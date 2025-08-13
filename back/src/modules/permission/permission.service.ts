@@ -1,0 +1,26 @@
+import { actions, permission } from 'src/utils/constants';
+import { Injectable } from '@nestjs/common';
+import { PermissionModuleType } from './permission.types';
+
+@Injectable()
+export class PermissionService {
+  list() {
+    return Object.keys(permission)
+      .sort((a, b) => (a > b ? 1 : -1))
+      .map(
+        (k) =>
+          ({
+            id: k,
+            name: (permission[k] as PermissionModuleType).name,
+            permissions: (permission[k] as PermissionModuleType).permissions,
+          }) as PermissionModuleType,
+      );
+  }
+
+  listActions() {
+    return Object.keys(actions).map((key) => ({
+      key,
+      name: actions[key] as string,
+    }));
+  }
+}
