@@ -18,8 +18,8 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-    @ApiProperty({
-    example: 'japerez',
+  @ApiProperty({
+      example: 'japerez',
   })
   @Column({ nullable: false })
   username: string;
