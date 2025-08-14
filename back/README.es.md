@@ -11,6 +11,15 @@ Elegimos NestJS porque ofrece:
 
 ---
 
+## **Swagger**
+
+Swagger se sirve en puerto 4000. Proporcionamos un endpoint por idioma:
+
+- Inglés: http://localhost:4000/api-en
+- Español: http://localhost:4000/api-es
+
+---
+
 ## **Internacionalización (i18n)**
 
 Usamos **[nestjs-i18n](https://nestjs-i18n.com/)** para manejar traducciones en múltiples idiomas.
@@ -69,3 +78,5 @@ Ejemplo:
 ```
 
 Si agregas una nueva clave en un idioma, **también debes** agregarla en los demás archivos de idioma.
+
+Tambien se tiene que actualizar `main.ts`, estos son los lenguajes soportados para Swagger

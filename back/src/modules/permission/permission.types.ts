@@ -2,7 +2,6 @@ import { Module, ModuleAction } from 'src/utils/constants';
 
 export interface PermissionModuleType {
   id?: string;
-  name: string;
   permissions: ModuleAction[];
 }
 

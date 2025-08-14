@@ -1,3 +1,4 @@
+import { ApiPropertyI18n } from 'src/common/decorators/ApiPropertyI18n';
 import {
   Column,
   CreateDateColumn,
@@ -18,21 +19,15 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ApiProperty({
-    example: 'japerez',
-  })
+  @ApiPropertyI18n({ example: 'examples.user.username' })
   @Column({ nullable: false })
   username: string;
 
-  @ApiProperty({
-    example: '1234abcd',
-  })
+  @ApiPropertyI18n({ example: 'examples.user.password' })
   @Column({ nullable: false, default: '' })
   password?: string;
 
-  @ApiProperty({
-    example: 'Juan Andres Perez',
-  })
+  @ApiPropertyI18n({ example: 'examples.user.name' })
   @Column({ nullable: false })
   name: string;
 

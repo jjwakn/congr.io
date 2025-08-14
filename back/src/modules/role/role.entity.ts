@@ -1,3 +1,4 @@
+import { ApiPropertyI18n } from 'src/common/decorators/ApiPropertyI18n';
 import {
   Column,
   CreateDateColumn,
@@ -16,8 +17,8 @@ export class Role {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ApiProperty({
-    example: 'Encargado usuarios',
+  @ApiPropertyI18n({
+    example: 'examples.role.name',
   })
   @Column({ nullable: false })
   name: string;

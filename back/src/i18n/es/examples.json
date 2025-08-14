@@ -1,0 +1,10 @@
+{
+  "user": {
+    "username": "jperez",
+    "password": "1234",
+    "name": "Juan Perez"
+  },
+  "role": {
+    "name": "Encargado coordinacion"
+  }
+}

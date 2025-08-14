@@ -1,17 +1,17 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyI18n } from 'src/common/decorators/ApiPropertyI18n';
 import { UserPermission } from '../permission/permission.types';
 import { User } from '../user/user.entity';
 
 export class LoginProps {
-  @ApiProperty({
+  @ApiPropertyI18n({
     required: true,
-    example: 'admin',
+    example: 'examples.user.username',
   })
   username: string;
 
-  @ApiProperty({
+  @ApiPropertyI18n({
     required: true,
-    example: '1234',
+    example: 'examples.user.password',
   })
   password: string;
 }

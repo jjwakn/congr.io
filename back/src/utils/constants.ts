@@ -19,16 +19,8 @@ export enum Module {
 export const PORT = process.env.PORT ?? 4000;
 export const TOKEN_SECRET = process.env.TOKEN_SECRET ?? '123';
 
-export const actions = {
-  [ModuleAction.get]: 'Ver',
-  [ModuleAction.create]: 'Crear',
-  [ModuleAction.update]: 'Actualizar',
-  [ModuleAction.delete]: 'Eliminar',
-};
-
 export const permission: PermissionType = {
   user: {
-    name: 'Usuarios',
     permissions: [
       ModuleAction.get,
       ModuleAction.create,
@@ -37,7 +29,6 @@ export const permission: PermissionType = {
     ],
   },
   role: {
-    name: 'Roles',
     permissions: [
       ModuleAction.get,
       ModuleAction.create,
