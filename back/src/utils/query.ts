@@ -1,22 +1,81 @@
-import { CommonEntity, ListParamsQuery } from './common.types';
+import {
+  ColumnType,
+  FindOptionsOrder,
+  FindOptionsWhere,
+  ObjectLiteral,
+  Raw,
+} from 'typeorm';
+import {
+  CaseInsensitiveWhereProps,
+  CommonEntity,
+  FindWithFiltersProps,
+  ListParamsQuery,
+} from './common.types';
+import { NUMERIC_COLUMN_TYPES } from './constants';
 
-export const caseInsensitiveWhere = (alias: string, search: string) =>
+export const caseInsensitiveWhere = ({
+  alias,
+  search,
+}: CaseInsensitiveWhereProps) =>
   `LOWER(${alias}) LIKE '%${search.toLowerCase()}%'`;
 
-export const getListVariables = (
-  query: ListParamsQuery,
-  extraFind: string[] = [],
-) => {
+export async function findWithFilters<
+  Entity extends ObjectLiteral,
+  Query extends ListParamsQuery,
+>({
+  repository,
+  query,
+  searchFields = [],
+  booleanFields = [],
+}: FindWithFiltersProps<Entity, Query>) {
+  const search = query.search?.trim() ?? '';
   const paginate = 'size' in query && 'page' in query;
   const sort = 'order' in query && 'direction' in query;
-  let find = 'search' in query || 'enabled' in query;
+  const find = 'search' in query || booleanFields.some((f) => f in query);
 
-  extraFind.forEach((f) => {
-    if (f in query) find = true;
+  const orConditions: FindOptionsWhere<Entity>[] = [];
+  const andConditions: Record<string, boolean> = {};
+
+  if (find) {
+    if (search)
+      searchFields.forEach((field) => {
+        orConditions.push({
+          [field]: NUMERIC_COLUMN_TYPES.has(
+            repository.metadata.findColumnWithPropertyName(field as string)
+              ?.type as ColumnType,
+          )
+            ? Raw((alias) => `${alias}::text LIKE '%${search}%'`)
+            : Raw((alias) => caseInsensitiveWhere({ alias, search })),
+        } as FindOptionsWhere<Entity>);
+      });
+
+    booleanFields.forEach((field) => {
+      if (field in query) {
+        andConditions[field as string] = query[field as string];
+      }
+    });
+  }
+
+  const where =
+    orConditions.length > 0
+      ? (orConditions.map((cond) => ({
+          ...cond,
+          ...andConditions,
+        })) as FindOptionsWhere<Entity>[])
+      : Object.keys(andConditions).length > 0
+        ? (andConditions as FindOptionsWhere<Entity>)
+        : {};
+
+  const [result, total] = await repository.findAndCount({
+    ...(paginate && { take: query.size, skip: query.size * query.page }),
+    ...(sort && {
+      order: { [query.order]: query.direction } as FindOptionsOrder<Entity>,
+    }),
+    where,
   });
 
-  return { paginate, sort, find };
-};
+  return { result, total };
+}
 
 export const cleanColumns = <T extends CommonEntity>(entity: CommonEntity) => {
   const newEntity: T & CommonEntity = { ...entity } as T;

@@ -46,7 +46,7 @@ export class UserController {
   @Permission(Module.user, ModuleAction.get)
   @Get(':id')
   async get(@Param('id', ParseIntPipe) id: number) {
-    return this.service.get(id);
+    return this.service.get({ id });
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
@@ -55,7 +55,7 @@ export class UserController {
   @ApiBody({ type: User })
   async create(@Body() data: User, @Headers() headers: HeadersType) {
     const userId = decodeToken(headers.authorization).user.id;
-    return this.service.create(data, userId);
+    return this.service.create({ data, userId });
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
@@ -68,7 +68,7 @@ export class UserController {
     @Headers() headers: HeadersType,
   ) {
     const userId = decodeToken(headers.authorization).user.id;
-    return this.service.update(id, data, userId);
+    return this.service.update({ id, data, userId });
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
@@ -79,7 +79,7 @@ export class UserController {
     @Headers() headers: HeadersType,
   ) {
     const userId = decodeToken(headers.authorization).user.id;
-    return this.service.remove(id, userId);
+    return this.service.remove({ id, userId });
   }
 
   @UseGuards(AuthGuard)

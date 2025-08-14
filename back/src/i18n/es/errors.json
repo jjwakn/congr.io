@@ -1,0 +1,15 @@
+{
+  "auth": { "userNotFound": "Usuario no encontrado o contraseña incorrecta" },
+  "permission": {
+    "undefinedPermission": "Permiso no definido para la solicitud",
+    "notIncluded": "Token de autorizacion no incluido",
+    "decodingError": "Error al decodificar token"
+  },
+  "role": {
+    "notFound": "Rol no encontrado"
+  },
+  "user": {
+    "notFound": "Usuario no encontrado",
+    "usernameExists": "Usuario ya existe"
+  }
+}

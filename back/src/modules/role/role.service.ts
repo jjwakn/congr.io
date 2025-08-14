@@ -1,48 +1,35 @@
-import {
-  caseInsensitiveWhere,
-  cleanColumns,
-  getListVariables,
-} from 'src/utils/query';
-import { Raw, Repository } from 'typeorm';
+import { I18nService } from 'nestjs-i18n';
+import { cleanColumns, findWithFilters } from 'src/utils/query';
+import { Repository } from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
 import { Role } from './role.entity';
-import { RoleQuery } from './role.types';
+import {
+  RoleCreateProps,
+  RoleDeleteProps,
+  RoleQuery,
+  RoleUpdateProps,
+} from './role.types';
 
 @Injectable()
 export class RoleService {
   constructor(
     @InjectRepository(Role)
     private repository: Repository<Role>,
+
     @InjectRepository(User)
     private userRepository: Repository<User>,
+
+    private readonly i18n: I18nService,
   ) {}
 
   async list(query: RoleQuery) {
-    const { paginate, sort, find } = getListVariables(query, ['full_access']);
-
-    const [result, total] = await this.repository.findAndCount({
-      ...(paginate && { take: query.size, skip: query.size * query.page }),
-      ...(sort && { order: { [query.order]: query.direction } }),
-      ...(find && {
-        where: {
-          ...('search' in query &&
-            Number.isNaN(Number(query.search)) && {
-              name: Raw((alias) => caseInsensitiveWhere(alias, query.search)),
-            }),
-          ...('search' in query &&
-            !Number.isNaN(Number(query.search)) && {
-              id: Number(query.search),
-            }),
-          ...('full_access' in query && {
-            full_access: query.full_access,
-          }),
-          ...('enabled' in query && {
-            enabled: query.enabled,
-          }),
-        },
-      }),
+    const { result, total } = await findWithFilters<Role, RoleQuery>({
+      repository: this.repository,
+      query,
+      searchFields: ['id', 'name'],
+      booleanFields: ['enabled', 'full_access'],
     });
 
     return { result, total };
@@ -59,14 +46,15 @@ export class RoleService {
       },
     });
 
-    if (!result) throw new NotFoundException('Role not found');
+    if (!result)
+      throw new NotFoundException(this.i18n.t('errors.role.notFound'));
 
     return cleanColumns<Role>(result);
   }
 
-  async create(data: Role, user_id: number) {
+  async create({ data, userId }: RoleCreateProps) {
     const created_by = await this.userRepository.findOne({
-      where: { id: user_id },
+      where: { id: userId },
       withDeleted: true,
     });
 
@@ -74,9 +62,9 @@ export class RoleService {
     return this.repository.save(created);
   }
 
-  async update(id: number, data: Role, user_id: number) {
+  async update({ id, data, userId }: RoleUpdateProps) {
     const updated_by = await this.userRepository.findOne({
-      where: { id: user_id },
+      where: { id: userId },
       withDeleted: true,
     });
 
@@ -88,9 +76,9 @@ export class RoleService {
     );
   }
 
-  async remove(id: number, user_id: number) {
+  async remove({ id, userId }: RoleDeleteProps) {
     const deleted_by = await this.userRepository.findOne({
-      where: { id: user_id },
+      where: { id: userId },
       withDeleted: true,
     });
 

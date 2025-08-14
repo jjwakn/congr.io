@@ -55,7 +55,7 @@ export class RoleController {
   @ApiBody({ type: Role })
   async create(@Body() data: Role, @Headers() headers: HeadersType) {
     const userId = decodeToken(headers.authorization).user.id;
-    return this.service.create(data, userId);
+    return this.service.create({ data, userId });
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
@@ -68,7 +68,7 @@ export class RoleController {
     @Headers() headers: HeadersType,
   ) {
     const userId = decodeToken(headers.authorization).user.id;
-    return this.service.update(id, data, userId);
+    return this.service.update({ id, data, userId });
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
@@ -79,6 +79,6 @@ export class RoleController {
     @Headers() headers: HeadersType,
   ) {
     const userId = decodeToken(headers.authorization).user.id;
-    return this.service.remove(id, userId);
+    return this.service.remove({ id, userId });
   }
 }

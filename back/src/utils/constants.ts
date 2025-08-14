@@ -1,4 +1,5 @@
 import { PermissionType } from 'src/modules/permission/permission.types';
+import { ColumnType } from 'typeorm';
 
 //#region Enums
 export enum ModuleAction {
@@ -45,4 +46,40 @@ export const permission: PermissionType = {
     ],
   },
 };
+
+export const NUMERIC_COLUMN_TYPES = new Set<ColumnType>([
+  'int',
+  'int2',
+  'int4',
+  'int8',
+  'integer',
+  'tinyint',
+  'smallint',
+  'mediumint',
+  'bigint',
+  'dec',
+  'decimal',
+  'smalldecimal',
+  'fixed',
+  'numeric',
+  'number',
+  'float',
+  'double',
+  'real',
+  'double precision',
+  'float4',
+  'float8',
+  'float64',
+  'smallmoney',
+  'money',
+  'int64',
+  'unsigned big int',
+  'int4range',
+  'int8range',
+  'numrange',
+  'int4multirange',
+  'int8multirange',
+  'nummultirange',
+]);
+
 //#endregion

@@ -19,7 +19,7 @@ export class User {
   id: number;
 
   @ApiProperty({
-      example: 'japerez',
+    example: 'japerez',
   })
   @Column({ nullable: false })
   username: string;

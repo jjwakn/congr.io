@@ -1,6 +1,35 @@
 import { IsOptional } from 'class-validator';
-import { CommonOrder, ListParamsQuery } from 'src/utils/common.types';
+import {
+  CommonOrder,
+  EntityActionProps,
+  ListParamsQuery,
+} from 'src/utils/common.types';
 import { ApiProperty } from '@nestjs/swagger';
+import { User } from './user.entity';
+
+interface UserGetProps {
+  includePassword?: boolean;
+}
+
+export interface UserGetByIdProps extends UserGetProps {
+  id: number;
+}
+
+export interface UserGetByUsernameProps extends UserGetProps {
+  username: string;
+}
+
+export interface UserCreateProps extends EntityActionProps {
+  data: User;
+}
+
+export interface UserUpdateProps extends UserCreateProps {
+  id: number;
+}
+
+export interface UserDeleteProps extends EntityActionProps {
+  id: number;
+}
 
 enum Order {
   name = 'name',

@@ -1,31 +1,35 @@
 import { compare } from 'bcrypt';
+import { I18nService } from 'nestjs-i18n';
 import { mergePermissions } from 'src/utils/helpers';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserPermission } from '../permission/permission.types';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
-import { LoginProps } from './auth.types';
+import { LoginProps, UserValidated } from './auth.types';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
+
     private jwtService: JwtService,
+
+    private readonly i18n: I18nService,
   ) {}
 
-  async validateUser(
-    username: string,
-    password: string,
-  ): Promise<{
-    user: User;
-    auth: { token: string; fullAccess: boolean; permissions: UserPermission };
-  } | null> {
-    const fullUser = await this.userService.getByUsername(username, true);
+  async validateUser({
+    username,
+    password,
+  }: LoginProps): Promise<UserValidated | null> {
+    const fullUser = await this.userService.getByUsername({
+      username,
+      includePassword: true,
+    });
 
     const result = await compare(password, fullUser.password ?? '');
 
-    if (!fullUser || !result) return null;
+    if (!fullUser || !result)
+      throw new UnauthorizedException(this.i18n.t('errors.auth.userNotFound'));
 
     const { roles, ...user } = fullUser;
 
@@ -54,7 +58,7 @@ export class AuthService {
   }
 
   async login(data: LoginProps) {
-    const result = await this.validateUser(data.username, data.password);
+    const result = await this.validateUser(data);
 
     return result;
   }

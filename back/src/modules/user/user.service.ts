@@ -1,11 +1,8 @@
+import { I18nService } from 'nestjs-i18n';
 import { TokenPayload } from 'src/utils/common.types';
 import { encryptPassword } from 'src/utils/helpers';
-import {
-  caseInsensitiveWhere,
-  cleanColumns,
-  getListVariables,
-} from 'src/utils/query';
-import { Raw, Repository } from 'typeorm';
+import { cleanColumns, findWithFilters } from 'src/utils/query';
+import { Repository } from 'typeorm';
 import {
   Injectable,
   NotAcceptableException,
@@ -15,7 +12,15 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from '../role/role.entity';
 import { User } from './user.entity';
-import { UserQuery, UserValidateProps } from './user.types';
+import {
+  UserCreateProps,
+  UserDeleteProps,
+  UserGetByIdProps,
+  UserGetByUsernameProps,
+  UserQuery,
+  UserUpdateProps,
+  UserValidateProps,
+} from './user.types';
 
 @Injectable()
 export class UserService {
@@ -25,50 +30,16 @@ export class UserService {
 
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+
+    private readonly i18n: I18nService,
   ) {}
 
   async list(query: UserQuery) {
-    const { paginate, sort, find } = getListVariables(query);
-
-    const common = {
-      ...('enabled' in query && {
-        enabled: query.enabled,
-      }),
-    };
-
-    const [result, total] = await this.repository.findAndCount({
-      ...(paginate && { take: query.size, skip: query.size * query.page }),
-      ...(sort && { order: { [query.order]: query.direction } }),
-      ...(find && {
-        where: [
-          ...('search' in query
-            ? [
-                {
-                  id: Raw((alias) =>
-                    caseInsensitiveWhere(
-                      `CAST(${alias} AS CHAR(10000))`,
-                      query.search,
-                    ),
-                  ),
-                  ...common,
-                },
-                {
-                  name: Raw((alias) =>
-                    caseInsensitiveWhere(alias, query.search),
-                  ),
-                  ...common,
-                },
-                {
-                  username: Raw((alias) =>
-                    caseInsensitiveWhere(alias, query.search),
-                  ),
-                  ...common,
-                },
-              ]
-            : [{ ...common }]),
-        ],
-      }),
-      relations: ['roles'],
+    const { result, total } = await findWithFilters<User, UserQuery>({
+      repository: this.repository,
+      query,
+      searchFields: ['id', 'name', 'username'],
+      booleanFields: ['enabled'],
     });
 
     return {
@@ -80,7 +51,7 @@ export class UserService {
     };
   }
 
-  async get(id: number, includePassword: boolean = false) {
+  async get({ id, includePassword = false }: UserGetByIdProps) {
     const result = await this.repository.findOne({
       where: { id },
       withDeleted: true,
@@ -92,7 +63,8 @@ export class UserService {
       },
     });
 
-    if (!result) throw new NotFoundException('User not found');
+    if (!result)
+      throw new NotFoundException(this.i18n.t('errors.user.notFound'));
 
     if (!includePassword) delete result.password;
     return {
@@ -101,7 +73,10 @@ export class UserService {
     };
   }
 
-  async getByUsername(username: string, includePassword: boolean = false) {
+  async getByUsername({
+    username,
+    includePassword = false,
+  }: UserGetByUsernameProps) {
     const result = await this.repository.findOne({
       where: { username },
       withDeleted: true,
@@ -113,7 +88,8 @@ export class UserService {
       },
     });
 
-    if (!result) throw new NotFoundException('User not found');
+    if (!result)
+      throw new NotFoundException(this.i18n.t('errors.user.notFound'));
 
     if (result && !includePassword) delete result.password;
     return {
@@ -122,9 +98,9 @@ export class UserService {
     } as User;
   }
 
-  async create(data: User, user_id: number) {
+  async create({ data, userId }: UserCreateProps) {
     const created_by = await this.repository.findOne({
-      where: { id: user_id },
+      where: { id: userId },
       withDeleted: true,
     });
 
@@ -133,7 +109,7 @@ export class UserService {
     });
     if (exists)
       throw new NotAcceptableException(
-        `username ${data.username} already exists`,
+        `${this.i18n.t('errors.user.usernameExists')}: ${data.username}`,
       );
 
     const roles: Role[] = [];
@@ -144,7 +120,9 @@ export class UserService {
           where: { id },
         });
         if (!found)
-          throw new NotAcceptableException(`Role with id ${id} not found`);
+          throw new NotAcceptableException(
+            `${this.i18n.t('errors.role.notFound')}. ID: ${id}`,
+          );
 
         roles.push(found);
       }
@@ -161,9 +139,9 @@ export class UserService {
     return cleanColumns<User>(result);
   }
 
-  async update(id: number, data: User, user_id: number) {
+  async update({ id, data, userId }: UserUpdateProps) {
     const updated_by = await this.repository.findOne({
-      where: { id: user_id },
+      where: { id: userId },
       withDeleted: true,
     });
 
@@ -172,7 +150,8 @@ export class UserService {
       where: { id },
     });
 
-    if (!existing) throw new NotFoundException('User not found');
+    if (!existing)
+      throw new NotFoundException(this.i18n.t('errors.user.notFound'));
 
     // if username changed
     if (data.username && existing.username !== data.username) {
@@ -181,7 +160,7 @@ export class UserService {
       });
       if (exists)
         throw new NotAcceptableException(
-          `username ${data.username} already exists`,
+          `${this.i18n.t('errors.user.usernameExists')}: ${data.username}`,
         );
     }
 
@@ -193,7 +172,9 @@ export class UserService {
           where: { id },
         });
         if (!found)
-          throw new NotAcceptableException(`Role with id ${id} not found`);
+          throw new NotAcceptableException(
+            `${this.i18n.t('errors.role.notFound')}. ID: ${id}`,
+          );
 
         roles.push(found);
       }
@@ -215,9 +196,9 @@ export class UserService {
     return cleanColumns<User>(result);
   }
 
-  async remove(id: number, user_id: number) {
+  async remove({ id, userId }: UserDeleteProps) {
     const deleted_by = await this.repository.findOne({
-      where: { id: user_id },
+      where: { id: userId },
       withDeleted: true,
     });
 
@@ -231,12 +212,14 @@ export class UserService {
       const token = data?.token;
 
       if (!token)
-        throw new UnauthorizedException('Authorization token not included');
+        throw new UnauthorizedException(
+          this.i18n.t('errors.token.notIncluded'),
+        );
 
       const base64Payload = token.split('.')[1];
       const payloadBuffer = Buffer.from(base64Payload, 'base64');
       const payload = JSON.parse(payloadBuffer.toString()) as TokenPayload;
-      const user = await this.get(payload.user.id);
+      const user = await this.get({ id: payload.user.id });
       return !!user;
     } catch (e) {
       console.error(e);

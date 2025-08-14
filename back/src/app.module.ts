@@ -1,3 +1,11 @@
+import {
+  AcceptLanguageResolver,
+  HeaderResolver,
+  I18nJsonLoader,
+  I18nModule,
+  QueryResolver,
+} from 'nestjs-i18n';
+import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -25,10 +33,26 @@ import { UserModule } from './modules/user/user.module';
       }),
       inject: [ConfigService],
     }),
-    RoleModule,
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path:
+          process.env.NODE_ENV !== 'production'
+            ? join(process.cwd(), 'src', 'i18n')
+            : join(__dirname, 'i18n'),
+        watch: true,
+      },
+      loader: I18nJsonLoader,
+      resolvers: [
+        { use: QueryResolver, options: ['en', 'locale', 'l'] }, // example: ?lang=es
+        AcceptLanguageResolver,
+        new HeaderResolver(['x-lang']),
+      ],
+    }),
     PermissionModule,
     AuthModule,
     UserModule,
+    RoleModule,
   ],
 })
 export class AppModule {}

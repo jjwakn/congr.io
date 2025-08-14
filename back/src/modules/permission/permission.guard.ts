@@ -1,3 +1,4 @@
+import { I18nService } from 'nestjs-i18n';
 import { RequestType } from 'src/utils/common.types';
 import { decodeToken } from 'src/utils/helpers';
 import {
@@ -12,7 +13,11 @@ import { PermissionMetadata } from './permission.types';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+
+    private readonly i18n: I18nService,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     try {
@@ -22,13 +27,17 @@ export class PermissionGuard implements CanActivate {
       );
 
       if (!section || !action)
-        throw new UnauthorizedException('Permission not defined for request');
+        throw new UnauthorizedException(
+          this.i18n.t('errors.permission.undefinedPermission'),
+        );
 
       const request: RequestType = context.switchToHttp().getRequest();
       const token = request.headers.authorization;
 
       if (!token)
-        throw new UnauthorizedException('Authorization token not included');
+        throw new UnauthorizedException(
+          this.i18n.t('errors.token.notIncluded'),
+        );
 
       const { fullAccess, permissions } = decodeToken(token).auth;
 
@@ -37,7 +46,7 @@ export class PermissionGuard implements CanActivate {
       return !!canDoIt;
     } catch (err) {
       console.error(err);
-      throw new UnauthorizedException('Error decoding token');
+      throw new UnauthorizedException(this.i18n.t('errors.auth.decodingError'));
     }
   }
 }

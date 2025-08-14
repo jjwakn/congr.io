@@ -8,10 +8,9 @@
     "front"
   ],
   "scripts": {
-    "start:back": "yarn workspace back start:dev",
+    "dev": "yarn workspace back start:dev",
     "lint": "yarn workspaces run lint",
-    "format": "yarn workspaces run format",
-    "prepare": "husky"
+    "format": "yarn workspaces run format"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

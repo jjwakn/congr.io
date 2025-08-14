@@ -1,6 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsNumber, IsOptional } from 'class-validator';
 import { User } from 'src/modules/user/user.entity';
+import { ObjectLiteral, Repository } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Module } from './constants';
 
@@ -47,6 +48,25 @@ export interface CommonEntity {
   updated_by?: User | null;
   deleted_by?: User | null;
   [key: string]: any;
+}
+
+export interface FindWithFiltersProps<
+  Entity extends ObjectLiteral,
+  Query extends ListParamsQuery,
+> {
+  repository: Repository<Entity>;
+  query: Query;
+  searchFields?: (keyof Entity)[];
+  booleanFields?: (keyof Entity)[];
+}
+
+export interface CaseInsensitiveWhereProps {
+  alias: string;
+  search: string;
+}
+
+export interface EntityActionProps {
+  userId: number;
 }
 //#endregion
 
