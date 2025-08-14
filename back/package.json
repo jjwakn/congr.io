@@ -1,10 +1,9 @@
 {
   "name": "back",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "API",
+  "author": "JJ",
   "private": true,
-  "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -48,7 +47,6 @@
     "@types/express": "^5.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
-    "globals": "^16.0.0",
     "source-map-support": "^0.5.21",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
