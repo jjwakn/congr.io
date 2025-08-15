@@ -4,5 +4,12 @@
   "importOrder": ["@nestjs/(.*)", "^react(.*)", "@/(.*)", "^[./]"],
   "importOrderSortSpecifiers": true,
   "plugins": ["@trivago/prettier-plugin-sort-imports"],
-  "importOrderParserPlugins": ["typescript", "decorators-legacy"]
+  "importOrderParserPlugins": [
+    "typescript",
+    "decorators-legacy",
+    "jsx",
+    "classProperties",
+    "classPrivateProperties",
+    "classPrivateMethods"
+  ]
 }
