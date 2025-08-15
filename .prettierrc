@@ -1,7 +1,13 @@
 {
   "singleQuote": true,
   "trailingComma": "all",
-  "importOrder": ["@nestjs/(.*)", "^react(.*)", "@/(.*)", "^[./]"],
+  "importOrder": [
+    "^react(.*)$",
+    "^@fontsource/(.*)$",
+    "^@nestjs/(.*)$",
+    "^@/(.*)$",
+    "^[./]"
+  ],
   "importOrderSortSpecifiers": true,
   "plugins": ["@trivago/prettier-plugin-sort-imports"],
   "importOrderParserPlugins": [
