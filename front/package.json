@@ -9,8 +9,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "format": "prettier --write \"src/**/*.ts\""
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^19.0.0",
