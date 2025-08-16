@@ -3,7 +3,7 @@ import {
   PaletteOptions,
   ThemeOptions,
   createTheme,
-} from '@mui/material/styles'
+} from '@mui/material/styles';
 
 const components: ThemeOptions['components'] = {
   MuiAppBar: {
@@ -13,7 +13,7 @@ const components: ThemeOptions['components'] = {
       }),
     },
   },
-}
+};
 
 const commonPalette: PaletteOptions = {
   primary: {
@@ -22,7 +22,7 @@ const commonPalette: PaletteOptions = {
     dark: '#0d47a1',
     contrastText: 'white',
   },
-}
+};
 
 const darkTheme = createTheme({
   palette: {
@@ -30,7 +30,7 @@ const darkTheme = createTheme({
     ...commonPalette,
   },
   components,
-})
+});
 
 const lightTheme = createTheme({
   palette: {
@@ -38,7 +38,7 @@ const lightTheme = createTheme({
     ...commonPalette,
   },
   components,
-})
+});
 
 export const getTheme = ({ mode }: { mode: PaletteMode }) =>
-  mode === 'dark' ? darkTheme : lightTheme
+  mode === 'dark' ? darkTheme : lightTheme;

@@ -1,19 +1,19 @@
-import { Transform } from 'class-transformer'
-import { IsBoolean, IsOptional } from 'class-validator'
-import { EntityActionProps, ListParamsQuery } from 'src/utils/common.types'
-import { ApiProperty } from '@nestjs/swagger'
-import { Role } from './role.entity'
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsOptional } from 'class-validator';
+import { EntityActionProps, ListParamsQuery } from 'src/utils/common.types';
+import { ApiProperty } from '@nestjs/swagger';
+import { Role } from './role.entity';
 
 export interface RoleCreateProps extends EntityActionProps {
-  data: Role
+  data: Role;
 }
 
 export interface RoleUpdateProps extends RoleCreateProps {
-  id: number
+  id: number;
 }
 
 export interface RoleDeleteProps extends EntityActionProps {
-  id: number
+  id: number;
 }
 
 enum Order {
@@ -28,7 +28,7 @@ export class RoleQuery extends ListParamsQuery {
     enum: Order,
   })
   @IsOptional()
-  order: Order = Order.name
+  order: Order = Order.name;
 
   @ApiProperty({
     required: false,
@@ -37,5 +37,5 @@ export class RoleQuery extends ListParamsQuery {
   @Transform(({ value }: { value: string }) => value.toLowerCase() === 'true')
   @IsBoolean()
   @IsOptional()
-  full_access: boolean
+  full_access: boolean;
 }

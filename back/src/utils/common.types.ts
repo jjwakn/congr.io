@@ -1,9 +1,9 @@
-import { Transform } from 'class-transformer'
-import { IsNumber, IsOptional } from 'class-validator'
-import { User } from 'src/modules/user/user.entity'
-import { ObjectLiteral, Repository } from 'typeorm'
-import { ApiProperty } from '@nestjs/swagger'
-import { Module } from './constants'
+import { Transform } from 'class-transformer';
+import { IsNumber, IsOptional } from 'class-validator';
+import { User } from 'src/modules/user/user.entity';
+import { ObjectLiteral, Repository } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
+import { Module } from './constants';
 
 //#region Enums
 export enum Direction {
@@ -21,52 +21,52 @@ export enum CommonOrder {
 //#region Types & Interfaces
 export interface TokenPayload {
   user: {
-    id: number
-    username: string
-    name: string
-    created_at: string
-  }
+    id: number;
+    username: string;
+    name: string;
+    created_at: string;
+  };
   auth: {
-    fullAccess: boolean
-    permissions: { [key in keyof typeof Module]?: string[] }
-  }
-  iat: number
-  exp: number
+    fullAccess: boolean;
+    permissions: { [key in keyof typeof Module]?: string[] };
+  };
+  iat: number;
+  exp: number;
 }
 
 export interface HeadersType {
-  authorization: string
-  [key: string]: string
+  authorization: string;
+  [key: string]: string;
 }
 
 export interface RequestType {
-  headers: HeadersType
+  headers: HeadersType;
 }
 
 export interface CommonEntity {
-  created_by?: User | null
-  updated_by?: User | null
-  deleted_by?: User | null
-  [key: string]: any
+  created_by?: User | null;
+  updated_by?: User | null;
+  deleted_by?: User | null;
+  [key: string]: any;
 }
 
 export interface FindWithFiltersProps<
   Entity extends ObjectLiteral,
   Query extends ListParamsQuery,
 > {
-  repository: Repository<Entity>
-  query: Query
-  searchFields?: (keyof Entity)[]
-  booleanFields?: (keyof Entity)[]
+  repository: Repository<Entity>;
+  query: Query;
+  searchFields?: (keyof Entity)[];
+  booleanFields?: (keyof Entity)[];
 }
 
 export interface CaseInsensitiveWhereProps {
-  alias: string
-  search: string
+  alias: string;
+  search: string;
 }
 
 export interface EntityActionProps {
-  userId: number
+  userId: number;
 }
 //#endregion
 
@@ -79,7 +79,7 @@ export class ListParamsQuery {
   @Transform(({ value }) => Number(value))
   @IsNumber()
   @IsOptional()
-  size: number
+  size: number;
 
   @ApiProperty({
     required: false,
@@ -88,7 +88,7 @@ export class ListParamsQuery {
   @Transform(({ value }) => Number(value))
   @IsNumber()
   @IsOptional()
-  page: number
+  page: number;
 
   @ApiProperty({
     required: false,
@@ -96,21 +96,21 @@ export class ListParamsQuery {
     enum: Direction,
   })
   @IsOptional()
-  direction: Direction
+  direction: Direction;
 
   @ApiProperty({
     required: false,
     example: 'name',
   })
   @IsOptional()
-  order: string
+  order: string;
 
   @ApiProperty({
     required: false,
     example: 'encargado',
   })
   @IsOptional()
-  search: string
+  search: string;
 
   @Transform(({ value }: { value: string }) => value.toLowerCase() === 'true')
   @ApiProperty({
@@ -118,6 +118,6 @@ export class ListParamsQuery {
     example: true,
   })
   @IsOptional()
-  enabled: boolean
+  enabled: boolean;
 }
 //#endregion

@@ -1,11 +1,11 @@
-import { compare } from 'bcrypt'
-import { I18nService } from 'nestjs-i18n'
-import { mergePermissions } from 'src/utils/helpers'
-import { Injectable, UnauthorizedException } from '@nestjs/common'
-import { JwtService } from '@nestjs/jwt'
-import { User } from '../user/user.entity'
-import { UserService } from '../user/user.service'
-import { LoginProps, UserValidated } from './auth.types'
+import { compare } from 'bcrypt';
+import { I18nService } from 'nestjs-i18n';
+import { mergePermissions } from 'src/utils/helpers';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
+import { LoginProps, UserValidated } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -24,20 +24,20 @@ export class AuthService {
     const fullUser = await this.userService.getByUsername({
       username,
       includePassword: true,
-    })
+    });
 
-    const result = await compare(password, fullUser.password ?? '')
+    const result = await compare(password, fullUser.password ?? '');
 
     if (!fullUser || !result)
-      throw new UnauthorizedException(this.i18n.t('errors.auth.userNotFound'))
+      throw new UnauthorizedException(this.i18n.t('errors.auth.userNotFound'));
 
-    const { roles, ...user } = fullUser
+    const { roles, ...user } = fullUser;
 
-    delete user.password
-    delete user.updated_at
-    delete user.deleted_at
+    delete user.password;
+    delete user.updated_at;
+    delete user.deleted_at;
 
-    const { fullAccess, permissions } = mergePermissions(roles)
+    const { fullAccess, permissions } = mergePermissions(roles);
 
     const token = this.jwtService.sign({
       user,
@@ -45,7 +45,7 @@ export class AuthService {
         fullAccess,
         permissions,
       },
-    })
+    });
 
     return {
       user: user as User,
@@ -54,12 +54,12 @@ export class AuthService {
         fullAccess,
         permissions,
       },
-    }
+    };
   }
 
   async login(data: LoginProps) {
-    const result = await this.validateUser(data)
+    const result = await this.validateUser(data);
 
-    return result
+    return result;
   }
 }

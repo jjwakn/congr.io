@@ -3,4 +3,5 @@
 node_modules
 .env
 back/dist
+front/dist
 .idea

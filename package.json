@@ -12,7 +12,7 @@
     "start:back": "yarn --cwd back start:dev",
     "wait-and-front": "wait-on tcp:4000 && yarn --cwd front dev --host",
     "lint": "yarn workspaces run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md,html}\" --ignore-path .gitignore"
+    "format": "prettier --write \"**/*.{ts,tsx,json,css,md,html}\" --ignore-path .gitignore"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

@@ -4,15 +4,15 @@ import {
   I18nJsonLoader,
   I18nModule,
   QueryResolver,
-} from 'nestjs-i18n'
-import { join } from 'path'
-import { Module } from '@nestjs/common'
-import { ConfigModule, ConfigService } from '@nestjs/config'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { AuthModule } from './modules/auth/auth.module'
-import { PermissionModule } from './modules/permission/permissions.module'
-import { RoleModule } from './modules/role/role.module'
-import { UserModule } from './modules/user/user.module'
+} from 'nestjs-i18n';
+import { join } from 'path';
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './modules/auth/auth.module';
+import { PermissionModule } from './modules/permission/permissions.module';
+import { RoleModule } from './modules/role/role.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -38,8 +38,8 @@ import { UserModule } from './modules/user/user.module'
       loaderOptions: {
         path:
           process.env.NODE_ENV !== 'production'
-            ? join(process.cwd(), 'src', 'i18n')
-            : join(__dirname, 'i18n'),
+            ? join(process.cwd(), 'src', 'locales')
+            : join(__dirname, 'locales'),
         watch: true,
       },
       loader: I18nJsonLoader,
