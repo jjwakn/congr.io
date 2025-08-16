@@ -1,15 +1,15 @@
-import { I18nService } from 'nestjs-i18n';
-import { RequestType } from 'src/utils/common.types';
-import { decodeToken } from 'src/utils/helpers';
+import { I18nService } from 'nestjs-i18n'
+import { RequestType } from 'src/utils/common.types'
+import { decodeToken } from 'src/utils/helpers'
 import {
   CanActivate,
   ExecutionContext,
   Injectable,
   SetMetadata,
   UnauthorizedException,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { PermissionMetadata } from './permission.types';
+} from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
+import { PermissionMetadata } from './permission.types'
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -24,32 +24,30 @@ export class PermissionGuard implements CanActivate {
       const { section, action } = this.reflector.get<PermissionMetadata>(
         'permission',
         context.getHandler(),
-      );
+      )
 
       if (!section || !action)
         throw new UnauthorizedException(
           this.i18n.t('errors.permission.undefinedPermission'),
-        );
+        )
 
-      const request: RequestType = context.switchToHttp().getRequest();
-      const token = request.headers.authorization;
+      const request: RequestType = context.switchToHttp().getRequest()
+      const token = request.headers.authorization
 
       if (!token)
-        throw new UnauthorizedException(
-          this.i18n.t('errors.token.notIncluded'),
-        );
+        throw new UnauthorizedException(this.i18n.t('errors.token.notIncluded'))
 
-      const { fullAccess, permissions } = decodeToken(token).auth;
+      const { fullAccess, permissions } = decodeToken(token).auth
 
-      const canDoIt = fullAccess || permissions[section]?.includes(action);
+      const canDoIt = fullAccess || permissions[section]?.includes(action)
 
-      return !!canDoIt;
+      return !!canDoIt
     } catch (err) {
-      console.error(err);
-      throw new UnauthorizedException(this.i18n.t('errors.auth.decodingError'));
+      console.error(err)
+      throw new UnauthorizedException(this.i18n.t('errors.auth.decodingError'))
     }
   }
 }
 
 export const Permission = (section: string, action: string) =>
-  SetMetadata('permission', { section, action });
+  SetMetadata('permission', { section, action })

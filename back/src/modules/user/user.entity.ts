@@ -1,4 +1,4 @@
-import { ApiPropertyI18n } from 'src/common/decorators/ApiPropertyI18n';
+import { ApiPropertyI18n } from 'src/common/decorators/ApiPropertyI18n'
 import {
   Column,
   CreateDateColumn,
@@ -10,26 +10,26 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { Role } from '../role/role.entity';
+} from 'typeorm'
+import { ApiProperty } from '@nestjs/swagger'
+import { Role } from '../role/role.entity'
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: number
 
   @ApiPropertyI18n({ example: 'examples.user.username' })
   @Column({ nullable: false })
-  username: string;
+  username: string
 
   @ApiPropertyI18n({ example: 'examples.user.password' })
   @Column({ nullable: false, default: '' })
-  password?: string;
+  password?: string
 
   @ApiPropertyI18n({ example: 'examples.user.name' })
   @Column({ nullable: false })
-  name: string;
+  name: string
 
   @ManyToMany(() => Role, { onDelete: 'NO ACTION', onUpdate: 'NO ACTION' })
   @JoinTable({
@@ -37,37 +37,37 @@ export class User {
     joinColumn: { name: 'user_id' },
     inverseJoinColumn: { name: 'role_id' },
   })
-  roles: Role[];
+  roles: Role[]
 
   @ApiProperty({
     example: [1, 2],
   })
-  roles_ids?: number[];
+  roles_ids?: number[]
 
   @ApiProperty({
     example: true,
   })
   @Column({ nullable: false, default: true })
-  enabled: boolean;
+  enabled: boolean
 
   @CreateDateColumn()
-  created_at?: Date;
+  created_at?: Date
 
   @UpdateDateColumn()
-  updated_at?: Date;
+  updated_at?: Date
 
   @DeleteDateColumn()
-  deleted_at?: Date;
+  deleted_at?: Date
 
   @ManyToOne(() => User, (user) => user.id, { nullable: true })
   @JoinColumn({ name: 'created_by' })
-  created_by: User | null;
+  created_by: User | null
 
   @ManyToOne(() => User, (user) => user.id, { nullable: true })
   @JoinColumn({ name: 'updated_by' })
-  updated_by: User | null;
+  updated_by: User | null
 
   @ManyToOne(() => User, (user) => user.id, { nullable: true })
   @JoinColumn({ name: 'deleted_by' })
-  deleted_by: User | null;
+  deleted_by: User | null
 }

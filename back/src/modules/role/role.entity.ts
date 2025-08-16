@@ -1,4 +1,4 @@
-import { ApiPropertyI18n } from 'src/common/decorators/ApiPropertyI18n';
+import { ApiPropertyI18n } from 'src/common/decorators/ApiPropertyI18n'
 import {
   Column,
   CreateDateColumn,
@@ -8,59 +8,59 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { User } from '../user/user.entity';
+} from 'typeorm'
+import { ApiProperty } from '@nestjs/swagger'
+import { User } from '../user/user.entity'
 
 @Entity()
 export class Role {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: number
 
   @ApiPropertyI18n({
     example: 'examples.role.name',
   })
   @Column({ nullable: false })
-  name: string;
+  name: string
 
   @ApiProperty({
     example: { user: ['post', 'get', 'update', 'delete'] },
   })
   @Column('simple-json', { nullable: true })
   permissions: {
-    [key: string]: string[];
-  };
+    [key: string]: string[]
+  }
 
   @ApiProperty({
     example: false,
   })
   @Column({ nullable: false, default: false })
-  full_access: boolean;
+  full_access: boolean
 
   @ApiProperty({
     example: true,
   })
   @Column({ nullable: false, default: true })
-  enabled: boolean;
+  enabled: boolean
 
   @CreateDateColumn()
-  created_at?: Date;
+  created_at?: Date
 
   @UpdateDateColumn()
-  updated_at?: Date;
+  updated_at?: Date
 
   @DeleteDateColumn()
-  deleted_at?: Date;
+  deleted_at?: Date
 
   @ManyToOne(() => User, (user) => user.id, { nullable: true })
   @JoinColumn({ name: 'created_by' })
-  created_by: User | null;
+  created_by: User | null
 
   @ManyToOne(() => User, (user) => user.id, { nullable: true })
   @JoinColumn({ name: 'updated_by' })
-  updated_by: User | null;
+  updated_by: User | null
 
   @ManyToOne(() => User, (user) => user.id, { nullable: true })
   @JoinColumn({ name: 'deleted_by' })
-  deleted_by: User | null;
+  deleted_by: User | null
 }

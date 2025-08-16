@@ -1,12 +1,13 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import '@fontsource/roboto/300.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
-import App from './App.tsx';
-import { ThemeModeProvider } from './contexts/ThemeContext.tsx';
-import './index.css';
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import '@fontsource/roboto/300.css'
+import '@fontsource/roboto/400.css'
+import '@fontsource/roboto/500.css'
+import '@fontsource/roboto/700.css'
+import App from './App.tsx'
+import { ThemeModeProvider } from './contexts/ThemeProvider.tsx'
+import '../i18n'
+import './index.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,4 +15,4 @@ createRoot(document.getElementById('root')!).render(
       <App />
     </ThemeModeProvider>
   </StrictMode>,
-);
+)

@@ -1,5 +1,5 @@
-import { PermissionType } from 'src/modules/permission/permission.types';
-import { ColumnType } from 'typeorm';
+import { PermissionType } from 'src/modules/permission/permission.types'
+import { ColumnType } from 'typeorm'
 
 //#region Enums
 export enum ModuleAction {
@@ -16,8 +16,8 @@ export enum Module {
 //#endregion
 
 //#region Constants
-export const PORT = process.env.PORT ?? 4000;
-export const TOKEN_SECRET = process.env.TOKEN_SECRET ?? '123';
+export const PORT = process.env.PORT ?? 4000
+export const TOKEN_SECRET = process.env.TOKEN_SECRET ?? '123'
 
 export const permission: PermissionType = {
   user: {
@@ -36,7 +36,7 @@ export const permission: PermissionType = {
       ModuleAction.delete,
     ],
   },
-};
+}
 
 export const NUMERIC_COLUMN_TYPES = new Set<ColumnType>([
   'int',
@@ -71,6 +71,6 @@ export const NUMERIC_COLUMN_TYPES = new Set<ColumnType>([
   'int4multirange',
   'int8multirange',
   'nummultirange',
-]);
+])
 
 //#endregion

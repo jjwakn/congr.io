@@ -1,6 +1,6 @@
-import { type HeadersType } from 'src/utils/common.types';
-import { Module, ModuleAction } from 'src/utils/constants';
-import { decodeToken } from 'src/utils/helpers';
+import { type HeadersType } from 'src/utils/common.types'
+import { Module, ModuleAction } from 'src/utils/constants'
+import { decodeToken } from 'src/utils/helpers'
 import {
   Body,
   Controller,
@@ -14,13 +14,13 @@ import {
   Query,
   UseGuards,
   ValidationPipe,
-} from '@nestjs/common';
-import { ApiBody, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '../auth/auth.guard';
-import { Permission, PermissionGuard } from '../permission/permission.guard';
-import { Role } from './role.entity';
-import { RoleService } from './role.service';
-import { RoleQuery } from './role.types';
+} from '@nestjs/common'
+import { ApiBody, ApiTags } from '@nestjs/swagger'
+import { AuthGuard } from '../auth/auth.guard'
+import { Permission, PermissionGuard } from '../permission/permission.guard'
+import { Role } from './role.entity'
+import { RoleService } from './role.service'
+import { RoleQuery } from './role.types'
 
 @ApiTags('roles')
 @Controller('roles')
@@ -39,14 +39,14 @@ export class RoleController {
     )
     query: RoleQuery,
   ) {
-    return this.service.list(query);
+    return this.service.list(query)
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
   @Permission(Module.role, ModuleAction.get)
   @Get(':id')
   async get(@Param('id', ParseIntPipe) id: number) {
-    return this.service.get(id);
+    return this.service.get(id)
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
@@ -54,8 +54,8 @@ export class RoleController {
   @Post()
   @ApiBody({ type: Role })
   async create(@Body() data: Role, @Headers() headers: HeadersType) {
-    const userId = decodeToken(headers.authorization).user.id;
-    return this.service.create({ data, userId });
+    const userId = decodeToken(headers.authorization).user.id
+    return this.service.create({ data, userId })
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
@@ -67,8 +67,8 @@ export class RoleController {
     @Body() data: Role,
     @Headers() headers: HeadersType,
   ) {
-    const userId = decodeToken(headers.authorization).user.id;
-    return this.service.update({ id, data, userId });
+    const userId = decodeToken(headers.authorization).user.id
+    return this.service.update({ id, data, userId })
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
@@ -78,7 +78,7 @@ export class RoleController {
     @Param('id', ParseIntPipe) id: number,
     @Headers() headers: HeadersType,
   ) {
-    const userId = decodeToken(headers.authorization).user.id;
-    return this.service.remove({ id, userId });
+    const userId = decodeToken(headers.authorization).user.id
+    return this.service.remove({ id, userId })
   }
 }

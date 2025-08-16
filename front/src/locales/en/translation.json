@@ -1,0 +1,14 @@
+{
+  "http": {
+    "error": {
+      "emptyData": "Empty data",
+      "paramNotFound": "Parameter {{param}} nmot found in {{url}}",
+      "missingParam": "GET: ${key} debe tener un valor que no sea  null, undefined o string vacio"
+    }
+  },
+  "theme": {
+    "error": {
+      "useTheme": "useTheme debe ser usado dentro de ThemeModeProvider"
+    }
+  }
+}

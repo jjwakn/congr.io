@@ -1,6 +1,6 @@
-import { AppBar, Toolbar, Typography } from '@mui/material';
-import PWABadge from './PWABadge.tsx';
-import { ThemeToggleButton } from './components/ThemeToggleButton/index.tsx';
+import { AppBar, Toolbar, Typography } from '@mui/material'
+import PWABadge from './PWABadge.tsx'
+import { ThemeToggleButton } from './components/ThemeToggleButton/index.tsx'
 
 function App() {
   return (
@@ -20,7 +20,7 @@ function App() {
 
       <PWABadge />
     </>
-  );
+  )
 }
 
-export default App;
+export default App

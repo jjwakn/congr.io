@@ -4,15 +4,15 @@ import {
   I18nJsonLoader,
   I18nModule,
   QueryResolver,
-} from 'nestjs-i18n';
-import { join } from 'path';
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from './modules/auth/auth.module';
-import { PermissionModule } from './modules/permission/permissions.module';
-import { RoleModule } from './modules/role/role.module';
-import { UserModule } from './modules/user/user.module';
+} from 'nestjs-i18n'
+import { join } from 'path'
+import { Module } from '@nestjs/common'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import { TypeOrmModule } from '@nestjs/typeorm'
+import { AuthModule } from './modules/auth/auth.module'
+import { PermissionModule } from './modules/permission/permissions.module'
+import { RoleModule } from './modules/role/role.module'
+import { UserModule } from './modules/user/user.module'
 
 @Module({
   imports: [
