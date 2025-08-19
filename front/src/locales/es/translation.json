@@ -3,12 +3,12 @@
     "error": {
       "emptyData": "Data vacia",
       "paramNotFound": "Parametro {{param}} no encontrado en {{url}}",
-      "missingParam": "GET: ${key} must have a value that is not null, undefined or an empty string"
+      "missingParam": "GET: ${key} debe tener un valor que no sea  null, undefined o string vacio"
     }
   },
   "theme": {
     "error": {
-      "useTheme": "useTheme must be used inside ThemeModeProvider"
+      "useTheme": "useTheme debe ser usado dentro de ThemeModeProvider"
     }
   }
 }

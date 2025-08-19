@@ -13,7 +13,7 @@ interface ModuleType {
 
 export const HttpService: ModuleType = {};
 
-export const httpRequest = async <ResponseType>({
+export const httpRequest = async ({
   service,
   data,
   url: baseURL = API_URL,
