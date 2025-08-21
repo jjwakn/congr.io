@@ -13,5 +13,8 @@
   "user": {
     "notFound": "Usuario no encontrado",
     "usernameExists": "Usuario ya existe"
+  },
+  "congregation": {
+    "notFound": "Congregación no encontrada"
   }
 }

@@ -6,5 +6,13 @@
   },
   "role": {
     "name": "Encargado coordinacion"
+  },
+  "congregation": {
+    "name": "Iglesia Luz",
+    "type": "Congregación"
+  },
+  "location": {
+    "name": "Sede principal",
+    "address": "Calle 3"
   }
 }

@@ -12,6 +12,7 @@ export enum ModuleAction {
 export enum Module {
   user = 'user',
   role = 'role',
+  congregation = 'congregation',
 }
 //#endregion
 
@@ -19,22 +20,22 @@ export enum Module {
 export const PORT = process.env.PORT ?? 4000;
 export const TOKEN_SECRET = process.env.TOKEN_SECRET ?? '123';
 
+const CRUD: ModuleAction[] = [
+  ModuleAction.get,
+  ModuleAction.create,
+  ModuleAction.update,
+  ModuleAction.delete,
+];
+
 export const permission: PermissionType = {
   user: {
-    permissions: [
-      ModuleAction.get,
-      ModuleAction.create,
-      ModuleAction.update,
-      ModuleAction.delete,
-    ],
+    permissions: CRUD,
   },
   role: {
-    permissions: [
-      ModuleAction.get,
-      ModuleAction.create,
-      ModuleAction.update,
-      ModuleAction.delete,
-    ],
+    permissions: CRUD,
+  },
+  congregation: {
+    permissions: CRUD,
   },
 };
 

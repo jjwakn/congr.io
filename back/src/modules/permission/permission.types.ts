@@ -6,7 +6,7 @@ export interface PermissionModuleType {
 }
 
 export type PermissionType = {
-  [key in keyof typeof Module]?: PermissionModuleType;
+  [key in Module]: PermissionModuleType;
 };
 
 export type UserPermission = {

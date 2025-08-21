@@ -1,7 +1,3 @@
-Perfecto 👌 aquí tienes la versión en **español profesional** de tu README:
-
----
-
 # 🚀 Guía de Configuración
 
 ## 📦 Requisitos Previos
