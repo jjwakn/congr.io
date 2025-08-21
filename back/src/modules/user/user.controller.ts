@@ -17,7 +17,10 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
-import { Permission, PermissionGuard } from '../permission/permission.guard';
+import {
+  PermissionDecorator,
+  PermissionGuard,
+} from '../permission/permission.guard';
 import { User } from './user.entity';
 import { UserService } from './user.service';
 import { UserQuery, UserValidateProps } from './user.types';
@@ -28,7 +31,7 @@ export class UserController {
   constructor(private readonly service: UserService) {}
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @Permission(Module.user, ModuleAction.get)
+  @PermissionDecorator(Module.user, ModuleAction.get)
   @Get()
   list(
     @Query(
@@ -43,14 +46,14 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @Permission(Module.user, ModuleAction.get)
+  @PermissionDecorator(Module.user, ModuleAction.get)
   @Get(':id')
   async get(@Param('id', ParseIntPipe) id: number) {
     return this.service.get({ id });
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @Permission(Module.user, ModuleAction.create)
+  @PermissionDecorator(Module.user, ModuleAction.create)
   @Post()
   @ApiBody({ type: User })
   async create(@Body() data: User, @Headers() headers: HeadersType) {
@@ -59,7 +62,7 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @Permission(Module.user, ModuleAction.update)
+  @PermissionDecorator(Module.user, ModuleAction.update)
   @Put(':id')
   @ApiBody({ type: User })
   async update(
@@ -72,7 +75,7 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @Permission(Module.user, ModuleAction.delete)
+  @PermissionDecorator(Module.user, ModuleAction.delete)
   @Delete(':id')
   async remove(
     @Param('id', ParseIntPipe) id: number,

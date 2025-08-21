@@ -1,5 +1,6 @@
 import { I18nService } from 'nestjs-i18n';
 import { RequestType } from 'src/utils/common.types';
+import { Module, ModuleAction } from 'src/utils/constants';
 import { decodeToken } from 'src/utils/helpers';
 import {
   CanActivate,
@@ -51,5 +52,5 @@ export class PermissionGuard implements CanActivate {
   }
 }
 
-export const Permission = (section: string, action: string) =>
+export const PermissionDecorator = (section: Module, action: ModuleAction) =>
   SetMetadata('permission', { section, action });

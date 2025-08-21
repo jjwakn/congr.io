@@ -17,7 +17,10 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
-import { Permission, PermissionGuard } from '../permission/permission.guard';
+import {
+  PermissionDecorator,
+  PermissionGuard,
+} from '../permission/permission.guard';
 import { Congregation } from './congregation.entity';
 import { CongregationService } from './congregation.service';
 import { CongregationQuery } from './congregation.types';
@@ -28,7 +31,7 @@ export class CongregationController {
   constructor(private readonly service: CongregationService) {}
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @Permission(Module.congregation, ModuleAction.get)
+  @PermissionDecorator(Module.congregation, ModuleAction.get)
   @Get()
   list(
     @Query(
@@ -43,14 +46,14 @@ export class CongregationController {
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @Permission(Module.congregation, ModuleAction.get)
+  @PermissionDecorator(Module.congregation, ModuleAction.get)
   @Get(':id')
   async get(@Param('id', ParseIntPipe) id: number) {
     return this.service.get(id);
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @Permission(Module.congregation, ModuleAction.create)
+  @PermissionDecorator(Module.congregation, ModuleAction.create)
   @Post()
   @ApiBody({ type: Congregation })
   async create(@Body() data: Congregation, @Headers() headers: HeadersType) {
@@ -59,7 +62,7 @@ export class CongregationController {
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @Permission(Module.congregation, ModuleAction.update)
+  @PermissionDecorator(Module.congregation, ModuleAction.update)
   @Put(':id')
   @ApiBody({ type: Congregation })
   async update(
@@ -72,7 +75,7 @@ export class CongregationController {
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @Permission(Module.congregation, ModuleAction.delete)
+  @PermissionDecorator(Module.congregation, ModuleAction.delete)
   @Delete(':id')
   async remove(
     @Param('id', ParseIntPipe) id: number,
