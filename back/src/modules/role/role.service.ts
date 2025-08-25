@@ -1,4 +1,5 @@
 import { I18nService } from 'nestjs-i18n';
+import { DefaultGetData } from 'src/utils/common.types';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
 import { Repository } from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -35,7 +36,7 @@ export class RoleService {
     return { result, total };
   }
 
-  async get(id: string) {
+  async get({ id }: DefaultGetData) {
     const result = await this.repository.findOne({
       where: { id },
       withDeleted: true,

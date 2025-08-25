@@ -68,6 +68,10 @@ export interface CaseInsensitiveWhereProps {
 export interface EntityActionProps {
   userId: string;
 }
+
+export interface DefaultGetData {
+  id: string;
+}
 //#endregion
 
 //#region Classes

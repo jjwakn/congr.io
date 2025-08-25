@@ -5,6 +5,7 @@ import {
 } from 'src/modules/permission/permission.guard';
 import type {
   CommonEntity,
+  DefaultGetData,
   HeadersType,
   ListParamsQuery,
 } from 'src/utils/common.types';
@@ -25,13 +26,17 @@ import {
 } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 
-export abstract class CommonController<Entity, Query extends ListParamsQuery> {
+export abstract class CommonController<
+  Entity,
+  Query extends ListParamsQuery,
+  GetData extends DefaultGetData = DefaultGetData,
+> {
   protected abstract service: {
     list(query: Query): Promise<{
       result: Entity[];
       total: number;
     }>;
-    get(id: string): Promise<Entity & CommonEntity>;
+    get(data: GetData): Promise<Entity & CommonEntity>;
     create(params: { data: Entity; userId: string }): Promise<Entity>;
     update(params: {
       id: string;
@@ -65,7 +70,7 @@ export abstract class CommonController<Entity, Query extends ListParamsQuery> {
   )
   @Get(':id')
   async get(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    return this.service.get(id);
+    return this.service.get({ id } as GetData);
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
