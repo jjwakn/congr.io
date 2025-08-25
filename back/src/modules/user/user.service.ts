@@ -29,7 +29,7 @@ export class UserService {
     private repository: Repository<User>,
 
     @InjectRepository(Role)
-    private rolesRepository: Repository<Role>,
+    private roleRepository: Repository<Role>,
 
     private readonly i18n: I18nService,
   ) {}
@@ -116,7 +116,7 @@ export class UserService {
 
     if (data.roles_ids) {
       for (const id of data.roles_ids) {
-        const found = await this.rolesRepository.findOne({
+        const found = await this.roleRepository.findOne({
           where: { id },
         });
         if (!found)
@@ -168,7 +168,7 @@ export class UserService {
 
     if (data.roles_ids?.length) {
       for (const id of data.roles_ids) {
-        const found = await this.rolesRepository.findOne({
+        const found = await this.roleRepository.findOne({
           where: { id },
         });
         if (!found)

@@ -9,11 +9,11 @@ export interface RoleCreateProps extends EntityActionProps {
 }
 
 export interface RoleUpdateProps extends RoleCreateProps {
-  id: number;
+  id: string;
 }
 
 export interface RoleDeleteProps extends EntityActionProps {
-  id: number;
+  id: string;
 }
 
 enum Order {

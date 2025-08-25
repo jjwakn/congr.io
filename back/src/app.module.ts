@@ -13,6 +13,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CongregationModule } from './modules/congregation/congregation.module';
 import { PermissionModule } from './modules/permission/permissions.module';
 import { RoleModule } from './modules/role/role.module';
+import { SetupModule } from './modules/setup/setup.module';
 import { UserModule } from './modules/user/user.module';
 
 @Module({
@@ -50,6 +51,7 @@ import { UserModule } from './modules/user/user.module';
         new HeaderResolver(['x-lang']),
       ],
     }),
+    SetupModule,
     PermissionModule,
     AuthModule,
     UserModule,

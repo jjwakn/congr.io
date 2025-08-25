@@ -16,5 +16,11 @@
   },
   "congregation": {
     "notFound": "Congregación no encontrada"
+  },
+  "setup": {
+    "alreadySetup": "Sistema ya configurado",
+    "missing": "No encontrado en request:",
+    "missingProp": "Propiedad faltante en",
+    "errorCreating": "Error creando en repositorio:"
   }
 }

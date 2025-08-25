@@ -21,7 +21,7 @@ export enum CommonOrder {
 //#region Types & Interfaces
 export interface TokenPayload {
   user: {
-    id: number;
+    id: string;
     username: string;
     name: string;
     created_at: string;
@@ -66,7 +66,7 @@ export interface CaseInsensitiveWhereProps {
 }
 
 export interface EntityActionProps {
-  userId: number;
+  userId: string;
 }
 //#endregion
 

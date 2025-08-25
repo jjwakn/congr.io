@@ -14,8 +14,8 @@ import { User } from '../user/user.entity';
 
 @Entity()
 export class Location {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ApiProperty()
   @Column({ nullable: false, default: 1 })
@@ -33,10 +33,10 @@ export class Location {
   created_at?: Date;
 
   @UpdateDateColumn()
-  updated_at?: Date;
+  updated_at?: Date | null;
 
   @DeleteDateColumn()
-  deleted_at?: Date;
+  deleted_at?: Date | null;
 
   @ManyToOne(() => User, (user) => user.id)
   @JoinColumn({ name: 'created_by' })

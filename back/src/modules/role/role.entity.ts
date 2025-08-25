@@ -14,8 +14,8 @@ import { User } from '../user/user.entity';
 
 @Entity()
 export class Role {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ApiPropertyI18n({
     example: 'examples.role.name',
@@ -47,10 +47,10 @@ export class Role {
   created_at?: Date;
 
   @UpdateDateColumn()
-  updated_at?: Date;
+  updated_at?: Date | null;
 
   @DeleteDateColumn()
-  deleted_at?: Date;
+  deleted_at?: Date | null;
 
   @ManyToOne(() => User, (user) => user.id, { nullable: true })
   @JoinColumn({ name: 'created_by' })

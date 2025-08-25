@@ -41,7 +41,7 @@ export class CongregationService {
     };
   }
 
-  async get(id: number) {
+  async get(id: string) {
     const result = await this.repository.findOne({
       where: { id },
       withDeleted: true,

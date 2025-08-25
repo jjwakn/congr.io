@@ -17,8 +17,8 @@ import { User } from '../user/user.entity';
 
 @Entity()
 export class Congregation {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ApiPropertyI18n({ example: 'examples.congregation.name' })
   @Column({ nullable: false })
@@ -49,10 +49,10 @@ export class Congregation {
   created_at?: Date;
 
   @UpdateDateColumn()
-  updated_at?: Date;
+  updated_at?: Date | null;
 
   @DeleteDateColumn()
-  deleted_at?: Date;
+  deleted_at?: Date | null;
 
   @ManyToOne(() => User, (user) => user.id, { nullable: true })
   @JoinColumn({ name: 'created_by' })

@@ -54,3 +54,8 @@ export class PermissionGuard implements CanActivate {
 
 export const PermissionDecorator = (section: Module, action: ModuleAction) =>
   SetMetadata('permission', { section, action });
+
+export const CommonPermissionDecorator = <Entity>(
+  section: (controller: Entity) => Module,
+  action: ModuleAction,
+) => SetMetadata('permission', { section, action });

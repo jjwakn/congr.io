@@ -16,5 +16,11 @@
   },
   "congregation": {
     "notFound": "Congregation not found"
+  },
+  "setup": {
+    "alreadySetup": "System already setup",
+    "missing": "Missing in request:",
+    "missingProp": "Missing property in",
+    "errorCreating": "Error creating in repository:"
   }
 }

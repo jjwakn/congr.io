@@ -12,11 +12,11 @@ export interface CongregationCreateProps extends EntityActionProps {
 }
 
 export interface CongregationUpdateProps extends CongregationCreateProps {
-  id: number;
+  id: string;
 }
 
 export interface CongregationDeleteProps extends EntityActionProps {
-  id: number;
+  id: string;
 }
 
 enum Order {

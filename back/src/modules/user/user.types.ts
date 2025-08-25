@@ -12,7 +12,7 @@ interface UserGetProps {
 }
 
 export interface UserGetByIdProps extends UserGetProps {
-  id: number;
+  id: string;
 }
 
 export interface UserGetByUsernameProps extends UserGetProps {
@@ -24,11 +24,11 @@ export interface UserCreateProps extends EntityActionProps {
 }
 
 export interface UserUpdateProps extends UserCreateProps {
-  id: number;
+  id: string;
 }
 
 export interface UserDeleteProps extends EntityActionProps {
-  id: number;
+  id: string;
 }
 
 enum Order {

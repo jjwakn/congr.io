@@ -8,7 +8,7 @@ import {
   Get,
   Headers,
   Param,
-  ParseIntPipe,
+  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -48,7 +48,7 @@ export class RoleController {
   @UseGuards(AuthGuard, PermissionGuard)
   @PermissionDecorator(Module.role, ModuleAction.get)
   @Get(':id')
-  async get(@Param('id', ParseIntPipe) id: number) {
+  async get(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.service.get(id);
   }
 
@@ -66,7 +66,7 @@ export class RoleController {
   @Put(':id')
   @ApiBody({ type: Role })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() data: Role,
     @Headers() headers: HeadersType,
   ) {
@@ -78,7 +78,7 @@ export class RoleController {
   @PermissionDecorator(Module.role, ModuleAction.delete)
   @Delete(':id')
   async remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Headers() headers: HeadersType,
   ) {
     const userId = decodeToken(headers.authorization).user.id;
