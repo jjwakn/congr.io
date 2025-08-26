@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional } from 'class-validator';
-import { EntityActionProps, ListParamsQuery } from 'src/utils/common.types';
+import { EntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from './role.entity';
 

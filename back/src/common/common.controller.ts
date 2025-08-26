@@ -1,14 +1,14 @@
-import { AuthGuard } from 'src/modules/auth/auth.guard';
-import {
-  CommonPermissionDecorator,
-  PermissionGuard,
-} from 'src/modules/permission/permission.guard';
 import type {
   CommonEntity,
   DefaultGetData,
   HeadersType,
   ListParamsQuery,
-} from 'src/utils/common.types';
+} from 'src/common/common.types';
+import { AuthGuard } from 'src/modules/auth/auth.guard';
+import {
+  CommonPermissionDecorator,
+  PermissionGuard,
+} from 'src/modules/permission/permission.guard';
 import { Module, ModuleAction } from 'src/utils/constants';
 import { decodeToken } from 'src/utils/helpers';
 import {
@@ -50,11 +50,12 @@ export abstract class CommonController<
 
   protected abstract module: Module;
 
-  @UseGuards(AuthGuard, PermissionGuard)
-  @CommonPermissionDecorator(
-    (ctrl: CommonController<Entity, Query>) => ctrl.module,
-    ModuleAction.get,
-  )
+  // @UseGuards(AuthGuard, PermissionGuard)
+  @UseGuards(AuthGuard)
+  // @CommonPermissionDecorator(
+  //   (ctrl: CommonController<Entity, Query>) => ctrl.module,
+  //   ModuleAction.get,
+  // )
   @Get()
   async list(
     @Query(new ValidationPipe({ transform: true, whitelist: true }))

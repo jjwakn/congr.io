@@ -1,16 +1,16 @@
 import {
+  CaseInsensitiveWhereProps,
+  CommonEntity,
+  FindWithFiltersProps,
+  ListParamsQuery,
+} from 'src/common/common.types';
+import {
   ColumnType,
   FindOptionsOrder,
   FindOptionsWhere,
   ObjectLiteral,
   Raw,
 } from 'typeorm';
-import {
-  CaseInsensitiveWhereProps,
-  CommonEntity,
-  FindWithFiltersProps,
-  ListParamsQuery,
-} from './common.types';
 import { NUMERIC_COLUMN_TYPES } from './constants';
 
 export const caseInsensitiveWhere = ({

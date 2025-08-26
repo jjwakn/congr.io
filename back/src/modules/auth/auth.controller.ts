@@ -1,5 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginProps } from './auth.types';
@@ -10,7 +9,7 @@ export class AuthController {
   constructor(private readonly service: AuthService) {}
 
   @Post('login')
-  @UseGuards(AuthGuard('local'))
+  // @UseGuards(AuthGuard('local'))
   @ApiBody({ type: LoginProps })
   async login(@Body() data: LoginProps) {
     return this.service.login(data);

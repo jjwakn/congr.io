@@ -3,7 +3,7 @@ import {
   CommonOrder,
   EntityActionProps,
   ListParamsQuery,
-} from 'src/utils/common.types';
+} from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 import { Congregation } from './congregation.entity';
 

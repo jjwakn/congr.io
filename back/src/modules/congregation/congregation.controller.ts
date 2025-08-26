@@ -1,4 +1,4 @@
-import { CommonController } from 'src/utils/common.controller';
+import { CommonController } from 'src/common/common.controller';
 import { Module } from 'src/utils/constants';
 import { Controller } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';

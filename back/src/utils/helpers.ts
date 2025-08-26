@@ -1,7 +1,7 @@
 import { genSalt, hash } from 'bcrypt';
+import { TokenPayload } from 'src/common/common.types';
 import { UserPermission } from 'src/modules/permission/permission.types';
 import { Role } from 'src/modules/role/role.entity';
-import { TokenPayload } from './common.types';
 import { ModuleAction } from './constants';
 
 export const decodeToken = (token: string) => {

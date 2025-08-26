@@ -1,4 +1,5 @@
 import { I18nService } from 'nestjs-i18n';
+import { encryptPassword } from 'src/utils/helpers';
 import { IsNull, Repository } from 'typeorm';
 import {
   BadRequestException,
@@ -109,7 +110,7 @@ export class SetupService {
 
     const userCreated = this.userRepository.create({
       username: user.username,
-      password: user.password,
+      password: await encryptPassword(user.password),
       name: user.name,
     });
     if (!userCreated)

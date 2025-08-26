@@ -1,4 +1,4 @@
-import { ApiPropertyI18n } from 'src/common/decorators/ApiPropertyI18n';
+import { ApiPropertyI18n } from 'src/common/ApiPropertyI18n';
 import { UserPermission } from '../permission/permission.types';
 import { User } from '../user/user.entity';
 

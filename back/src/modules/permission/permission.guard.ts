@@ -1,5 +1,5 @@
 import { I18nService } from 'nestjs-i18n';
-import { RequestType } from 'src/utils/common.types';
+import { RequestType } from 'src/common/common.types';
 import { Module, ModuleAction } from 'src/utils/constants';
 import { decodeToken } from 'src/utils/helpers';
 import {

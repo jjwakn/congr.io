@@ -1,9 +1,9 @@
 import { Transform } from 'class-transformer';
 import { IsNumber, IsOptional } from 'class-validator';
 import { User } from 'src/modules/user/user.entity';
+import { Module } from 'src/utils/constants';
 import { ObjectLiteral, Repository } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Module } from './constants';
 
 //#region Enums
 export enum Direction {

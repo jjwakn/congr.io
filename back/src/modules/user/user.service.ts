@@ -1,5 +1,5 @@
 import { I18nService } from 'nestjs-i18n';
-import { TokenPayload } from 'src/utils/common.types';
+import { TokenPayload } from 'src/common/common.types';
 import { encryptPassword } from 'src/utils/helpers';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
 import { Repository } from 'typeorm';

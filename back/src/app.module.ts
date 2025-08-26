@@ -6,9 +6,10 @@ import {
   QueryResolver,
 } from 'nestjs-i18n';
 import { join } from 'path';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppLoggerMiddleware } from './middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { CongregationModule } from './modules/congregation/congregation.module';
 import { PermissionModule } from './modules/permission/permissions.module';
@@ -19,7 +20,7 @@ import { UserModule } from './modules/user/user.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // makes .env vars available everywhere
+      isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -59,4 +60,8 @@ import { UserModule } from './modules/user/user.module';
     CongregationModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(AppLoggerMiddleware).forRoutes('*');
+  }
+}
