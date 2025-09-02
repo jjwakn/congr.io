@@ -1,2 +1,7 @@
-export const THEME_KEY = 'theme-mode';
+export const THEME_KEY = 'theme_mode';
 export const API_URL = import.meta.env.VITE_API_URL ?? '';
+
+export const COMMON_DEFAULT_VALUES = {
+  id: '',
+  enabled: true,
+};

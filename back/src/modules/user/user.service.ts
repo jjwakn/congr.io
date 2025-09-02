@@ -10,6 +10,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Congregation } from '../congregation/congregation.entity';
+import { Location } from '../location/location.entity';
 import { Role } from '../role/role.entity';
 import { User } from './user.entity';
 import {
@@ -30,6 +32,12 @@ export class UserService {
 
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
+
+    @InjectRepository(Congregation)
+    private congregationRepository: Repository<Congregation>,
+
+    @InjectRepository(Location)
+    private locationRepository: Repository<Location>,
 
     private readonly i18n: I18nService,
   ) {}
@@ -57,6 +65,8 @@ export class UserService {
       withDeleted: true,
       relations: {
         roles: true,
+        locations: true,
+        congregations: true,
         created_by: true,
         updated_by: true,
         deleted_by: true,
@@ -82,6 +92,8 @@ export class UserService {
       withDeleted: true,
       relations: {
         roles: true,
+        locations: true,
+        congregations: true,
         created_by: true,
         updated_by: true,
         deleted_by: true,
@@ -113,6 +125,8 @@ export class UserService {
       );
 
     const roles: Role[] = [];
+    const congregations: Congregation[] = [];
+    const locations: Location[] = [];
 
     if (data.roles_ids) {
       for (const id of data.roles_ids) {
@@ -129,6 +143,38 @@ export class UserService {
       delete data.roles_ids;
     }
     data.roles = roles;
+
+    if (data.congregations_ids) {
+      for (const id of data.congregations_ids) {
+        const found = await this.congregationRepository.findOne({
+          where: { id },
+        });
+        if (!found)
+          throw new NotAcceptableException(
+            `${this.i18n.t('errors.congregation.notFound')}. ID: ${id}`,
+          );
+
+        congregations.push(found);
+      }
+      delete data.congregations_ids;
+    }
+    data.congregations = congregations;
+
+    if (data.locations_ids) {
+      for (const id of data.locations_ids) {
+        const found = await this.locationRepository.findOne({
+          where: { id },
+        });
+        if (!found)
+          throw new NotAcceptableException(
+            `${this.i18n.t('errors.location.notFound')}. ID: ${id}`,
+          );
+
+        locations.push(found);
+      }
+      delete data.locations_ids;
+    }
+    data.locations = locations;
 
     if (data.password) data.password = await encryptPassword(data.password);
 
@@ -165,6 +211,8 @@ export class UserService {
     }
 
     const roles: Role[] = [];
+    const congregations: Congregation[] = [];
+    const locations: Location[] = [];
 
     if (data.roles_ids?.length) {
       for (const id of data.roles_ids) {
@@ -181,8 +229,40 @@ export class UserService {
 
       delete data.roles_ids;
     }
-
     existing.roles = roles;
+
+    if (data.congregations_ids) {
+      for (const id of data.congregations_ids) {
+        const found = await this.congregationRepository.findOne({
+          where: { id },
+        });
+        if (!found)
+          throw new NotAcceptableException(
+            `${this.i18n.t('errors.congregation.notFound')}. ID: ${id}`,
+          );
+
+        congregations.push(found);
+      }
+      delete data.congregations_ids;
+    }
+    existing.congregations = congregations;
+
+    if (data.locations_ids) {
+      for (const id of data.locations_ids) {
+        const found = await this.locationRepository.findOne({
+          where: { id },
+        });
+        if (!found)
+          throw new NotAcceptableException(
+            `${this.i18n.t('errors.location.notFound')}. ID: ${id}`,
+          );
+
+        locations.push(found);
+      }
+      delete data.locations_ids;
+    }
+    existing.locations = locations;
+
     existing.updated_by = updated_by;
 
     if (data.username) existing.username = data.username;

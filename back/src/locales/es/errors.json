@@ -17,6 +17,9 @@
   "congregation": {
     "notFound": "Congregación no encontrada"
   },
+  "location": {
+    "notFound": "Ubicación no encontrada"
+  },
   "setup": {
     "alreadySetup": "Sistema ya configurado",
     "missing": "No encontrado en request:",

@@ -4,9 +4,9 @@ import { ThemeContext } from '../contexts/ThemeContext';
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
-
   const { t } = useTranslation();
 
   if (!context) throw new Error(t('theme.error.useTheme'));
+
   return context;
 };

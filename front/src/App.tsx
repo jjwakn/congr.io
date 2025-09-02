@@ -1,26 +1,35 @@
-import { AppBar, Toolbar, Typography } from '@mui/material';
-import PWABadge from './PWABadge.tsx';
-import { ThemeToggleButton } from './components/ThemeToggleButton/index.tsx';
+import Loading from './components/Loading';
+import { AppProvider } from './contexts/AppProvider';
+import { AuthProvider } from './contexts/AuthProvider';
+import { useAppContext } from './hooks/useAppContext';
+import { useAuth } from './hooks/useAuth';
+import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
+import Setup from './pages/Setup';
 
-function App() {
-  return (
-    <>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            My App
-          </Typography>
-          <ThemeToggleButton />
-        </Toolbar>
-      </AppBar>
+const AppContent = () => {
+  const { isLoading, isSetup } = useAppContext();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-      <main style={{ padding: 16 }}>
-        <p>Welcome to the MUI v7 theme switcher demo 🎨</p>
-      </main>
-
-      <PWABadge />
-    </>
+  return isLoading || authLoading ? (
+    <Loading />
+  ) : !isSetup ? (
+    <Setup />
+  ) : isAuthenticated ? (
+    <Dashboard />
+  ) : (
+    <Login />
   );
-}
+};
+
+const App = () => {
+  return (
+    <AppProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </AppProvider>
+  );
+};
 
 export default App;

@@ -17,6 +17,9 @@
   "congregation": {
     "notFound": "Congregation not found"
   },
+  "location": {
+    "notFound": "Location not found"
+  },
   "setup": {
     "alreadySetup": "System already setup",
     "missing": "Missing in request:",

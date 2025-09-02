@@ -6,8 +6,8 @@ import { Role } from './role.entity';
 import { RoleService } from './role.service';
 import { RoleQuery } from './role.types';
 
-@ApiTags('roles')
-@Controller('roles')
+@ApiTags('role')
+@Controller('role')
 export class RoleController extends CommonController<Role, RoleQuery> {
   protected module = Module.role;
 

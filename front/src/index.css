@@ -5,7 +5,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+#root {
+  height: 100%;
+}
+
 body {
   padding: 0;
   margin: 0;
+  height: 100svh;
 }

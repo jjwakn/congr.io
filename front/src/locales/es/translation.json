@@ -10,5 +10,33 @@
     "error": {
       "useTheme": "useTheme debe ser usado dentro de ThemeModeProvider"
     }
+  },
+  "context": {
+    "error": {
+      "appContext": "useAppContext debe ser usado dentro de AppProvider",
+      "notificationContext": "notificationContext debe ser usado dentro de NotificationProvider",
+      "authContext": "authContext debe ser usado dentro de AuthProvider"
+    }
+  },
+  "form": {
+    "error": { "isRequired": "es requerido" },
+    "field": {
+      "name": "Nombre",
+      "type": "Tipo",
+      "add": "Añadir"
+    }
+  },
+  "setup": {
+    "error": {
+      "notFound": "El sistema no esta configurado. Si crees que es un error puedes reportarlo"
+    },
+    "form": {
+      "title": "Bienvenido",
+      "subtitle": "Vamos a configurar tu",
+      "defaultType": "Congregación",
+      "submitText": "Crear",
+      "types": "Asamblea,Congregación,Iglesia",
+      "tooltip": "Creando"
+    }
   }
 }

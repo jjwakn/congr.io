@@ -78,7 +78,7 @@ const checkLocales = (locales) => {
 };
 
 for (const project of projects) {
-  console.log(`\n🔍 Checking ${project.name} (${project.dir})`);
+  console.info(`\n🔍 Checking ${project.name} (${project.dir})`);
   const locales = loadLocales(project.dir);
   checkLocales(locales);
 }

@@ -1,24 +1,13 @@
 import { ApiPropertyI18n } from 'src/common/ApiPropertyI18n';
-import {
-  Column,
-  CreateDateColumn,
-  DeleteDateColumn,
-  Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { CommonEntity } from 'src/common/common.entity';
+import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { Congregation } from '../congregation/congregation.entity';
+import { Location } from '../location/location.entity';
 import { Role } from '../role/role.entity';
 
 @Entity()
-export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class User extends CommonEntity {
   @ApiPropertyI18n({ example: 'examples.user.username' })
   @Column({ nullable: false })
   username: string;
@@ -39,35 +28,37 @@ export class User {
   })
   roles: Role[];
 
+  @ManyToMany(() => Congregation, {
+    onDelete: 'NO ACTION',
+    onUpdate: 'NO ACTION',
+  })
+  @JoinTable({
+    name: 'user_congregation',
+    joinColumn: { name: 'user_id' },
+    inverseJoinColumn: { name: 'congregation_id' },
+  })
+  congregations: Congregation[];
+
+  @ManyToMany(() => Location, { onDelete: 'NO ACTION', onUpdate: 'NO ACTION' })
+  @JoinTable({
+    name: 'user_location',
+    joinColumn: { name: 'user_id' },
+    inverseJoinColumn: { name: 'location_id' },
+  })
+  locations: Location[];
+
   @ApiProperty({
     example: [1, 2],
   })
   roles_ids?: string[];
 
   @ApiProperty({
-    example: true,
+    example: [1, 2],
   })
-  @Column({ nullable: false, default: true })
-  enabled: boolean;
+  congregations_ids?: string[];
 
-  @CreateDateColumn()
-  created_at?: Date;
-
-  @UpdateDateColumn()
-  updated_at?: Date | null;
-
-  @DeleteDateColumn()
-  deleted_at?: Date | null;
-
-  @ManyToOne(() => User, (user) => user.id, { nullable: true })
-  @JoinColumn({ name: 'created_by' })
-  created_by: User | null;
-
-  @ManyToOne(() => User, (user) => user.id, { nullable: true })
-  @JoinColumn({ name: 'updated_by' })
-  updated_by: User | null;
-
-  @ManyToOne(() => User, (user) => user.id, { nullable: true })
-  @JoinColumn({ name: 'deleted_by' })
-  deleted_by: User | null;
+  @ApiProperty({
+    example: [1, 2],
+  })
+  locations_ids?: string[];
 }

@@ -13,6 +13,13 @@ const components: ThemeOptions['components'] = {
       }),
     },
   },
+  MuiCard: {
+    styleOverrides: {
+      root: {
+        borderRadius: '1rem',
+      },
+    },
+  },
 };
 
 const commonPalette: PaletteOptions = {

@@ -10,5 +10,33 @@
     "error": {
       "useTheme": "useTheme must be used inside ThemeModeProvider"
     }
+  },
+  "context": {
+    "error": {
+      "appContext": "useAppContext must be used within an AppProvider",
+      "notificationContext": "notificationContext must be used within an NotificationProvider",
+      "authContext": "authContext must be used within an AuthProvider"
+    }
+  },
+  "form": {
+    "error": { "isRequired": "is required" },
+    "field": {
+      "name": "Name",
+      "type": "Type",
+      "add": "Add"
+    }
+  },
+  "setup": {
+    "error": {
+      "notFound": "System is not setup. If you think this is an error please let us know"
+    },
+    "form": {
+      "title": "Welcome",
+      "subtitle": "Let's set up your",
+      "defaultType": "Congregation",
+      "submitText": "Create",
+      "types": "Assembly,Church,Congregation",
+      "tooltip": "Creating"
+    }
   }
 }

@@ -1,25 +1,10 @@
 import { ApiPropertyI18n } from 'src/common/ApiPropertyI18n';
-import {
-  Column,
-  CreateDateColumn,
-  DeleteDateColumn,
-  Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { CommonEntity } from 'src/common/common.entity';
+import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import { Location } from '../location/location.entity';
-import { User } from '../user/user.entity';
 
 @Entity()
-export class Congregation {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class Congregation extends CommonEntity {
   @ApiPropertyI18n({ example: 'examples.congregation.name' })
   @Column({ nullable: false })
   name: string;
@@ -38,31 +23,4 @@ export class Congregation {
     inverseJoinColumn: { name: 'congregation_location_id' },
   })
   locations: Location[];
-
-  @ApiProperty({
-    example: true,
-  })
-  @Column({ nullable: false, default: true })
-  enabled: boolean;
-
-  @CreateDateColumn()
-  created_at?: Date;
-
-  @UpdateDateColumn()
-  updated_at?: Date | null;
-
-  @DeleteDateColumn()
-  deleted_at?: Date | null;
-
-  @ManyToOne(() => User, (user) => user.id, { nullable: true })
-  @JoinColumn({ name: 'created_by' })
-  created_by: User | null;
-
-  @ManyToOne(() => User, (user) => user.id, { nullable: true })
-  @JoinColumn({ name: 'updated_by' })
-  updated_by: User | null;
-
-  @ManyToOne(() => User, (user) => user.id, { nullable: true })
-  @JoinColumn({ name: 'deleted_by' })
-  deleted_by: User | null;
 }

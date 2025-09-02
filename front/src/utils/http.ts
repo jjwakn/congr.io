@@ -7,13 +7,13 @@ interface ServiceType {
   url: string;
   method: HttpMethods;
 }
-interface ModuleType {
+export interface ModuleType {
   [key: string]: ServiceType;
 }
 
 export const HttpService: ModuleType = {};
 
-export const httpRequest = async ({
+export const httpRequest = async <ResponseType>({
   service,
   data,
   url: baseURL = API_URL,
@@ -71,9 +71,7 @@ export const httpRequest = async ({
       service.method !== 'GET' && { body: JSON.stringify(data) }),
   });
 
-  const result = await response.json();
-
-  if (!response.ok) throw new Error(result.message ?? JSON.stringify(result));
+  const result: ResponseType = await response.json();
 
   return result;
 };

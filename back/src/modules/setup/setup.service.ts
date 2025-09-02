@@ -26,6 +26,22 @@ export class SetupService {
     private readonly i18n: I18nService,
   ) {}
 
+  async isSetup() {
+    const [userCount, roleCount, congregationCount] = await Promise.all([
+      this.userRepository.count({
+        where: { deleted_at: IsNull(), deleted_by: IsNull() },
+      }),
+      this.roleRepository.count({
+        where: { deleted_at: IsNull(), deleted_by: IsNull() },
+      }),
+      this.congregationRepository.count({
+        where: { deleted_at: IsNull(), deleted_by: IsNull() },
+      }),
+    ]);
+
+    return { isSetup: !!userCount && !!roleCount && !!congregationCount };
+  }
+
   async setup(data: SetupProps) {
     if (!data)
       throw new BadRequestException(

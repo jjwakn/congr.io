@@ -7,8 +7,8 @@ import { User } from './user.entity';
 import { UserService } from './user.service';
 import { UserGetByIdProps, UserQuery, UserValidateProps } from './user.types';
 
-@ApiTags('users')
-@Controller('users')
+@ApiTags('user')
+@Controller('user')
 export class UserController extends CommonController<
   User,
   UserQuery,
