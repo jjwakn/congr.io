@@ -1,0 +1,26 @@
+{
+  "users": {
+    "title": "Usuarios",
+    "description": "Esta función permite que el sistema tenga una lista de Usuarios y Roles.\nCada rol puede tener diferentes permisos para distintas funciones.\nESTA FUNCIÓN ES REQUERIDA PARA UTILIZAR EL SISTEMA"
+  },
+  "members": {
+    "title": "Miembros",
+    "description": "Los miembros de tu {type}.\nPuedes guardar toda la información necesaria de cada miembro."
+  },
+  "events_calendar": {
+    "title": "Eventos",
+    "description": "Los eventos de tu {type}.\nPuedes visualizarlos en una vista de calendario.\nLos eventos públicos están disponibles para que todos puedan verlos, sin importar si tienen un Usuario en el sistema o no."
+  },
+  "events_attendance": {
+    "title": "Asistencia a Eventos",
+    "description": "Esto permitirá registrar la asistencia de cada miembro a un evento."
+  },
+  "ministries": {
+    "title": "Ministerios",
+    "description": "Esto te permitirá asignar miembros a ministerios."
+  },
+  "ministries_calendar": {
+    "title": "Calendario de Ministerios",
+    "description": "Esto te permitirá programar un calendario para cada ministerio, de modo que cada miembro pueda ver sus días de servicio."
+  }
+}

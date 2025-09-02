@@ -1,0 +1,26 @@
+{
+  "users": {
+    "title": "Users",
+    "description": "This feature allows the system to have a list of Users and Roles.\nEach role could have different permissions for different features\nTHIS FEATURE IS REQUIRED TO USE THE SYSTEM"
+  },
+  "members": {
+    "title": "Members",
+    "description": "The members of your {type}.\nYou can save all the necessary information for each member."
+  },
+  "events_calendar": {
+    "title": "Events",
+    "description": "The events of your {type}.\nYou would visualize this in a calendar view.\nPublic events are available so everyone could see them, regardless if they have an User in the system or not."
+  },
+  "events_attendance": {
+    "title": "Events Attendance",
+    "description": "This will allow to record the attendance of each member to an event."
+  },
+  "ministries": {
+    "title": "Ministries",
+    "description": "This will allow you to assign members to ministries"
+  },
+  "ministries_calendar": {
+    "title": "Ministries Calendar",
+    "description": "This will allow you to program a calendar for each ministry so each member could see their service days."
+  }
+}

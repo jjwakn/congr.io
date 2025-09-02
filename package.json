@@ -14,6 +14,7 @@
     "lint": "yarn workspaces run lint",
     "format": "prettier --write \"**/*.{ts,tsx,json,css,md,html}\" --ignore-path .gitignore",
     "i18n:check": "node scripts/i18n.mjs",
+    "features:check": "node scripts/features.mjs",
     "prepare": "husky"
   },
   "devDependencies": {

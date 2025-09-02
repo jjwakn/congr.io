@@ -123,6 +123,14 @@ export class SetupService {
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missingProp')} Congregation: location.address`,
       );
+    if (!congregation.features || !congregation.features.length)
+      throw new BadRequestException(
+        `${this.i18n.t('errors.setup.missingProp')} Congregation: features`,
+      );
+    if (congregation.features.some((l) => !l))
+      throw new BadRequestException(
+        `${this.i18n.t('errors.setup.missingProp')} Congregation: feature`,
+      );
 
     const userCreated = this.userRepository.create({
       username: user.username,
@@ -159,6 +167,7 @@ export class SetupService {
         address: l.address,
         created_by: userCreated,
       })),
+      features: congregation.features,
     });
     if (!congregationCreated)
       throw new InternalServerErrorException(

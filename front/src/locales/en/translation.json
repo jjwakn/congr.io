@@ -27,6 +27,7 @@
     }
   },
   "setup": {
+    "title": "Setup your system",
     "error": {
       "notFound": "System is not setup. If you think this is an error please let us know"
     },

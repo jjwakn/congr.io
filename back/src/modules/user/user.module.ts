@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CongregationModule } from '../congregation/congregation.module';
 import { LocationModule } from '../location/location.module';
-import { PermissionModule } from '../permission/permissions.module';
+import { PermissionModule } from '../permission/permission.module';
 import { RoleModule } from '../role/role.module';
 import { UserController } from './user.controller';
 import { User } from './user.entity';

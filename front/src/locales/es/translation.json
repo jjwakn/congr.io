@@ -27,6 +27,7 @@
     }
   },
   "setup": {
+    "title": "Configura tu sistema",
     "error": {
       "notFound": "El sistema no esta configurado. Si crees que es un error puedes reportarlo"
     },

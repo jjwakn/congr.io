@@ -4,6 +4,7 @@ import { useNotificationContext } from '../hooks/useNotifications';
 import { SetupService } from '../services/setup';
 import { IsSetupResponse } from '../types/setup.types';
 import { httpRequest } from '../utils/http';
+import { getIsSetupFromStorage, setIsSetupToStorage } from '../utils/storage';
 import { AppContext } from './AppContext';
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
@@ -12,31 +13,52 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const { showNotification } = useNotificationContext();
   const { t } = useTranslation();
 
-  const checkIsSetup = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await httpRequest<IsSetupResponse>({
-        service: SetupService.isSetup,
-      });
+  const checkIsSetup = useCallback(
+    async (forceRefresh = false) => {
+      if (!forceRefresh) {
+        const storedIsSetup = getIsSetupFromStorage();
+        if (storedIsSetup) {
+          setIsSetup(true);
+          setIsLoading(false);
+          return;
+        }
+      }
 
-      setIsSetup(!!data?.isSetup);
+      setIsLoading(true);
+      try {
+        const data = await httpRequest<IsSetupResponse>({
+          service: SetupService.isSetup,
+        });
 
-      if (!data || !data.isSetup)
-        showNotification(t('setup.error.notFound'), { severity: 'warning' });
-    } catch (err) {
-      const error = err instanceof Error ? err.message : String(err);
-      showNotification(error, { severity: 'error' });
+        const setupStatus = !!data?.isSetup;
 
-      console.error('AppProvider Error', error);
+        setIsSetup(setupStatus);
+        if (setupStatus) setIsSetupToStorage(true);
 
-      setIsSetup(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [showNotification, t]);
+        if (!data || !data.isSetup)
+          showNotification(t('setup.error.notFound'), { severity: 'warning' });
+      } catch (err) {
+        const error = err instanceof Error ? err.message : String(err);
+        showNotification(error, { severity: 'error' });
+
+        console.error('AppProvider Error', error);
+
+        setIsSetup(false);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [showNotification, t],
+  );
 
   useEffect(() => {
-    checkIsSetup();
+    const storedIsSetup = getIsSetupFromStorage();
+    if (storedIsSetup) {
+      setIsSetup(true);
+      setIsLoading(false);
+    } else {
+      checkIsSetup();
+    }
   }, [checkIsSetup]);
 
   return (
@@ -44,7 +66,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       value={{
         isSetup,
         isLoading,
-        refreshIsSetup: checkIsSetup,
+        refreshIsSetup: () => checkIsSetup(true),
       }}
     >
       {children}

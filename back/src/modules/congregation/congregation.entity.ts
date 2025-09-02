@@ -1,6 +1,8 @@
 import { ApiPropertyI18n } from 'src/common/ApiPropertyI18n';
 import { CommonEntity } from 'src/common/common.entity';
+import { Feature } from 'src/utils/constants';
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 import { Location } from '../location/location.entity';
 
 @Entity()
@@ -23,4 +25,10 @@ export class Congregation extends CommonEntity {
     inverseJoinColumn: { name: 'congregation_location_id' },
   })
   locations: Location[];
+
+  @ApiProperty({
+    example: { user: ['users', 'roles'] },
+  })
+  @Column('simple-json', { nullable: false, default: [] })
+  features: Feature[];
 }

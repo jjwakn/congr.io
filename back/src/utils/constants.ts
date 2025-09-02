@@ -1,3 +1,4 @@
+import { FeatureTreeType } from 'src/modules/feature/feature.types';
 import { PermissionType } from 'src/modules/permission/permission.types';
 import { ColumnType } from 'typeorm';
 
@@ -13,6 +14,15 @@ export enum Module {
   user = 'user',
   role = 'role',
   congregation = 'congregation',
+}
+
+export enum Feature {
+  Users = 'users',
+  Members = 'members',
+  EventsCalendar = 'events_calendar',
+  EventsAttendance = 'events_attendance',
+  Ministries = 'ministries',
+  MinistriesCalendar = 'ministries_calendar',
 }
 //#endregion
 
@@ -74,4 +84,25 @@ export const NUMERIC_COLUMN_TYPES = new Set<ColumnType>([
   'nummultirange',
 ]);
 
+export const FeatureTree: FeatureTreeType = {
+  [Feature.Users]: {
+    required: true,
+    prerequisites: [],
+  },
+  [Feature.Members]: {
+    prerequisites: [],
+  },
+  [Feature.EventsCalendar]: {
+    prerequisites: [],
+  },
+  [Feature.EventsAttendance]: {
+    prerequisites: [Feature.EventsCalendar, Feature.Members],
+  },
+  [Feature.Ministries]: {
+    prerequisites: [Feature.Users, Feature.Members],
+  },
+  [Feature.MinistriesCalendar]: {
+    prerequisites: [Feature.Users, Feature.Members, Feature.Ministries],
+  },
+};
 //#endregion
