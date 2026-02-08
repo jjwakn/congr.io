@@ -7,8 +7,9 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ReactNode } from 'react';
-import { FieldValues, FormProvider, UseFormReturn } from 'react-hook-form';
+import { FieldValues, FormProvider } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { FormContainerProps } from '../../../types/FormContainer.types';
 
 export const FormContainer = <FormData extends FieldValues>({
   children,
@@ -20,17 +21,11 @@ export const FormContainer = <FormData extends FieldValues>({
   disabled,
   submitText,
   loadingTooltip,
-}: {
-  children: ReactNode;
-  form: UseFormReturn<FormData, unknown, FormData>;
-  onSubmit: (data: FormData) => void;
-  loading?: boolean;
-  title?: string;
-  subtitle?: string;
-  disabled?: boolean;
-  submitText: string;
-  loadingTooltip?: string;
-}) => {
+  onCancel,
+  cancelText,
+}: FormContainerProps<FormData>) => {
+  const { t } = useTranslation();
+
   return (
     <Box
       sx={{
@@ -39,9 +34,11 @@ export const FormContainer = <FormData extends FieldValues>({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 2,
+        maxWidth: 500,
+        width: '100%',
       }}
     >
-      <Card sx={{ maxWidth: 500, width: '100%' }}>
+      <Card sx={{ width: '100%' }}>
         <CardContent sx={{ padding: 3 }}>
           <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -57,7 +54,7 @@ export const FormContainer = <FormData extends FieldValues>({
                   gutterBottom
                   align="center"
                   color="text.secondary"
-                  sx={{ mb: 3 }}
+                  sx={{ mb: 3, whiteSpace: 'pre-line' }}
                 >
                   {subtitle}
                 </Typography>
@@ -73,6 +70,18 @@ export const FormContainer = <FormData extends FieldValues>({
                   alignItems: 'center',
                 }}
               >
+                {onCancel ? (
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    size="large"
+                    disabled={disabled}
+                    onClick={onCancel}
+                  >
+                    {cancelText ?? t('form.field.cancel')}
+                  </Button>
+                ) : null}
+
                 <Button
                   type="submit"
                   fullWidth

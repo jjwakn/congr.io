@@ -1,6 +1,9 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 const Loading = () => {
+  const { t } = useTranslation();
+
   return (
     <Box
       sx={{
@@ -14,7 +17,7 @@ const Loading = () => {
     >
       <CircularProgress size={60} />
       <Typography variant="h6" color="text.secondary">
-        Loading...
+        {t('components.loading.text')}
       </Typography>
     </Box>
   );

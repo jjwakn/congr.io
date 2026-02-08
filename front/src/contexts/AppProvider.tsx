@@ -51,6 +51,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     [showNotification, t],
   );
 
+  const markSetupComplete = useCallback(() => {
+    setIsSetup(true);
+    setIsSetupToStorage(true);
+  }, []);
+
   useEffect(() => {
     const storedIsSetup = getIsSetupFromStorage();
     if (storedIsSetup) {
@@ -67,6 +72,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         isSetup,
         isLoading,
         refreshIsSetup: () => checkIsSetup(true),
+        markSetupComplete,
       }}
     >
       {children}

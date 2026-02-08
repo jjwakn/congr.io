@@ -33,10 +33,10 @@ const Dashboard = () => {
             <Card>
               <CardContent>
                 <Typography variant="h5" component="h2" gutterBottom>
-                  Welcome to your Dashboard
+                  {t('pages.dashboard.welcomeTitle')}
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
-                  Your congregation is successfully configured and ready to use.
+                  {t('pages.dashboard.successMessage')}
                 </Typography>
 
                 <Box sx={{ mt: 2, mb: 2 }}>

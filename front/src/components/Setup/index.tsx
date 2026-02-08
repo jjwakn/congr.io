@@ -1,122 +1,204 @@
-import { Autocomplete, TextField, createFilterOptions } from '@mui/material';
-import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Box, LinearProgress } from '@mui/material';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FormContainer } from '../../components/common/FormContainer';
 import { useAppContext } from '../../hooks/useAppContext';
+import { useFooter } from '../../hooks/useFooter';
 import { useNotificationContext } from '../../hooks/useNotifications';
-import { Congregation } from '../../types/congregation.types';
-import { COMMON_DEFAULT_VALUES } from '../../utils/constants';
+import { useSetup } from '../../hooks/useSetup';
+import { SetupService } from '../../services/setup';
+import { SetupSubmitResponse } from '../../types/setup.types';
+import { API_URL } from '../../utils/constants';
+import { setCongregationToStorage } from '../../utils/storage';
+import AdminStep from './steps/AdminStep';
+import ConfirmStep from './steps/ConfirmStep';
+import CongregationStep from './steps/CongregationStep';
+import FeaturesStep from './steps/FeaturesStep';
+import LocationsStep from './steps/LocationsStep';
+import LogoStep from './steps/LogoStep';
+
+const Progress = ({ activeStep }: { activeStep: number }) => {
+  return (
+    <Box sx={{ width: '100%', padding: 2 }}>
+      <LinearProgress variant="determinate" value={(100 / 6) * activeStep} />
+    </Box>
+  );
+};
 
 const Setup = () => {
-  const [loading, setLoading] = useState(false);
-
-  const { t } = useTranslation();
-  const { refreshIsSetup } = useAppContext();
+  const { markSetupComplete } = useAppContext();
   const { showNotification } = useNotificationContext();
-
-  const filter = createFilterOptions<string>();
-
-  const form = useForm<Congregation>({
-    defaultValues: {
-      ...COMMON_DEFAULT_VALUES,
-      name: '',
-      type: t('setup.form.defaultType'),
-    },
-  });
+  const { setChildren } = useFooter();
+  const { i18n, t } = useTranslation();
   const {
-    register,
-    watch,
-    control,
-    formState: { errors },
-  } = form;
+    setupData: data,
+    activeStep,
+    setActiveStep,
+    loading: loadingSetup,
+    setLoading: setLoadingSetup,
+    loadingFeatures,
+  } = useSetup();
 
-  const type = watch('type');
+  const loading = useMemo(
+    () => loadingSetup || loadingFeatures,
+    [loadingFeatures, loadingSetup],
+  );
 
-  const onSubmit = async (data: Congregation) => {
+  const goNext = useCallback(
+    () =>
+      setActiveStep((step) => {
+        const next = step + 1;
+        setChildren(<Progress activeStep={next} />);
+        return next;
+      }),
+    [setActiveStep, setChildren],
+  );
+  const goBack = useCallback(
+    () =>
+      setActiveStep((step) => {
+        const next = step - 1;
+        setChildren(<Progress activeStep={next} />);
+        return next;
+      }),
+    [setActiveStep, setChildren],
+  );
+
+  const handleFinish = useCallback(async () => {
     try {
-      setLoading(true);
-      console.log({ data });
-      // delay 3 seconds
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      setLoadingSetup(true);
 
-      await refreshIsSetup();
+      const smallLogo = data.logo.small?.data;
+      const largeLogo = data.logo.large?.data;
+
+      if (!smallLogo || !largeLogo) {
+        throw new Error(t('setup.form.logoRequired'));
+      }
+
+      const payload = {
+        user: {
+          username: data.admin.username.trim(),
+          password: data.admin.password,
+          name: data.admin.name.trim(),
+        },
+        role: {
+          name: data.admin.roleName.trim(),
+        },
+        congregation: {
+          name: data.congregation.name.trim(),
+          type: data.congregation.type.trim(),
+          locations: data.locations.locations.map((location) => ({
+            order: location.order,
+            name: location.name.trim(),
+            address: location.address.trim(),
+          })),
+          features: data.features.features,
+        },
+      };
+
+      const formData = new FormData();
+      formData.append('payload', JSON.stringify(payload));
+      formData.append('logoSmall', smallLogo);
+      formData.append('logoLarge', largeLogo);
+
+      const response = await fetch(`${API_URL}/${SetupService.setup.url}`, {
+        method: SetupService.setup.method,
+        headers: {
+          'Accept-Language': i18n.language || 'en',
+        },
+        body: formData,
+      });
+
+      const rawResult = (await response.json()) as unknown;
+
+      if (!response.ok) {
+        let message = t('setup.error.saveFailed');
+        if (
+          rawResult &&
+          typeof rawResult === 'object' &&
+          'message' in rawResult
+        ) {
+          const apiMessage = (rawResult as { message?: string | string[] })
+            .message;
+          if (Array.isArray(apiMessage)) message = apiMessage.join(', ');
+          else if (typeof apiMessage === 'string') message = apiMessage;
+        }
+        throw new Error(message);
+      }
+
+      if (
+        !rawResult ||
+        typeof rawResult !== 'object' ||
+        !('isSetup' in rawResult) ||
+        !('congregation' in rawResult) ||
+        !(rawResult as SetupSubmitResponse).isSetup
+      )
+        throw new Error(t('setup.error.saveFailed'));
+
+      const result = rawResult as SetupSubmitResponse;
+
+      setCongregationToStorage(result.congregation);
+      markSetupComplete();
+      showNotification(t('setup.success.saved'), { severity: 'success' });
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       showNotification(error, { severity: 'error' });
-
       console.error('Setup Error', error);
     } finally {
-      setLoading(false);
+      setLoadingSetup(false);
     }
-  };
+  }, [
+    data,
+    i18n.language,
+    markSetupComplete,
+    setLoadingSetup,
+    showNotification,
+    t,
+  ]);
+
+  useEffect(() => {
+    setChildren(<Progress activeStep={activeStep} />);
+  }, [activeStep, setChildren]);
 
   return (
-    <FormContainer<Congregation>
-      form={form}
-      onSubmit={onSubmit}
-      title={t('setup.form.title')}
-      subtitle={`${t('setup.form.subtitle')} ${type}`}
-      disabled={loading}
-      submitText={`${t('setup.form.submitText')} ${type}`}
-      loading={loading}
-      loadingTooltip={`${t('setup.form.tooltip')} ${type}`}
+    <Box
+      sx={{
+        height: 'fit-content',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        width: '100%',
+        minHeight: '100%',
+      }}
     >
-      <TextField
-        fullWidth
-        label={errors?.name?.message ?? `${type} ${t('form.field.name')}`}
-        margin="normal"
-        {...register('name', {
-          required: `${type} ${t('form.field.name')} ${t('form.error.isRequired')}`,
-        })}
-        error={!!errors?.name}
-      />
+      {activeStep === 0 && (
+        <CongregationStep goNext={goNext} loading={loading} />
+      )}
 
-      <Controller
-        name="type"
-        control={control}
-        rules={{
-          required: `${t('form.field.type')} ${t('form.error.isRequired')}`,
-        }}
-        render={({ field }) => (
-          <Autocomplete
-            {...field}
-            disableClearable
-            clearIcon={null}
-            onChange={(_event, newValue) => field.onChange(newValue)}
-            filterOptions={(options, params) => {
-              const filtered = filter(options, params);
-              const { inputValue } = params;
-              const isExisting = options.some(
-                (option) => inputValue.toLowerCase() === option.toLowerCase(),
-              );
-              if (inputValue !== '' && !isExisting)
-                filtered.push(`${t('form.field.add')} "${inputValue}"`);
+      {activeStep === 1 && (
+        <FeaturesStep goNext={goNext} goBack={goBack} loading={loading} />
+      )}
 
-              return filtered;
-            }}
-            selectOnFocus
-            clearOnBlur
-            handleHomeEndKeys
-            options={t('setup.form.types').split(',')}
-            renderOption={({ key, ...optionProps }, option) => (
-              <li key={key} {...optionProps}>
-                {option}
-              </li>
-            )}
-            freeSolo
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label={errors?.type?.message ?? t('form.field.type')}
-                margin="normal"
-                error={!!errors?.type}
-              />
-            )}
-          />
-        )}
-      />
-    </FormContainer>
+      {activeStep === 2 && (
+        <LocationsStep goNext={goNext} goBack={goBack} loading={loading} />
+      )}
+
+      {activeStep === 3 && (
+        <LogoStep goNext={goNext} goBack={goBack} loading={loading} />
+      )}
+
+      {activeStep === 4 && (
+        <AdminStep goNext={goNext} goBack={goBack} loading={loading} />
+      )}
+
+      {activeStep === 5 && (
+        <ConfirmStep
+          data={data}
+          onFinish={handleFinish}
+          disabled={loading}
+          onBack={goBack}
+        />
+      )}
+    </Box>
   );
 };
 

@@ -1,17 +1,21 @@
 import { I18nService } from 'nestjs-i18n';
+import { Feature } from 'src/utils/constants';
 import { encryptPassword } from 'src/utils/helpers';
 import { IsNull, Repository } from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
+  Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Congregation } from '../congregation/congregation.entity';
+import { Location } from '../location/location.entity';
 import { Role } from '../role/role.entity';
 import { User } from '../user/user.entity';
-import { SetupProps } from './setup.types';
+import { SetupProps, SetupResponse } from './setup.types';
 
+@Injectable()
 export class SetupService {
   constructor(
     @InjectRepository(User)
@@ -22,6 +26,9 @@ export class SetupService {
 
     @InjectRepository(Congregation)
     private congregationRepository: Repository<Congregation>,
+
+    @InjectRepository(Location)
+    private locationRepository: Repository<Location>,
 
     private readonly i18n: I18nService,
   ) {}
@@ -42,7 +49,7 @@ export class SetupService {
     return { isSetup: !!userCount && !!roleCount && !!congregationCount };
   }
 
-  async setup(data: SetupProps) {
+  async setup(data: SetupProps): Promise<SetupResponse> {
     if (!data)
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missing')} body`,
@@ -69,7 +76,7 @@ export class SetupService {
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missing')} user`,
       );
-    if (!user.username)
+    if (!user.username?.trim())
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missingProp')} User: username`,
       );
@@ -77,7 +84,7 @@ export class SetupService {
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missingProp')} User: password`,
       );
-    if (!user.name)
+    if (!user.name?.trim())
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missingProp')} User: name`,
       );
@@ -86,7 +93,7 @@ export class SetupService {
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missing')} role`,
       );
-    if (!role.name)
+    if (!role.name?.trim())
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missingProp')} Role: name`,
       );
@@ -95,11 +102,11 @@ export class SetupService {
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missing')} congregation`,
       );
-    if (!congregation.name)
+    if (!congregation.name?.trim())
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missingProp')} Congregation: name`,
       );
-    if (!congregation.type)
+    if (!congregation.type?.trim())
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missingProp')} Congregation: type`,
       );
@@ -115,14 +122,11 @@ export class SetupService {
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missingProp')} Congregation: location.order`,
       );
-    if (congregation.locations.some((l) => !l.name))
+    if (congregation.locations.some((l) => !l.name?.trim()))
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missingProp')} Congregation: location.name`,
       );
-    if (congregation.locations.some((l) => !l.address))
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} Congregation: location.address`,
-      );
+
     if (!congregation.features || !congregation.features.length)
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missingProp')} Congregation: features`,
@@ -131,11 +135,19 @@ export class SetupService {
       throw new BadRequestException(
         `${this.i18n.t('errors.setup.missingProp')} Congregation: feature`,
       );
+    if (!congregation.logo_small?.length)
+      throw new BadRequestException(
+        `${this.i18n.t('errors.setup.missingProp')} Congregation: logo_small`,
+      );
+    if (!congregation.logo_large?.length)
+      throw new BadRequestException(
+        `${this.i18n.t('errors.setup.missingProp')} Congregation: logo_large`,
+      );
 
     const userCreated = this.userRepository.create({
-      username: user.username,
+      username: user.username.trim(),
       password: await encryptPassword(user.password),
-      name: user.name,
+      name: user.name.trim(),
     });
     if (!userCreated)
       throw new InternalServerErrorException(
@@ -144,7 +156,7 @@ export class SetupService {
     await this.userRepository.save(userCreated);
 
     const roleCreated = this.roleRepository.create({
-      name: role.name,
+      name: role.name.trim(),
       full_access: true,
       created_by: userCreated,
     });
@@ -154,20 +166,30 @@ export class SetupService {
       );
     await this.roleRepository.save(roleCreated);
 
-    userCreated.roles = [roleCreated];
-    await this.userRepository.save(userCreated);
-
-    const congregationCreated = this.congregationRepository.create({
-      name: congregation.name,
-      type: congregation.type,
-      created_by: userCreated,
-      locations: congregation.locations.map((l) => ({
+    const locationsCreated = this.locationRepository.create(
+      congregation.locations.map((l) => ({
         order: l.order,
-        name: l.name,
-        address: l.address,
+        name: l.name.trim(),
+        address: l.address.trim(),
         created_by: userCreated,
       })),
-      features: congregation.features,
+    );
+    if (!locationsCreated.length)
+      throw new InternalServerErrorException(
+        `${this.i18n.t('errors.setup.errorCreating')} locationRepository`,
+      );
+    await this.locationRepository.save(locationsCreated);
+
+    const congregationCreated = this.congregationRepository.create({
+      name: congregation.name.trim(),
+      type: congregation.type.trim(),
+      created_by: userCreated,
+      locations: locationsCreated,
+      features: congregation.features
+        .map((f) => f.toString().trim())
+        .filter(Boolean) as Feature[],
+      logo_small: congregation.logo_small,
+      logo_large: congregation.logo_large,
     });
     if (!congregationCreated)
       throw new InternalServerErrorException(
@@ -175,6 +197,27 @@ export class SetupService {
       );
     await this.congregationRepository.save(congregationCreated);
 
-    return { success: true };
+    userCreated.roles = [roleCreated];
+    userCreated.congregations = [congregationCreated];
+    userCreated.locations = locationsCreated;
+    await this.userRepository.save(userCreated);
+
+    return {
+      isSetup: true,
+      congregation: {
+        id: congregationCreated.id,
+        name: congregationCreated.name,
+        type: congregationCreated.type,
+        features: congregationCreated.features,
+        locations: locationsCreated.map((location) => ({
+          id: location.id,
+          order: location.order,
+          name: location.name,
+          address: location.address,
+        })),
+        has_logo_small: Boolean(congregationCreated.logo_small?.length),
+        has_logo_large: Boolean(congregationCreated.logo_large?.length),
+      },
+    };
   }
 }

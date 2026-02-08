@@ -3,19 +3,17 @@
     "error": {
       "emptyData": "Empty data",
       "paramNotFound": "Parameter {{param}} nmot found in {{url}}",
-      "missingParam": "GET: ${key} must have a value that is not null, undefined or an empty string"
-    }
-  },
-  "theme": {
-    "error": {
-      "useTheme": "useTheme must be used inside ThemeModeProvider"
+      "missingParam": "GET: {{key}} must have a value that is not null, undefined or an empty string"
     }
   },
   "context": {
     "error": {
       "appContext": "useAppContext must be used within an AppProvider",
+      "footerContext": "footerContext must be used within a FooterProvider",
       "notificationContext": "notificationContext must be used within an NotificationProvider",
-      "authContext": "authContext must be used within an AuthProvider"
+      "authContext": "authContext must be used within an AuthProvider",
+      "useTheme": "useTheme must be used inside ThemeModeProvider",
+      "useSetup": "useSetup must be used inside SetupProvider"
     }
   },
   "form": {
@@ -23,21 +21,103 @@
     "field": {
       "name": "Name",
       "type": "Type",
+      "address": "Address",
+      "username": "Username",
+      "password": "Password",
+
+      "next": "Next",
+      "cancel": "Cancel",
+      "back": "Back",
+      "selectAll": "Select All",
       "add": "Add"
+    },
+    "common": {
+      "replace": "Replace",
+      "delete": "Delete",
+      "moveUp": "Move up",
+      "moveDown": "Move down"
     }
   },
   "setup": {
     "title": "Setup your system",
     "error": {
-      "notFound": "System is not setup. If you think this is an error please let us know"
+      "notFound": "System is not setup. If you think this is an error please let us know",
+      "featuresNotFound": "Fatal error, features not found",
+      "saveFailed": "Setup could not be completed"
+    },
+    "success": {
+      "saved": "Setup completed successfully"
     },
     "form": {
       "title": "Welcome",
-      "subtitle": "Let's set up your",
+      "subtitle": "Let's set up your {{type}}",
       "defaultType": "Congregation",
+
       "submitText": "Create",
       "types": "Assembly,Church,Congregation",
-      "tooltip": "Creating"
+
+      "features": "Modules",
+      "featuresText": "Select the features you want to use",
+
+      "locations": "Locations",
+      "locationsText": "The locations for your {{type}}. Locations can share data between them",
+      "locationDefault": "Main Location",
+
+      "logo": "Logo Image",
+      "logoText": "Upload a logo image that will display across the app",
+      "logoTypeError": "Invalid File",
+      "logoRequired": "Both logos are required",
+      "smallLogo": "Small logo",
+      "largeLogo": "Large logo",
+      "uploadSmallLogo": "Upload or drop your small logo here",
+      "uploadLargeLogo": "Upload or drop your large logo here",
+      "smallLogoPreviewAlt": "Small logo preview",
+      "largeLogoPreviewAlt": "Large logo preview",
+      "uploadLogo": "Upload or drop your logo here",
+      "supportedFormats": "Supported formats:",
+
+      "user": "Main user",
+      "userSubtitle": "The main user that will manage the system. We could add more or update it later",
+      "fullAccessRoleName": "Role Name",
+
+      "confirm": "Confirm",
+      "confirmSubtitle": "Confirm your {{type}} setup"
+    },
+    "confirm": {
+      "review": "Review and confirm",
+      "none": "None",
+      "preview": "Preview",
+      "small": "Small",
+      "large": "Large",
+      "fullAccessRole": "Full access role",
+      "sections": {
+        "congregation": "{{type}}",
+        "features": "Features",
+        "locations": "Locations",
+        "logos": "Logos",
+        "admin": "Admin"
+      }
+    }
+  },
+  "components": {
+    "loading": {
+      "text": "Loading..."
+    },
+    "fileUploader": {
+      "onTypeError": "Unsupported file type",
+      "onSizeTooBigError": "The file is too big",
+      "onSizeTooSmallError": "The file is too small",
+      "dropHere": "Drop Here",
+      "fileTypeError": "File type/size error, Hovered on types!",
+      "uploadDefault": "Upload or drop a file right here",
+      "uploadedSuccessfully": "Uploaded Successfully!",
+      "uploadAnother": "Upload another?"
+    }
+  },
+  "pages": {
+    "dashboard": {
+      "welcomeTitle": "Welcome to your Dashboard",
+      "successMessage": "Your congregation is successfully configured and ready to use."
     }
   }
 }

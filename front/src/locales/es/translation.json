@@ -3,19 +3,17 @@
     "error": {
       "emptyData": "Data vacia",
       "paramNotFound": "Parametro {{param}} no encontrado en {{url}}",
-      "missingParam": "GET: ${key} debe tener un valor que no sea  null, undefined o string vacio"
-    }
-  },
-  "theme": {
-    "error": {
-      "useTheme": "useTheme debe ser usado dentro de ThemeModeProvider"
+      "missingParam": "GET: {{key}} debe tener un valor que no sea  null, undefined o string vacio"
     }
   },
   "context": {
     "error": {
       "appContext": "useAppContext debe ser usado dentro de AppProvider",
+      "footerContext": "footerContext debe ser usado dentro de FooterProvider",
       "notificationContext": "notificationContext debe ser usado dentro de NotificationProvider",
-      "authContext": "authContext debe ser usado dentro de AuthProvider"
+      "authContext": "authContext debe ser usado dentro de AuthProvider",
+      "useTheme": "useTheme debe ser usado dentro de ThemeModeProvider",
+      "useSetup": "useSetup debe ser usado dentro de SetupProvider"
     }
   },
   "form": {
@@ -23,21 +21,103 @@
     "field": {
       "name": "Nombre",
       "type": "Tipo",
+      "address": "Dirección",
+      "username": "Usuario",
+      "password": "Contraseña",
+
+      "next": "Siguiente",
+      "cancel": "Cancelar",
+      "back": "Regresar",
+      "selectAll": "Seleccionar Todos",
       "add": "Añadir"
+    },
+    "common": {
+      "replace": "Reemplazar",
+      "delete": "Eliminar",
+      "moveUp": "Mover arriba",
+      "moveDown": "Mover abajo"
     }
   },
   "setup": {
     "title": "Configura tu sistema",
     "error": {
-      "notFound": "El sistema no esta configurado. Si crees que es un error puedes reportarlo"
+      "notFound": "El sistema no esta configurado. Si crees que es un error puedes reportarlo",
+      "featuresNotFound": "Error grave, características no encontradas",
+      "saveFailed": "No se pudo completar la configuración"
+    },
+    "success": {
+      "saved": "Configuración completada exitosamente"
     },
     "form": {
       "title": "Bienvenido",
-      "subtitle": "Vamos a configurar tu",
+      "subtitle": "Vamos a configurar tu {{type}}",
       "defaultType": "Congregación",
+
       "submitText": "Crear",
       "types": "Asamblea,Congregación,Iglesia",
-      "tooltip": "Creando"
+
+      "features": "Módulos",
+      "featuresText": "Selecciona las características que quieres usar",
+
+      "locations": "Ubicaciones",
+      "locationsText": "Las ubicaciones de tu {{type}}. Las ubicaciones pueden compartir datos entre ellas",
+      "locationDefault": "Ubicación Principal",
+
+      "logo": "Imagen de Logotipo",
+      "logoText": "Añade un logo que se mostrara a lo largo de toda el app",
+      "logoTypeError": "Archivo de imagen no valido",
+      "logoRequired": "Ambos logos son requeridos",
+      "smallLogo": "Logo pequeño",
+      "largeLogo": "Logo grande",
+      "uploadSmallLogo": "Sube o arrastra tu logo pequeño aquí",
+      "uploadLargeLogo": "Sube o arrastra tu logo grande aquí",
+      "smallLogoPreviewAlt": "Vista previa del logo pequeño",
+      "largeLogoPreviewAlt": "Vista previa del logo grande",
+      "uploadLogo": "Sube o arrastra tu logo aquí",
+      "supportedFormats": "Formatos soportados:",
+
+      "user": "Usuario principal",
+      "userSubtitle": "El usuario principal que administrará el sistema. Podemos añadir más o editarlo luego",
+      "fullAccessRoleName": "Nombre Rol",
+
+      "confirm": "Confirmar",
+      "confirmSubtitle": "Confirma la configuración de tu {{type}}"
+    },
+    "confirm": {
+      "review": "Revisa y confirma",
+      "none": "Ninguno",
+      "preview": "Vista previa",
+      "small": "Pequeño",
+      "large": "Grande",
+      "fullAccessRole": "Rol de acceso completo",
+      "sections": {
+        "congregation": "{{type}}",
+        "features": "Módulos",
+        "locations": "Ubicaciones",
+        "logos": "Logos",
+        "admin": "Administrador"
+      }
+    }
+  },
+  "components": {
+    "loading": {
+      "text": "Cargando..."
+    },
+    "fileUploader": {
+      "onTypeError": "Tipo de archivo no soportado",
+      "onSizeTooBigError": "El archivo es demasiado grande",
+      "onSizeTooSmallError": "El archivo es demasiado pequeño",
+      "dropHere": "Suelta Aquí",
+      "fileTypeError": "Error de tipo/tamaño de archivo, ¡Hover en tipos!",
+      "uploadDefault": "Sube o arrastra un archivo aquí",
+      "uploadedSuccessfully": "¡Cargado Exitosamente!",
+      "uploadAnother": "¿Subir otro?"
+    }
+  },
+  "pages": {
+    "dashboard": {
+      "welcomeTitle": "Bienvenido a tu Panel",
+      "successMessage": "Tu congregación está configurada exitosamente y lista para usar."
     }
   }
 }

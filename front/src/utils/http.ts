@@ -13,7 +13,7 @@ export interface ModuleType {
 
 export const HttpService: ModuleType = {};
 
-export const httpRequest = async <ResponseType>({
+export const httpRequest = async <ResponseType extends object>({
   service,
   data,
   url: baseURL = API_URL,
@@ -65,6 +65,7 @@ export const httpRequest = async <ResponseType>({
     method: service.method,
     headers: {
       'Content-Type': 'application/json',
+      'Accept-Language': i18n.language || 'en',
     },
     ...(typeof data === 'object' &&
       Object.keys(data).length &&
@@ -72,6 +73,12 @@ export const httpRequest = async <ResponseType>({
   });
 
   const result: ResponseType = await response.json();
+
+  if (
+    'statusCode' in (result as object) &&
+    (result as { statusCode: number; message: string }).statusCode === 401
+  )
+    throw new Error('message' in result ? `${result.message}` : 'Error');
 
   return result;
 };

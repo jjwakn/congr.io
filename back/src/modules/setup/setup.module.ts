@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { CongregationModule } from '../congregation/congregation.module';
+import { LocationModule } from '../location/location.module';
 import { RoleModule } from '../role/role.module';
 import { UserModule } from '../user/user.module';
 import { SetupController } from './setup.controller';
 import { SetupService } from './setup.service';
 
 @Module({
-  imports: [UserModule, RoleModule, CongregationModule],
+  imports: [UserModule, RoleModule, CongregationModule, LocationModule],
   providers: [SetupService],
   controllers: [SetupController],
   exports: [SetupService],

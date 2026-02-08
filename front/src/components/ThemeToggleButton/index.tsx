@@ -1,9 +1,8 @@
 import { DarkMode, LightMode } from '@mui/icons-material';
 import { IconButton } from '@mui/material';
-import React from 'react';
 import { useTheme } from '../../hooks/useTheme';
 
-export const ThemeToggleButton: React.FC = () => {
+export const ThemeToggleButton = () => {
   const { mode, toggleMode } = useTheme();
 
   return (

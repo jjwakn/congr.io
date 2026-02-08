@@ -1,6 +1,9 @@
+import Layout from './components/Layout';
 import Loading from './components/Loading';
 import { AppProvider } from './contexts/AppProvider';
 import { AuthProvider } from './contexts/AuthProvider';
+import { FooterProvider } from './contexts/FooterProvider';
+import { SetupProvider } from './contexts/SetupProvider';
 import { useAppContext } from './hooks/useAppContext';
 import { useAuth } from './hooks/useAuth';
 import Dashboard from './pages/Dashboard';
@@ -26,7 +29,13 @@ const App = () => {
   return (
     <AppProvider>
       <AuthProvider>
-        <AppContent />
+        <SetupProvider>
+          <FooterProvider>
+            <Layout>
+              <AppContent />
+            </Layout>
+          </FooterProvider>
+        </SetupProvider>
       </AuthProvider>
     </AppProvider>
   );

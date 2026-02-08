@@ -6,7 +6,7 @@ export const useTheme = () => {
   const context = useContext(ThemeContext);
   const { t } = useTranslation();
 
-  if (!context) throw new Error(t('theme.error.useTheme'));
+  if (!context) throw new Error(t('context.error.useTheme'));
 
   return context;
 };

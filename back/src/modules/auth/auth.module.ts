@@ -1,3 +1,4 @@
+import type { StringValue } from 'ms';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -15,7 +16,7 @@ import { JwtStrategy } from './jwt.strategy';
     PassportModule,
     JwtModule.register({
       secret: process.env.TOKEN_SECRET,
-      signOptions: { expiresIn: process.env.TOKEN_DURATION },
+      signOptions: { expiresIn: process.env.TOKEN_DURATION as StringValue },
     }),
   ],
   providers: [AuthService, AuthStrategy, JwtStrategy],

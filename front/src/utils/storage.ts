@@ -1,4 +1,5 @@
-import { IS_SETUP_KEY } from './constants';
+import { Congregation } from '../types/congregation.types';
+import { CONGREGATION_KEY, IS_SETUP_KEY } from './constants';
 
 export const getLocalStorageItem = <T>(key: string, defaultValue: T): T => {
   try {
@@ -24,4 +25,20 @@ export const getIsSetupFromStorage = (): boolean => {
 
 export const setIsSetupToStorage = (value: boolean): void => {
   setLocalStorageItem(IS_SETUP_KEY, value);
+};
+
+export const getCongregationFromStorage = (): Congregation | null => {
+  return getLocalStorageItem<Congregation | null>(CONGREGATION_KEY, null);
+};
+
+export const setCongregationToStorage = (value: Congregation): void => {
+  setLocalStorageItem(CONGREGATION_KEY, value);
+};
+
+export const clearCongregationFromStorage = (): void => {
+  try {
+    localStorage.removeItem(CONGREGATION_KEY);
+  } catch (error) {
+    console.warn(`${CONGREGATION_KEY}`, error);
+  }
 };

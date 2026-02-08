@@ -42,7 +42,7 @@ export const authService = {
     localStorage.setItem(AUTH_TOKEN_KEY, token);
   },
 
-  getUserData(): UserData | null {
+  getUserData(): User | null {
     try {
       const userData = localStorage.getItem(USER_DATA_KEY);
       return userData ? JSON.parse(userData) : null;
@@ -52,7 +52,7 @@ export const authService = {
     }
   },
 
-  setUserData(user: UserData): void {
+  setUserData(user: User): void {
     localStorage.setItem(USER_DATA_KEY, JSON.stringify(user));
   },
 

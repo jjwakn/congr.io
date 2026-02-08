@@ -1,6 +1,6 @@
-import { CommonEntity } from './common.types';
-import { Congregation, Location } from './congregation.types';
-import { Role } from './role.types';
+import { CommonEntity } from './common.types.js';
+import { Congregation, Location } from './congregation.types.js';
+import { Role } from './role.types.js';
 
 export interface User extends CommonEntity {
   username: string;

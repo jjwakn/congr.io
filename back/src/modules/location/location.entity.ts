@@ -15,5 +15,5 @@ export class Location extends CommonEntity {
 
   @ApiPropertyI18n({ example: 'examples.location.address' })
   @Column({ nullable: true })
-  address: number;
+  address: string;
 }

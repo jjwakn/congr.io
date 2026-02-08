@@ -7,6 +7,8 @@
 
 #root {
   height: 100%;
+  /* Reserve space for fixed footer height so content isn't hidden behind it */
+  padding-bottom: 40px;
 }
 
 body {
