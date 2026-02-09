@@ -14,7 +14,6 @@ const initialSetupData: SetupData = {
   },
   features: { features: [] },
   locations: { locations: [] },
-  logo: { small: null, large: null },
   admin: { username: '', password: '', name: '', roleName: '' },
 };
 

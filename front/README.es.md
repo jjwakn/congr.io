@@ -19,3 +19,13 @@ Este proyecto es una **Aplicación Web Progresiva**.
 - Funciona sin conexión con recursos en caché
 - Se puede instalar en dispositivos móviles y de escritorio
 - Soporta notificaciones push (opcional)
+
+---
+
+## 0. Branding (antes de la configuración)
+
+Antes de ejecutar el flujo de configuración, abre la ruta de branding y sigue las instrucciones que aparecen en pantalla:
+
+1. Ve a `/branding`
+2. Genera y descarga el paquete de branding
+3. Copia los archivos generados en `front/public/` como indica esa página

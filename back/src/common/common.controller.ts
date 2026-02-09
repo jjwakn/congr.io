@@ -1,8 +1,8 @@
 import type {
   CommonEntity,
   DefaultGetData,
-  HeadersType,
   ListParamsQuery,
+  RequestType,
 } from 'src/common/common.types';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import {
@@ -10,17 +10,17 @@ import {
   PermissionGuard,
 } from 'src/modules/permission/permission.guard';
 import { Module, ModuleAction } from 'src/utils/constants';
-import { decodeToken } from 'src/utils/helpers';
 import {
   Body,
   Delete,
   Get,
-  Headers,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
+  Req,
+  UnauthorizedException,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
@@ -81,8 +81,9 @@ export abstract class CommonController<
   )
   @Post()
   @ApiBody({ type: Object }) // Can be overridden in child controllers
-  async create(@Body() data: Entity, @Headers() headers: HeadersType) {
-    const userId = decodeToken(headers.authorization).user.id;
+  async create(@Body() data: Entity, @Req() request: RequestType) {
+    const userId = request.user?.userId;
+    if (!userId) throw new UnauthorizedException();
     return this.service.create({ data, userId });
   }
 
@@ -96,9 +97,10 @@ export abstract class CommonController<
   async update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() data: Entity,
-    @Headers() headers: HeadersType,
+    @Req() request: RequestType,
   ) {
-    const userId = decodeToken(headers.authorization).user.id;
+    const userId = request.user?.userId;
+    if (!userId) throw new UnauthorizedException();
     return this.service.update({ id, data, userId });
   }
 
@@ -110,9 +112,10 @@ export abstract class CommonController<
   @Delete(':id')
   async remove(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-    @Headers() headers: HeadersType,
+    @Req() request: RequestType,
   ) {
-    const userId = decodeToken(headers.authorization).user.id;
+    const userId = request.user?.userId;
+    if (!userId) throw new UnauthorizedException();
     return this.service.remove({ id, userId });
   }
 }

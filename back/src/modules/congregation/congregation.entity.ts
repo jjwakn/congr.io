@@ -15,14 +15,6 @@ export class Congregation extends CommonEntity {
   @Column({ nullable: false })
   type: string;
 
-  @ApiProperty({ type: 'string', format: 'binary', required: false })
-  @Column({ type: 'bytea', nullable: true })
-  logo_small?: Buffer;
-
-  @ApiProperty({ type: 'string', format: 'binary', required: false })
-  @Column({ type: 'bytea', nullable: true })
-  logo_large?: Buffer;
-
   @ManyToMany(() => Location, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

@@ -14,12 +14,12 @@ const getInitialMode = (): PaletteMode => {
 };
 
 export const ThemeModeProvider = ({ children }: { children: ReactNode }) => {
-  const [mode, setMode] = useState<PaletteMode>(getInitialMode);
+  const [mode, setModeState] = useState<PaletteMode>(getInitialMode);
 
   const theme = useMemo(() => getTheme({ mode }), [mode]);
 
   const toggleMode = useCallback(() => {
-    setMode((prev) => {
+    setModeState((prev) => {
       const newMode = prev === 'light' ? 'dark' : 'light';
       localStorage.setItem(THEME_KEY, newMode);
       return newMode;

@@ -5,7 +5,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
-import { LoginProps, UserValidated } from './auth.types';
+import { AuthLoginResult, LoginProps } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -17,10 +17,19 @@ export class AuthService {
     private readonly i18n: I18nService,
   ) {}
 
+  private sanitizeUser(user: User): User {
+    const sanitizedUser = { ...user };
+    delete sanitizedUser.password;
+    delete sanitizedUser.updated_at;
+    delete sanitizedUser.deleted_at;
+
+    return sanitizedUser;
+  }
+
   async validateUser({
     username,
     password,
-  }: LoginProps): Promise<UserValidated | null> {
+  }: LoginProps): Promise<AuthLoginResult> {
     const fullUser = await this.userService.getByUsername({
       username,
       includePassword: true,
@@ -31,16 +40,21 @@ export class AuthService {
     if (!fullUser || !result)
       throw new UnauthorizedException(this.i18n.t('errors.auth.userNotFound'));
 
-    const { roles, ...user } = fullUser;
-
-    delete user.password;
-    delete user.updated_at;
-    delete user.deleted_at;
+    const { roles } = fullUser;
 
     const { fullAccess, permissions } = mergePermissions(roles);
+    const user = this.sanitizeUser(fullUser);
+    const tokenUser = {
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      created_at: user.created_at,
+    };
 
     const token = this.jwtService.sign({
-      user,
+      sub: user.id,
+      username: user.username,
+      user: tokenUser,
       auth: {
         fullAccess,
         permissions,
@@ -48,12 +62,9 @@ export class AuthService {
     });
 
     return {
-      user: user as User,
-      auth: {
-        token,
-        fullAccess,
-        permissions,
-      },
+      user,
+      token,
+      auth: { fullAccess, permissions },
     };
   }
 
@@ -61,5 +72,10 @@ export class AuthService {
     const result = await this.validateUser(data);
 
     return result;
+  }
+
+  async getCurrentUser(userId: string): Promise<User> {
+    const user = await this.userService.get({ id: userId });
+    return this.sanitizeUser(user);
   }
 }

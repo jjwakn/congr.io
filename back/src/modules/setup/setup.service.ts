@@ -1,7 +1,7 @@
-import { I18nService } from 'nestjs-i18n';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Feature } from 'src/utils/constants';
 import { encryptPassword } from 'src/utils/helpers';
-import { IsNull, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
@@ -13,11 +13,20 @@ import { Congregation } from '../congregation/congregation.entity';
 import { Location } from '../location/location.entity';
 import { Role } from '../role/role.entity';
 import { User } from '../user/user.entity';
-import { SetupProps, SetupResponse } from './setup.types';
+import {
+  IsSetupResponse,
+  SetupCongregationData,
+  SetupProps,
+  SetupResponse,
+} from './setup.types';
 
 @Injectable()
 export class SetupService {
+  private setupInProgress = false;
+
   constructor(
+    private dataSource: DataSource,
+
     @InjectRepository(User)
     private userRepository: Repository<User>,
 
@@ -33,30 +42,27 @@ export class SetupService {
     private readonly i18n: I18nService,
   ) {}
 
-  async isSetup() {
-    const [userCount, roleCount, congregationCount] = await Promise.all([
-      this.userRepository.count({
-        where: { deleted_at: IsNull(), deleted_by: IsNull() },
-      }),
-      this.roleRepository.count({
-        where: { deleted_at: IsNull(), deleted_by: IsNull() },
-      }),
-      this.congregationRepository.count({
-        where: { deleted_at: IsNull(), deleted_by: IsNull() },
-      }),
-    ]);
-
-    return { isSetup: !!userCount && !!roleCount && !!congregationCount };
+  private translate(key: string, lang?: string): string {
+    return this.i18n.t(key, { lang: lang ?? I18nContext.current()?.lang });
   }
 
-  async setup(data: SetupProps): Promise<SetupResponse> {
-    if (!data)
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missing')} body`,
-      );
+  private mapCongregation(congregation: Congregation): SetupCongregationData {
+    return {
+      id: congregation.id,
+      name: congregation.name,
+      type: congregation.type,
+      features: congregation.features,
+      updated_at: congregation.updated_at,
+      locations: (congregation.locations ?? []).map((location) => ({
+        id: location.id,
+        order: location.order,
+        name: location.name,
+        address: location.address,
+      })),
+    };
+  }
 
-    const { role, user, congregation } = data;
-
+  async isSetup(): Promise<IsSetupResponse> {
     const [userCount, roleCount, congregationCount] = await Promise.all([
       this.userRepository.count({
         where: { deleted_at: IsNull(), deleted_by: IsNull() },
@@ -69,155 +75,204 @@ export class SetupService {
       }),
     ]);
 
-    if (userCount || roleCount || congregationCount)
-      throw new ConflictException(this.i18n.t('errors.setup.alreadySetup'));
+    const isSetup = !!userCount && !!roleCount && !!congregationCount;
+    if (!isSetup) return { isSetup: false };
 
-    if (!user)
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missing')} user`,
-      );
-    if (!user.username?.trim())
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} User: username`,
-      );
-    if (!user.password)
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} User: password`,
-      );
-    if (!user.name?.trim())
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} User: name`,
-      );
-
-    if (!role)
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missing')} role`,
-      );
-    if (!role.name?.trim())
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} Role: name`,
-      );
-
-    if (!congregation)
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missing')} congregation`,
-      );
-    if (!congregation.name?.trim())
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} Congregation: name`,
-      );
-    if (!congregation.type?.trim())
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} Congregation: type`,
-      );
-    if (!congregation.locations || !congregation.locations.length)
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} Congregation: locations`,
-      );
-    if (
-      congregation.locations.some(
-        (l) => l.order === undefined || l.order === null,
-      )
-    )
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} Congregation: location.order`,
-      );
-    if (congregation.locations.some((l) => !l.name?.trim()))
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} Congregation: location.name`,
-      );
-
-    if (!congregation.features || !congregation.features.length)
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} Congregation: features`,
-      );
-    if (congregation.features.some((l) => !l))
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} Congregation: feature`,
-      );
-    if (!congregation.logo_small?.length)
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} Congregation: logo_small`,
-      );
-    if (!congregation.logo_large?.length)
-      throw new BadRequestException(
-        `${this.i18n.t('errors.setup.missingProp')} Congregation: logo_large`,
-      );
-
-    const userCreated = this.userRepository.create({
-      username: user.username.trim(),
-      password: await encryptPassword(user.password),
-      name: user.name.trim(),
+    const congregation = await this.congregationRepository.findOne({
+      where: { deleted_at: IsNull(), deleted_by: IsNull() },
+      relations: {
+        locations: true,
+      },
     });
-    if (!userCreated)
-      throw new InternalServerErrorException(
-        `${this.i18n.t('errors.setup.errorCreating')} userRepository`,
-      );
-    await this.userRepository.save(userCreated);
 
-    const roleCreated = this.roleRepository.create({
-      name: role.name.trim(),
-      full_access: true,
-      created_by: userCreated,
-    });
-    if (!roleCreated)
-      throw new InternalServerErrorException(
-        `${this.i18n.t('errors.setup.errorCreating')} roleRepository`,
-      );
-    await this.roleRepository.save(roleCreated);
-
-    const locationsCreated = this.locationRepository.create(
-      congregation.locations.map((l) => ({
-        order: l.order,
-        name: l.name.trim(),
-        address: l.address.trim(),
-        created_by: userCreated,
-      })),
-    );
-    if (!locationsCreated.length)
-      throw new InternalServerErrorException(
-        `${this.i18n.t('errors.setup.errorCreating')} locationRepository`,
-      );
-    await this.locationRepository.save(locationsCreated);
-
-    const congregationCreated = this.congregationRepository.create({
-      name: congregation.name.trim(),
-      type: congregation.type.trim(),
-      created_by: userCreated,
-      locations: locationsCreated,
-      features: congregation.features
-        .map((f) => f.toString().trim())
-        .filter(Boolean) as Feature[],
-      logo_small: congregation.logo_small,
-      logo_large: congregation.logo_large,
-    });
-    if (!congregationCreated)
-      throw new InternalServerErrorException(
-        `${this.i18n.t('errors.setup.errorCreating')} congregationRepository`,
-      );
-    await this.congregationRepository.save(congregationCreated);
-
-    userCreated.roles = [roleCreated];
-    userCreated.congregations = [congregationCreated];
-    userCreated.locations = locationsCreated;
-    await this.userRepository.save(userCreated);
+    if (!congregation) return { isSetup: false };
 
     return {
       isSetup: true,
-      congregation: {
-        id: congregationCreated.id,
-        name: congregationCreated.name,
-        type: congregationCreated.type,
-        features: congregationCreated.features,
-        locations: locationsCreated.map((location) => ({
-          id: location.id,
-          order: location.order,
-          name: location.name,
-          address: location.address,
-        })),
-        has_logo_small: Boolean(congregationCreated.logo_small?.length),
-        has_logo_large: Boolean(congregationCreated.logo_large?.length),
-      },
+      congregation: this.mapCongregation(congregation),
     };
+  }
+
+  async setup(data: SetupProps, lang?: string): Promise<SetupResponse> {
+    if (this.setupInProgress)
+      throw new ConflictException(
+        this.translate('errors.setup.alreadySetup', lang),
+      );
+
+    this.setupInProgress = true;
+
+    try {
+      if (!data)
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missing', lang)} body`,
+        );
+
+      const { role, user, congregation } = data;
+
+      if (!user)
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missing', lang)} user`,
+        );
+      if (!user.username?.trim())
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missingProp', lang)} User: username`,
+        );
+      if (!user.password)
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missingProp', lang)} User: password`,
+        );
+      if (!user.name?.trim())
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missingProp', lang)} User: name`,
+        );
+
+      if (!role)
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missing', lang)} role`,
+        );
+      if (!role.name?.trim())
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missingProp', lang)} Role: name`,
+        );
+
+      if (!congregation)
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missing', lang)} congregation`,
+        );
+      if (!congregation.name?.trim())
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missingProp', lang)} Congregation: name`,
+        );
+      if (!congregation.type?.trim())
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missingProp', lang)} Congregation: type`,
+        );
+      if (!congregation.locations || !congregation.locations.length)
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missingProp', lang)} Congregation: locations`,
+        );
+      if (
+        congregation.locations.some(
+          (location) => location.order === undefined || location.order === null,
+        )
+      )
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missingProp', lang)} Congregation: location.order`,
+        );
+      if (congregation.locations.some((location) => !location.name?.trim()))
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missingProp', lang)} Congregation: location.name`,
+        );
+
+      if (!congregation.features || !congregation.features.length)
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missingProp', lang)} Congregation: features`,
+        );
+      if (congregation.features.some((feature) => !feature))
+        throw new BadRequestException(
+          `${this.translate('errors.setup.missingProp', lang)} Congregation: feature`,
+        );
+
+      const encryptedPassword = await encryptPassword(user.password);
+
+      return this.dataSource.transaction(async (manager) => {
+        const userRepository = manager.getRepository(User);
+        const roleRepository = manager.getRepository(Role);
+        const congregationRepository = manager.getRepository(Congregation);
+        const locationRepository = manager.getRepository(Location);
+
+        const [userCount, roleCount, congregationCount] = await Promise.all([
+          userRepository.count({
+            where: { deleted_at: IsNull(), deleted_by: IsNull() },
+          }),
+          roleRepository.count({
+            where: { deleted_at: IsNull(), deleted_by: IsNull() },
+          }),
+          congregationRepository.count({
+            where: { deleted_at: IsNull(), deleted_by: IsNull() },
+          }),
+        ]);
+
+        if (userCount || roleCount || congregationCount)
+          throw new ConflictException(
+            this.translate('errors.setup.alreadySetup', lang),
+          );
+
+        const userCreated = userRepository.create({
+          username: user.username.trim(),
+          password: encryptedPassword,
+          name: user.name.trim(),
+        });
+        if (!userCreated)
+          throw new InternalServerErrorException(
+            `${this.translate('errors.setup.errorCreating', lang)} userRepository`,
+          );
+        await userRepository.save(userCreated);
+
+        const roleCreated = roleRepository.create({
+          name: role.name.trim(),
+          full_access: true,
+          created_by: userCreated,
+        });
+        if (!roleCreated)
+          throw new InternalServerErrorException(
+            `${this.translate('errors.setup.errorCreating', lang)} roleRepository`,
+          );
+        await roleRepository.save(roleCreated);
+
+        const locationsCreated = locationRepository.create(
+          congregation.locations.map((location) => ({
+            order: location.order,
+            name: location.name.trim(),
+            address: location.address?.trim() ?? '',
+            created_by: userCreated,
+          })),
+        );
+        if (!locationsCreated.length)
+          throw new InternalServerErrorException(
+            `${this.translate('errors.setup.errorCreating', lang)} locationRepository`,
+          );
+        await locationRepository.save(locationsCreated);
+
+        const congregationCreated = congregationRepository.create({
+          name: congregation.name.trim(),
+          type: congregation.type.trim(),
+          created_by: userCreated,
+          locations: locationsCreated,
+          features: congregation.features
+            .map((feature) => feature.toString().trim())
+            .filter(Boolean) as Feature[],
+        });
+        if (!congregationCreated)
+          throw new InternalServerErrorException(
+            `${this.translate('errors.setup.errorCreating', lang)} congregationRepository`,
+          );
+        await congregationRepository.save(congregationCreated);
+
+        userCreated.roles = [roleCreated];
+        userCreated.congregations = [congregationCreated];
+        userCreated.locations = locationsCreated;
+        await userRepository.save(userCreated);
+
+        const congregationWithRelations = await congregationRepository.findOne({
+          where: { id: congregationCreated.id },
+          relations: {
+            locations: true,
+          },
+        });
+
+        if (!congregationWithRelations)
+          throw new InternalServerErrorException(
+            `${this.translate('errors.setup.errorCreating', lang)} congregationRepository`,
+          );
+
+        return {
+          isSetup: true,
+          congregation: this.mapCongregation(congregationWithRelations),
+        };
+      });
+    } finally {
+      this.setupInProgress = false;
+    }
   }
 }

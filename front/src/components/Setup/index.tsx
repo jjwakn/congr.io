@@ -1,5 +1,5 @@
 import { Box, LinearProgress } from '@mui/material';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useFooter } from '../../hooks/useFooter';
@@ -7,19 +7,17 @@ import { useNotificationContext } from '../../hooks/useNotifications';
 import { useSetup } from '../../hooks/useSetup';
 import { SetupService } from '../../services/setup';
 import { SetupSubmitResponse } from '../../types/setup.types';
-import { API_URL } from '../../utils/constants';
-import { setCongregationToStorage } from '../../utils/storage';
+import { HttpRequestError, httpRequest } from '../../utils/http';
 import AdminStep from './steps/AdminStep';
 import ConfirmStep from './steps/ConfirmStep';
 import CongregationStep from './steps/CongregationStep';
 import FeaturesStep from './steps/FeaturesStep';
 import LocationsStep from './steps/LocationsStep';
-import LogoStep from './steps/LogoStep';
 
 const Progress = ({ activeStep }: { activeStep: number }) => {
   return (
     <Box sx={{ width: '100%', padding: 2 }}>
-      <LinearProgress variant="determinate" value={(100 / 6) * activeStep} />
+      <LinearProgress variant="determinate" value={(100 / 5) * activeStep} />
     </Box>
   );
 };
@@ -28,7 +26,7 @@ const Setup = () => {
   const { markSetupComplete } = useAppContext();
   const { showNotification } = useNotificationContext();
   const { setChildren } = useFooter();
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
   const {
     setupData: data,
     activeStep,
@@ -37,6 +35,7 @@ const Setup = () => {
     setLoading: setLoadingSetup,
     loadingFeatures,
   } = useSetup();
+  const setupSubmittedRef = useRef(false);
 
   const loading = useMemo(
     () => loadingSetup || loadingFeatures,
@@ -63,15 +62,11 @@ const Setup = () => {
   );
 
   const handleFinish = useCallback(async () => {
+    if (setupSubmittedRef.current) return;
+    setupSubmittedRef.current = true;
+
     try {
       setLoadingSetup(true);
-
-      const smallLogo = data.logo.small?.data;
-      const largeLogo = data.logo.large?.data;
-
-      if (!smallLogo || !largeLogo) {
-        throw new Error(t('setup.form.logoRequired'));
-      }
 
       const payload = {
         user: {
@@ -94,35 +89,10 @@ const Setup = () => {
         },
       };
 
-      const formData = new FormData();
-      formData.append('payload', JSON.stringify(payload));
-      formData.append('logoSmall', smallLogo);
-      formData.append('logoLarge', largeLogo);
-
-      const response = await fetch(`${API_URL}/${SetupService.setup.url}`, {
-        method: SetupService.setup.method,
-        headers: {
-          'Accept-Language': i18n.language || 'en',
-        },
-        body: formData,
+      const rawResult = await httpRequest<SetupSubmitResponse>({
+        service: SetupService.setup,
+        data: payload,
       });
-
-      const rawResult = (await response.json()) as unknown;
-
-      if (!response.ok) {
-        let message = t('setup.error.saveFailed');
-        if (
-          rawResult &&
-          typeof rawResult === 'object' &&
-          'message' in rawResult
-        ) {
-          const apiMessage = (rawResult as { message?: string | string[] })
-            .message;
-          if (Array.isArray(apiMessage)) message = apiMessage.join(', ');
-          else if (typeof apiMessage === 'string') message = apiMessage;
-        }
-        throw new Error(message);
-      }
 
       if (
         !rawResult ||
@@ -135,11 +105,17 @@ const Setup = () => {
 
       const result = rawResult as SetupSubmitResponse;
 
-      setCongregationToStorage(result.congregation);
-      markSetupComplete();
+      setChildren(null);
+      markSetupComplete(result.congregation);
       showNotification(t('setup.success.saved'), { severity: 'success' });
     } catch (err) {
-      const error = err instanceof Error ? err.message : String(err);
+      setupSubmittedRef.current = false;
+      const error =
+        err instanceof HttpRequestError
+          ? err.message || t('setup.error.saveFailed')
+          : err instanceof Error
+            ? err.message
+            : String(err);
       showNotification(error, { severity: 'error' });
       console.error('Setup Error', error);
     } finally {
@@ -147,9 +123,9 @@ const Setup = () => {
     }
   }, [
     data,
-    i18n.language,
     markSetupComplete,
     setLoadingSetup,
+    setChildren,
     showNotification,
     t,
   ]);
@@ -157,6 +133,13 @@ const Setup = () => {
   useEffect(() => {
     setChildren(<Progress activeStep={activeStep} />);
   }, [activeStep, setChildren]);
+
+  useEffect(
+    () => () => {
+      setChildren(null);
+    },
+    [setChildren],
+  );
 
   return (
     <Box
@@ -168,6 +151,7 @@ const Setup = () => {
         flexDirection: 'column',
         width: '100%',
         minHeight: '100%',
+        backgroundColor: ({ palette }) => palette.background.paper,
       }}
     >
       {activeStep === 0 && (
@@ -183,14 +167,10 @@ const Setup = () => {
       )}
 
       {activeStep === 3 && (
-        <LogoStep goNext={goNext} goBack={goBack} loading={loading} />
-      )}
-
-      {activeStep === 4 && (
         <AdminStep goNext={goNext} goBack={goBack} loading={loading} />
       )}
 
-      {activeStep === 5 && (
+      {activeStep === 4 && (
         <ConfirmStep
           data={data}
           onFinish={handleFinish}

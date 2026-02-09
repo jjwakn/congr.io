@@ -11,7 +11,5 @@ export interface Congregation extends CommonEntity {
   name: string;
   type: string;
   features?: string[];
-  has_logo_small?: boolean;
-  has_logo_large?: boolean;
   locations: Location[];
 }

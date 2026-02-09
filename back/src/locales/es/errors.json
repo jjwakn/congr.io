@@ -15,7 +15,8 @@
     "usernameExists": "Usuario ya existe"
   },
   "congregation": {
-    "notFound": "Congregación no encontrada"
+    "notFound": "Congregación no encontrada",
+    "logoNotFound": "Logo de congregación no encontrado"
   },
   "location": {
     "notFound": "Ubicación no encontrada"
@@ -23,6 +24,8 @@
   "setup": {
     "alreadySetup": "Sistema ya configurado",
     "missing": "No encontrado en request:",
+    "invalidPayload": "Payload de configuración inválido",
+    "missingCongregationPayload": "Falta el payload de congregación",
     "missingProp": "Propiedad faltante en",
     "errorCreating": "Error creando en repositorio:"
   }

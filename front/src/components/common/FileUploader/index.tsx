@@ -6,6 +6,7 @@ import {
   MouseEventHandler,
   ReactNode,
   useEffect,
+  useId,
   useRef,
   useState,
 } from 'react';
@@ -39,6 +40,7 @@ const FileUploader = ({
   onDelete,
   previewImage,
   previewAlt,
+  previewBackgroundColor,
 }: {
   name?: string;
   hoverTitle?: ReactNode;
@@ -61,12 +63,16 @@ const FileUploader = ({
   onDelete?: () => void;
   previewImage?: string;
   previewAlt?: string;
+  previewBackgroundColor?: string;
 }) => {
   const labelRef = useRef<HTMLLabelElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [localFile, setLocalFile] = useState<FileList | File | null>(null);
   const [error, setError] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const uniqueId = useId().replace(/:/g, '');
+  const menuId = `file-uploader-menu-${uniqueId}`;
+  const menuButtonId = `${menuId}-button`;
   const file = fileOrFiles ?? localFile;
   const uploaded = Boolean(file || previewImage);
 
@@ -150,15 +156,6 @@ const FileUploader = ({
     e.stopPropagation();
   };
 
-  const handleClick: MouseEventHandler<HTMLInputElement> = (e) => {
-    e.stopPropagation();
-
-    if (inputRef?.current) {
-      inputRef.current.value = '';
-      inputRef.current.click();
-    }
-  };
-
   const handleInputChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const allFiles = e.target.files;
     if (!allFiles) return;
@@ -192,10 +189,9 @@ const FileUploader = ({
       overRide={hasCustomZone}
       ref={labelRef}
       htmlFor={name}
-      onClick={blockEvent}
+      onClick={uploaded ? blockEvent : undefined}
     >
       <input
-        onClick={handleClick}
         onChange={handleInputChange}
         accept={acceptedExt(types)}
         ref={inputRef}
@@ -207,8 +203,8 @@ const FileUploader = ({
       {!hasCustomZone && showMenu && uploaded && (
         <>
           <IconButton
-            id="file-uploader-menu-button"
-            aria-controls={anchorEl ? 'file-uploader-menu' : undefined}
+            id={menuButtonId}
+            aria-controls={anchorEl ? menuId : undefined}
             aria-haspopup="true"
             aria-expanded={anchorEl ? 'true' : undefined}
             data-file-uploader-no-open="true"
@@ -228,7 +224,7 @@ const FileUploader = ({
             <MoreVertIcon />
           </IconButton>
           <Menu
-            id="file-uploader-menu"
+            id={menuId}
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
@@ -255,13 +251,17 @@ const FileUploader = ({
             borderRadius: '8px',
             position: 'relative',
             boxSizing: 'border-box',
+            cursor: uploaded ? 'default' : 'pointer',
+            backgroundColor: previewImage
+              ? (previewBackgroundColor ?? 'transparent')
+              : 'transparent',
           }}
         >
           {showFloatingMenu && (
             <>
               <IconButton
-                id="file-uploader-menu-button"
-                aria-controls={anchorEl ? 'file-uploader-menu' : undefined}
+                id={menuButtonId}
+                aria-controls={anchorEl ? menuId : undefined}
                 aria-haspopup="true"
                 aria-expanded={anchorEl ? 'true' : undefined}
                 data-file-uploader-no-open="true"
@@ -282,7 +282,7 @@ const FileUploader = ({
                 <MoreVertIcon />
               </IconButton>
               <Menu
-                id="file-uploader-menu"
+                id={menuId}
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
@@ -367,7 +367,6 @@ const FileUploader = ({
                 sx={{
                   span: {
                     textDecoration: 'underline',
-                    // fontSize: '14px',
                     color: ({ palette }) => palette.text.secondary,
                   },
                 }}

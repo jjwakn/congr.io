@@ -2,38 +2,91 @@ import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNotificationContext } from '../hooks/useNotifications';
 import { SetupService } from '../services/setup';
+import { Congregation } from '../types/congregation.types';
 import { IsSetupResponse } from '../types/setup.types';
 import { httpRequest } from '../utils/http';
-import { getIsSetupFromStorage, setIsSetupToStorage } from '../utils/storage';
+import {
+  clearCongregationFromStorage,
+  getCongregationFromStorage,
+  getIsSetupFromStorage,
+  setCongregationToStorage,
+  setIsSetupToStorage,
+} from '../utils/storage';
 import { AppContext } from './AppContext';
 
+let setupStatusRequest: Promise<IsSetupResponse> | null = null;
+
+const toTimestamp = (value?: Date | string | null): number => {
+  if (!value) return 0;
+  const date = value instanceof Date ? value : new Date(value);
+  const timestamp = date.getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
+const shouldSyncCongregation = (
+  localCongregation: Congregation | null,
+  remoteCongregation: Congregation,
+): boolean => {
+  if (!localCongregation) return true;
+
+  const localUpdated = toTimestamp(localCongregation.updated_at);
+  const remoteUpdated = toTimestamp(remoteCongregation.updated_at);
+
+  if (!localUpdated || !remoteUpdated) return true;
+  return remoteUpdated > localUpdated;
+};
+
+const fetchSetupStatus = (forceRefresh = false) => {
+  if (forceRefresh || !setupStatusRequest) {
+    setupStatusRequest = httpRequest<IsSetupResponse>({
+      service: SetupService.isSetup,
+    }).catch((error) => {
+      setupStatusRequest = null;
+      throw error;
+    });
+  }
+  return setupStatusRequest;
+};
+
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [isSetup, setIsSetup] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isSetup, setIsSetup] = useState<boolean>(() =>
+    getIsSetupFromStorage(),
+  );
+  const [congregation, setCongregation] = useState<Congregation | null>(() =>
+    getCongregationFromStorage(),
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(
+    () => !getIsSetupFromStorage(),
+  );
   const { showNotification } = useNotificationContext();
   const { t } = useTranslation();
 
   const checkIsSetup = useCallback(
     async (forceRefresh = false) => {
-      if (!forceRefresh) {
-        const storedIsSetup = getIsSetupFromStorage();
-        if (storedIsSetup) {
-          setIsSetup(true);
-          setIsLoading(false);
-          return;
-        }
-      }
+      const shouldShowLoading = forceRefresh || !isSetup;
+      if (shouldShowLoading) setIsLoading(true);
 
-      setIsLoading(true);
       try {
-        const data = await httpRequest<IsSetupResponse>({
-          service: SetupService.isSetup,
-        });
+        const data = await fetchSetupStatus(forceRefresh);
 
         const setupStatus = !!data?.isSetup;
-
         setIsSetup(setupStatus);
-        if (setupStatus) setIsSetupToStorage(true);
+        setIsSetupToStorage(setupStatus);
+
+        if (setupStatus && data?.congregation) {
+          const localCongregation =
+            congregation ?? getCongregationFromStorage();
+
+          if (shouldSyncCongregation(localCongregation, data.congregation)) {
+            setCongregation(data.congregation);
+            setCongregationToStorage(data.congregation);
+          } else if (!congregation && localCongregation) {
+            setCongregation(localCongregation);
+          }
+        } else if (!setupStatus) {
+          setCongregation(null);
+          clearCongregationFromStorage();
+        }
 
         if (!data || !data.isSetup)
           showNotification(t('setup.error.notFound'), { severity: 'warning' });
@@ -43,33 +96,39 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
         console.error('AppProvider Error', error);
 
-        setIsSetup(false);
+        const storedIsSetup = getIsSetupFromStorage();
+        if (!isSetup && !storedIsSetup) {
+          setIsSetup(false);
+          setIsSetupToStorage(false);
+        }
       } finally {
-        setIsLoading(false);
+        if (shouldShowLoading) setIsLoading(false);
       }
     },
-    [showNotification, t],
+    [congregation, isSetup, showNotification, t],
   );
 
-  const markSetupComplete = useCallback(() => {
+  const markSetupComplete = useCallback((nextCongregation: Congregation) => {
     setIsSetup(true);
+    setIsLoading(false);
     setIsSetupToStorage(true);
+    setCongregation(nextCongregation);
+    setCongregationToStorage(nextCongregation);
+    setupStatusRequest = Promise.resolve({
+      isSetup: true,
+      congregation: nextCongregation,
+    });
   }, []);
 
   useEffect(() => {
-    const storedIsSetup = getIsSetupFromStorage();
-    if (storedIsSetup) {
-      setIsSetup(true);
-      setIsLoading(false);
-    } else {
-      checkIsSetup();
-    }
+    void checkIsSetup();
   }, [checkIsSetup]);
 
   return (
     <AppContext.Provider
       value={{
         isSetup,
+        congregation,
         isLoading,
         refreshIsSetup: () => checkIsSetup(true),
         markSetupComplete,

@@ -6,40 +6,36 @@ import {
   CardContent,
   CircularProgress,
   TextField,
-  Typography,
 } from '@mui/material';
-import { ChangeEvent, FormEvent, useState } from 'react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { LogoBig } from '../../components/Logos';
+import { LoginCredentials } from '../../contexts/AuthContext';
 import { useAuth } from '../../hooks/useAuth';
 
 const Login = () => {
-  const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
+  const { login, isLoading } = useAuth();
   const [error, setError] = useState('');
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginCredentials>({
+    defaultValues: {
+      username: '',
+      password: '',
+    },
+  });
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const onSubmit = async (values: LoginCredentials) => {
     setError('');
-
     try {
-      await login(formData);
-      // Login successful - the auth context will handle the state update
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Login failed');
-    } finally {
-      setIsLoading(false);
+      await login(values);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('auth.loginFailed'));
     }
   };
 
@@ -55,33 +51,52 @@ const Login = () => {
     >
       <Card sx={{ maxWidth: 400, width: '100%' }}>
         <CardContent sx={{ padding: 3 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
-            Welcome
-          </Typography>
+          <LogoBig
+            alt={t('auth.logoAlt')}
+            size={160}
+            containerSx={{
+              display: 'flex',
+              justifyContent: 'center',
+              mb: 2,
+            }}
+            imageSx={{
+              maxWidth: '100%',
+            }}
+          />
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+          <Box
+            component="form"
+            onSubmit={handleSubmit(onSubmit)}
+            sx={{ mt: 2 }}
+          >
             <TextField
               fullWidth
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange}
+              label={t('form.field.username')}
+              type="text"
               margin="normal"
-              required
-              autoComplete="email"
+              autoComplete="username"
+              error={Boolean(errors.username)}
+              helperText={
+                errors.username
+                  ? `${t('form.field.username')} ${t('form.error.isRequired')}`
+                  : undefined
+              }
+              {...register('username', { required: true })}
             />
 
             <TextField
               fullWidth
-              label="Password"
-              name="password"
+              label={t('form.field.password')}
               type="password"
-              value={formData.password}
-              onChange={handleInputChange}
               margin="normal"
-              required
               autoComplete="current-password"
+              error={Boolean(errors.password)}
+              helperText={
+                errors.password
+                  ? `${t('form.field.password')} ${t('form.error.isRequired')}`
+                  : undefined
+              }
+              {...register('password', { required: true })}
             />
 
             {error && (
@@ -98,7 +113,7 @@ const Login = () => {
               disabled={isLoading}
               sx={{ mt: 3 }}
             >
-              {isLoading ? <CircularProgress size={24} /> : 'Sign In'}
+              {isLoading ? <CircularProgress size={24} /> : t('auth.signIn')}
             </Button>
           </Box>
         </CardContent>

@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Setup from '../../components/Setup';
-import { SetupProvider } from '../../contexts/SetupProvider';
 
 const SetupPage = () => {
   const { t } = useTranslation();
@@ -10,11 +9,7 @@ const SetupPage = () => {
     document.title = t('setup.title');
   }, [t]);
 
-  return (
-    <SetupProvider>
-      <Setup />
-    </SetupProvider>
-  );
+  return <Setup />;
 };
 
 export default SetupPage;

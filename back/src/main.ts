@@ -39,8 +39,13 @@ async function bootstrap() {
     SwaggerModule.setup(`api-${lang}`, app, document);
   });
 
+  const corsOrigins = process.env.CORS_ORIGIN?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: '*',
+    origin: corsOrigins?.length ? corsOrigins : true,
+    credentials: true,
   });
 
   await app.listen(PORT);

@@ -4,9 +4,4 @@ export const CONGREGATION_KEY = 'congregation_data';
 
 export const API_URL = import.meta.env.VITE_API_URL ?? '';
 
-export const COMMON_DEFAULT_VALUES = {
-  id: '',
-  enabled: true,
-};
-
-export const ImageTypes = ['JPG', 'PNG', 'GIF', 'JPEG'];
+export const FOOTER_HEIGHT = '40px';

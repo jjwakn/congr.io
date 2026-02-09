@@ -2,33 +2,112 @@ import i18n from '../../i18n';
 import { API_URL } from './constants';
 
 type HttpMethods = 'POST' | 'GET' | 'PUT' | 'DELETE';
+type HttpResponseType = 'json' | 'text' | 'raw';
+type HttpScalar = string | boolean | number | null | undefined;
+type HttpJsonData = {
+  [key: string]: HttpScalar | HttpJsonData | HttpScalar[] | HttpJsonData[];
+};
+type HttpData = FormData | HttpJsonData;
 
 interface ServiceType {
   url: string;
   method: HttpMethods;
 }
+
 export interface ModuleType {
   [key: string]: ServiceType;
 }
 
 export const HttpService: ModuleType = {};
 
-export const httpRequest = async <ResponseType extends object>({
+export class HttpRequestError<TPayload = unknown> extends Error {
+  statusCode: number;
+  payload: TPayload | null;
+
+  constructor({
+    statusCode,
+    message,
+    payload = null,
+  }: {
+    statusCode: number;
+    message: string;
+    payload?: TPayload | null;
+  }) {
+    super(message);
+    this.name = 'HttpRequestError';
+    this.statusCode = statusCode;
+    this.payload = payload;
+  }
+}
+
+const getLegacyAuthToken = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem('auth_token');
+  } catch {
+    return null;
+  }
+};
+
+const parseResponseBody = async (
+  response: Response,
+): Promise<unknown | null> => {
+  if (response.status === 204) return null;
+
+  const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
+  try {
+    if (contentType.includes('application/json')) return await response.json();
+    return await response.text();
+  } catch {
+    return null;
+  }
+};
+
+const parseErrorMessage = (payload: unknown, fallback: string): string => {
+  if (payload && typeof payload === 'object' && 'message' in payload) {
+    const message = (payload as { message?: string | string[] }).message;
+    if (Array.isArray(message)) return message.join(', ');
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+
+  if (typeof payload === 'string' && payload.trim()) return payload;
+
+  return fallback || i18n.t('http.error.requestFailed');
+};
+
+export const httpRequest = async <ResponseType>({
   service,
   data,
   url: baseURL = API_URL,
+  headers,
+  responseType = 'json',
+  requestInit,
 }: {
   service: ServiceType;
-  data?: {
-    [key: string]: string | boolean | number;
-  };
+  data?: HttpData;
   url?: string;
+  headers?: Record<string, string>;
+  responseType?: HttpResponseType;
+  requestInit?: Omit<RequestInit, 'method' | 'headers' | 'body'>;
 }) => {
-  let url = `${baseURL}/${service.url}`;
+  const isAbsoluteUrl = /^https?:\/\//i.test(service.url);
+  const cleanBaseURL = baseURL.replace(/\/+$/, '');
+  const cleanServiceURL = service.url.replace(/^\/+/, '');
+
+  let url = isAbsoluteUrl
+    ? service.url
+    : cleanServiceURL
+      ? `${cleanBaseURL}/${cleanServiceURL}`
+      : cleanBaseURL;
+
+  const isFormData =
+    typeof FormData !== 'undefined' && data instanceof FormData;
+  const jsonData =
+    data && !isFormData ? ({ ...data } as Record<string, unknown>) : undefined;
 
   // Replacing path params
   if (url.match(/{[A-z]+}/gi)) {
-    if (!data || !Object.keys(data).length)
+    if (!jsonData || !Object.keys(jsonData).length)
       throw new Error(i18n.t('http.error.emptyData'));
 
     const pathParams = url
@@ -37,48 +116,76 @@ export const httpRequest = async <ResponseType extends object>({
       .map((x: string) => x.replace('{', '').replace('}', ''));
 
     pathParams.forEach((param) => {
-      if (!(param in data))
+      if (!(param in jsonData))
         throw new Error(i18n.t('http.error.paramNotFound', { param, url }));
 
-      const value = data[param] ?? '';
+      const value = jsonData[param] ?? '';
 
       url = url.replace(`{${param}}`, value.toString());
 
       // deleting so it wont be included in body anymore
-      delete data[param];
+      delete jsonData[param];
     });
   }
 
   // Converting to query params if method is GET
-  if (service.method === 'GET' && data && Object.keys(data).length) {
-    url += `?`;
-    const queryParams = Object.entries(data).map(([key, value]) => {
+  if (service.method === 'GET' && jsonData && Object.keys(jsonData).length) {
+    const queryParams = Object.entries(jsonData).map(([key, value]) => {
       if (value === null || value === undefined || value === '')
         throw new Error(i18n.t('http.error.missingParam', { key }));
+      if (typeof value === 'object')
+        throw new Error(i18n.t('http.error.missingParam', { key }));
 
-      return `${key}=${value}`;
+      return `${encodeURIComponent(key)}=${encodeURIComponent(
+        value.toString(),
+      )}`;
     });
-    url += queryParams.join('&');
+
+    const separator = url.includes('?') ? '&' : '?';
+    url += `${separator}${queryParams.join('&')}`;
+  }
+
+  const requestHeaders: Record<string, string> = {
+    'Accept-Language': i18n.language || 'en',
+    ...headers,
+  };
+  const legacyAuthToken = getLegacyAuthToken();
+  if (legacyAuthToken && !requestHeaders.Authorization)
+    requestHeaders.Authorization = `Bearer ${legacyAuthToken}`;
+
+  if (!isFormData && service.method !== 'GET')
+    requestHeaders['Content-Type'] = requestHeaders['Content-Type']
+      ? requestHeaders['Content-Type']
+      : 'application/json';
+
+  let requestBody: BodyInit | undefined;
+  if (service.method !== 'GET') {
+    if (isFormData) requestBody = data as FormData;
+    else if (jsonData && Object.keys(jsonData).length)
+      requestBody = JSON.stringify(jsonData);
   }
 
   const response = await fetch(url, {
+    ...requestInit,
     method: service.method,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept-Language': i18n.language || 'en',
-    },
-    ...(typeof data === 'object' &&
-      Object.keys(data).length &&
-      service.method !== 'GET' && { body: JSON.stringify(data) }),
+    headers: requestHeaders,
+    credentials: requestInit?.credentials ?? 'include',
+    ...(requestBody ? { body: requestBody } : {}),
   });
 
-  const result: ResponseType = await response.json();
+  if (!response.ok) {
+    const payload = await parseResponseBody(response);
+    throw new HttpRequestError({
+      statusCode: response.status,
+      message: parseErrorMessage(payload, response.statusText),
+      payload,
+    });
+  }
 
-  if (
-    'statusCode' in (result as object) &&
-    (result as { statusCode: number; message: string }).statusCode === 401
-  )
-    throw new Error('message' in result ? `${result.message}` : 'Error');
+  if (responseType === 'raw') return response as ResponseType;
 
-  return result;
+  const parsed = await parseResponseBody(response);
+  if (responseType === 'text') return (parsed ?? '') as ResponseType;
+
+  return parsed as ResponseType;
 };

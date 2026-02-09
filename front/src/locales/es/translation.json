@@ -3,7 +3,8 @@
     "error": {
       "emptyData": "Data vacia",
       "paramNotFound": "Parametro {{param}} no encontrado en {{url}}",
-      "missingParam": "GET: {{key}} debe tener un valor que no sea  null, undefined o string vacio"
+      "missingParam": "GET: {{key}} debe tener un valor que no sea  null, undefined o string vacio",
+      "requestFailed": "Solicitud fallida"
     }
   },
   "context": {
@@ -63,19 +64,6 @@
       "locationsText": "Las ubicaciones de tu {{type}}. Las ubicaciones pueden compartir datos entre ellas",
       "locationDefault": "Ubicación Principal",
 
-      "logo": "Imagen de Logotipo",
-      "logoText": "Añade un logo que se mostrara a lo largo de toda el app",
-      "logoTypeError": "Archivo de imagen no valido",
-      "logoRequired": "Ambos logos son requeridos",
-      "smallLogo": "Logo pequeño",
-      "largeLogo": "Logo grande",
-      "uploadSmallLogo": "Sube o arrastra tu logo pequeño aquí",
-      "uploadLargeLogo": "Sube o arrastra tu logo grande aquí",
-      "smallLogoPreviewAlt": "Vista previa del logo pequeño",
-      "largeLogoPreviewAlt": "Vista previa del logo grande",
-      "uploadLogo": "Sube o arrastra tu logo aquí",
-      "supportedFormats": "Formatos soportados:",
-
       "user": "Usuario principal",
       "userSubtitle": "El usuario principal que administrará el sistema. Podemos añadir más o editarlo luego",
       "fullAccessRoleName": "Nombre Rol",
@@ -86,18 +74,21 @@
     "confirm": {
       "review": "Revisa y confirma",
       "none": "Ninguno",
-      "preview": "Vista previa",
-      "small": "Pequeño",
-      "large": "Grande",
       "fullAccessRole": "Rol de acceso completo",
       "sections": {
         "congregation": "{{type}}",
         "features": "Módulos",
         "locations": "Ubicaciones",
-        "logos": "Logos",
         "admin": "Administrador"
       }
     }
+  },
+  "auth": {
+    "title": "Bienvenido",
+    "subtitle": "Inicia sesión para continuar",
+    "signIn": "Ingresar",
+    "loginFailed": "No se pudo iniciar sesión",
+    "logoAlt": "Logo de congregación"
   },
   "components": {
     "loading": {
@@ -114,10 +105,66 @@
       "uploadAnother": "¿Subir otro?"
     }
   },
+  "footer": {
+    "languageAriaLabel": "Selector de idioma",
+    "themeAriaLabel": "Selector de tema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "backToApp": "Volver a la app"
+  },
+  "brandingGenerator": {
+    "title": "Generador de Marca",
+    "subtitle": "Genera assets estáticos de marca en tu navegador y luego cópialos en la carpeta public del frontend.",
+    "warningRebuild": "Los cambios de marca requieren reconstrucción/redeploy; no se actualizarán en una implementación ya en ejecución.",
+    "smallLogo": "Logo pequeño",
+    "bigLogo": "Logo grande",
+    "selectSmallLogo": "Seleccionar logo pequeño",
+    "selectBigLogo": "Seleccionar logo grande",
+    "backgroundMode": "Fondo del ícono",
+    "backgroundTransparent": "Transparente",
+    "backgroundWhite": "Blanco",
+    "backgroundBlack": "Negro",
+    "roundedCorners": "Chip de rectángulo redondeado",
+    "cornerRadius": "Radio de esquina",
+    "appName": "Nombre del manifest",
+    "shortName": "Nombre corto del manifest",
+    "generateButton": "Generar y descargar ZIP",
+    "generating": "Generando...",
+    "success": {
+      "generated": "ZIP generado correctamente."
+    },
+    "errors": {
+      "missingFiles": "Sube ambos logos antes de generar.",
+      "generateFailed": "No se pudieron generar los assets de marca."
+    },
+    "instructionsTitle": "Cómo aplicar los archivos generados",
+    "instructionsIntro": "Después de descargar el ZIP, coloca su contenido en el repositorio frontend:",
+    "instructions": {
+      "step1": "Descarga el ZIP desde esta página.",
+      "step2": "Extrae el ZIP localmente.",
+      "step3": "Copia `branding/`, `icons/` y `favicon.ico` dentro de `apps/front/public/` (o `front/public/` en este proyecto).",
+      "step4": "Revisa `public/manifest.webmanifest` y ajusta name, short_name y los colores de tema/fondo si hace falta.",
+      "step5": "Reconstruye y vuelve a desplegar el frontend."
+    },
+    "previewsTitle": "Vistas previas de assets generados",
+    "previewsIntro": "Estas vistas previas reflejan los archivos que se incluirán en el ZIP.",
+    "previewsLoading": "Generando vistas previas...",
+    "previewsEmpty": "Sube ambos logos para previsualizar los assets generados.",
+    "previews": {
+      "smallLogo": "Logo pequeño",
+      "bigLogo": "Logo grande",
+      "icon": "Vista previa de ícono de app",
+      "favicon": "Vista previa de favicon"
+    }
+  },
   "pages": {
     "dashboard": {
       "welcomeTitle": "Bienvenido a tu Panel",
-      "successMessage": "Tu congregación está configurada exitosamente y lista para usar."
+      "successMessage": "Tu congregación está configurada exitosamente y lista para usar.",
+      "modules": "Módulos",
+      "noModules": "No hay módulos disponibles para esta congregación.",
+      "moduleNotFound": "Módulo no encontrado. Selecciona uno en la barra lateral.",
+      "logout": "Cerrar sesión"
     }
   }
 }

@@ -35,12 +35,20 @@ export interface TokenPayload {
 }
 
 export interface HeadersType {
-  authorization: string;
-  [key: string]: string;
+  authorization?: string;
+  [key: string]: string | undefined;
 }
 
 export interface RequestType {
   headers: HeadersType;
+  user?: {
+    userId: string;
+    username: string;
+    auth: {
+      fullAccess: boolean;
+      permissions: { [key: string]: string[] };
+    };
+  };
 }
 
 export interface CommonEntity {

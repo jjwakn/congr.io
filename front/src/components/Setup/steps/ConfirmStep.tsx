@@ -1,5 +1,5 @@
 import { Box, Chip, Divider, Typography } from '@mui/material';
-import { ReactNode, useEffect, useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useSetup } from '../../../hooks/useSetup';
@@ -46,25 +46,6 @@ const FieldRow = ({ label, value }: { label: string; value: ReactNode }) => (
   </Box>
 );
 
-const PreviewImage = ({ src, alt }: { src: string | null; alt: string }) =>
-  src ? (
-    <Box
-      component="img"
-      src={src}
-      alt={alt}
-      sx={{
-        maxWidth: '100%',
-        maxHeight: 120,
-        borderRadius: 1,
-        border: ({ palette }) => `1px solid ${palette.divider}`,
-        display: 'block',
-        objectFit: 'contain',
-      }}
-    />
-  ) : (
-    <Typography variant="body2">-</Typography>
-  );
-
 export const ConfirmStep = ({
   data,
   onFinish,
@@ -87,20 +68,6 @@ export const ConfirmStep = ({
     },
   });
 
-  const smallObjectUrl = useMemo(
-    () =>
-      data.logo.small?.data ? URL.createObjectURL(data.logo.small.data) : null,
-    [data.logo.small],
-  );
-  const largeObjectUrl = useMemo(
-    () =>
-      data.logo.large?.data ? URL.createObjectURL(data.logo.large.data) : null,
-    [data.logo.large],
-  );
-
-  const smallPreviewUrl = data.logo.small?.url ?? smallObjectUrl;
-  const largePreviewUrl = data.logo.large?.url ?? largeObjectUrl;
-
   const featureTitleById = useMemo(() => {
     const byId = new Map<string, string>();
     features.forEach((feature) => {
@@ -108,18 +75,6 @@ export const ConfirmStep = ({
     });
     return byId;
   }, [features]);
-
-  useEffect(() => {
-    return () => {
-      if (smallObjectUrl) URL.revokeObjectURL(smallObjectUrl);
-    };
-  }, [smallObjectUrl]);
-
-  useEffect(() => {
-    return () => {
-      if (largeObjectUrl) URL.revokeObjectURL(largeObjectUrl);
-    };
-  }, [largeObjectUrl]);
 
   return (
     <FormContainer<{ noop: boolean }>
@@ -203,43 +158,6 @@ export const ConfirmStep = ({
                   {t('setup.confirm.none')}
                 </Typography>
               )
-            }
-          />
-        </ConfirmSection>
-
-        <ConfirmSection title={t('setup.confirm.sections.logos')}>
-          <FieldRow
-            label={t('setup.confirm.small')}
-            value={
-              <Typography variant="body2">
-                {data.logo.small?.data?.name ?? data.logo.small?.url ?? '-'}
-              </Typography>
-            }
-          />
-          <FieldRow
-            label={`${t('setup.confirm.small')} ${t('setup.confirm.preview')}`}
-            value={
-              <PreviewImage
-                src={smallPreviewUrl}
-                alt={t('setup.form.smallLogoPreviewAlt')}
-              />
-            }
-          />
-          <FieldRow
-            label={t('setup.confirm.large')}
-            value={
-              <Typography variant="body2">
-                {data.logo.large?.data?.name ?? data.logo.large?.url ?? '-'}
-              </Typography>
-            }
-          />
-          <FieldRow
-            label={`${t('setup.confirm.large')} ${t('setup.confirm.preview')}`}
-            value={
-              <PreviewImage
-                src={largePreviewUrl}
-                alt={t('setup.form.largeLogoPreviewAlt')}
-              />
             }
           />
         </ConfirmSection>

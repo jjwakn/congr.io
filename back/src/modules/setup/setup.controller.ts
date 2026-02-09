@@ -1,63 +1,89 @@
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
+import { I18nLang, I18nService } from 'nestjs-i18n';
 import {
   BadRequestException,
   Body,
   Controller,
   Get,
   Post,
-  UploadedFiles,
-  UseInterceptors,
 } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { SetupService } from './setup.service';
-import type { SetupProps, SetupResponse } from './setup.types';
+import type { IsSetupResponse, SetupResponse } from './setup.types';
+import { SetupPayloadDto, SetupProps } from './setup.types';
 
 @ApiTags('setup')
 @Controller('setup')
 export class SetupController {
-  constructor(private readonly service: SetupService) {}
+  constructor(
+    private readonly service: SetupService,
+    private readonly i18n: I18nService,
+  ) {}
+
+  private translate(key: string, lang?: string): string {
+    return String(this.i18n.t(key, { lang }));
+  }
+
+  private parsePayload(
+    body: (SetupProps & { payload?: string | SetupProps }) | undefined,
+    lang?: string,
+  ): SetupProps {
+    if (!body || typeof body !== 'object') {
+      throw new BadRequestException(
+        `${this.translate('errors.setup.missing', lang)} body`,
+      );
+    }
+
+    if (body.payload === undefined || body.payload === null)
+      return body as SetupProps;
+
+    if (typeof body.payload === 'string') {
+      try {
+        return JSON.parse(body.payload) as SetupProps;
+      } catch {
+        throw new BadRequestException(
+          this.translate('errors.setup.invalidPayload', lang),
+        );
+      }
+    }
+
+    if (typeof body.payload === 'object') return body.payload;
+
+    throw new BadRequestException(
+      this.translate('errors.setup.invalidPayload', lang),
+    );
+  }
 
   @Get()
-  async isSetup() {
+  async isSetup(): Promise<IsSetupResponse> {
     return this.service.isSetup();
   }
 
   @Post()
-  @ApiConsumes('application/json', 'multipart/form-data')
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'logoSmall', maxCount: 1 },
-      { name: 'logoLarge', maxCount: 1 },
-    ]),
-  )
   async setup(
-    @Body() body: SetupProps & { payload?: string },
-    @UploadedFiles()
-    files?: {
-      logoSmall?: Array<{ buffer?: Buffer }>;
-      logoLarge?: Array<{ buffer?: Buffer }>;
-    },
+    @Body() body: SetupProps & { payload?: string | SetupProps },
+    @I18nLang() lang?: string,
   ): Promise<SetupResponse> {
-    const parsedBody = (() => {
-      if (typeof body?.payload === 'string') {
-        try {
-          return JSON.parse(body.payload) as SetupProps;
-        } catch {
-          throw new BadRequestException('Invalid setup payload');
-        }
-      }
-      return body as SetupProps;
-    })();
+    const payload = this.parsePayload(body, lang);
 
-    if (!parsedBody?.congregation)
-      throw new BadRequestException('Missing congregation payload');
+    if (!payload?.congregation)
+      throw new BadRequestException(
+        this.translate('errors.setup.missingCongregationPayload', lang),
+      );
 
-    const smallLogo = files?.logoSmall?.[0]?.buffer;
-    const largeLogo = files?.logoLarge?.[0]?.buffer;
+    const parsedBody = plainToInstance(SetupPayloadDto, payload);
+    const validationErrors = validateSync(parsedBody, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
 
-    if (smallLogo) parsedBody.congregation.logo_small = smallLogo;
-    if (largeLogo) parsedBody.congregation.logo_large = largeLogo;
+    if (validationErrors.length)
+      throw new BadRequestException({
+        message: this.translate('errors.setup.invalidPayload', lang),
+        errors: validationErrors,
+      });
 
-    return this.service.setup(parsedBody);
+    return this.service.setup(parsedBody, lang);
   }
 }

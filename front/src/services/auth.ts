@@ -1,45 +1,71 @@
+import i18n from '../../i18n';
 import { LoginCredentials } from '../contexts/AuthContext';
 import { User } from '../types/user.types';
+import { HttpRequestError, ModuleType, httpRequest } from '../utils/http';
 
-const AUTH_TOKEN_KEY = 'auth_token';
 const USER_DATA_KEY = 'user_data';
+const authHttpService: ModuleType = {
+  login: { url: 'auth/login', method: 'POST' },
+  me: { url: 'auth/me', method: 'GET' },
+  logout: { url: 'auth/logout', method: 'POST' },
+};
+
+interface LoginResponse {
+  user: User;
+}
 
 export const authService = {
-  async login(
-    credentials: LoginCredentials,
-  ): Promise<{ user: User; token: string }> {
-    const response = await fetch('http://localhost:4000/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+  async login(credentials: LoginCredentials): Promise<{ user: User }> {
+    const data = await httpRequest<LoginResponse>({
+      service: authHttpService.login,
+      data: {
+        username: credentials.username,
+        password: credentials.password,
       },
-      body: JSON.stringify(credentials),
     });
 
-    if (!response.ok) {
-      throw new Error('Invalid credentials');
-    }
+    if (!data?.user) throw new Error(i18n.t('auth.loginFailed'));
 
-    const data = await response.json();
-
-    // Store token and user data
-    this.setToken(data.token);
     this.setUserData(data.user);
 
-    return data;
+    return {
+      user: data.user,
+    };
   },
 
-  logout(): void {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
+  async me(): Promise<User | null> {
+    try {
+      const data = await httpRequest<{ user: User }>({
+        service: authHttpService.me,
+      });
+
+      if (!data?.user) return null;
+      this.setUserData(data.user);
+      return data.user;
+    } catch (error) {
+      if (error instanceof HttpRequestError && error.statusCode === 401) {
+        this.clearUserData();
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  async logout(): Promise<void> {
+    try {
+      await httpRequest<{ loggedOut: boolean }>({
+        service: authHttpService.logout,
+      });
+    } catch {
+      // Keep local logout resilient even if server logout fails.
+    } finally {
+      this.clearUserData();
+    }
+  },
+
+  clearUserData(): void {
+    localStorage.removeItem('auth_token');
     localStorage.removeItem(USER_DATA_KEY);
-  },
-
-  getToken(): string | null {
-    return localStorage.getItem(AUTH_TOKEN_KEY);
-  },
-
-  setToken(token: string): void {
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
   },
 
   getUserData(): User | null {
@@ -57,11 +83,6 @@ export const authService = {
   },
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
-  },
-
-  getAuthHeaders(): Record<string, string> {
-    const token = this.getToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    return !!this.getUserData();
   },
 };

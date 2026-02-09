@@ -35,12 +35,13 @@ export class PermissionGuard implements CanActivate {
       const request: RequestType = context.switchToHttp().getRequest();
       const token = request.headers.authorization;
 
-      if (!token)
-        throw new UnauthorizedException(
-          this.i18n.t('errors.token.notIncluded'),
-        );
+      const auth =
+        request.user?.auth ?? (token ? decodeToken(token).auth : undefined);
 
-      const { fullAccess, permissions } = decodeToken(token).auth;
+      if (!auth)
+        throw new UnauthorizedException(this.i18n.t('errors.auth.notIncluded'));
+
+      const { fullAccess, permissions } = auth;
 
       const canDoIt = fullAccess || permissions[section]?.includes(action);
 

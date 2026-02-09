@@ -16,12 +16,19 @@ export class LoginProps {
   password: string;
 }
 
-export interface UserValidated {
+export interface AuthLoginResult {
   user: User;
-  auth: { token: string; fullAccess: boolean; permissions: UserPermission };
+  token: string;
+  auth: { fullAccess: boolean; permissions: UserPermission };
 }
+
+export type UserValidated = AuthLoginResult;
 
 export interface JWTPayload {
   sub: string;
   username: string;
+  auth: {
+    fullAccess: boolean;
+    permissions: UserPermission;
+  };
 }

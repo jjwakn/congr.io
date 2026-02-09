@@ -19,3 +19,13 @@ This project is a **Progressive Web App**.
 - Works offline with cached assets
 - Installs on mobile & desktop
 - Supports push notifications (optional)
+
+---
+
+## 0. Branding (before setup)
+
+Before running the setup flow, open the branding route and follow the on-page instructions:
+
+1. Go to `/branding`
+2. Generate and download the branding package
+3. Copy the generated files into `front/public/` as instructed on that page

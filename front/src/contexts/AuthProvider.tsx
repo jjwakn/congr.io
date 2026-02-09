@@ -1,49 +1,59 @@
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { authService } from '../services/auth';
+import { User } from '../types/user.types';
 import { AuthContext, LoginCredentials } from './AuthContext';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
-
-  const checkAuth = useCallback(() => {
-    // const token = authService.getToken();
-    // const userData = authService.getUserData();
-
-    // if (token && userData) {
-    //   setUser(userData);
-    // }
-
-    setIsLoading(false);
-  }, []);
+  const [user, setUser] = useState<User | null>(() =>
+    authService.getUserData(),
+  );
 
   useEffect(() => {
-    return () => {
-      checkAuth();
+    let active = true;
+
+    const syncSession = async () => {
+      try {
+        const sessionUser = await authService.me();
+        if (!active) return;
+        setUser(sessionUser);
+      } catch {
+        if (!active) return;
+        setUser(null);
+      } finally {
+        if (active) setIsLoading(false);
+      }
     };
-  }, [checkAuth]);
 
-  const login = async ({ email, password }: LoginCredentials) => {
-    console.log({ email, password });
-    // setIsLoading(true);
-    // try {
-    //   const { user: userData } = await authService.login(credentials);
-    //   setUser(userData);
-    // } catch (error) {
-    //   throw error;
-    // } finally {
-    //   setIsLoading(false);
-    // }
-  };
+    void syncSession();
 
-  const logout = () => {
-    // authService.logout();
-    // setUser(null);
-  };
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const login = useCallback(async (credentials: LoginCredentials) => {
+    setIsLoading(true);
+    try {
+      const { user: userData } = await authService.login(credentials);
+      setUser(userData);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    void authService.logout();
+    setUser(null);
+  }, []);
+
+  const isAuthenticated = useMemo(() => Boolean(user), [user]);
 
   return (
     <AuthContext.Provider
       value={{
-        user: null,
-        isAuthenticated: false,
+        user,
+        isAuthenticated,
         isLoading,
         login,
         logout,

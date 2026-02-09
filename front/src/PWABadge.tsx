@@ -1,5 +1,6 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import './PWABadge.css';
+import { httpRequest } from './utils/http';
 
 function PWABadge() {
   // check for updates every hour
@@ -65,16 +66,24 @@ function registerPeriodicSync(
   if (period <= 0) return;
 
   setInterval(async () => {
-    if ('onLine' in navigator && !navigator.onLine) return;
+    try {
+      if ('onLine' in navigator && !navigator.onLine) return;
 
-    const resp = await fetch(swUrl, {
-      cache: 'no-store',
-      headers: {
-        cache: 'no-store',
-        'cache-control': 'no-cache',
-      },
-    });
+      const resp = await httpRequest<Response>({
+        service: { url: swUrl, method: 'GET' },
+        responseType: 'raw',
+        headers: {
+          cache: 'no-store',
+          'cache-control': 'no-cache',
+        },
+        requestInit: {
+          cache: 'no-store',
+        },
+      });
 
-    if (resp?.status === 200) await r.update();
+      if (resp?.status === 200) await r.update();
+    } catch {
+      // Ignore transient update checks.
+    }
   }, period);
 }

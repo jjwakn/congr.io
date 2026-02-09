@@ -40,6 +40,13 @@ const components: ThemeOptions['components'] = {
       },
     ],
   },
+  MuiPaper: {
+    styleOverrides: {
+      root: ({ theme }) => ({
+        backgroundColor: theme.palette.background.default,
+      }),
+    },
+  },
 };
 
 export const commonPalette = {
@@ -63,6 +70,10 @@ const lightTheme = createTheme({
   palette: {
     mode: 'light',
     ...commonPalette,
+    background: {
+      default: '#ffffff',
+      paper: '#ffffffba',
+    },
   },
   components,
 });
