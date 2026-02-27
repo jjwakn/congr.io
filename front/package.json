@@ -1,8 +1,9 @@
 {
   "name": "front",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "API",
   "author": "JJ",
+  "license": "Apache-2.0",
   "private": true,
   "type": "module",
   "scripts": {

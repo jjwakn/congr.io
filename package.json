@@ -1,8 +1,8 @@
 {
   "name": "congr.io",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": true,
-  "license": "MIT",
+  "license": "Apache-2.0",
   "workspaces": [
     "back",
     "front"

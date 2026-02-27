@@ -46,17 +46,33 @@ When accessing the application for the first time:
 
 ## Licensing
 
-This project is source-available for non-commercial use.
+This project is licensed under the Apache License, Version 2.0. See `LICENSE`.
 
-If you wish to:
+You are free to:
 
-- Offer hosting
-- Sell services based on this software
-- Use it commercially
+- Use the software for personal, organizational, and commercial purposes
+- Modify and fork the software
+- Distribute original or modified copies
+- Deploy and self-host it
+- Contribute improvements
 
-You must obtain a commercial license.
+## Philosophy
 
-Contact: jjwakn@gmail.com
+This project is intended to serve churches and ministries.
+
+While the license permits commercial use, we strongly encourage:
+
+- Contributing back to the community
+- Supporting the project financially if monetizing
+- Respecting the spirit of ministry collaboration
+
+---
+
+## Sponsors
+
+If this project helps your church or ministry, please consider supporting it:
+
+- [GitHub Sponsors](https://github.com/sponsors/jjwakn)
 
 ---
 
