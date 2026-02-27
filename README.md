@@ -16,13 +16,3 @@
 
 - [Frontend – Español](./front/README.es.md)
 - [Frontend – English](./front/README.en.md)
-
----
-
-## 📚 Project Docs
-
-- [Contributing](./CONTRIBUTING.md)
-- [Code of Conduct](./CODE_OF_CONDUCT.md)
-- [License](./LICENSE.md)
-- [Security Policy](./SECURITY.md)
-- [Privacy](./PRIVACY.md)
