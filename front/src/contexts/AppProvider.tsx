@@ -61,6 +61,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const { showNotification } = useNotificationContext();
   const { t } = useTranslation();
 
+  useEffect(() => {
+    if (!isSetup) {
+      document.title = t('setup.title');
+      return;
+    }
+
+    const congregationName = congregation?.name?.trim();
+    document.title = congregationName || 'congr.io';
+  }, [congregation?.name, isSetup, t]);
+
   const checkIsSetup = useCallback(
     async (forceRefresh = false) => {
       const shouldShowLoading = forceRefresh || !isSetup;
