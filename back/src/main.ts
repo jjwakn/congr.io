@@ -16,7 +16,6 @@ async function bootstrap() {
     .setDescription('API')
     .setVersion(packageJson.version)
     .build();
-  // SwaggerModule.setup('api', app, document);
 
   const i18n = app.get(I18nService);
 

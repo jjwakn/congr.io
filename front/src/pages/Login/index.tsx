@@ -109,7 +109,6 @@ const Login = () => {
               type="submit"
               fullWidth
               variant="contained"
-              size="large"
               disabled={isLoading}
               sx={{ mt: 3 }}
             >

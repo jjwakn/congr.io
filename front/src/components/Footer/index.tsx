@@ -1,33 +1,17 @@
 import {
   Box,
-  Button,
   FormControl,
   MenuItem,
   Select,
   SelectChangeEvent,
 } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useFooter } from '../../hooks/useFooter';
-import { getBrandingPath, isBrandingPath } from '../../utils/routes';
 import { smallOptionStyle } from '../../utils/theme';
 import { ThemeToggleButton } from '../ThemeToggleButton';
 
 const Footer = () => {
   const { i18n, t } = useTranslation();
-  const { children } = useFooter();
-  const [pathname, setPathname] = useState(() => window.location.pathname);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      setPathname(window.location.pathname);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
 
   const handleChange = useCallback(
     (event: SelectChangeEvent<string>) => {
@@ -38,16 +22,6 @@ const Footer = () => {
     },
     [i18n],
   );
-
-  const handleBrandingNavigation = useCallback(() => {
-    const nextPath = isBrandingPath(pathname)
-      ? '/'
-      : getBrandingPath(i18n.language);
-    if (window.location.pathname === nextPath) return;
-
-    window.history.pushState(null, '', nextPath);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, [i18n.language, pathname]);
 
   return (
     <Box
@@ -65,19 +39,7 @@ const Footer = () => {
         zIndex: (theme) => theme.zIndex.appBar - 1,
       }}
     >
-      {children ? children : null}
-
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1 }}>
-        {isBrandingPath(pathname) ? (
-          <Button
-            variant="text"
-            size="small"
-            onClick={handleBrandingNavigation}
-          >
-            {t('footer.backToApp')}
-          </Button>
-        ) : null}
-
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <ThemeToggleButton />
 
         <FormControl size="small" variant="outlined" sx={{ minWidth: 50 }}>

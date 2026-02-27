@@ -20,6 +20,12 @@ export class User extends CommonEntity {
   @Column({ nullable: false })
   name: string;
 
+  @Column({ type: 'int', nullable: false, default: 0 })
+  failed_login_attempts: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  locked_at?: Date | null;
+
   @ManyToMany(() => Role, { onDelete: 'NO ACTION', onUpdate: 'NO ACTION' })
   @JoinTable({
     name: 'user_role',

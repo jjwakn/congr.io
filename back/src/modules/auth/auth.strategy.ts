@@ -19,7 +19,9 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
     const user = await this.service.validateUser(data);
 
     if (!user)
-      throw new UnauthorizedException(this.i18n.t('errors.auth.userNotFound'));
+      throw new UnauthorizedException(
+        this.i18n.t('errors.auth.invalidCredentials'),
+      );
 
     return user;
   }

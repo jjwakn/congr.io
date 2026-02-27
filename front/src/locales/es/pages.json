@@ -2,9 +2,48 @@
   "dashboard": {
     "welcomeTitle": "Bienvenido a tu Panel",
     "successMessage": "Tu congregación está configurada exitosamente y lista para usar.",
+    "home": "Inicio",
     "modules": "Módulos",
     "noModules": "No hay módulos disponibles para esta congregación.",
     "moduleNotFound": "Módulo no encontrado. Selecciona uno en la barra lateral.",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "settings": "Configuración"
+  },
+  "settings": {
+    "title": "Configuración",
+    "subtitle": "Administra la apariencia y el idioma de tu congregación.",
+    "themeMode": {
+      "label": "Modo de tema",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "ariaLabel": "Cambiar modo de tema",
+      "toggleToLight": "Cambiar a modo claro",
+      "toggleToDark": "Cambiar a modo oscuro"
+    },
+    "language": {
+      "label": "Idioma",
+      "english": "Inglés",
+      "spanish": "Español"
+    },
+    "lightMode": "Paleta Modo Claro",
+    "darkMode": "Paleta Modo Oscuro",
+    "fields": {
+      "primary": "Primario",
+      "secondary": "Secundario",
+      "backgroundDefault": "Fondo 1",
+      "backgroundPaper": "Fondo 2"
+    },
+    "actions": {
+      "save": "Guardar",
+      "reset": "Restablecer"
+    },
+    "frontendVersion": "Versión del frontend: {{version}}",
+    "success": {
+      "saved": "La paleta de tema se guardó correctamente."
+    },
+    "error": {
+      "saveFailed": "No se pudo guardar la paleta de tema.",
+      "loadFailed": "No se pudo cargar la paleta de tema."
+    }
   }
 }

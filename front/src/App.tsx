@@ -4,7 +4,6 @@ import Layout from './components/Layout';
 import Loading from './components/Loading';
 import { AppProvider } from './contexts/AppProvider';
 import { AuthProvider } from './contexts/AuthProvider';
-import { FooterProvider } from './contexts/FooterProvider';
 import { SetupProvider } from './contexts/SetupProvider';
 import { useAppContext } from './hooks/useAppContext';
 import { useAuth } from './hooks/useAuth';
@@ -16,9 +15,9 @@ import { getLocalizedPathname, isBrandingPath } from './utils/routes';
 
 const AppContent = () => {
   const { isLoading, isSetup } = useAppContext();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isSessionLoading } = useAuth();
 
-  return isLoading || authLoading ? (
+  return isLoading || isSessionLoading ? (
     <Loading />
   ) : !isSetup ? (
     <Setup />
@@ -26,6 +25,20 @@ const AppContent = () => {
     <Dashboard />
   ) : (
     <Login />
+  );
+};
+
+const AppShell = () => {
+  const { isLoading, isSetup } = useAppContext();
+  const { isAuthenticated, isSessionLoading } = useAuth();
+
+  const showFooter =
+    !isLoading && !isSessionLoading && (!isSetup || !isAuthenticated);
+
+  return (
+    <Layout showFooter={showFooter}>
+      <AppContent />
+    </Layout>
   );
 };
 
@@ -65,22 +78,16 @@ const App = () => {
 
   if (isBrandingPath(pathname))
     return (
-      <FooterProvider>
-        <Layout>
-          <BrandingPage />
-        </Layout>
-      </FooterProvider>
+      <Layout>
+        <BrandingPage />
+      </Layout>
     );
 
   return (
     <AppProvider>
       <AuthProvider>
         <SetupProvider>
-          <FooterProvider>
-            <Layout>
-              <AppContent />
-            </Layout>
-          </FooterProvider>
+          <AppShell />
         </SetupProvider>
       </AuthProvider>
     </AppProvider>

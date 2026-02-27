@@ -1,8 +1,7 @@
 import { Box, LinearProgress } from '@mui/material';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../../hooks/useAppContext';
-import { useFooter } from '../../hooks/useFooter';
 import { useNotificationContext } from '../../hooks/useNotifications';
 import { useSetup } from '../../hooks/useSetup';
 import { SetupService } from '../../services/setup';
@@ -25,7 +24,6 @@ const Progress = ({ activeStep }: { activeStep: number }) => {
 const Setup = () => {
   const { markSetupComplete } = useAppContext();
   const { showNotification } = useNotificationContext();
-  const { setChildren } = useFooter();
   const { t } = useTranslation();
   const {
     setupData: data,
@@ -43,22 +41,12 @@ const Setup = () => {
   );
 
   const goNext = useCallback(
-    () =>
-      setActiveStep((step) => {
-        const next = step + 1;
-        setChildren(<Progress activeStep={next} />);
-        return next;
-      }),
-    [setActiveStep, setChildren],
+    () => setActiveStep((step) => step + 1),
+    [setActiveStep],
   );
   const goBack = useCallback(
-    () =>
-      setActiveStep((step) => {
-        const next = step - 1;
-        setChildren(<Progress activeStep={next} />);
-        return next;
-      }),
-    [setActiveStep, setChildren],
+    () => setActiveStep((step) => step - 1),
+    [setActiveStep],
   );
 
   const handleFinish = useCallback(async () => {
@@ -105,7 +93,6 @@ const Setup = () => {
 
       const result = rawResult as SetupSubmitResponse;
 
-      setChildren(null);
       markSetupComplete(result.congregation);
       showNotification(t('setup.success.saved'), { severity: 'success' });
     } catch (err) {
@@ -121,25 +108,7 @@ const Setup = () => {
     } finally {
       setLoadingSetup(false);
     }
-  }, [
-    data,
-    markSetupComplete,
-    setLoadingSetup,
-    setChildren,
-    showNotification,
-    t,
-  ]);
-
-  useEffect(() => {
-    setChildren(<Progress activeStep={activeStep} />);
-  }, [activeStep, setChildren]);
-
-  useEffect(
-    () => () => {
-      setChildren(null);
-    },
-    [setChildren],
-  );
+  }, [data, markSetupComplete, setLoadingSetup, showNotification, t]);
 
   return (
     <Box
@@ -154,6 +123,8 @@ const Setup = () => {
         backgroundColor: ({ palette }) => palette.background.paper,
       }}
     >
+      <Progress activeStep={activeStep} />
+
       {activeStep === 0 && (
         <CongregationStep goNext={goNext} loading={loading} />
       )}

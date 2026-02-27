@@ -11,7 +11,9 @@ import {
   getIsSetupFromStorage,
   setCongregationToStorage,
   setIsSetupToStorage,
+  setThemePaletteConfigToStorage,
 } from '../utils/storage';
+import { DEFAULT_THEME_PALETTE_CONFIG } from '../utils/theme';
 import { AppContext } from './AppContext';
 
 let setupStatusRequest: Promise<IsSetupResponse> | null = null;
@@ -93,9 +95,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           } else if (!congregation && localCongregation) {
             setCongregation(localCongregation);
           }
+
+          setThemePaletteConfigToStorage(
+            data.congregation.theme_palette ?? DEFAULT_THEME_PALETTE_CONFIG,
+          );
         } else if (!setupStatus) {
           setCongregation(null);
           clearCongregationFromStorage();
+          setThemePaletteConfigToStorage(DEFAULT_THEME_PALETTE_CONFIG);
         }
 
         if (!data || !data.isSetup)
@@ -124,6 +131,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setIsSetupToStorage(true);
     setCongregation(nextCongregation);
     setCongregationToStorage(nextCongregation);
+    setThemePaletteConfigToStorage(
+      nextCongregation.theme_palette ?? DEFAULT_THEME_PALETTE_CONFIG,
+    );
     setupStatusRequest = Promise.resolve({
       isSetup: true,
       congregation: nextCongregation,

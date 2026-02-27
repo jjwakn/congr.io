@@ -9,6 +9,12 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Configuration } from '../configurations/configurations.entity';
+import { ConfigurationsService } from '../configurations/configurations.service';
+import {
+  DEFAULT_THEME_PALETTE_CONFIG,
+  THEME_PALETTE_CONFIG_KEY,
+} from '../configurations/configurations.types';
 import { Congregation } from '../congregation/congregation.entity';
 import { Location } from '../location/location.entity';
 import { Role } from '../role/role.entity';
@@ -39,6 +45,8 @@ export class SetupService {
     @InjectRepository(Location)
     private locationRepository: Repository<Location>,
 
+    private readonly configurationsService: ConfigurationsService,
+
     private readonly i18n: I18nService,
   ) {}
 
@@ -46,7 +54,14 @@ export class SetupService {
     return this.i18n.t(key, { lang: lang ?? I18nContext.current()?.lang });
   }
 
-  private mapCongregation(congregation: Congregation): SetupCongregationData {
+  private async mapCongregation(
+    congregation: Congregation,
+  ): Promise<SetupCongregationData> {
+    const themePalette =
+      await this.configurationsService.getThemePaletteConfigByCongregationId(
+        congregation.id,
+      );
+
     return {
       id: congregation.id,
       name: congregation.name,
@@ -59,6 +74,7 @@ export class SetupService {
         name: location.name,
         address: location.address,
       })),
+      theme_palette: themePalette,
     };
   }
 
@@ -89,7 +105,7 @@ export class SetupService {
 
     return {
       isSetup: true,
-      congregation: this.mapCongregation(congregation),
+      congregation: await this.mapCongregation(congregation),
     };
   }
 
@@ -179,6 +195,7 @@ export class SetupService {
         const userRepository = manager.getRepository(User);
         const roleRepository = manager.getRepository(Role);
         const congregationRepository = manager.getRepository(Congregation);
+        const configurationsRepository = manager.getRepository(Configuration);
         const locationRepository = manager.getRepository(Location);
 
         const [userCount, roleCount, congregationCount] = await Promise.all([
@@ -255,6 +272,18 @@ export class SetupService {
           );
         await congregationRepository.save(congregationCreated);
 
+        const themePaletteConfig = configurationsRepository.create({
+          congregation_id: congregationCreated.id,
+          congregation: congregationCreated,
+          config_key: THEME_PALETTE_CONFIG_KEY,
+          config_value: DEFAULT_THEME_PALETTE_CONFIG as unknown as Record<
+            string,
+            unknown
+          >,
+          created_by: userCreated,
+        });
+        await configurationsRepository.save(themePaletteConfig);
+
         userCreated.roles = [roleCreated];
         userCreated.congregations = [congregationCreated];
         userCreated.locations = locationsCreated;
@@ -277,7 +306,7 @@ export class SetupService {
 
         return {
           isSetup: true,
-          congregation: this.mapCongregation(congregationWithRelations),
+          congregation: await this.mapCongregation(congregationWithRelations),
         };
       });
     } finally {

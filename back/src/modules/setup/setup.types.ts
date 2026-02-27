@@ -12,6 +12,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Feature } from 'src/utils/constants';
+import { ThemePaletteConfig } from '../configurations/configurations.types';
 import { Congregation } from '../congregation/congregation.entity';
 import { Location } from '../location/location.entity';
 
@@ -117,4 +118,5 @@ export interface SetupCongregationData extends Pick<
   'id' | 'name' | 'type' | 'features' | 'updated_at'
 > {
   locations: Array<Pick<Location, 'id' | 'order' | 'name' | 'address'>>;
+  theme_palette: ThemePaletteConfig;
 }

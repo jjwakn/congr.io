@@ -2,9 +2,48 @@
   "dashboard": {
     "welcomeTitle": "Welcome to your Dashboard",
     "successMessage": "Your congregation is successfully configured and ready to use.",
+    "home": "Home",
     "modules": "Modules",
     "noModules": "No modules available for this congregation.",
     "moduleNotFound": "Module not found. Select one from the sidebar.",
-    "logout": "Logout"
+    "logout": "Logout",
+    "settings": "Configuration"
+  },
+  "settings": {
+    "title": "Configuration",
+    "subtitle": "Manage appearance and language settings for your congregation.",
+    "themeMode": {
+      "label": "Theme Mode",
+      "light": "Light",
+      "dark": "Dark",
+      "ariaLabel": "Toggle theme mode",
+      "toggleToLight": "Switch to light mode",
+      "toggleToDark": "Switch to dark mode"
+    },
+    "language": {
+      "label": "Language",
+      "english": "English",
+      "spanish": "Spanish"
+    },
+    "lightMode": "Light Mode Palette",
+    "darkMode": "Dark Mode Palette",
+    "fields": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "backgroundDefault": "Background 1",
+      "backgroundPaper": "Background 2"
+    },
+    "actions": {
+      "save": "Save",
+      "reset": "Reset"
+    },
+    "frontendVersion": "Frontend version: {{version}}",
+    "success": {
+      "saved": "Theme palette saved successfully."
+    },
+    "error": {
+      "saveFailed": "Could not save the theme palette.",
+      "loadFailed": "Could not load the theme palette."
+    }
   }
 }

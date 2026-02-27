@@ -4,7 +4,8 @@ import { User } from '../types/user.types';
 import { AuthContext, LoginCredentials } from './AuthContext';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<User | null>(() =>
     authService.getUserData(),
   );
@@ -21,7 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!active) return;
         setUser(null);
       } finally {
-        if (active) setIsLoading(false);
+        if (active) setIsSessionLoading(false);
       }
     };
 
@@ -54,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         isAuthenticated,
+        isSessionLoading,
         isLoading,
         login,
         logout,

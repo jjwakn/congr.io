@@ -2,7 +2,13 @@ import { Box } from '@mui/material';
 import { ReactNode } from 'react';
 import Footer from '../Footer';
 
-const Layout = ({ children }: { children: ReactNode }) => {
+const Layout = ({
+  children,
+  showFooter = false,
+}: {
+  children: ReactNode;
+  showFooter?: boolean;
+}) => {
   return (
     <Box
       sx={{
@@ -16,7 +22,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
         {children}
       </Box>
 
-      <Footer />
+      {showFooter ? <Footer /> : null}
     </Box>
   );
 };

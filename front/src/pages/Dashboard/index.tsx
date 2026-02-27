@@ -1,29 +1,34 @@
-import {
-  AppBar,
-  Box,
-  Button,
-  Divider,
-  List,
-  ListItemButton,
-  ListItemText,
-  Paper,
-  Toolbar,
-  Typography,
-} from '@mui/material';
-import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { Box, Paper, Typography } from '@mui/material';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PWABadge from '../../PWABadge';
-import { LogoSmall } from '../../components/Logos';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../hooks/useAuth';
 import { useSetup } from '../../hooks/useSetup';
-import { getModuleIdFromPath, getModulePath } from '../../utils/routes';
+import {
+  getHomePath,
+  getLocalizedPathname,
+  getModuleIdFromPath,
+  getModulePath,
+  isHomePath,
+  isSettingsPath,
+} from '../../utils/routes';
+import SettingsPage from '../Settings';
+import { DashboardHeader } from './components/DashboardHeader';
+import { DashboardNavigationDrawer } from './components/DashboardNavigationDrawer';
+import { Home } from './components/Home';
+import { ModuleSummary } from './components/ModuleSummary';
+import {
+  createModuleNavigationItem,
+  createSettingsNavigationItem,
+} from './helpers/navigation';
 
 const Dashboard = () => {
   const { i18n, t } = useTranslation();
   const { congregation } = useAppContext();
   const { user, logout } = useAuth();
   const { features } = useSetup();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [, rerenderRoute] = useReducer((value: number) => value + 1, 0);
 
   const refreshRoute = useCallback(() => {
@@ -44,32 +49,57 @@ const Dashboard = () => {
 
     return moduleIds.map((moduleId) => {
       const feature = featureById.get(moduleId);
+      const title = feature?.title ?? moduleId;
+      const description = (feature?.description ?? '').replace(
+        '{type}',
+        congregationType,
+      );
 
       return {
         id: moduleId,
-        title: feature?.title ?? moduleId,
-        description: (feature?.description ?? '').replace(
-          '{type}',
-          congregationType,
-        ),
+        title,
+        description,
+        path: getModulePath(moduleId, i18n.language),
       };
     });
-  }, [congregation?.features, congregationType, featureById]);
+  }, [congregation?.features, congregationType, featureById, i18n.language]);
 
-  const currentModuleId = getModuleIdFromPath(window.location.pathname);
+  const pathname = window.location.pathname;
+  const moduleIdFromPath = getModuleIdFromPath(pathname);
+  const isHomeSelected = isHomePath(pathname);
+  const isSettingsSelected = isSettingsPath(pathname);
   const selectedModule =
-    availableModules.find((module) => module.id === currentModuleId) ?? null;
+    availableModules.find((module) => module.id === moduleIdFromPath) ?? null;
 
-  const navigateToModule = useCallback(
-    (moduleId: string) => {
-      const nextPath = getModulePath(moduleId, i18n.language);
-      if (window.location.pathname === nextPath) return;
-
-      window.history.pushState(null, '', nextPath);
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    },
-    [i18n.language],
+  const navigationItems = useMemo(
+    () => [
+      ...availableModules.map((module) =>
+        createModuleNavigationItem({
+          moduleId: module.id,
+          label: module.title,
+          language: i18n.language,
+        }),
+      ),
+      createSettingsNavigationItem({
+        label: t('pages.dashboard.settings'),
+        language: i18n.language,
+      }),
+    ],
+    [availableModules, i18n.language, t],
   );
+
+  const selectedPath = getLocalizedPathname(pathname, i18n.language);
+
+  const navigateToPath = useCallback((nextPath: string) => {
+    if (window.location.pathname === nextPath) return;
+
+    window.history.pushState(null, '', nextPath);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, []);
+
+  const navigateHome = useCallback(() => {
+    navigateToPath(getHomePath());
+  }, [navigateToPath]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -83,7 +113,19 @@ const Dashboard = () => {
   }, [refreshRoute]);
 
   useEffect(() => {
-    if (!availableModules.length) return;
+    const localizedPath = getLocalizedPathname(
+      window.location.pathname,
+      i18n.language,
+    );
+    if (window.location.pathname === localizedPath) return;
+
+    window.history.replaceState(null, '', localizedPath);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, [i18n.language]);
+
+  useEffect(() => {
+    if (isHomePath(window.location.pathname)) return;
+    if (isSettingsPath(window.location.pathname)) return;
 
     const routeModuleId = getModuleIdFromPath(window.location.pathname);
     const isValidRoute = routeModuleId
@@ -99,7 +141,7 @@ const Dashboard = () => {
       return;
     }
 
-    const fallbackPath = getModulePath(availableModules[0].id, i18n.language);
+    const fallbackPath = getHomePath();
     if (window.location.pathname === fallbackPath) return;
 
     window.history.replaceState(null, '', fallbackPath);
@@ -108,84 +150,57 @@ const Dashboard = () => {
 
   return (
     <Box sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <LogoSmall
-            alt={congregation?.name || 'Congr.io'}
-            size={34}
-            containerSx={{
-              mr: 1.25,
-            }}
-          />
+      <DashboardHeader
+        congregationName={congregation?.name || 'Congr.io'}
+        username={user?.username}
+        homeLabel={t('pages.dashboard.home')}
+        logoutLabel={t('pages.dashboard.logout')}
+        onLogout={logout}
+        onMenuClick={() => setIsDrawerOpen(true)}
+        onLogoClick={navigateHome}
+      />
 
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {congregation?.name || 'Congr.io'}
-          </Typography>
+      <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <DashboardNavigationDrawer
+          items={navigationItems}
+          selectedPath={selectedPath}
+          congregationName={congregation?.name || 'Congr.io'}
+          homeLabel={t('pages.dashboard.home')}
+          open={isDrawerOpen}
+          onNavigate={navigateToPath}
+          onLogoClick={navigateHome}
+          onClose={() => setIsDrawerOpen(false)}
+        />
 
-          <Typography
-            variant="body2"
-            sx={{ mr: 1, display: { xs: 'none', sm: 'inline' } }}
-          >
-            {user?.name || user?.username}
-          </Typography>
-
-          <Button color="inherit" onClick={logout} sx={{ ml: 1 }}>
-            {t('pages.dashboard.logout')}
-          </Button>
-        </Toolbar>
-      </AppBar>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '280px 1fr' },
-          gap: 2,
-          p: 2,
-          flex: 1,
-        }}
-      >
-        <Paper variant="outlined" sx={{ alignSelf: 'start' }}>
-          <Typography variant="subtitle1" sx={{ px: 2, py: 1.5 }}>
-            {t('pages.dashboard.modules')}
-          </Typography>
-          <Divider />
-          <List disablePadding>
-            {availableModules.map((module) => (
-              <ListItemButton
-                key={module.id}
-                selected={selectedModule?.id === module.id}
-                onClick={() => navigateToModule(module.id)}
-              >
-                <ListItemText primary={module.title} />
-              </ListItemButton>
-            ))}
-          </List>
-        </Paper>
-
-        <Paper variant="outlined" sx={{ p: 3 }}>
-          {!availableModules.length ? (
-            <Typography variant="body1">
-              {t('pages.dashboard.noModules')}
-            </Typography>
-          ) : selectedModule ? (
-            <>
-              <Typography variant="h4" gutterBottom>
-                {selectedModule.title}
-              </Typography>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{ whiteSpace: 'pre-line' }}
-              >
-                {selectedModule.description}
-              </Typography>
-            </>
+        <Box sx={{ flex: 1, p: { xs: 1.5, md: 2 }, overflowY: 'auto' }}>
+          {isSettingsSelected ? (
+            <SettingsPage />
+          ) : isHomeSelected ? (
+            <Paper variant="outlined" sx={{ p: 3 }}>
+              <Home
+                title={t('pages.dashboard.welcomeTitle')}
+                subtitle={t('pages.dashboard.successMessage')}
+              />
+            </Paper>
           ) : (
-            <Typography variant="body1">
-              {t('pages.dashboard.moduleNotFound')}
-            </Typography>
+            <Paper variant="outlined" sx={{ p: 3 }}>
+              {!availableModules.length ? (
+                <Typography variant="body1">
+                  {t('pages.dashboard.noModules')}
+                </Typography>
+              ) : selectedModule ? (
+                <ModuleSummary
+                  title={selectedModule.title}
+                  description={selectedModule.description}
+                />
+              ) : (
+                <Typography variant="body1">
+                  {t('pages.dashboard.moduleNotFound')}
+                </Typography>
+              )}
+            </Paper>
           )}
-        </Paper>
+        </Box>
       </Box>
 
       <PWABadge />

@@ -10,7 +10,6 @@ import {
 import { FieldValues, FormProvider } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { FormContainerProps } from '../../../types/FormContainer.types';
-import { FOOTER_HEIGHT } from '../../../utils/constants';
 
 export const FormContainer = <FormData extends FieldValues>({
   children,
@@ -37,7 +36,6 @@ export const FormContainer = <FormData extends FieldValues>({
         padding: 2,
         maxWidth: 500,
         width: '100%',
-        marginBottom: FOOTER_HEIGHT,
       }}
     >
       <Card sx={{ width: '100%' }}>
@@ -76,7 +74,6 @@ export const FormContainer = <FormData extends FieldValues>({
                   <Button
                     fullWidth
                     variant="outlined"
-                    size="large"
                     disabled={disabled}
                     onClick={onCancel}
                   >
@@ -88,7 +85,6 @@ export const FormContainer = <FormData extends FieldValues>({
                   type="submit"
                   fullWidth
                   variant="contained"
-                  size="large"
                   disabled={disabled}
                 >
                   {submitText}

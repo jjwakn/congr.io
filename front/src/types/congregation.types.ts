@@ -1,4 +1,5 @@
 import { CommonEntity } from './common.types.js';
+import { ThemePaletteConfig } from './theme.types.js';
 
 export interface Location extends CommonEntity {
   order: number;
@@ -12,4 +13,5 @@ export interface Congregation extends CommonEntity {
   type: string;
   features?: string[];
   locations: Location[];
+  theme_palette?: ThemePaletteConfig;
 }

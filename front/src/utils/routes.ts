@@ -2,6 +2,8 @@ type AppLanguage = 'en' | 'es';
 
 type LocalizedValue = Record<AppLanguage, string>;
 
+const HOME_PATH = '/';
+
 const BRANDING_SEGMENT: LocalizedValue = {
   en: 'branding',
   es: 'marca',
@@ -10,6 +12,11 @@ const BRANDING_SEGMENT: LocalizedValue = {
 const MODULES_SEGMENT: LocalizedValue = {
   en: 'modules',
   es: 'modulos',
+};
+
+const SETTINGS_SEGMENT: LocalizedValue = {
+  en: 'settings',
+  es: 'configuracion',
 };
 
 const MODULE_SLUGS: Record<string, LocalizedValue> = {
@@ -71,6 +78,13 @@ export const getBrandingPath = (language?: string): string => {
   return `/${BRANDING_SEGMENT[lang]}`;
 };
 
+export const getHomePath = (): string => HOME_PATH;
+
+export const isHomePath = (pathname: string): boolean => {
+  const trimmed = trimPath(pathname);
+  return !trimmed;
+};
+
 export const isBrandingPath = (pathname: string): boolean => {
   const segments = splitPath(pathname);
   return (
@@ -82,6 +96,19 @@ export const isBrandingPath = (pathname: string): boolean => {
 export const getModulePrefix = (language?: string): string => {
   const lang = normalizeLanguage(language);
   return `/${MODULES_SEGMENT[lang]}`;
+};
+
+export const getSettingsPath = (language?: string): string => {
+  const lang = normalizeLanguage(language);
+  return `/${SETTINGS_SEGMENT[lang]}`;
+};
+
+export const isSettingsPath = (pathname: string): boolean => {
+  const segments = splitPath(pathname);
+  return (
+    segments.length === 1 &&
+    matchesLocalizedSegment(segments[0], SETTINGS_SEGMENT)
+  );
 };
 
 export const getModulePath = (moduleId: string, language?: string): string =>
@@ -110,6 +137,7 @@ export const getLocalizedPathname = (
   language?: string,
 ): string => {
   if (isBrandingPath(pathname)) return getBrandingPath(language);
+  if (isSettingsPath(pathname)) return getSettingsPath(language);
 
   const moduleId = getModuleIdFromPath(pathname);
   if (moduleId) return getModulePath(moduleId, language);

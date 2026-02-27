@@ -11,6 +11,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppLoggerMiddleware } from './middleware';
 import { AuthModule } from './modules/auth/auth.module';
+import { ConfigurationsModule } from './modules/configurations/configurations.module';
 import { CongregationModule } from './modules/congregation/congregation.module';
 import { FeatureModule } from './modules/feature/feature.module';
 import { PermissionModule } from './modules/permission/permission.module';
@@ -57,6 +58,7 @@ import { UserModule } from './modules/user/user.module';
     SetupModule,
     PermissionModule,
     FeatureModule,
+    ConfigurationsModule,
     AuthModule,
     UserModule,
     RoleModule,
