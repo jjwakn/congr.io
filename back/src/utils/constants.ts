@@ -14,6 +14,7 @@ export enum Module {
   user = 'user',
   role = 'role',
   congregation = 'congregation',
+  configuration = 'configuration',
 }
 
 export enum Feature {
@@ -45,6 +46,9 @@ export const permission: PermissionType = {
     permissions: CRUD,
   },
   congregation: {
+    permissions: CRUD,
+  },
+  configuration: {
     permissions: CRUD,
   },
 };

@@ -1,69 +1,115 @@
 import i18n from 'i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
-import enApp from './src/locales/en/app.json';
-import enAuth from './src/locales/en/auth.json';
-import enBrandingGenerator from './src/locales/en/brandingGenerator.json';
-import enComponents from './src/locales/en/components.json';
-import enContext from './src/locales/en/context.json';
-import enFooter from './src/locales/en/footer.json';
-import enForm from './src/locales/en/form.json';
-import enHttp from './src/locales/en/http.json';
-import enPages from './src/locales/en/pages.json';
-import enPwa from './src/locales/en/pwa.json';
-import enSetup from './src/locales/en/setup.json';
-import esApp from './src/locales/es/app.json';
-import esAuth from './src/locales/es/auth.json';
-import esBrandingGenerator from './src/locales/es/brandingGenerator.json';
-import esComponents from './src/locales/es/components.json';
-import esContext from './src/locales/es/context.json';
-import esFooter from './src/locales/es/footer.json';
-import esForm from './src/locales/es/form.json';
-import esHttp from './src/locales/es/http.json';
-import esPages from './src/locales/es/pages.json';
-import esPwa from './src/locales/es/pwa.json';
-import esSetup from './src/locales/es/setup.json';
 
-const enTranslation = {
-  app: enApp,
-  auth: enAuth,
-  brandingGenerator: enBrandingGenerator,
-  components: enComponents,
-  context: enContext,
-  footer: enFooter,
-  form: enForm,
-  http: enHttp,
-  pages: enPages,
-  pwa: enPwa,
-  setup: enSetup,
+type SupportedLanguage = 'en' | 'es';
+type TranslationRecord = Record<string, unknown>;
+type TranslationBundle = Record<string, TranslationRecord>;
+type TranslationLoader = () => Promise<{ default: TranslationBundle }>;
+
+const FALLBACK_LANGUAGE: SupportedLanguage = 'en';
+
+const translationLoaders: Record<SupportedLanguage, TranslationLoader> = {
+  en: () => import('./src/locales/en'),
+  es: () => import('./src/locales/es'),
 };
 
-const esTranslation = {
-  app: esApp,
-  auth: esAuth,
-  brandingGenerator: esBrandingGenerator,
-  components: esComponents,
-  context: esContext,
-  footer: esFooter,
-  form: esForm,
-  http: esHttp,
-  pages: esPages,
-  pwa: esPwa,
-  setup: esSetup,
+const loadedLanguages = new Set<SupportedLanguage>();
+let initializationPromise: Promise<typeof i18n> | null = null;
+
+const normalizeLanguage = (value?: string | null): SupportedLanguage => {
+  if (!value) return FALLBACK_LANGUAGE;
+  return value.toLowerCase().startsWith('es') ? 'es' : 'en';
 };
 
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    fallbackLng: 'en',
-    interpolation: {
-      escapeValue: false,
-    },
-    resources: {
-      en: { translation: enTranslation },
-      es: { translation: esTranslation },
-    },
-  });
+const readStoredLanguage = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem('i18nextLng');
+  } catch {
+    return null;
+  }
+};
+
+const persistLanguage = (language: SupportedLanguage) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem('i18nextLng', language);
+  } catch {
+    // Ignore storage write failures and keep language in memory.
+  }
+};
+
+const resolveInitialLanguage = (): SupportedLanguage => {
+  const storedLanguage = readStoredLanguage();
+  if (storedLanguage) return normalizeLanguage(storedLanguage);
+
+  if (typeof navigator !== 'undefined') {
+    return normalizeLanguage(navigator.language);
+  }
+
+  return FALLBACK_LANGUAGE;
+};
+
+const loadLanguageBundle = async (
+  language: SupportedLanguage,
+): Promise<TranslationBundle> => {
+  const loader = translationLoaders[language];
+  const bundle = await loader();
+  return bundle.default;
+};
+
+export const ensureLanguageResources = async (
+  language: string,
+): Promise<SupportedLanguage> => {
+  const normalizedLanguage = normalizeLanguage(language);
+  if (loadedLanguages.has(normalizedLanguage)) return normalizedLanguage;
+
+  const bundle = await loadLanguageBundle(normalizedLanguage);
+  i18n.addResourceBundle(normalizedLanguage, 'translation', bundle, true, true);
+  loadedLanguages.add(normalizedLanguage);
+
+  return normalizedLanguage;
+};
+
+export const initializeI18n = async (): Promise<typeof i18n> => {
+  if (initializationPromise) return initializationPromise;
+
+  initializationPromise = (async () => {
+    const initialLanguage = resolveInitialLanguage();
+    const initialBundle = await loadLanguageBundle(initialLanguage);
+
+    await i18n.use(initReactI18next).init({
+      lng: initialLanguage,
+      fallbackLng: FALLBACK_LANGUAGE,
+      interpolation: {
+        escapeValue: false,
+      },
+      resources: {
+        [initialLanguage]: { translation: initialBundle },
+      },
+    });
+
+    loadedLanguages.add(initialLanguage);
+    persistLanguage(initialLanguage);
+
+    if (initialLanguage !== FALLBACK_LANGUAGE) {
+      await ensureLanguageResources(FALLBACK_LANGUAGE);
+    }
+
+    return i18n;
+  })();
+
+  return initializationPromise;
+};
+
+export const changeLanguageWithResources = async (
+  language: string,
+): Promise<void> => {
+  const normalizedLanguage = await ensureLanguageResources(language);
+  if (normalizeLanguage(i18n.language) !== normalizedLanguage) {
+    await i18n.changeLanguage(normalizedLanguage);
+  }
+  persistLanguage(normalizedLanguage);
+};
 
 export default i18n;

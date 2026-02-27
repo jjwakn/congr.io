@@ -15,3 +15,6 @@ alwaysApply: true
   - `back/src/locales/en/**/*.json`
   - `back/src/locales/es/**/*.json`
 - Use `yarn` for scripts and package commands.
+- Keep TypeScript `type`/`interface` declarations in dedicated `*.types.ts` files.
+- In frontend, keep only shared domain types in `front/src/types`; colocate feature/component-specific `*.types.ts` files with their files.
+- Keep exactly one React component per `.tsx` file; extract additional components into separate files.

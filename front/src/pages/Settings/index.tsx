@@ -1,4 +1,5 @@
-import { DarkMode, LightMode } from '@mui/icons-material';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import {
   Alert,
   Box,
@@ -14,6 +15,7 @@ import {
 } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { changeLanguageWithResources } from '../../../i18n';
 import { useNotificationContext } from '../../hooks/useNotifications';
 import { useTheme } from '../../hooks/useTheme';
 import { ConfigurationsService } from '../../services/configurations';
@@ -21,7 +23,7 @@ import { ThemePaletteConfig } from '../../types/theme.types';
 import { FRONTEND_VERSION } from '../../utils/constants';
 import { HttpRequestError, httpRequest } from '../../utils/http';
 import { normalizeThemePaletteConfig } from '../../utils/theme';
-import { PaletteModeEditor } from './components/PaletteModeEditor';
+import { PaletteModeEditor } from './PaletteModeEditor';
 
 const SettingsPage = () => {
   const { i18n, t } = useTranslation();
@@ -59,8 +61,8 @@ const SettingsPage = () => {
     (event: SelectChangeEvent<'en' | 'es'>) => {
       const nextLanguage = event.target.value;
       if (!nextLanguage) return;
-      if (nextLanguage !== i18n.language)
-        void i18n.changeLanguage(nextLanguage);
+      if (!i18n.language?.startsWith(nextLanguage))
+        void changeLanguageWithResources(nextLanguage);
     },
     [i18n],
   );
@@ -180,7 +182,7 @@ const SettingsPage = () => {
         <Button
           variant="outlined"
           fullWidth
-          startIcon={mode === 'dark' ? <LightMode /> : <DarkMode />}
+          startIcon={mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
           onClick={toggleMode}
           aria-label={t('pages.settings.themeMode.ariaLabel')}
           sx={{ minHeight: 40 }}

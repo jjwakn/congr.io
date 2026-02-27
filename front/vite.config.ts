@@ -45,6 +45,39 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            const normalizedId = id.split('\\').join('/');
+            if (!normalizedId.includes('/node_modules/')) return undefined;
+
+            if (
+              normalizedId.includes('/@mui/') ||
+              normalizedId.includes('/@emotion/')
+            ) {
+              return 'vendor-mui';
+            }
+
+            if (
+              normalizedId.includes('/i18next/') ||
+              normalizedId.includes('/react-i18next/')
+            ) {
+              return 'vendor-i18n';
+            }
+
+            if (
+              normalizedId.includes('/workbox-') ||
+              normalizedId.includes('virtual:pwa-register')
+            ) {
+              return 'vendor-pwa';
+            }
+
+            return 'vendor';
+          },
+        },
+      },
+    },
     server: {
       proxy: {
         '/api': {

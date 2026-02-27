@@ -1,68 +1,25 @@
 import { Box, Chip, Divider, Typography } from '@mui/material';
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useSetup } from '../../../hooks/useSetup';
-import { SetupData } from '../../../types/setup.types';
 import { FormContainer } from '../../common/FormContainer';
-
-const ConfirmSection = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) => (
-  <Box
-    sx={{
-      border: ({ palette }) => `1px solid ${palette.divider}`,
-      borderRadius: 2,
-      p: 2,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 1.5,
-    }}
-  >
-    <Typography variant="subtitle1" fontWeight={600}>
-      {title}
-    </Typography>
-    {children}
-  </Box>
-);
-
-const FieldRow = ({ label, value }: { label: string; value: ReactNode }) => (
-  <Box
-    sx={{
-      display: 'grid',
-      gridTemplateColumns: { xs: '120px 1fr', sm: '160px 1fr' },
-      gap: 1,
-      alignItems: 'start',
-    }}
-  >
-    <Typography variant="body2" color="text.secondary" fontWeight={500}>
-      {label}
-    </Typography>
-    <Box>{value}</Box>
-  </Box>
-);
+import ConfirmSection from './ConfirmSection';
+import { ConfirmStepFormData, ConfirmStepProps } from './ConfirmStep.types';
+import FieldRow from './FieldRow';
 
 export const ConfirmStep = ({
   data,
   onFinish,
   disabled,
   onBack,
-}: {
-  data: SetupData;
-  onFinish: () => void;
-  disabled?: boolean;
-  onBack: () => void;
-}) => {
+}: ConfirmStepProps) => {
   const { t } = useTranslation();
   const { features } = useSetup();
   const congregationType =
     data.congregation.type || t('setup.form.defaultType');
 
-  const form = useForm<{ noop: boolean }>({
+  const form = useForm<ConfirmStepFormData>({
     defaultValues: {
       noop: true,
     },
@@ -77,7 +34,7 @@ export const ConfirmStep = ({
   }, [features]);
 
   return (
-    <FormContainer<{ noop: boolean }>
+    <FormContainer<ConfirmStepFormData>
       form={form}
       onSubmit={() => onFinish()}
       title={t('setup.form.confirm')}

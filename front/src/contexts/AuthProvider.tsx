@@ -1,7 +1,8 @@
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { authService } from '../services/auth';
 import { User } from '../types/user.types';
-import { AuthContext, LoginCredentials } from './AuthContext';
+import { AuthContext } from './AuthContext';
+import { LoginCredentials } from './AuthContext.types';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isSessionLoading, setIsSessionLoading] = useState(true);

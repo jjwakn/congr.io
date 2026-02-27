@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { changeLanguageWithResources } from '../../../i18n';
 import { smallOptionStyle } from '../../utils/theme';
 import { ThemeToggleButton } from '../ThemeToggleButton';
 
@@ -16,8 +17,8 @@ const Footer = () => {
   const handleChange = useCallback(
     (event: SelectChangeEvent<string>) => {
       const nextLang = event.target.value;
-      if (nextLang && nextLang !== i18n.language) {
-        i18n.changeLanguage(nextLang);
+      if (nextLang && !i18n.language?.startsWith(nextLang)) {
+        void changeLanguageWithResources(nextLang);
       }
     },
     [i18n],

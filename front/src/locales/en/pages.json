@@ -4,10 +4,36 @@
     "successMessage": "Your congregation is successfully configured and ready to use.",
     "home": "Home",
     "modules": "Modules",
+    "loading": "Loading...",
     "noModules": "No modules available for this congregation.",
     "moduleNotFound": "Module not found. Select one from the sidebar.",
     "logout": "Logout",
     "settings": "Configuration"
+  },
+  "modules": {
+    "common": {
+      "refresh": "Refresh",
+      "search": "Search",
+      "searchPlaceholder": "Search by role name",
+      "rowsPerPage": "Rows per page",
+      "loading": "Loading roles...",
+      "empty": "No roles found."
+    },
+    "roles": {
+      "title": "Roles",
+      "description": "Review role access and CRUD permissions.",
+      "columns": {
+        "role": "Role",
+        "fullAccess": "Full Access",
+        "get": "Read",
+        "create": "Create",
+        "update": "Update",
+        "delete": "Delete"
+      },
+      "error": {
+        "loadFailed": "Could not load roles."
+      }
+    }
   },
   "settings": {
     "title": "Configuration",

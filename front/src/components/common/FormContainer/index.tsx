@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { FieldValues, FormProvider } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { FormContainerProps } from '../../../types/FormContainer.types';
+import { FormContainerProps } from './FormContainer.types';
 
 export const FormContainer = <FormData extends FieldValues>({
   children,

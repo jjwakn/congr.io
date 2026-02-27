@@ -1,10 +1,22 @@
 import { Box, Paper, Typography } from '@mui/material';
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import PWABadge from '../../PWABadge';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../hooks/useAuth';
 import { useSetup } from '../../hooks/useSetup';
+import {
+  createModuleNavigationItem,
+  createSettingsNavigationItem,
+} from '../../utils/dashboard';
 import {
   getHomePath,
   getLocalizedPathname,
@@ -13,15 +25,15 @@ import {
   isHomePath,
   isSettingsPath,
 } from '../../utils/routes';
-import SettingsPage from '../Settings';
-import { DashboardHeader } from './components/DashboardHeader';
-import { DashboardNavigationDrawer } from './components/DashboardNavigationDrawer';
-import { Home } from './components/Home';
-import { ModuleSummary } from './components/ModuleSummary';
-import {
-  createModuleNavigationItem,
-  createSettingsNavigationItem,
-} from './helpers/navigation';
+import { DashboardHeader } from './DashboardHeader';
+import { DashboardNavigationDrawer } from './DashboardNavigationDrawer';
+import { Home } from './Home';
+
+const ModulesRenderer = lazy(async () => {
+  const module = await import('../Modules');
+  return { default: module.ModulesRenderer };
+});
+const SettingsPage = lazy(() => import('../Settings'));
 
 const Dashboard = () => {
   const { i18n, t } = useTranslation();
@@ -174,7 +186,15 @@ const Dashboard = () => {
 
         <Box sx={{ flex: 1, p: { xs: 1.5, md: 2 }, overflowY: 'auto' }}>
           {isSettingsSelected ? (
-            <SettingsPage />
+            <Suspense
+              fallback={
+                <Typography variant="body1">
+                  {t('pages.dashboard.loading')}
+                </Typography>
+              }
+            >
+              <SettingsPage />
+            </Suspense>
           ) : isHomeSelected ? (
             <Paper variant="outlined" sx={{ p: 3 }}>
               <Home
@@ -189,10 +209,15 @@ const Dashboard = () => {
                   {t('pages.dashboard.noModules')}
                 </Typography>
               ) : selectedModule ? (
-                <ModuleSummary
-                  title={selectedModule.title}
-                  description={selectedModule.description}
-                />
+                <Suspense
+                  fallback={
+                    <Typography variant="body1">
+                      {t('pages.dashboard.loading')}
+                    </Typography>
+                  }
+                >
+                  <ModulesRenderer module={selectedModule} />
+                </Suspense>
               ) : (
                 <Typography variant="body1">
                   {t('pages.dashboard.moduleNotFound')}

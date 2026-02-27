@@ -1,5 +1,4 @@
 import {
-  Alert,
   Box,
   Button,
   Card,
@@ -7,17 +6,17 @@ import {
   CircularProgress,
   TextField,
 } from '@mui/material';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { LogoBig } from '../../components/Logos';
-import { LoginCredentials } from '../../contexts/AuthContext';
+import { LoginCredentials } from '../../contexts/AuthContext.types';
 import { useAuth } from '../../hooks/useAuth';
+import { useNotificationContext } from '../../hooks/useNotifications';
 
 const Login = () => {
   const { t } = useTranslation();
   const { login, isLoading } = useAuth();
-  const [error, setError] = useState('');
+  const { showNotification } = useNotificationContext();
 
   const {
     register,
@@ -31,11 +30,12 @@ const Login = () => {
   });
 
   const onSubmit = async (values: LoginCredentials) => {
-    setError('');
     try {
       await login(values);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.loginFailed'));
+      const message =
+        err instanceof Error ? err.message : t('auth.loginFailed');
+      showNotification(message, { severity: 'error' });
     }
   };
 
@@ -98,12 +98,6 @@ const Login = () => {
               }
               {...register('password', { required: true })}
             />
-
-            {error && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                {error}
-              </Alert>
-            )}
 
             <Button
               type="submit"

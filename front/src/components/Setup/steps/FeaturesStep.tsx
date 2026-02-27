@@ -1,4 +1,4 @@
-import { ExpandMore } from '@mui/icons-material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Accordion,
   AccordionDetails,
@@ -173,7 +173,7 @@ export const FeaturesStep = ({
                       expanded={expanded === f.id}
                       onChange={handleChange(f.id)}
                     >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography component="span">{f.title}</Typography>
                       </AccordionSummary>
                       <AccordionDetails>

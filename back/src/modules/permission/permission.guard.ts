@@ -9,6 +9,7 @@ import {
   SetMetadata,
   UnauthorizedException,
 } from '@nestjs/common';
+import { PATH_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { PermissionMetadata } from './permission.types';
 
@@ -20,12 +21,56 @@ export class PermissionGuard implements CanActivate {
     private readonly i18n: I18nService,
   ) {}
 
+  private resolveModuleFromControllerPath(
+    context: ExecutionContext,
+  ): Module | null {
+    const metadataPath = Reflect.getMetadata(PATH_METADATA, context.getClass());
+    const moduleIds = Object.values(Module) as string[];
+    const normalizedPath =
+      typeof metadataPath === 'string'
+        ? metadataPath.split('/')[0].trim().toLowerCase()
+        : '';
+
+    if (!normalizedPath) return null;
+
+    const moduleByPath = moduleIds.find(
+      (moduleId) =>
+        moduleId === normalizedPath || `${moduleId}s` === normalizedPath,
+    );
+
+    return (moduleByPath as Module | undefined) ?? null;
+  }
+
+  private resolvePermissionSection(
+    section: PermissionMetadata['section'],
+    context: ExecutionContext,
+  ): Module | null {
+    const moduleIds = Object.values(Module) as string[];
+
+    if (typeof section === 'string')
+      return moduleIds.includes(section) ? section : null;
+
+    if (typeof section === 'function') {
+      const moduleFromPath = this.resolveModuleFromControllerPath(context);
+      if (moduleFromPath) return moduleFromPath;
+
+      const moduleFromResolver = section({});
+      return moduleIds.includes(moduleFromResolver) ? moduleFromResolver : null;
+    }
+
+    return null;
+  }
+
   canActivate(context: ExecutionContext): boolean {
     try {
-      const { section, action } = this.reflector.get<PermissionMetadata>(
+      const permissionMetadata = this.reflector.get<PermissionMetadata>(
         'permission',
         context.getHandler(),
       );
+      const action = permissionMetadata?.action;
+      const section = permissionMetadata
+        ? this.resolvePermissionSection(permissionMetadata.section, context)
+        : null;
 
       if (!section || !action)
         throw new UnauthorizedException(

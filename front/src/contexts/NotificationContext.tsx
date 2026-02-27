@@ -1,14 +1,10 @@
-import { AlertProps } from '@mui/material';
 import { createContext } from 'react';
+import {
+  NotificationContextType,
+  ShowNotificationType,
+} from './NotificationContext.types';
 
-export type ShowNotificationType = (
-  text: string,
-  props?: { autohide?: boolean; severity?: AlertProps['severity'] },
-) => void;
-
-export interface NotificationContextType {
-  showNotification: ShowNotificationType;
-}
+export type { NotificationContextType, ShowNotificationType };
 
 export const NotificationContext = createContext<
   NotificationContextType | undefined

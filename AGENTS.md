@@ -1,4 +1,4 @@
-2# Project Agent Guidelines
+# Project Agent Guidelines
 
 These rules apply to all agent chats in this repository.
 
@@ -22,3 +22,10 @@ These rules apply to all agent chats in this repository.
 ## Tooling and Commands
 
 - Use `yarn` for package/script commands.
+
+## Frontend Structure
+
+- Keep TypeScript `type`/`interface` declarations in dedicated `*.types.ts` files.
+- Keep only shared domain-level types in `front/src/types`.
+- Move feature-specific/component-specific types to `*.types.ts` files colocated with the feature/component.
+- Keep exactly one React component per `.tsx` file. If a file contains additional components, extract them into separate files.

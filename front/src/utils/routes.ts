@@ -1,6 +1,4 @@
-type AppLanguage = 'en' | 'es';
-
-type LocalizedValue = Record<AppLanguage, string>;
+import { AppLanguage, LocalizedValue } from './routes.types';
 
 const HOME_PATH = '/';
 

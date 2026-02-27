@@ -1,8 +1,9 @@
-export type LogoBackgroundMode = 'transparent' | 'white' | 'black';
+import { BrandingManifest, LogoBackgroundMode } from './brandingManifest.types';
 
-type BrandingManifest = {
-  logo_background_mode?: LogoBackgroundMode;
-};
+export type {
+  BrandingManifest,
+  LogoBackgroundMode,
+} from './brandingManifest.types';
 
 const MANIFEST_PATH = '/manifest.webmanifest';
 let manifestRequest: Promise<BrandingManifest | null> | null = null;

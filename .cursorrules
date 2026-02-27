@@ -11,3 +11,6 @@ Project rules for AI assistants:
    - back/src/locales/en/**/*.json
    - back/src/locales/es/**/*.json
 7) Use yarn commands (not npm/pnpm) when running scripts.
+8) Keep TypeScript type/interface declarations in dedicated `*.types.ts` files.
+9) In frontend, keep only shared domain-level types in `front/src/types`; colocate feature/component-specific `*.types.ts` files with those files.
+10) Keep exactly one React component per `.tsx` file; extract additional components into separate files.

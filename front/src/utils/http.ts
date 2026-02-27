@@ -1,22 +1,12 @@
 import i18n from '../../i18n';
 import { API_URL } from './constants';
+import {
+  HttpRequestErrorParams,
+  HttpRequestProps,
+  ModuleType,
+} from './http.types';
 
-type HttpMethods = 'POST' | 'GET' | 'PUT' | 'DELETE';
-type HttpResponseType = 'json' | 'text' | 'raw';
-type HttpScalar = string | boolean | number | null | undefined;
-type HttpJsonData = {
-  [key: string]: HttpScalar | HttpJsonData | HttpScalar[] | HttpJsonData[];
-};
-type HttpData = FormData | HttpJsonData;
-
-interface ServiceType {
-  url: string;
-  method: HttpMethods;
-}
-
-export interface ModuleType {
-  [key: string]: ServiceType;
-}
+export type { ModuleType } from './http.types';
 
 export const HttpService: ModuleType = {};
 
@@ -28,11 +18,7 @@ export class HttpRequestError<TPayload = unknown> extends Error {
     statusCode,
     message,
     payload = null,
-  }: {
-    statusCode: number;
-    message: string;
-    payload?: TPayload | null;
-  }) {
+  }: HttpRequestErrorParams<TPayload>) {
     super(message);
     this.name = 'HttpRequestError';
     this.statusCode = statusCode;
@@ -82,14 +68,7 @@ export const httpRequest = async <ResponseType>({
   headers,
   responseType = 'json',
   requestInit,
-}: {
-  service: ServiceType;
-  data?: HttpData;
-  url?: string;
-  headers?: Record<string, string>;
-  responseType?: HttpResponseType;
-  requestInit?: Omit<RequestInit, 'method' | 'headers' | 'body'>;
-}) => {
+}: HttpRequestProps) => {
   const isAbsoluteUrl = /^https?:\/\//i.test(service.url);
   const cleanBaseURL = baseURL.replace(/\/+$/, '');
   const cleanServiceURL = service.url.replace(/^\/+/, '');

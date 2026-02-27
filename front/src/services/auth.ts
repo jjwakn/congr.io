@@ -1,7 +1,8 @@
 import i18n from '../../i18n';
-import { LoginCredentials } from '../contexts/AuthContext';
+import { LoginCredentials } from '../contexts/AuthContext.types';
 import { User } from '../types/user.types';
 import { HttpRequestError, ModuleType, httpRequest } from '../utils/http';
+import { LoginResponse } from './auth.types';
 
 const USER_DATA_KEY = 'user_data';
 const authHttpService: ModuleType = {
@@ -9,10 +10,6 @@ const authHttpService: ModuleType = {
   me: { url: 'auth/me', method: 'GET' },
   logout: { url: 'auth/logout', method: 'POST' },
 };
-
-interface LoginResponse {
-  user: User;
-}
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<{ user: User }> {

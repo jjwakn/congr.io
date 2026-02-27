@@ -1,12 +1,6 @@
 import { createContext } from 'react';
-import { Congregation } from '../types/congregation.types';
+import { AppContextType } from './AppContext.types';
 
-export interface AppContextType {
-  isSetup: boolean;
-  congregation: Congregation | null;
-  refreshIsSetup: () => Promise<void>;
-  markSetupComplete: (congregation: Congregation) => void;
-  isLoading: boolean;
-}
+export type { AppContextType };
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);

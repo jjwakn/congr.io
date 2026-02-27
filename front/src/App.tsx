@@ -1,46 +1,14 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Layout from './components/Layout';
 import Loading from './components/Loading';
 import { AppProvider } from './contexts/AppProvider';
 import { AuthProvider } from './contexts/AuthProvider';
 import { SetupProvider } from './contexts/SetupProvider';
-import { useAppContext } from './hooks/useAppContext';
-import { useAuth } from './hooks/useAuth';
-import BrandingPage from './pages/Branding';
-import Dashboard from './pages/Dashboard';
-import Login from './pages/Login';
-import Setup from './pages/Setup';
 import { getLocalizedPathname, isBrandingPath } from './utils/routes';
 
-const AppContent = () => {
-  const { isLoading, isSetup } = useAppContext();
-  const { isAuthenticated, isSessionLoading } = useAuth();
-
-  return isLoading || isSessionLoading ? (
-    <Loading />
-  ) : !isSetup ? (
-    <Setup />
-  ) : isAuthenticated ? (
-    <Dashboard />
-  ) : (
-    <Login />
-  );
-};
-
-const AppShell = () => {
-  const { isLoading, isSetup } = useAppContext();
-  const { isAuthenticated, isSessionLoading } = useAuth();
-
-  const showFooter =
-    !isLoading && !isSessionLoading && (!isSetup || !isAuthenticated);
-
-  return (
-    <Layout showFooter={showFooter}>
-      <AppContent />
-    </Layout>
-  );
-};
+const AppShell = lazy(() => import('./AppShell'));
+const BrandingPage = lazy(() => import('./pages/Branding'));
 
 const usePathname = () => {
   const [pathname, setPathname] = useState(() => window.location.pathname);
@@ -79,7 +47,9 @@ const App = () => {
   if (isBrandingPath(pathname))
     return (
       <Layout>
-        <BrandingPage />
+        <Suspense fallback={<Loading />}>
+          <BrandingPage />
+        </Suspense>
       </Layout>
     );
 
@@ -87,7 +57,9 @@ const App = () => {
     <AppProvider>
       <AuthProvider>
         <SetupProvider>
-          <AppShell />
+          <Suspense fallback={<Loading />}>
+            <AppShell />
+          </Suspense>
         </SetupProvider>
       </AuthProvider>
     </AppProvider>

@@ -1,4 +1,5 @@
-import { DarkMode, LightMode } from '@mui/icons-material';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import { IconButton } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../hooks/useTheme';
@@ -14,7 +15,7 @@ export const ThemeToggleButton = () => {
       aria-label={t('footer.themeAriaLabel')}
       size="small"
     >
-      {mode === 'dark' ? <LightMode /> : <DarkMode />}
+      {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
     </IconButton>
   );
 };

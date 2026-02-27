@@ -1,4 +1,4 @@
-import { Box, LinearProgress } from '@mui/material';
+import { Box } from '@mui/material';
 import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -7,19 +7,12 @@ import { useSetup } from '../../hooks/useSetup';
 import { SetupService } from '../../services/setup';
 import { SetupSubmitResponse } from '../../types/setup.types';
 import { HttpRequestError, httpRequest } from '../../utils/http';
+import Progress from './Progress';
 import AdminStep from './steps/AdminStep';
 import ConfirmStep from './steps/ConfirmStep';
 import CongregationStep from './steps/CongregationStep';
 import FeaturesStep from './steps/FeaturesStep';
 import LocationsStep from './steps/LocationsStep';
-
-const Progress = ({ activeStep }: { activeStep: number }) => {
-  return (
-    <Box sx={{ width: '100%', padding: 2 }}>
-      <LinearProgress variant="determinate" value={(100 / 5) * activeStep} />
-    </Box>
-  );
-};
 
 const Setup = () => {
   const { markSetupComplete } = useAppContext();

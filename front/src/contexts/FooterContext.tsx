@@ -1,9 +1,7 @@
-import { ReactNode, createContext } from 'react';
+import { createContext } from 'react';
+import { FooterContextType } from './FooterContext.types';
 
-export interface FooterContextType {
-  setChildren: (node: ReactNode | null) => void;
-  children: ReactNode | null;
-}
+export type { FooterContextType };
 
 export const FooterContext = createContext<FooterContextType | undefined>(
   undefined,

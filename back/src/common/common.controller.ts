@@ -58,12 +58,11 @@ export abstract class CommonController<
     );
   }
 
-  // @UseGuards(AuthGuard, PermissionGuard)
-  @UseGuards(AuthGuard)
-  // @CommonPermissionDecorator(
-  //   (ctrl: CommonController<Entity, Query>) => ctrl.module,
-  //   ModuleAction.get,
-  // )
+  @UseGuards(AuthGuard, PermissionGuard)
+  @CommonPermissionDecorator(
+    (ctrl: CommonController<Entity, Query>) => ctrl.module,
+    ModuleAction.get,
+  )
   @Get()
   async list(
     @Query(new ValidationPipe({ transform: true, whitelist: true }))

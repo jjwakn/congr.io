@@ -1,19 +1,7 @@
 import { createContext } from 'react';
-import { Feature } from '../types/feature.types';
-import { SetupData } from '../types/setup.types';
+import { SetupContextType } from './SetupContext.types';
 
-export interface SetupContextType {
-  setupData: SetupData;
-  setSetupData: (data: SetupData | ((prev: SetupData) => SetupData)) => void;
-  activeStep: number;
-  setActiveStep: (step: number | ((prev: number) => number)) => void;
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
-  features: Feature[];
-  setFeatures: (features: Feature[]) => void;
-  loadingFeatures: boolean;
-  setLoadingFeatures: (loading: boolean) => void;
-}
+export type { SetupContextType };
 
 export const SetupContext = createContext<SetupContextType | undefined>(
   undefined,

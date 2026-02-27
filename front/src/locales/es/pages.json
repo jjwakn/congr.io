@@ -4,10 +4,36 @@
     "successMessage": "Tu congregación está configurada exitosamente y lista para usar.",
     "home": "Inicio",
     "modules": "Módulos",
+    "loading": "Cargando...",
     "noModules": "No hay módulos disponibles para esta congregación.",
     "moduleNotFound": "Módulo no encontrado. Selecciona uno en la barra lateral.",
     "logout": "Cerrar sesión",
     "settings": "Configuración"
+  },
+  "modules": {
+    "common": {
+      "refresh": "Actualizar",
+      "search": "Buscar",
+      "searchPlaceholder": "Buscar por nombre de rol",
+      "rowsPerPage": "Filas por página",
+      "loading": "Cargando roles...",
+      "empty": "No se encontraron roles."
+    },
+    "roles": {
+      "title": "Roles",
+      "description": "Revisa el acceso de cada rol y sus permisos CRUD.",
+      "columns": {
+        "role": "Rol",
+        "fullAccess": "Acceso total",
+        "get": "Leer",
+        "create": "Crear",
+        "update": "Actualizar",
+        "delete": "Eliminar"
+      },
+      "error": {
+        "loadFailed": "No se pudieron cargar los roles."
+      }
+    }
   },
   "settings": {
     "title": "Configuración",

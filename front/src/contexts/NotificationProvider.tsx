@@ -1,11 +1,9 @@
-import { Close } from '@mui/icons-material';
+import CloseIcon from '@mui/icons-material/Close';
 import { Alert, AlertProps, IconButton, Snackbar } from '@mui/material';
 import { ReactNode, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  NotificationContext,
-  ShowNotificationType,
-} from './NotificationContext';
+import { NotificationContext } from './NotificationContext';
+import { ShowNotificationType } from './NotificationContext.types';
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
@@ -38,7 +36,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       color="inherit"
       onClick={handleCloseNotification}
     >
-      <Close fontSize="small" />
+      <CloseIcon fontSize="small" />
     </IconButton>
   );
 

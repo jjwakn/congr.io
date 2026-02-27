@@ -1,22 +1,29 @@
 import { Box } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import BrandingFormCard from './components/BrandingFormCard';
-import BrandingInstructionsCard from './components/BrandingInstructionsCard';
-import BrandingPreviewCard from './components/BrandingPreviewCard';
-import { generateBrandingAssets } from './helpers/brandingGenerator';
-import { downloadBlob } from './helpers/download';
-import { createPngObjectUrl } from './helpers/imageGenerator';
-import { createZipBlob } from './helpers/zip';
+import BrandingFormCard from './BrandingFormCard';
+import BrandingInstructionsCard from './BrandingInstructionsCard';
+import BrandingPreviewCard from './BrandingPreviewCard';
 import {
   BackgroundMode,
   BrandingPreviewItem,
   GeneratedBrandingAssets,
 } from './types';
 
+type BrandingUtilsModule = typeof import('../../utils/branding');
+
+let brandingUtilsPromise: Promise<BrandingUtilsModule> | null = null;
+const loadBrandingUtils = (): Promise<BrandingUtilsModule> => {
+  if (!brandingUtilsPromise) {
+    brandingUtilsPromise = import('../../utils/branding');
+  }
+  return brandingUtilsPromise;
+};
+
 const buildPreviewItems = (
   assets: GeneratedBrandingAssets,
   t: (key: string) => string,
+  createPngObjectUrl: BrandingUtilsModule['createPngObjectUrl'],
 ): BrandingPreviewItem[] => [
   {
     id: 'icon',
@@ -92,12 +99,12 @@ const BrandingPage = () => {
     setSuccess('');
   }, []);
 
-  const updatePreviewsFromAssets = useCallback(
-    (assets: GeneratedBrandingAssets) => {
-      replacePreviewItems(buildPreviewItems(assets, t));
-      setPreviewError('');
+  const createPreviewItems = useCallback(
+    async (assets: GeneratedBrandingAssets) => {
+      const { createPngObjectUrl } = await loadBrandingUtils();
+      return buildPreviewItems(assets, t, createPngObjectUrl);
     },
-    [replacePreviewItems, t],
+    [t],
   );
 
   useEffect(() => {
@@ -115,6 +122,7 @@ const BrandingPage = () => {
       setIsPreviewLoading(true);
 
       try {
+        const { generateBrandingAssets } = await loadBrandingUtils();
         const assets = await generateBrandingAssets({
           smallLogoFile: smallLogo,
           bigLogoFile: bigLogo,
@@ -125,8 +133,10 @@ const BrandingPage = () => {
           shortName,
         });
 
+        const nextItems = await createPreviewItems(assets);
         if (isCancelled) return;
-        updatePreviewsFromAssets(assets);
+        replacePreviewItems(nextItems);
+        setPreviewError('');
       } catch (value) {
         if (isCancelled) return;
 
@@ -158,7 +168,7 @@ const BrandingPage = () => {
     roundedCorners,
     shortName,
     t,
-    updatePreviewsFromAssets,
+    createPreviewItems,
   ]);
 
   const handleGenerate = useCallback(() => {
@@ -173,6 +183,8 @@ const BrandingPage = () => {
 
     const generateAndDownload = async () => {
       try {
+        const { createZipBlob, downloadBlob, generateBrandingAssets } =
+          await loadBrandingUtils();
         const assets = await generateBrandingAssets({
           smallLogoFile: smallLogo,
           bigLogoFile: bigLogo,
@@ -183,7 +195,9 @@ const BrandingPage = () => {
           shortName,
         });
 
-        updatePreviewsFromAssets(assets);
+        const nextItems = await createPreviewItems(assets);
+        replacePreviewItems(nextItems);
+        setPreviewError('');
 
         const zip = createZipBlob([
           { path: 'branding/logo-small.png', data: assets.smallLogoPng },
@@ -218,7 +232,8 @@ const BrandingPage = () => {
     roundedCorners,
     shortName,
     t,
-    updatePreviewsFromAssets,
+    createPreviewItems,
+    replacePreviewItems,
   ]);
 
   return (
