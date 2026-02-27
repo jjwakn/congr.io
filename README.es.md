@@ -46,17 +46,33 @@ Al acceder a la aplicación por primera vez:
 
 ## Licenciamiento
 
-Este proyecto está disponible en código fuente para uso no comercial.
+Este proyecto está licenciado bajo Apache License, Version 2.0. Ver `LICENSE`.
 
-Si deseas:
+Puedes:
 
-- Ofrecer hosting
-- Vender servicios basados en este software
-- Usarlo comercialmente
+- Usar el software para fines personales, organizacionales y comerciales
+- Modificar y hacer fork del software
+- Distribuir copias originales o modificadas
+- Desplegarlo y alojarlo por cuenta propia
+- Contribuir mejoras
 
-Debes obtener una licencia comercial.
+## Filosofía
 
-Contacto: jjwakn@gmail.com
+Este proyecto está pensado para servir a iglesias y ministerios.
+
+Aunque la licencia permite uso comercial, recomendamos fuertemente:
+
+- Contribuir de regreso a la comunidad
+- Apoyar financieramente el proyecto si se monetiza
+- Respetar el espíritu de colaboración ministerial
+
+---
+
+## Patrocinios
+
+Si este proyecto ayuda a tu iglesia o ministerio, considera apoyarlo:
+
+- [GitHub Sponsors](https://github.com/sponsors/jjwakn)
 
 ---
 

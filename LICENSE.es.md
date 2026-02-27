@@ -1,23 +1,27 @@
 # Licencia
 
-Este software está licenciado bajo la Church Software Non-Commercial License (CSNCL).
+Este proyecto está licenciado bajo Apache License, Version 2.0.
 
-Usted puede:
+Puedes:
 
-- Usar el software para fines personales u organizacionales.
+- Usar el software para fines personales, organizacionales y comerciales.
 - Modificar y hacer fork del software.
+- Distribuir copias originales o modificadas.
 - Desplegarlo y alojarlo por cuenta propia.
 - Contribuir mejoras.
 
-Usted NO puede:
+Debes:
 
-- Vender el software.
-- Ofrecer servicios de hosting pagados usando este software.
-- Monetizar versiones derivadas.
-- Incluir este software en un producto o servicio de pago.
+- Incluir una copia de la licencia Apache 2.0 al redistribuir.
+- Mantener los avisos obligatorios de copyright, patentes, marcas y atribuciones.
+- Indicar claramente cambios significativos en archivos modificados.
 
-El uso comercial requiere un acuerdo de licencia comercial por separado.
+## Filosofía
 
-Para solicitar una licencia comercial, contacte a:
+Este proyecto está pensado para servir a iglesias y ministerios.
 
-jjwakn@gmail.com
+Aunque la licencia permite uso comercial, recomendamos fuertemente:
+
+- Contribuir de regreso a la comunidad
+- Apoyar financieramente el proyecto si se monetiza
+- Respetar el espíritu de colaboración ministerial
