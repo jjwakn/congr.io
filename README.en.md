@@ -41,3 +41,29 @@ When accessing the application for the first time:
 
 - Log in with your user account
 - Choose and save your **theme preference** (Dark or Light mode)
+
+---
+
+## Licensing
+
+This project is source-available for non-commercial use.
+
+If you wish to:
+
+- Offer hosting
+- Sell services based on this software
+- Use it commercially
+
+You must obtain a commercial license.
+
+Contact: jjwakn@gmail.com
+
+---
+
+## Project Docs
+
+- [Contributing](./CONTRIBUTING.en.md)
+- [Code of Conduct](./CODE_OF_CONDUCT.en.md)
+- [License](./LICENSE.en.md)
+- [Security Policy](./SECURITY.en.md)
+- [Privacy](./PRIVACY.md)

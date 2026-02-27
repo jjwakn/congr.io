@@ -41,3 +41,29 @@ Al acceder a la aplicación por primera vez:
 
 - Iniciar sesión con un usuario
 - Seleccionar y guardar la **preferencia de tema** (modo Oscuro o Claro)
+
+---
+
+## Licenciamiento
+
+Este proyecto está disponible en código fuente para uso no comercial.
+
+Si deseas:
+
+- Ofrecer hosting
+- Vender servicios basados en este software
+- Usarlo comercialmente
+
+Debes obtener una licencia comercial.
+
+Contacto: jjwakn@gmail.com
+
+---
+
+## Documentación del Proyecto
+
+- [Contribuir](./CONTRIBUTING.es.md)
+- [Código de Conducta](./CODE_OF_CONDUCT.es.md)
+- [Licencia](./LICENSE.es.md)
+- [Política de Seguridad](./SECURITY.es.md)
+- [Privacidad](./PRIVACY.md)
