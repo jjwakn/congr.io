@@ -1,3 +1,4 @@
+import { I18nContext } from 'nestjs-i18n';
 import type {
   CommonEntity,
   DefaultGetData,
@@ -50,6 +51,13 @@ export abstract class CommonController<
 
   protected abstract module: Module;
 
+  private buildUnauthorizedException() {
+    const message = I18nContext.current()?.t('errors.auth.notIncluded');
+    return new UnauthorizedException(
+      typeof message === 'string' ? message : 'Unauthorized',
+    );
+  }
+
   // @UseGuards(AuthGuard, PermissionGuard)
   @UseGuards(AuthGuard)
   // @CommonPermissionDecorator(
@@ -83,7 +91,7 @@ export abstract class CommonController<
   @ApiBody({ type: Object }) // Can be overridden in child controllers
   async create(@Body() data: Entity, @Req() request: RequestType) {
     const userId = request.user?.userId;
-    if (!userId) throw new UnauthorizedException();
+    if (!userId) throw this.buildUnauthorizedException();
     return this.service.create({ data, userId });
   }
 
@@ -100,7 +108,7 @@ export abstract class CommonController<
     @Req() request: RequestType,
   ) {
     const userId = request.user?.userId;
-    if (!userId) throw new UnauthorizedException();
+    if (!userId) throw this.buildUnauthorizedException();
     return this.service.update({ id, data, userId });
   }
 
@@ -115,7 +123,7 @@ export abstract class CommonController<
     @Req() request: RequestType,
   ) {
     const userId = request.user?.userId;
-    if (!userId) throw new UnauthorizedException();
+    if (!userId) throw this.buildUnauthorizedException();
     return this.service.remove({ id, userId });
   }
 }

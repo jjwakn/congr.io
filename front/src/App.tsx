@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Layout from './components/Layout';
 import Loading from './components/Loading';
 import { AppProvider } from './contexts/AppProvider';
@@ -11,6 +12,7 @@ import BrandingPage from './pages/Branding';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Setup from './pages/Setup';
+import { getLocalizedPathname, isBrandingPath } from './utils/routes';
 
 const AppContent = () => {
   const { isLoading, isSetup } = useAppContext();
@@ -46,8 +48,22 @@ const usePathname = () => {
 
 const App = () => {
   const pathname = usePathname();
+  const { i18n } = useTranslation();
 
-  if (pathname === '/branding')
+  useEffect(() => {
+    const localizedPathname = getLocalizedPathname(pathname, i18n.language);
+    if (localizedPathname === pathname) return;
+
+    const { search, hash } = window.location;
+    window.history.replaceState(
+      null,
+      '',
+      `${localizedPathname}${search}${hash}`,
+    );
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, [i18n.language, pathname]);
+
+  if (isBrandingPath(pathname))
     return (
       <FooterProvider>
         <Layout>

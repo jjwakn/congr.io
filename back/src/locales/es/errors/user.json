@@ -1,0 +1,5 @@
+{
+  "notFound": "Usuario no encontrado",
+  "usernameExists": "Usuario ya existe",
+  "usernameExistsWithValue": "Usuario ya existe: {{username}}"
+}

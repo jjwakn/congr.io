@@ -1,12 +1,14 @@
 import { Close } from '@mui/icons-material';
 import { Alert, AlertProps, IconButton, Snackbar } from '@mui/material';
 import { ReactNode, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   NotificationContext,
   ShowNotificationType,
 } from './NotificationContext';
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
+  const { t } = useTranslation();
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notificationText, setNotificationText] = useState('');
   const [notificationDuration, setNotificationDuration] = useState<
@@ -32,7 +34,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const action = (
     <IconButton
       size="small"
-      aria-label="close"
+      aria-label={t('components.notification.closeAriaLabel')}
       color="inherit"
       onClick={handleCloseNotification}
     >

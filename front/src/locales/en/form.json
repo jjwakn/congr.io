@@ -1,0 +1,23 @@
+{
+  "error": {
+    "isRequired": "is required"
+  },
+  "field": {
+    "name": "Name",
+    "type": "Type",
+    "address": "Address",
+    "username": "Username",
+    "password": "Password",
+    "next": "Next",
+    "cancel": "Cancel",
+    "back": "Back",
+    "selectAll": "Select All",
+    "add": "Add"
+  },
+  "common": {
+    "replace": "Replace",
+    "delete": "Delete",
+    "moveUp": "Move up",
+    "moveDown": "Move down"
+  }
+}

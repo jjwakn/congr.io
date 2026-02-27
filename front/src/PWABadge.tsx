@@ -1,8 +1,11 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { useTranslation } from 'react-i18next';
 import './PWABadge.css';
 import { httpRequest } from './utils/http';
 
 function PWABadge() {
+  const { t } = useTranslation();
+
   // check for updates every hour
   const period = 60 * 60 * 1000;
 
@@ -32,19 +35,17 @@ function PWABadge() {
       {needRefresh && (
         <div className="PWABadge-toast">
           <div className="PWABadge-message">
-            <span id="toast-message">
-              New content available, click on reload button to update.
-            </span>
+            <span id="toast-message">{t('pwa.updateAvailable')}</span>
           </div>
           <div className="PWABadge-buttons">
             <button
               className="PWABadge-toast-button"
               onClick={() => updateServiceWorker(true)}
             >
-              Reload
+              {t('pwa.reload')}
             </button>
             <button className="PWABadge-toast-button" onClick={() => close()}>
-              Close
+              {t('pwa.close')}
             </button>
           </div>
         </div>

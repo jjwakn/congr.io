@@ -1,3 +1,5 @@
+import i18n from '../../../../i18n';
+
 const PNG_SIGNATURE = '89504e470d0a1a0a';
 
 const parsePngDimensions = (png: Uint8Array) => {
@@ -5,11 +7,11 @@ const parsePngDimensions = (png: Uint8Array) => {
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');
   if (signature !== PNG_SIGNATURE)
-    throw new Error('Invalid PNG provided for favicon generation');
+    throw new Error(i18n.t('brandingGenerator.errors.invalidPng'));
 
   const headerType = new TextDecoder().decode(png.subarray(12, 16));
   if (headerType !== 'IHDR')
-    throw new Error('Invalid PNG IHDR chunk for favicon generation');
+    throw new Error(i18n.t('brandingGenerator.errors.invalidPngHeader'));
 
   const view = new DataView(png.buffer, png.byteOffset, png.byteLength);
   const width = view.getUint32(16, false);

@@ -1,0 +1,4 @@
+{
+  "title": "Usuarios",
+  "description": "Esta función permite que el sistema tenga una lista de Usuarios y Roles.\nCada rol puede tener diferentes permisos para distintas funciones.\nESTA FUNCIÓN ES REQUERIDA PARA UTILIZAR EL SISTEMA"
+}

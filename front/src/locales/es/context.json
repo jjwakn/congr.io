@@ -1,0 +1,10 @@
+{
+  "error": {
+    "appContext": "useAppContext debe ser usado dentro de AppProvider",
+    "footerContext": "footerContext debe ser usado dentro de FooterProvider",
+    "notificationContext": "notificationContext debe ser usado dentro de NotificationProvider",
+    "authContext": "authContext debe ser usado dentro de AuthProvider",
+    "useTheme": "useTheme debe ser usado dentro de ThemeModeProvider",
+    "useSetup": "useSetup debe ser usado dentro de SetupProvider"
+  }
+}

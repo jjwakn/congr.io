@@ -121,7 +121,9 @@ export class UserService {
     });
     if (exists)
       throw new NotAcceptableException(
-        `${this.i18n.t('errors.user.usernameExists')}: ${data.username}`,
+        this.i18n.t('errors.user.usernameExistsWithValue', {
+          args: { username: data.username },
+        }),
       );
 
     const roles: Role[] = [];
@@ -135,7 +137,9 @@ export class UserService {
         });
         if (!found)
           throw new NotAcceptableException(
-            `${this.i18n.t('errors.role.notFound')}. ID: ${id}`,
+            this.i18n.t('errors.role.notFoundWithId', {
+              args: { id },
+            }),
           );
 
         roles.push(found);
@@ -151,7 +155,9 @@ export class UserService {
         });
         if (!found)
           throw new NotAcceptableException(
-            `${this.i18n.t('errors.congregation.notFound')}. ID: ${id}`,
+            this.i18n.t('errors.congregation.notFoundWithId', {
+              args: { id },
+            }),
           );
 
         congregations.push(found);
@@ -167,7 +173,9 @@ export class UserService {
         });
         if (!found)
           throw new NotAcceptableException(
-            `${this.i18n.t('errors.location.notFound')}. ID: ${id}`,
+            this.i18n.t('errors.location.notFoundWithId', {
+              args: { id },
+            }),
           );
 
         locations.push(found);
@@ -206,7 +214,9 @@ export class UserService {
       });
       if (exists)
         throw new NotAcceptableException(
-          `${this.i18n.t('errors.user.usernameExists')}: ${data.username}`,
+          this.i18n.t('errors.user.usernameExistsWithValue', {
+            args: { username: data.username },
+          }),
         );
     }
 
@@ -221,7 +231,9 @@ export class UserService {
         });
         if (!found)
           throw new NotAcceptableException(
-            `${this.i18n.t('errors.role.notFound')}. ID: ${id}`,
+            this.i18n.t('errors.role.notFoundWithId', {
+              args: { id },
+            }),
           );
 
         roles.push(found);
@@ -238,7 +250,9 @@ export class UserService {
         });
         if (!found)
           throw new NotAcceptableException(
-            `${this.i18n.t('errors.congregation.notFound')}. ID: ${id}`,
+            this.i18n.t('errors.congregation.notFoundWithId', {
+              args: { id },
+            }),
           );
 
         congregations.push(found);
@@ -254,7 +268,9 @@ export class UserService {
         });
         if (!found)
           throw new NotAcceptableException(
-            `${this.i18n.t('errors.location.notFound')}. ID: ${id}`,
+            this.i18n.t('errors.location.notFoundWithId', {
+              args: { id },
+            }),
           );
 
         locations.push(found);

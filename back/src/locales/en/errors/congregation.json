@@ -1,0 +1,5 @@
+{
+  "notFound": "Congregation not found",
+  "notFoundWithId": "Congregation not found. ID: {{id}}",
+  "logoNotFound": "Congregation logo not found"
+}

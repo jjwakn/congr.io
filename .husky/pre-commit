@@ -1,3 +1,4 @@
+yarn bump:versions
 yarn format
 yarn lint
 yarn i18n:check

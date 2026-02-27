@@ -1,0 +1,10 @@
+{
+  "dashboard": {
+    "welcomeTitle": "Welcome to your Dashboard",
+    "successMessage": "Your congregation is successfully configured and ready to use.",
+    "modules": "Modules",
+    "noModules": "No modules available for this congregation.",
+    "moduleNotFound": "Module not found. Select one from the sidebar.",
+    "logout": "Logout"
+  }
+}

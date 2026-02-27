@@ -9,6 +9,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFooter } from '../../hooks/useFooter';
+import { getBrandingPath, isBrandingPath } from '../../utils/routes';
 import { smallOptionStyle } from '../../utils/theme';
 import { ThemeToggleButton } from '../ThemeToggleButton';
 
@@ -39,12 +40,14 @@ const Footer = () => {
   );
 
   const handleBrandingNavigation = useCallback(() => {
-    const nextPath = pathname === '/branding' ? '/' : '/branding';
+    const nextPath = isBrandingPath(pathname)
+      ? '/'
+      : getBrandingPath(i18n.language);
     if (window.location.pathname === nextPath) return;
 
     window.history.pushState(null, '', nextPath);
     window.dispatchEvent(new PopStateEvent('popstate'));
-  }, [pathname]);
+  }, [i18n.language, pathname]);
 
   return (
     <Box
@@ -65,7 +68,7 @@ const Footer = () => {
       {children ? children : null}
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1 }}>
-        {pathname === '/branding' ? (
+        {isBrandingPath(pathname) ? (
           <Button
             variant="text"
             size="small"

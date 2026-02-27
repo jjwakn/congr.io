@@ -1,0 +1,10 @@
+{
+  "dashboard": {
+    "welcomeTitle": "Bienvenido a tu Panel",
+    "successMessage": "Tu congregación está configurada exitosamente y lista para usar.",
+    "modules": "Módulos",
+    "noModules": "No hay módulos disponibles para esta congregación.",
+    "moduleNotFound": "Módulo no encontrado. Selecciona uno en la barra lateral.",
+    "logout": "Cerrar sesión"
+  }
+}

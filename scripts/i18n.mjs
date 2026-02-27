@@ -9,6 +9,43 @@ const projects = [
 
 const referenceLang = 'en';
 
+const collectJsonFiles = (baseDir) => {
+  const result = [];
+
+  const walk = (currentDir) => {
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const absolutePath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        walk(absolutePath);
+        continue;
+      }
+
+      if (entry.isFile() && entry.name.endsWith('.json')) {
+        result.push(absolutePath);
+      }
+    }
+  };
+
+  walk(baseDir);
+  return result.sort();
+};
+
+const assignNestedValue = (target, segments, value) => {
+  let current = target;
+
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    const segment = segments[index];
+    if (!current[segment] || typeof current[segment] !== 'object') {
+      current[segment] = {};
+    }
+    current = current[segment];
+  }
+
+  current[segments[segments.length - 1]] = value;
+};
+
 const loadLocales = (dir) => {
   if (!fs.existsSync(dir)) {
     console.warn(`Locales directory not found: ${dir}`);
@@ -22,16 +59,25 @@ const loadLocales = (dir) => {
 
   for (const lang of languages) {
     locales[lang] = {};
-    const files = fs
-      .readdirSync(path.join(dir, lang))
-      .filter((f) => f.endsWith('.json'));
 
-    for (const file of files) {
-      const key = path.basename(file, '.json');
-      const content = JSON.parse(
-        fs.readFileSync(path.join(dir, lang, file), 'utf-8'),
-      );
-      locales[lang][key] = content;
+    const languageDir = path.join(dir, lang);
+    const files = collectJsonFiles(languageDir);
+
+    for (const absolutePath of files) {
+      const relativePath = path.relative(languageDir, absolutePath);
+      const keySegments = relativePath
+        .replace(/\.json$/i, '')
+        .split(path.sep)
+        .filter(Boolean);
+      let content;
+
+      try {
+        content = JSON.parse(fs.readFileSync(absolutePath, 'utf-8'));
+      } catch {
+        throw new Error(`Invalid JSON in ${absolutePath}`);
+      }
+
+      assignNestedValue(locales[lang], keySegments, content);
     }
   }
 
@@ -49,36 +95,81 @@ const flatten = (obj, prefix = '') =>
     return acc;
   }, {});
 
-const checkLocales = (locales) => {
-  const langs = Object.keys(locales);
+const checkLocales = (projectName, locales) => {
+  const langs = Object.keys(locales).sort();
+
+  if (!langs.length) {
+    console.error(`[${projectName}] No locale languages found`);
+    return false;
+  }
+
+  if (!langs.includes(referenceLang)) {
+    console.error(
+      `[${projectName}] Missing reference language directory: ${referenceLang}`,
+    );
+    return false;
+  }
+
   const flat = Object.fromEntries(langs.map((l) => [l, flatten(locales[l])]));
 
   const refKeys = new Set(Object.keys(flat[referenceLang]));
+  let hasErrors = false;
 
   for (const lang of langs) {
     if (lang === referenceLang) continue;
     const keys = new Set(Object.keys(flat[lang]));
+    const missingKeys = [];
+    const extraKeys = [];
 
-    // Missing keys
     for (const k of refKeys) {
       if (!keys.has(k)) {
-        console.error(`[${lang}] Missing key: ${k}`);
-        process.exit(1);
+        missingKeys.push(k);
       }
     }
 
-    // Extra keys
     for (const k of keys) {
       if (!refKeys.has(k)) {
-        console.warn(`[${lang}] Extra key: ${k}`);
-        process.exit(1);
+        extraKeys.push(k);
       }
     }
+
+    if (missingKeys.length) {
+      hasErrors = true;
+      console.error(`[${projectName}][${lang}] Missing keys:`);
+      missingKeys.forEach((key) => console.error(`  - ${key}`));
+    }
+
+    if (extraKeys.length) {
+      hasErrors = true;
+      console.error(`[${projectName}][${lang}] Extra keys:`);
+      extraKeys.forEach((key) => console.error(`  - ${key}`));
+    }
   }
+
+  if (!hasErrors) {
+    console.info(
+      `[${projectName}] OK (${langs.length} languages checked against "${referenceLang}")`,
+    );
+  }
+
+  return !hasErrors;
 };
+
+let hasValidationErrors = false;
 
 for (const project of projects) {
   console.info(`\n🔍 Checking ${project.name} (${project.dir})`);
-  const locales = loadLocales(project.dir);
-  checkLocales(locales);
+  try {
+    const locales = loadLocales(project.dir);
+    const isValid = checkLocales(project.name, locales);
+    if (!isValid) hasValidationErrors = true;
+  } catch (error) {
+    hasValidationErrors = true;
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[${project.name}] ${message}`);
+  }
+}
+
+if (hasValidationErrors) {
+  process.exit(1);
 }

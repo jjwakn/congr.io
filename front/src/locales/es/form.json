@@ -1,0 +1,23 @@
+{
+  "error": {
+    "isRequired": "es requerido"
+  },
+  "field": {
+    "name": "Nombre",
+    "type": "Tipo",
+    "address": "Dirección",
+    "username": "Usuario",
+    "password": "Contraseña",
+    "next": "Siguiente",
+    "cancel": "Cancelar",
+    "back": "Regresar",
+    "selectAll": "Seleccionar Todos",
+    "add": "Añadir"
+  },
+  "common": {
+    "replace": "Reemplazar",
+    "delete": "Eliminar",
+    "moveUp": "Mover arriba",
+    "moveDown": "Mover abajo"
+  }
+}

@@ -1,0 +1,118 @@
+type AppLanguage = 'en' | 'es';
+
+type LocalizedValue = Record<AppLanguage, string>;
+
+const BRANDING_SEGMENT: LocalizedValue = {
+  en: 'branding',
+  es: 'marca',
+};
+
+const MODULES_SEGMENT: LocalizedValue = {
+  en: 'modules',
+  es: 'modulos',
+};
+
+const MODULE_SLUGS: Record<string, LocalizedValue> = {
+  users: { en: 'users', es: 'usuarios' },
+  members: { en: 'members', es: 'miembros' },
+  events_calendar: { en: 'events-calendar', es: 'eventos' },
+  events_attendance: {
+    en: 'events-attendance',
+    es: 'asistencia-eventos',
+  },
+  ministries: { en: 'ministries', es: 'ministerios' },
+  ministries_calendar: {
+    en: 'ministries-calendar',
+    es: 'calendario-ministerios',
+  },
+};
+
+const normalizeLanguage = (language?: string): AppLanguage =>
+  language?.toLowerCase().startsWith('es') ? 'es' : 'en';
+
+const trimPath = (pathname: string): string =>
+  pathname.replace(/^\/+|\/+$/g, '');
+
+const splitPath = (pathname: string): string[] => {
+  const trimmed = trimPath(pathname);
+  return trimmed ? trimmed.split('/').filter(Boolean) : [];
+};
+
+const matchesLocalizedSegment = (
+  segment: string | undefined,
+  values: LocalizedValue,
+): boolean => Boolean(segment && Object.values(values).includes(segment));
+
+const getModuleSlug = (moduleId: string, language?: string): string => {
+  const lang = normalizeLanguage(language);
+  return MODULE_SLUGS[moduleId]?.[lang] ?? moduleId.replace(/_/g, '-');
+};
+
+const getModuleIdFromSlug = (slug: string): string | null => {
+  const normalizedSlug = slug.trim().toLowerCase();
+  if (!normalizedSlug) return null;
+
+  for (const [moduleId, localized] of Object.entries(MODULE_SLUGS)) {
+    if (
+      normalizedSlug === localized.en ||
+      normalizedSlug === localized.es ||
+      normalizedSlug === moduleId ||
+      normalizedSlug === moduleId.replace(/_/g, '-')
+    ) {
+      return moduleId;
+    }
+  }
+
+  return null;
+};
+
+export const getBrandingPath = (language?: string): string => {
+  const lang = normalizeLanguage(language);
+  return `/${BRANDING_SEGMENT[lang]}`;
+};
+
+export const isBrandingPath = (pathname: string): boolean => {
+  const segments = splitPath(pathname);
+  return (
+    segments.length === 1 &&
+    matchesLocalizedSegment(segments[0], BRANDING_SEGMENT)
+  );
+};
+
+export const getModulePrefix = (language?: string): string => {
+  const lang = normalizeLanguage(language);
+  return `/${MODULES_SEGMENT[lang]}`;
+};
+
+export const getModulePath = (moduleId: string, language?: string): string =>
+  `/${getModuleSlug(moduleId, language)}`;
+
+export const getModuleIdFromPath = (pathname: string): string | null => {
+  const segments = splitPath(pathname);
+  if (!segments.length) return null;
+
+  if (matchesLocalizedSegment(segments[0], MODULES_SEGMENT)) {
+    return segments[1] ? getModuleIdFromSlug(segments[1]) : null;
+  }
+
+  if (
+    segments.length === 1 &&
+    !matchesLocalizedSegment(segments[0], BRANDING_SEGMENT)
+  ) {
+    return getModuleIdFromSlug(segments[0]);
+  }
+
+  return null;
+};
+
+export const getLocalizedPathname = (
+  pathname: string,
+  language?: string,
+): string => {
+  if (isBrandingPath(pathname)) return getBrandingPath(language);
+
+  const moduleId = getModuleIdFromPath(pathname);
+  if (moduleId) return getModulePath(moduleId, language);
+
+  return pathname;
+};

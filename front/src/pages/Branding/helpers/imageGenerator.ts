@@ -1,3 +1,4 @@
+import i18n from '../../../../i18n';
 import { BackgroundMode } from '../types';
 
 const PREFERRED_ICON_PADDING = 0.7;
@@ -15,7 +16,9 @@ const canvasToPngBytes = async (
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((value) => {
       if (!value) {
-        reject(new Error('Could not generate PNG image'));
+        reject(
+          new Error(i18n.t('brandingGenerator.errors.pngGenerationFailed')),
+        );
         return;
       }
       resolve(value);
@@ -66,7 +69,7 @@ export const loadImageFromFile = (file: File): Promise<HTMLImageElement> =>
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error('Could not load image'));
+      reject(new Error(i18n.t('brandingGenerator.errors.imageLoadFailed')));
     };
     image.src = url;
   });
@@ -78,7 +81,8 @@ export const normalizeImageToPng = async (
   canvas.width = Math.max(1, image.width);
   canvas.height = Math.max(1, image.height);
   const context = canvas.getContext('2d');
-  if (!context) throw new Error('Canvas is not available');
+  if (!context)
+    throw new Error(i18n.t('brandingGenerator.errors.canvasUnavailable'));
 
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
@@ -102,7 +106,8 @@ export const renderIcon = async ({
   canvas.width = size;
   canvas.height = size;
   const context = canvas.getContext('2d');
-  if (!context) throw new Error('Canvas is not available');
+  if (!context)
+    throw new Error(i18n.t('brandingGenerator.errors.canvasUnavailable'));
 
   context.clearRect(0, 0, size, size);
 

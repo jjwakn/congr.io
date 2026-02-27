@@ -1,0 +1,23 @@
+{
+  "loading": {
+    "text": "Cargando..."
+  },
+  "fileUploader": {
+    "onTypeError": "Tipo de archivo no soportado",
+    "onSizeTooBigError": "El archivo es demasiado grande",
+    "onSizeTooSmallError": "El archivo es demasiado pequeño",
+    "dropHere": "Suelta Aquí",
+    "fileTypeError": "Error de tipo/tamaño de archivo, ¡Hover en tipos!",
+    "uploadDefault": "Sube o arrastra un archivo aquí",
+    "uploadedSuccessfully": "¡Cargado Exitosamente!",
+    "uploadAnother": "¿Subir otro?",
+    "tooltip": {
+      "maxSize": "tamaño máximo <= {{size}}",
+      "minSize": "tamaño mínimo >= {{size}}",
+      "types": "tipos: {{types}}"
+    }
+  },
+  "notification": {
+    "closeAriaLabel": "Cerrar notificación"
+  }
+}

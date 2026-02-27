@@ -1,0 +1,23 @@
+{
+  "loading": {
+    "text": "Loading..."
+  },
+  "fileUploader": {
+    "onTypeError": "Unsupported file type",
+    "onSizeTooBigError": "The file is too big",
+    "onSizeTooSmallError": "The file is too small",
+    "dropHere": "Drop Here",
+    "fileTypeError": "File type/size error, Hovered on types!",
+    "uploadDefault": "Upload or drop a file right here",
+    "uploadedSuccessfully": "Uploaded Successfully!",
+    "uploadAnother": "Upload another?",
+    "tooltip": {
+      "maxSize": "max size <= {{size}}",
+      "minSize": "min size >= {{size}}",
+      "types": "types: {{types}}"
+    }
+  },
+  "notification": {
+    "closeAriaLabel": "Close notification"
+  }
+}

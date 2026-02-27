@@ -1,0 +1,52 @@
+{
+  "title": "Generador de Marca",
+  "subtitle": "Genera assets estáticos de marca en tu navegador y luego cópialos en la carpeta public del frontend.",
+  "warningRebuild": "Los cambios de marca requieren reconstrucción/redeploy; no se actualizarán en una implementación ya en ejecución.",
+  "smallLogo": "Logo pequeño",
+  "bigLogo": "Logo grande",
+  "selectSmallLogo": "Seleccionar logo pequeño",
+  "selectBigLogo": "Seleccionar logo grande",
+  "backgroundMode": "Fondo del ícono",
+  "backgroundTransparent": "Transparente",
+  "backgroundWhite": "Blanco",
+  "backgroundBlack": "Negro",
+  "roundedCorners": "Chip de rectángulo redondeado",
+  "cornerRadius": "Radio de esquina",
+  "appName": "Nombre del manifest",
+  "shortName": "Nombre corto del manifest",
+  "generateButton": "Generar y descargar ZIP",
+  "generating": "Generando...",
+  "success": {
+    "generated": "ZIP generado correctamente."
+  },
+  "errors": {
+    "missingFiles": "Sube ambos logos antes de generar.",
+    "generateFailed": "No se pudieron generar los assets de marca.",
+    "invalidPng": "PNG inválido para la generación del favicon.",
+    "invalidPngHeader": "Chunk IHDR inválido en el PNG para la generación del favicon.",
+    "pngGenerationFailed": "No se pudo generar la imagen PNG.",
+    "imageLoadFailed": "No se pudo cargar la imagen.",
+    "canvasUnavailable": "Canvas no está disponible."
+  },
+  "instructionsTitle": "Cómo aplicar los archivos generados",
+  "instructionsIntro": "Después de descargar el ZIP, coloca su contenido en el repositorio frontend:",
+  "instructions": {
+    "step1": "Descarga el ZIP desde esta página.",
+    "step2": "Extrae el ZIP localmente.",
+    "step3": "Copia `branding/`, `icons/` y `favicon.ico` dentro de `apps/front/public/` (o `front/public/` en este proyecto).",
+    "step4": "Revisa `public/manifest.webmanifest` y ajusta name, short_name y los colores de tema/fondo si hace falta.",
+    "step5": "Reconstruye y vuelve a desplegar el frontend."
+  },
+  "previewsTitle": "Vistas previas de assets generados",
+  "previewsIntro": "Estas vistas previas reflejan los archivos que se incluirán en el ZIP.",
+  "previewsLoading": "Generando vistas previas...",
+  "previewsEmpty": "Sube ambos logos para previsualizar los assets generados.",
+  "previews": {
+    "smallLogo": "Logo pequeño",
+    "bigLogo": "Logo grande",
+    "icon": "Vista previa de ícono de app",
+    "favicon": "Vista previa de favicon",
+    "iconPath": "icons/icon-512.png (incluye variantes 192/512/apple-touch)",
+    "faviconPath": "favicon.ico"
+  }
+}

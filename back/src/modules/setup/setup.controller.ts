@@ -31,7 +31,7 @@ export class SetupController {
   ): SetupProps {
     if (!body || typeof body !== 'object') {
       throw new BadRequestException(
-        `${this.translate('errors.setup.missing', lang)} body`,
+        this.translate('errors.setup.missingBody', lang),
       );
     }
 

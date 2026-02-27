@@ -1,0 +1,39 @@
+{
+  "title": "Setup your system",
+  "error": {
+    "notFound": "System is not setup. If you think this is an error please let us know",
+    "featuresNotFound": "Fatal error, features not found",
+    "saveFailed": "Setup could not be completed"
+  },
+  "success": {
+    "saved": "Setup completed successfully"
+  },
+  "form": {
+    "title": "Welcome",
+    "subtitle": "Let's set up your {{type}}",
+    "defaultType": "Congregation",
+    "submitText": "Create",
+    "types": "Assembly,Church,Congregation",
+    "features": "Modules",
+    "featuresText": "Select the features you want to use",
+    "locations": "Locations",
+    "locationsText": "The locations for your {{type}}. Locations can share data between them",
+    "locationDefault": "Main Location",
+    "user": "Main user",
+    "userSubtitle": "The main user that will manage the system. We could add more or update it later",
+    "fullAccessRoleName": "Role Name",
+    "confirm": "Confirm",
+    "confirmSubtitle": "Confirm your {{type}} setup"
+  },
+  "confirm": {
+    "review": "Review and confirm",
+    "none": "None",
+    "fullAccessRole": "Full access role",
+    "sections": {
+      "congregation": "{{type}}",
+      "features": "Features",
+      "locations": "Locations",
+      "admin": "Admin"
+    }
+  }
+}

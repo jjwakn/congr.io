@@ -1,0 +1,4 @@
+{
+  "notFound": "Role not found",
+  "notFoundWithId": "Role not found. ID: {{id}}"
+}

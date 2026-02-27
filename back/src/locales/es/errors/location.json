@@ -1,0 +1,4 @@
+{
+  "notFound": "Ubicación no encontrada",
+  "notFoundWithId": "Ubicación no encontrada. ID: {{id}}"
+}

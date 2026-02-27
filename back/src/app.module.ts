@@ -44,6 +44,7 @@ import { UserModule } from './modules/user/user.module';
           process.env.NODE_ENV !== 'production'
             ? join(process.cwd(), 'src', 'locales')
             : join(__dirname, 'locales'),
+        includeSubfolders: true,
         watch: true,
       },
       loader: I18nJsonLoader,

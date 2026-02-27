@@ -1,0 +1,8 @@
+{
+  "error": {
+    "emptyData": "Data vacia",
+    "paramNotFound": "Parametro {{param}} no encontrado en {{url}}",
+    "missingParam": "GET: {{key}} debe tener un valor que no sea  null, undefined o string vacio",
+    "requestFailed": "Solicitud fallida"
+  }
+}

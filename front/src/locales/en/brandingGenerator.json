@@ -1,0 +1,52 @@
+{
+  "title": "Branding Generator",
+  "subtitle": "Generate static branding assets in your browser, then copy them into the frontend public folder.",
+  "warningRebuild": "Branding changes require rebuild/redeploy; they will not update an already running deployment.",
+  "smallLogo": "Logo small",
+  "bigLogo": "Logo big",
+  "selectSmallLogo": "Select logo small",
+  "selectBigLogo": "Select logo big",
+  "backgroundMode": "Icon background",
+  "backgroundTransparent": "Transparent",
+  "backgroundWhite": "White",
+  "backgroundBlack": "Black",
+  "roundedCorners": "Rounded rectangle chip",
+  "cornerRadius": "Corner radius",
+  "appName": "Manifest name",
+  "shortName": "Manifest short name",
+  "generateButton": "Generate & Download ZIP",
+  "generating": "Generating...",
+  "success": {
+    "generated": "ZIP generated successfully."
+  },
+  "errors": {
+    "missingFiles": "Please upload both logos before generating.",
+    "generateFailed": "Could not generate branding assets.",
+    "invalidPng": "Invalid PNG provided for favicon generation.",
+    "invalidPngHeader": "Invalid PNG IHDR chunk for favicon generation.",
+    "pngGenerationFailed": "Could not generate PNG image.",
+    "imageLoadFailed": "Could not load image.",
+    "canvasUnavailable": "Canvas is not available."
+  },
+  "instructionsTitle": "How to apply generated files",
+  "instructionsIntro": "After downloading the ZIP, place its content in the frontend repository:",
+  "instructions": {
+    "step1": "Download the ZIP from this page.",
+    "step2": "Extract the ZIP locally.",
+    "step3": "Copy `branding/`, `icons/`, and `favicon.ico` into `apps/front/public/` (or this project's `front/public/`).",
+    "step4": "Review `public/manifest.webmanifest` and adjust name, short_name, and theme/background colors if needed.",
+    "step5": "Rebuild and redeploy the frontend."
+  },
+  "previewsTitle": "Generated asset previews",
+  "previewsIntro": "These previews reflect the files that will be included in the ZIP package.",
+  "previewsLoading": "Generating previews...",
+  "previewsEmpty": "Upload both logos to preview generated assets.",
+  "previews": {
+    "smallLogo": "Logo small",
+    "bigLogo": "Logo big",
+    "icon": "App icon preview",
+    "favicon": "Favicon preview",
+    "iconPath": "icons/icon-512.png (covers 192/512/apple-touch variants)",
+    "faviconPath": "favicon.ico"
+  }
+}

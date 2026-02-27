@@ -21,13 +21,13 @@ const buildPreviewItems = (
   {
     id: 'icon',
     label: t('brandingGenerator.previews.icon'),
-    path: 'icons/icon-512.png (covers 192/512/apple-touch variants)',
+    path: t('brandingGenerator.previews.iconPath'),
     url: createPngObjectUrl(assets.icon512),
   },
   {
     id: 'favicon',
     label: t('brandingGenerator.previews.favicon'),
-    path: 'favicon.ico',
+    path: t('brandingGenerator.previews.faviconPath'),
     url: createPngObjectUrl(assets.favicon32),
   },
 ];

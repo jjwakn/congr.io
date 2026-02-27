@@ -1,0 +1,4 @@
+{
+  "title": "Users",
+  "description": "This feature allows the system to have a list of Users and Roles.\nEach role could have different permissions for different features\nTHIS FEATURE IS REQUIRED TO USE THE SYSTEM"
+}

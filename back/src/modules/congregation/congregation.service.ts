@@ -59,7 +59,7 @@ export class CongregationService {
     });
 
     if (!result)
-      throw new NotFoundException(this.i18n.t('errors.role.notFound'));
+      throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
 
     return cleanColumns<Congregation>(result);
   }

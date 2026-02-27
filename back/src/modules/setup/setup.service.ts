@@ -104,52 +104,52 @@ export class SetupService {
     try {
       if (!data)
         throw new BadRequestException(
-          `${this.translate('errors.setup.missing', lang)} body`,
+          this.translate('errors.setup.missingBody', lang),
         );
 
       const { role, user, congregation } = data;
 
       if (!user)
         throw new BadRequestException(
-          `${this.translate('errors.setup.missing', lang)} user`,
+          this.translate('errors.setup.missingUser', lang),
         );
       if (!user.username?.trim())
         throw new BadRequestException(
-          `${this.translate('errors.setup.missingProp', lang)} User: username`,
+          this.translate('errors.setup.missingUserUsername', lang),
         );
       if (!user.password)
         throw new BadRequestException(
-          `${this.translate('errors.setup.missingProp', lang)} User: password`,
+          this.translate('errors.setup.missingUserPassword', lang),
         );
       if (!user.name?.trim())
         throw new BadRequestException(
-          `${this.translate('errors.setup.missingProp', lang)} User: name`,
+          this.translate('errors.setup.missingUserName', lang),
         );
 
       if (!role)
         throw new BadRequestException(
-          `${this.translate('errors.setup.missing', lang)} role`,
+          this.translate('errors.setup.missingRole', lang),
         );
       if (!role.name?.trim())
         throw new BadRequestException(
-          `${this.translate('errors.setup.missingProp', lang)} Role: name`,
+          this.translate('errors.setup.missingRoleName', lang),
         );
 
       if (!congregation)
         throw new BadRequestException(
-          `${this.translate('errors.setup.missing', lang)} congregation`,
+          this.translate('errors.setup.missingCongregation', lang),
         );
       if (!congregation.name?.trim())
         throw new BadRequestException(
-          `${this.translate('errors.setup.missingProp', lang)} Congregation: name`,
+          this.translate('errors.setup.missingCongregationName', lang),
         );
       if (!congregation.type?.trim())
         throw new BadRequestException(
-          `${this.translate('errors.setup.missingProp', lang)} Congregation: type`,
+          this.translate('errors.setup.missingCongregationType', lang),
         );
       if (!congregation.locations || !congregation.locations.length)
         throw new BadRequestException(
-          `${this.translate('errors.setup.missingProp', lang)} Congregation: locations`,
+          this.translate('errors.setup.missingCongregationLocations', lang),
         );
       if (
         congregation.locations.some(
@@ -157,20 +157,20 @@ export class SetupService {
         )
       )
         throw new BadRequestException(
-          `${this.translate('errors.setup.missingProp', lang)} Congregation: location.order`,
+          this.translate('errors.setup.missingCongregationLocationOrder', lang),
         );
       if (congregation.locations.some((location) => !location.name?.trim()))
         throw new BadRequestException(
-          `${this.translate('errors.setup.missingProp', lang)} Congregation: location.name`,
+          this.translate('errors.setup.missingCongregationLocationName', lang),
         );
 
       if (!congregation.features || !congregation.features.length)
         throw new BadRequestException(
-          `${this.translate('errors.setup.missingProp', lang)} Congregation: features`,
+          this.translate('errors.setup.missingCongregationFeatures', lang),
         );
       if (congregation.features.some((feature) => !feature))
         throw new BadRequestException(
-          `${this.translate('errors.setup.missingProp', lang)} Congregation: feature`,
+          this.translate('errors.setup.missingCongregationFeature', lang),
         );
 
       const encryptedPassword = await encryptPassword(user.password);
@@ -205,7 +205,7 @@ export class SetupService {
         });
         if (!userCreated)
           throw new InternalServerErrorException(
-            `${this.translate('errors.setup.errorCreating', lang)} userRepository`,
+            this.translate('errors.setup.errorCreatingUserRepository', lang),
           );
         await userRepository.save(userCreated);
 
@@ -216,7 +216,7 @@ export class SetupService {
         });
         if (!roleCreated)
           throw new InternalServerErrorException(
-            `${this.translate('errors.setup.errorCreating', lang)} roleRepository`,
+            this.translate('errors.setup.errorCreatingRoleRepository', lang),
           );
         await roleRepository.save(roleCreated);
 
@@ -230,7 +230,10 @@ export class SetupService {
         );
         if (!locationsCreated.length)
           throw new InternalServerErrorException(
-            `${this.translate('errors.setup.errorCreating', lang)} locationRepository`,
+            this.translate(
+              'errors.setup.errorCreatingLocationRepository',
+              lang,
+            ),
           );
         await locationRepository.save(locationsCreated);
 
@@ -245,7 +248,10 @@ export class SetupService {
         });
         if (!congregationCreated)
           throw new InternalServerErrorException(
-            `${this.translate('errors.setup.errorCreating', lang)} congregationRepository`,
+            this.translate(
+              'errors.setup.errorCreatingCongregationRepository',
+              lang,
+            ),
           );
         await congregationRepository.save(congregationCreated);
 
@@ -263,7 +269,10 @@ export class SetupService {
 
         if (!congregationWithRelations)
           throw new InternalServerErrorException(
-            `${this.translate('errors.setup.errorCreating', lang)} congregationRepository`,
+            this.translate(
+              'errors.setup.errorCreatingCongregationRepository',
+              lang,
+            ),
           );
 
         return {

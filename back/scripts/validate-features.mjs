@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { readdirSync } from 'fs';
+import { basename, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,22 +17,18 @@ const Features = {
   MinistriesCalendar: 'ministries_calendar',
 };
 
-// Path to the features.json file
-const featuresJsonPath = join(__dirname, '..', 'src', 'locales', 'en', 'features.json');
+const featuresDirPath = join(__dirname, '..', 'src', 'locales', 'en', 'features');
 
 function validateFeatures() {
   try {
-    console.log('🔍 Validating backend features.json against Features enum...\n');
-    
-    // Read and parse the features.json file
-    const featuresJsonContent = readFileSync(featuresJsonPath, 'utf8');
-    const featuresJson = JSON.parse(featuresJsonContent);
+    console.log('🔍 Validating backend feature locale files against Features enum...\n');
     
     // Get all feature values from the enum
     const enumFeatureValues = Object.values(Features);
     
-    // Get all feature keys from the JSON
-    const jsonFeatureKeys = Object.keys(featuresJson);
+    const jsonFeatureKeys = readdirSync(featuresDirPath)
+      .filter((file) => file.endsWith('.json'))
+      .map((file) => basename(file, '.json'));
     
     console.log('📋 Features defined in enum:');
     enumFeatureValues.forEach(feature => console.log(`  ✅ ${feature}`));

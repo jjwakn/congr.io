@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { I18nContext } from 'nestjs-i18n';
 import {
   Body,
   Controller,
@@ -51,7 +52,11 @@ export class AuthController {
   @Get('me')
   async me(@Req() req: Request & { user?: { userId?: string } }) {
     const userId = req.user?.userId;
-    if (!userId) throw new UnauthorizedException();
+    const message = I18nContext.current()?.t('errors.auth.notIncluded');
+    if (!userId)
+      throw new UnauthorizedException(
+        typeof message === 'string' ? message : 'Unauthorized',
+      );
 
     return {
       user: await this.service.getCurrentUser(userId),

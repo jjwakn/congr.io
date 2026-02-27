@@ -17,17 +17,10 @@ import { LogoSmall } from '../../components/Logos';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../hooks/useAuth';
 import { useSetup } from '../../hooks/useSetup';
-
-const MODULE_ROUTE_PREFIX = '/modules/';
-
-const getModuleFromPath = (pathname: string): string | null => {
-  if (!pathname.startsWith(MODULE_ROUTE_PREFIX)) return null;
-  const moduleId = pathname.slice(MODULE_ROUTE_PREFIX.length).trim();
-  return moduleId || null;
-};
+import { getModuleIdFromPath, getModulePath } from '../../utils/routes';
 
 const Dashboard = () => {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { congregation } = useAppContext();
   const { user, logout } = useAuth();
   const { features } = useSetup();
@@ -63,17 +56,20 @@ const Dashboard = () => {
     });
   }, [congregation?.features, congregationType, featureById]);
 
-  const currentModuleId = getModuleFromPath(window.location.pathname);
+  const currentModuleId = getModuleIdFromPath(window.location.pathname);
   const selectedModule =
     availableModules.find((module) => module.id === currentModuleId) ?? null;
 
-  const navigateToModule = useCallback((moduleId: string) => {
-    const nextPath = `${MODULE_ROUTE_PREFIX}${moduleId}`;
-    if (window.location.pathname === nextPath) return;
+  const navigateToModule = useCallback(
+    (moduleId: string) => {
+      const nextPath = getModulePath(moduleId, i18n.language);
+      if (window.location.pathname === nextPath) return;
 
-    window.history.pushState(null, '', nextPath);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, []);
+      window.history.pushState(null, '', nextPath);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    },
+    [i18n.language],
+  );
 
   useEffect(() => {
     const handlePopState = () => {
@@ -89,20 +85,26 @@ const Dashboard = () => {
   useEffect(() => {
     if (!availableModules.length) return;
 
-    const routeModuleId = getModuleFromPath(window.location.pathname);
+    const routeModuleId = getModuleIdFromPath(window.location.pathname);
     const isValidRoute = routeModuleId
       ? availableModules.some((module) => module.id === routeModuleId)
       : false;
 
-    if (isValidRoute) return;
+    if (isValidRoute && routeModuleId) {
+      const localizedPath = getModulePath(routeModuleId, i18n.language);
+      if (window.location.pathname === localizedPath) return;
 
-    window.history.replaceState(
-      null,
-      '',
-      `${MODULE_ROUTE_PREFIX}${availableModules[0].id}`,
-    );
+      window.history.replaceState(null, '', localizedPath);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      return;
+    }
+
+    const fallbackPath = getModulePath(availableModules[0].id, i18n.language);
+    if (window.location.pathname === fallbackPath) return;
+
+    window.history.replaceState(null, '', fallbackPath);
     window.dispatchEvent(new PopStateEvent('popstate'));
-  }, [availableModules]);
+  }, [availableModules, i18n.language]);
 
   return (
     <Box sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>

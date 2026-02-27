@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function DrawTypes({
   types,
@@ -9,13 +10,30 @@ export default function DrawTypes({
   minSize?: number;
   maxSize?: number;
 }): null | ReactNode {
+  const { t } = useTranslation();
+
   if (types) {
     const stringTypes = types.toString();
-    let size = '';
-    if (maxSize) size += `size >= ${maxSize}, `;
-    if (minSize) size += `size <= ${minSize}, `;
+    const tooltipParts: string[] = [];
+
+    if (maxSize) {
+      tooltipParts.push(
+        t('components.fileUploader.tooltip.maxSize', { size: maxSize }),
+      );
+    }
+
+    if (minSize) {
+      tooltipParts.push(
+        t('components.fileUploader.tooltip.minSize', { size: minSize }),
+      );
+    }
+
+    tooltipParts.push(
+      t('components.fileUploader.tooltip.types', { types: stringTypes }),
+    );
+
     return (
-      <span title={`${size}types: ${stringTypes}`} className="file-types">
+      <span title={tooltipParts.join(', ')} className="file-types">
         {stringTypes}
       </span>
     );

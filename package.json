@@ -1,6 +1,6 @@
 {
   "name": "congr.io",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "private": true,
   "license": "MIT",
   "workspaces": [
@@ -13,6 +13,8 @@
     "wait-and-front": "wait-on tcp:4000 && yarn --cwd front dev --host",
     "lint": "yarn workspaces run lint",
     "format": "prettier --write \"**/*.{ts,tsx,json,css,md,html}\" --ignore-path .gitignore",
+    "bump:versions": "node scripts/bump-package-versions.mjs",
+    "commitmsg:check": "node scripts/commitmsg-check.mjs",
     "i18n:check": "node scripts/i18n.mjs",
     "features:check": "node scripts/features.mjs",
     "prepare": "husky"
