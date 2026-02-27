@@ -1,0 +1,17 @@
+---
+description: Project-wide assistant rules
+globs:
+alwaysApply: true
+---
+
+- Always respond in English.
+- Never hardcode user-facing strings.
+- Any text visible to users must come from i18n keys in JSON locale files.
+- Keep wording consistent with the existing app style.
+- For frontend translation changes, always update both:
+  - `front/src/locales/en/*.json`
+  - `front/src/locales/es/*.json`
+- For backend translation changes, always update both:
+  - `back/src/locales/en/**/*.json`
+  - `back/src/locales/es/**/*.json`
+- Use `yarn` for scripts and package commands.

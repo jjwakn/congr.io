@@ -1,5 +1,5 @@
 yarn bump:versions
-yarn format
+yarn format:staged
 yarn lint
 yarn i18n:check
 yarn features:check

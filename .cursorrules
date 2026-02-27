@@ -1,0 +1,13 @@
+Project rules for AI assistants:
+
+1) Always answer in English.
+2) Do not hardcode user-facing strings.
+3) Any user-facing text must go through i18n keys and JSON locale files.
+4) Keep copy tone/style consistent with existing app text.
+5) For frontend i18n, update both:
+   - front/src/locales/en/*.json
+   - front/src/locales/es/*.json
+6) For backend i18n, update both:
+   - back/src/locales/en/**/*.json
+   - back/src/locales/es/**/*.json
+7) Use yarn commands (not npm/pnpm) when running scripts.
