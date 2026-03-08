@@ -1,12 +1,5 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  Checkbox,
-  Typography,
-} from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Checkbox, Typography } from '@mui/material';
 import { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -14,25 +7,14 @@ import { useSetup } from '../../../hooks/useSetup';
 import { SetupData } from '../../../types/setup.types';
 import { FormContainer } from '../../common/FormContainer';
 
-export const FeaturesStep = ({
-  goNext,
-  goBack,
-  loading,
-}: {
-  goNext: () => void;
-  goBack: () => void;
-  loading?: boolean;
-}) => {
+export const FeaturesStep = ({ goNext, goBack, loading }: { goNext: () => void; goBack: () => void; loading?: boolean }) => {
   const [expanded, setExpanded] = useState<string | false>(false);
 
   const { t } = useTranslation();
   const { setupData, setSetupData, features } = useSetup();
   const form = useForm<SetupData['features']>({
     defaultValues: {
-      features:
-        setupData.features.features.length > 0
-          ? setupData.features.features
-          : features.filter((f) => f.required).map((f) => f.id),
+      features: setupData.features.features.length > 0 ? setupData.features.features : features.filter((f) => f.required).map((f) => f.id),
     },
   });
   const selectedFeatures = useWatch({
@@ -50,9 +32,7 @@ export const FeaturesStep = ({
 
     setValue(
       'features',
-      features
-        .filter((feature) => feature.required)
-        .map((feature) => feature.id),
+      features.filter((feature) => feature.required).map((feature) => feature.id),
     );
   }, [features, form, setValue]);
 
@@ -155,9 +135,7 @@ export const FeaturesStep = ({
                             });
                         } else {
                           next.delete(f.id);
-                          const prerequisiteOf = features.filter((feature) =>
-                            feature.prerequisites?.includes(f.id),
-                          );
+                          const prerequisiteOf = features.filter((feature) => feature.prerequisites?.includes(f.id));
                           prerequisiteOf.forEach((feature) => {
                             if (next.has(feature.id)) next.delete(feature.id);
                           });
@@ -169,10 +147,7 @@ export const FeaturesStep = ({
                       sx={{ mt: '2px' }}
                     />
 
-                    <Accordion
-                      expanded={expanded === f.id}
-                      onChange={handleChange(f.id)}
-                    >
+                    <Accordion expanded={expanded === f.id} onChange={handleChange(f.id)}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography component="span">{f.title}</Typography>
                       </AccordionSummary>
@@ -182,10 +157,7 @@ export const FeaturesStep = ({
                             whiteSpace: 'pre-line',
                           }}
                         >
-                          {f.description.replace(
-                            '{type}',
-                            setupData.congregation.type,
-                          )}
+                          {f.description.replace('{type}', setupData.congregation.type)}
                         </Typography>
                       </AccordionDetails>
                     </Accordion>

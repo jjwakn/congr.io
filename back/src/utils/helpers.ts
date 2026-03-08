@@ -22,14 +22,8 @@ export const mergePermissions = (roles: Role[]) => {
           if (!permissions[permission]) permissions[permission] = [];
 
           role.permissions[permission].forEach((p) => {
-            if (
-              !(permissions[permission] as ModuleAction[]).includes(
-                p as ModuleAction,
-              )
-            )
-              (permissions[permission] as ModuleAction[]).push(
-                p as ModuleAction,
-              );
+            if (!(permissions[permission] as ModuleAction[]).includes(p as ModuleAction))
+              (permissions[permission] as ModuleAction[]).push(p as ModuleAction);
           });
         });
     });

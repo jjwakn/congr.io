@@ -3,12 +3,7 @@ import { TokenPayload } from 'src/common/common.types';
 import { encryptPassword } from 'src/utils/helpers';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
 import { Repository } from 'typeorm';
-import {
-  Injectable,
-  NotAcceptableException,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotAcceptableException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Congregation } from '../congregation/congregation.entity';
 import { Location } from '../location/location.entity';
@@ -73,8 +68,7 @@ export class UserService {
       },
     });
 
-    if (!result)
-      throw new NotFoundException(this.i18n.t('errors.user.notFound'));
+    if (!result) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
 
     if (!includePassword) delete result.password;
     return {
@@ -83,10 +77,7 @@ export class UserService {
     };
   }
 
-  async getByUsername({
-    username,
-    includePassword = false,
-  }: UserGetByUsernameProps) {
+  async getByUsername({ username, includePassword = false }: UserGetByUsernameProps) {
     const result = await this.repository.findOne({
       where: { username },
       withDeleted: true,
@@ -100,8 +91,7 @@ export class UserService {
       },
     });
 
-    if (!result)
-      throw new NotFoundException(this.i18n.t('errors.user.notFound'));
+    if (!result) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
 
     if (result && !includePassword) delete result.password;
     return {
@@ -204,8 +194,7 @@ export class UserService {
       where: { id },
     });
 
-    if (!existing)
-      throw new NotFoundException(this.i18n.t('errors.user.notFound'));
+    if (!existing) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
 
     // if username changed
     if (data.username && existing.username !== data.username) {
@@ -307,10 +296,7 @@ export class UserService {
     try {
       const token = data?.token;
 
-      if (!token)
-        throw new UnauthorizedException(
-          this.i18n.t('errors.token.notIncluded'),
-        );
+      if (!token) throw new UnauthorizedException(this.i18n.t('errors.token.notIncluded'));
 
       const base64Payload = token.split('.')[1];
       const payloadBuffer = Buffer.from(base64Payload, 'base64');

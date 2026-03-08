@@ -7,9 +7,7 @@ import { LoginCredentials } from './AuthContext.types';
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(() =>
-    authService.getUserData(),
-  );
+  const [user, setUser] = useState<User | null>(() => authService.getUserData());
 
   useEffect(() => {
     let active = true;

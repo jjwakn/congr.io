@@ -6,12 +6,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
 import { Role } from './role.entity';
-import {
-  RoleCreateProps,
-  RoleDeleteProps,
-  RoleQuery,
-  RoleUpdateProps,
-} from './role.types';
+import { RoleCreateProps, RoleDeleteProps, RoleQuery, RoleUpdateProps } from './role.types';
 
 @Injectable()
 export class RoleService {
@@ -47,8 +42,7 @@ export class RoleService {
       },
     });
 
-    if (!result)
-      throw new NotFoundException(this.i18n.t('errors.role.notFound'));
+    if (!result) throw new NotFoundException(this.i18n.t('errors.role.notFound'));
 
     return cleanColumns<Role>(result);
   }

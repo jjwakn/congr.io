@@ -6,8 +6,7 @@ export const useNotificationContext = () => {
   const context = useContext(NotificationContext);
   const { t } = useTranslation();
 
-  if (context === undefined)
-    throw new Error(t('context.error.notificationContext'));
+  if (context === undefined) throw new Error(t('context.error.notificationContext'));
 
   return context;
 };

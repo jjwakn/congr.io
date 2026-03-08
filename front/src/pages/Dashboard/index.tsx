@@ -1,39 +1,22 @@
+import { useAppContext } from '@hooks/useAppContext';
+import { useAuth } from '@hooks/useAuth';
+import { useSetup } from '@hooks/useSetup';
 import { Box, Paper, Typography } from '@mui/material';
-import {
-  Suspense,
-  lazy,
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useState,
-} from 'react';
+import { DashboardHeader } from '@pages/Dashboard/DashboardHeader';
+import { DashboardNavigationDrawer } from '@pages/Dashboard/DashboardNavigationDrawer';
+import { Home } from '@pages/Dashboard/Home';
+import { createModuleNavigationItem, createSettingsNavigationItem } from '@utils/dashboard';
+import { getHomePath, getLocalizedPathname, getModuleIdFromPath, getModulePath, isHomePath, isSettingsPath } from '@utils/routes';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import PWABadge from '../../PWABadge';
-import { useAppContext } from '../../hooks/useAppContext';
-import { useAuth } from '../../hooks/useAuth';
-import { useSetup } from '../../hooks/useSetup';
-import {
-  createModuleNavigationItem,
-  createSettingsNavigationItem,
-} from '../../utils/dashboard';
-import {
-  getHomePath,
-  getLocalizedPathname,
-  getModuleIdFromPath,
-  getModulePath,
-  isHomePath,
-  isSettingsPath,
-} from '../../utils/routes';
-import { DashboardHeader } from './DashboardHeader';
-import { DashboardNavigationDrawer } from './DashboardNavigationDrawer';
-import { Home } from './Home';
+import { useLocation, useNavigate } from 'react-router-dom';
+import PWABadge from '@/PWABadge';
 
 const ModulesRenderer = lazy(async () => {
-  const module = await import('../Modules');
+  const module = await import('@pages/Modules');
   return { default: module.ModulesRenderer };
 });
-const SettingsPage = lazy(() => import('../Settings'));
+const SettingsPage = lazy(() => import('@pages/Settings'));
 
 const Dashboard = () => {
   const { i18n, t } = useTranslation();
@@ -41,11 +24,8 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
   const { features } = useSetup();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [, rerenderRoute] = useReducer((value: number) => value + 1, 0);
-
-  const refreshRoute = useCallback(() => {
-    rerenderRoute();
-  }, []);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const featureById = useMemo(() => {
     const byId = new Map<string, (typeof features)[number]>();
@@ -62,10 +42,7 @@ const Dashboard = () => {
     return moduleIds.map((moduleId) => {
       const feature = featureById.get(moduleId);
       const title = feature?.title ?? moduleId;
-      const description = (feature?.description ?? '').replace(
-        '{type}',
-        congregationType,
-      );
+      const description = (feature?.description ?? '').replace('{type}', congregationType);
 
       return {
         id: moduleId,
@@ -76,12 +53,11 @@ const Dashboard = () => {
     });
   }, [congregation?.features, congregationType, featureById, i18n.language]);
 
-  const pathname = window.location.pathname;
+  const pathname = location.pathname;
   const moduleIdFromPath = getModuleIdFromPath(pathname);
   const isHomeSelected = isHomePath(pathname);
   const isSettingsSelected = isSettingsPath(pathname);
-  const selectedModule =
-    availableModules.find((module) => module.id === moduleIdFromPath) ?? null;
+  const selectedModule = availableModules.find((module) => module.id === moduleIdFromPath) ?? null;
 
   const navigationItems = useMemo(
     () => [
@@ -102,63 +78,48 @@ const Dashboard = () => {
 
   const selectedPath = getLocalizedPathname(pathname, i18n.language);
 
-  const navigateToPath = useCallback((nextPath: string) => {
-    if (window.location.pathname === nextPath) return;
+  const navigateToPath = useCallback(
+    (nextPath: string) => {
+      if (pathname === nextPath) return;
 
-    window.history.pushState(null, '', nextPath);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, []);
+      navigate(nextPath);
+    },
+    [navigate, pathname],
+  );
 
   const navigateHome = useCallback(() => {
     navigateToPath(getHomePath());
   }, [navigateToPath]);
 
   useEffect(() => {
-    const handlePopState = () => {
-      refreshRoute();
-    };
+    const localizedPath = getLocalizedPathname(pathname, i18n.language);
+    if (pathname === localizedPath) return;
 
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [refreshRoute]);
+    navigate(`${localizedPath}${location.search}${location.hash}`, {
+      replace: true,
+    });
+  }, [i18n.language, location.hash, location.search, navigate, pathname]);
 
   useEffect(() => {
-    const localizedPath = getLocalizedPathname(
-      window.location.pathname,
-      i18n.language,
-    );
-    if (window.location.pathname === localizedPath) return;
+    if (isHomePath(pathname)) return;
+    if (isSettingsPath(pathname)) return;
 
-    window.history.replaceState(null, '', localizedPath);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, [i18n.language]);
-
-  useEffect(() => {
-    if (isHomePath(window.location.pathname)) return;
-    if (isSettingsPath(window.location.pathname)) return;
-
-    const routeModuleId = getModuleIdFromPath(window.location.pathname);
-    const isValidRoute = routeModuleId
-      ? availableModules.some((module) => module.id === routeModuleId)
-      : false;
+    const routeModuleId = getModuleIdFromPath(pathname);
+    const isValidRoute = routeModuleId ? availableModules.some((module) => module.id === routeModuleId) : false;
 
     if (isValidRoute && routeModuleId) {
       const localizedPath = getModulePath(routeModuleId, i18n.language);
-      if (window.location.pathname === localizedPath) return;
+      if (pathname === localizedPath) return;
 
-      window.history.replaceState(null, '', localizedPath);
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      navigate(localizedPath, { replace: true });
       return;
     }
 
     const fallbackPath = getHomePath();
-    if (window.location.pathname === fallbackPath) return;
+    if (pathname === fallbackPath) return;
 
-    window.history.replaceState(null, '', fallbackPath);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, [availableModules, i18n.language]);
+    navigate(fallbackPath, { replace: true });
+  }, [availableModules, i18n.language, navigate, pathname]);
 
   return (
     <Box sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -186,42 +147,23 @@ const Dashboard = () => {
 
         <Box sx={{ flex: 1, p: { xs: 1.5, md: 2 }, overflowY: 'auto' }}>
           {isSettingsSelected ? (
-            <Suspense
-              fallback={
-                <Typography variant="body1">
-                  {t('pages.dashboard.loading')}
-                </Typography>
-              }
-            >
+            <Suspense fallback={<Typography variant="body1">{t('pages.dashboard.loading')}</Typography>}>
               <SettingsPage />
             </Suspense>
           ) : isHomeSelected ? (
             <Paper variant="outlined" sx={{ p: 3 }}>
-              <Home
-                title={t('pages.dashboard.welcomeTitle')}
-                subtitle={t('pages.dashboard.successMessage')}
-              />
+              <Home title={t('pages.dashboard.welcomeTitle')} subtitle={t('pages.dashboard.successMessage')} />
             </Paper>
           ) : (
             <Paper variant="outlined" sx={{ p: 3 }}>
               {!availableModules.length ? (
-                <Typography variant="body1">
-                  {t('pages.dashboard.noModules')}
-                </Typography>
+                <Typography variant="body1">{t('pages.dashboard.noModules')}</Typography>
               ) : selectedModule ? (
-                <Suspense
-                  fallback={
-                    <Typography variant="body1">
-                      {t('pages.dashboard.loading')}
-                    </Typography>
-                  }
-                >
+                <Suspense fallback={<Typography variant="body1">{t('pages.dashboard.loading')}</Typography>}>
                   <ModulesRenderer module={selectedModule} />
                 </Suspense>
               ) : (
-                <Typography variant="body1">
-                  {t('pages.dashboard.moduleNotFound')}
-                </Typography>
+                <Typography variant="body1">{t('pages.dashboard.moduleNotFound')}</Typography>
               )}
             </Paper>
           )}

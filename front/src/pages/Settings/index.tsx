@@ -1,18 +1,6 @@
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
-import {
-  Alert,
-  Box,
-  Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  SelectChangeEvent,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Button, FormControl, InputLabel, MenuItem, Paper, Select, SelectChangeEvent, Stack, Typography } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { changeLanguageWithResources } from '../../../i18n';
@@ -34,22 +22,15 @@ const SettingsPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const updateModeColor = useCallback(
-    (
-      mode: keyof ThemePaletteConfig,
-      key: keyof ThemePaletteConfig['light'],
-      value: string,
-    ) => {
-      setDraft((previous) => ({
-        ...previous,
-        [mode]: {
-          ...previous[mode],
-          [key]: value,
-        },
-      }));
-    },
-    [],
-  );
+  const updateModeColor = useCallback((mode: keyof ThemePaletteConfig, key: keyof ThemePaletteConfig['light'], value: string) => {
+    setDraft((previous) => ({
+      ...previous,
+      [mode]: {
+        ...previous[mode],
+        [key]: value,
+      },
+    }));
+  }, []);
 
   const handleReset = useCallback(() => {
     const normalized = normalizeThemePaletteConfig(paletteConfig);
@@ -61,8 +42,7 @@ const SettingsPage = () => {
     (event: SelectChangeEvent<'en' | 'es'>) => {
       const nextLanguage = event.target.value;
       if (!nextLanguage) return;
-      if (!i18n.language?.startsWith(nextLanguage))
-        void changeLanguageWithResources(nextLanguage);
+      if (!i18n.language?.startsWith(nextLanguage)) void changeLanguageWithResources(nextLanguage);
     },
     [i18n],
   );
@@ -85,10 +65,7 @@ const SettingsPage = () => {
         severity: 'success',
       });
     } catch (value) {
-      const message =
-        value instanceof HttpRequestError || value instanceof Error
-          ? value.message
-          : t('pages.settings.error.saveFailed');
+      const message = value instanceof HttpRequestError || value instanceof Error ? value.message : t('pages.settings.error.saveFailed');
       setError(message);
       showNotification(message, { severity: 'error' });
     } finally {
@@ -112,10 +89,7 @@ const SettingsPage = () => {
         setDraft(normalized);
       } catch (value) {
         if (!active) return;
-        const message =
-          value instanceof HttpRequestError || value instanceof Error
-            ? value.message
-            : t('pages.settings.error.loadFailed');
+        const message = value instanceof HttpRequestError || value instanceof Error ? value.message : t('pages.settings.error.loadFailed');
         setError(message);
       } finally {
         if (active) setIsLoading(false);
@@ -161,21 +135,15 @@ const SettingsPage = () => {
         }}
       >
         <FormControl fullWidth>
-          <InputLabel id="configuration-language-label">
-            {t('pages.settings.language.label')}
-          </InputLabel>
+          <InputLabel id="configuration-language-label">{t('pages.settings.language.label')}</InputLabel>
           <Select
             labelId="configuration-language-label"
             value={i18n.language?.startsWith('es') ? 'es' : 'en'}
             label={t('pages.settings.language.label')}
             onChange={handleLanguageChange}
           >
-            <MenuItem value="en">
-              {t('pages.settings.language.english')}
-            </MenuItem>
-            <MenuItem value="es">
-              {t('pages.settings.language.spanish')}
-            </MenuItem>
+            <MenuItem value="en">{t('pages.settings.language.english')}</MenuItem>
+            <MenuItem value="es">{t('pages.settings.language.spanish')}</MenuItem>
           </Select>
         </FormControl>
 
@@ -187,9 +155,7 @@ const SettingsPage = () => {
           aria-label={t('pages.settings.themeMode.ariaLabel')}
           sx={{ minHeight: 40 }}
         >
-          {mode === 'dark'
-            ? t('pages.settings.themeMode.toggleToLight')
-            : t('pages.settings.themeMode.toggleToDark')}
+          {mode === 'dark' ? t('pages.settings.themeMode.toggleToLight') : t('pages.settings.themeMode.toggleToDark')}
         </Button>
       </Stack>
 
@@ -225,20 +191,12 @@ const SettingsPage = () => {
         <Button variant="outlined" onClick={handleReset} disabled={isSaving}>
           {t('pages.settings.actions.reset')}
         </Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={isSaving || isLoading}
-        >
+        <Button variant="contained" onClick={handleSave} disabled={isSaving || isLoading}>
           {t('pages.settings.actions.save')}
         </Button>
       </Stack>
 
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ textAlign: 'right' }}
-      >
+      <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'right' }}>
         {t('pages.settings.frontendVersion', { version: FRONTEND_VERSION })}
       </Typography>
     </Paper>

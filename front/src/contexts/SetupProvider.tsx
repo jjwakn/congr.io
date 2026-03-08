@@ -27,19 +27,13 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
   const { showNotification } = useNotificationContext();
   const { t } = useTranslation();
 
-  const setSetupData = useCallback(
-    (data: SetupData | ((prev: SetupData) => SetupData)) => {
-      setSetupDataState(data);
-    },
-    [],
-  );
+  const setSetupData = useCallback((data: SetupData | ((prev: SetupData) => SetupData)) => {
+    setSetupDataState(data);
+  }, []);
 
-  const setActiveStep = useCallback(
-    (step: number | ((prev: number) => number)) => {
-      setActiveStepState(step);
-    },
-    [],
-  );
+  const setActiveStep = useCallback((step: number | ((prev: number) => number)) => {
+    setActiveStepState(step);
+  }, []);
 
   const setLoading = useCallback((loading: boolean) => {
     setLoadingState(loading);

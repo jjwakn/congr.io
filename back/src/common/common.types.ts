@@ -58,10 +58,7 @@ export interface CommonEntity {
   [key: string]: any;
 }
 
-export interface FindWithFiltersProps<
-  Entity extends ObjectLiteral,
-  Query extends ListParamsQuery,
-> {
+export interface FindWithFiltersProps<Entity extends ObjectLiteral, Query extends ListParamsQuery> {
   repository: Repository<Entity>;
   query: Query;
   searchFields?: (keyof Entity)[];

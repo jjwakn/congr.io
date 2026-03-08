@@ -5,11 +5,7 @@ import { UserModule } from '../user/user.module';
 import { Location } from './location.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Location]),
-    forwardRef(() => UserModule),
-    ConfigModule.forRoot(),
-  ],
+  imports: [TypeOrmModule.forFeature([Location]), forwardRef(() => UserModule), ConfigModule.forRoot()],
   exports: [TypeOrmModule],
 })
 export class LocationModule {}

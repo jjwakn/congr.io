@@ -1,15 +1,7 @@
 import { Congregation } from '../types/congregation.types';
 import { ThemePaletteConfig } from '../types/theme.types';
-import {
-  CONGREGATION_KEY,
-  IS_SETUP_KEY,
-  THEME_PALETTE_CONFIG_KEY,
-  THEME_PALETTE_UPDATED_EVENT,
-} from './constants';
-import {
-  DEFAULT_THEME_PALETTE_CONFIG,
-  normalizeThemePaletteConfig,
-} from './theme';
+import { CONGREGATION_KEY, IS_SETUP_KEY, THEME_PALETTE_CONFIG_KEY, THEME_PALETTE_UPDATED_EVENT } from './constants';
+import { DEFAULT_THEME_PALETTE_CONFIG, normalizeThemePaletteConfig } from './theme';
 
 export const getLocalStorageItem = <T>(key: string, defaultValue: T): T => {
   try {
@@ -59,16 +51,11 @@ const emitThemePaletteUpdated = (): void => {
 };
 
 export const getThemePaletteConfigFromStorage = (): ThemePaletteConfig => {
-  const stored = getLocalStorageItem<ThemePaletteConfig | null>(
-    THEME_PALETTE_CONFIG_KEY,
-    null,
-  );
+  const stored = getLocalStorageItem<ThemePaletteConfig | null>(THEME_PALETTE_CONFIG_KEY, null);
   return normalizeThemePaletteConfig(stored ?? DEFAULT_THEME_PALETTE_CONFIG);
 };
 
-export const setThemePaletteConfigToStorage = (
-  value: ThemePaletteConfig,
-): void => {
+export const setThemePaletteConfigToStorage = (value: ThemePaletteConfig): void => {
   setLocalStorageItem(THEME_PALETTE_CONFIG_KEY, value);
   emitThemePaletteUpdated();
 };

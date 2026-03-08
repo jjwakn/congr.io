@@ -1,9 +1,4 @@
-import {
-  Autocomplete,
-  Box,
-  TextField,
-  createFilterOptions,
-} from '@mui/material';
+import { Autocomplete, Box, TextField, createFilterOptions } from '@mui/material';
 import { useCallback } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -11,13 +6,7 @@ import { useSetup } from '../../../hooks/useSetup';
 import { SetupData } from '../../../types/setup.types';
 import { FormContainer } from '../../common/FormContainer';
 
-export const CongregationStep = ({
-  goNext,
-  loading,
-}: {
-  goNext: () => void;
-  loading?: boolean;
-}) => {
+export const CongregationStep = ({ goNext, loading }: { goNext: () => void; loading?: boolean }) => {
   const { t } = useTranslation();
   const { setupData, setSetupData } = useSetup();
   const form = useForm<SetupData['congregation']>({
@@ -77,9 +66,7 @@ export const CongregationStep = ({
               filterOptions={(options, params) => {
                 const filtered = filter(options, params);
                 const { inputValue } = params;
-                const isExisting = options.some(
-                  (option) => inputValue.toLowerCase() === option.toLowerCase(),
-                );
+                const isExisting = options.some((option) => inputValue.toLowerCase() === option.toLowerCase());
                 if (inputValue !== '' && !isExisting) filtered.push(inputValue);
                 return filtered;
               }}

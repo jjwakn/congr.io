@@ -4,18 +4,14 @@ import { useTranslation } from 'react-i18next';
 import BrandingFormCard from './BrandingFormCard';
 import BrandingInstructionsCard from './BrandingInstructionsCard';
 import BrandingPreviewCard from './BrandingPreviewCard';
-import {
-  BackgroundMode,
-  BrandingPreviewItem,
-  GeneratedBrandingAssets,
-} from './types';
+import { BackgroundMode, BrandingPreviewItem, GeneratedBrandingAssets } from './types';
 
-type BrandingUtilsModule = typeof import('../../utils/branding');
+type BrandingUtilsModule = typeof import('@utils/branding');
 
 let brandingUtilsPromise: Promise<BrandingUtilsModule> | null = null;
 const loadBrandingUtils = (): Promise<BrandingUtilsModule> => {
   if (!brandingUtilsPromise) {
-    brandingUtilsPromise = import('../../utils/branding');
+    brandingUtilsPromise = import('@utils/branding');
   }
   return brandingUtilsPromise;
 };
@@ -43,8 +39,7 @@ const BrandingPage = () => {
   const { t } = useTranslation();
   const [smallLogo, setSmallLogo] = useState<File | null>(null);
   const [bigLogo, setBigLogo] = useState<File | null>(null);
-  const [backgroundMode, setBackgroundMode] =
-    useState<BackgroundMode>('transparent');
+  const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>('transparent');
   const [roundedCorners, setRoundedCorners] = useState(true);
   const [cornerRadiusPercent, setCornerRadiusPercent] = useState(30);
   const [appName, setAppName] = useState('Congr.io');
@@ -57,16 +52,13 @@ const BrandingPage = () => {
   const [previewItems, setPreviewItems] = useState<BrandingPreviewItem[]>([]);
   const previewUrlsRef = useRef<string[]>([]);
 
-  const replacePreviewItems = useCallback(
-    (nextItems: BrandingPreviewItem[]) => {
-      previewUrlsRef.current.forEach((url) => {
-        URL.revokeObjectURL(url);
-      });
-      previewUrlsRef.current = nextItems.map((item) => item.url);
-      setPreviewItems(nextItems);
-    },
-    [],
-  );
+  const replacePreviewItems = useCallback((nextItems: BrandingPreviewItem[]) => {
+    previewUrlsRef.current.forEach((url) => {
+      URL.revokeObjectURL(url);
+    });
+    previewUrlsRef.current = nextItems.map((item) => item.url);
+    setPreviewItems(nextItems);
+  }, []);
 
   useEffect(() => {
     document.title = t('brandingGenerator.title');
@@ -82,10 +74,7 @@ const BrandingPage = () => {
     [],
   );
 
-  const canGenerate = useMemo(
-    () => Boolean(smallLogo && bigLogo) && !isGenerating,
-    [smallLogo, isGenerating, bigLogo],
-  );
+  const canGenerate = useMemo(() => Boolean(smallLogo && bigLogo) && !isGenerating, [smallLogo, isGenerating, bigLogo]);
 
   const handleSmallLogoChange = useCallback((file: File | null) => {
     setSmallLogo(file);
@@ -140,10 +129,7 @@ const BrandingPage = () => {
       } catch (value) {
         if (isCancelled) return;
 
-        const message =
-          value instanceof Error
-            ? value.message
-            : t('brandingGenerator.errors.generateFailed');
+        const message = value instanceof Error ? value.message : t('brandingGenerator.errors.generateFailed');
         setPreviewError(message);
         replacePreviewItems([]);
       } finally {
@@ -158,18 +144,7 @@ const BrandingPage = () => {
     return () => {
       isCancelled = true;
     };
-  }, [
-    appName,
-    backgroundMode,
-    cornerRadiusPercent,
-    smallLogo,
-    bigLogo,
-    replacePreviewItems,
-    roundedCorners,
-    shortName,
-    t,
-    createPreviewItems,
-  ]);
+  }, [appName, backgroundMode, cornerRadiusPercent, smallLogo, bigLogo, replacePreviewItems, roundedCorners, shortName, t, createPreviewItems]);
 
   const handleGenerate = useCallback(() => {
     if (!smallLogo || !bigLogo) {
@@ -183,8 +158,7 @@ const BrandingPage = () => {
 
     const generateAndDownload = async () => {
       try {
-        const { createZipBlob, downloadBlob, generateBrandingAssets } =
-          await loadBrandingUtils();
+        const { createZipBlob, downloadBlob, generateBrandingAssets } = await loadBrandingUtils();
         const assets = await generateBrandingAssets({
           smallLogoFile: smallLogo,
           bigLogoFile: bigLogo,
@@ -212,10 +186,7 @@ const BrandingPage = () => {
         downloadBlob(zip, 'branding-assets.zip');
         setSuccess(t('brandingGenerator.success.generated'));
       } catch (value) {
-        const message =
-          value instanceof Error
-            ? value.message
-            : t('brandingGenerator.errors.generateFailed');
+        const message = value instanceof Error ? value.message : t('brandingGenerator.errors.generateFailed');
         setError(message);
       } finally {
         setIsGenerating(false);
@@ -223,18 +194,7 @@ const BrandingPage = () => {
     };
 
     void generateAndDownload();
-  }, [
-    appName,
-    backgroundMode,
-    cornerRadiusPercent,
-    smallLogo,
-    bigLogo,
-    roundedCorners,
-    shortName,
-    t,
-    createPreviewItems,
-    replacePreviewItems,
-  ]);
+  }, [appName, backgroundMode, cornerRadiusPercent, smallLogo, bigLogo, roundedCorners, shortName, t, createPreviewItems, replacePreviewItems]);
 
   return (
     <Box
@@ -281,11 +241,7 @@ const BrandingPage = () => {
           minWidth: 0,
         }}
       >
-        <BrandingPreviewCard
-          previews={previewItems}
-          isLoading={isPreviewLoading}
-          error={previewError}
-        />
+        <BrandingPreviewCard previews={previewItems} isLoading={isPreviewLoading} error={previewError} />
         <BrandingInstructionsCard />
       </Box>
     </Box>

@@ -46,41 +46,31 @@ export const RolesSection = () => {
         id: 'full-access',
         label: t('pages.modules.roles.columns.fullAccess'),
         align: 'center',
-        render: (role) => (
-          <CrudPermissionStatus enabled={Boolean(role.full_access)} />
-        ),
+        render: (role) => <CrudPermissionStatus enabled={Boolean(role.full_access)} />,
       },
       {
         id: 'get',
         label: t('pages.modules.roles.columns.get'),
         align: 'center',
-        render: (role) => (
-          <CrudPermissionStatus enabled={hasRolePermission(role, 'get')} />
-        ),
+        render: (role) => <CrudPermissionStatus enabled={hasRolePermission(role, 'get')} />,
       },
       {
         id: 'create',
         label: t('pages.modules.roles.columns.create'),
         align: 'center',
-        render: (role) => (
-          <CrudPermissionStatus enabled={hasRolePermission(role, 'create')} />
-        ),
+        render: (role) => <CrudPermissionStatus enabled={hasRolePermission(role, 'create')} />,
       },
       {
         id: 'update',
         label: t('pages.modules.roles.columns.update'),
         align: 'center',
-        render: (role) => (
-          <CrudPermissionStatus enabled={hasRolePermission(role, 'update')} />
-        ),
+        render: (role) => <CrudPermissionStatus enabled={hasRolePermission(role, 'update')} />,
       },
       {
         id: 'delete',
         label: t('pages.modules.roles.columns.delete'),
         align: 'center',
-        render: (role) => (
-          <CrudPermissionStatus enabled={hasRolePermission(role, 'delete')} />
-        ),
+        render: (role) => <CrudPermissionStatus enabled={hasRolePermission(role, 'delete')} />,
       },
     ],
     [t],

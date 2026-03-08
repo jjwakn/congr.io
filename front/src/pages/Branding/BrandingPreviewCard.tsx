@@ -2,20 +2,14 @@ import { Alert, Box, Card, CardContent, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { BrandingPreviewCardProps } from './BrandingPreviewCard.types';
 
-const BrandingPreviewCard = ({
-  previews,
-  isLoading,
-  error,
-}: BrandingPreviewCardProps) => {
+const BrandingPreviewCard = ({ previews, isLoading, error }: BrandingPreviewCardProps) => {
   const { t } = useTranslation();
 
   return (
     <Card>
       <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box>
-          <Typography variant="h6">
-            {t('brandingGenerator.previewsTitle')}
-          </Typography>
+          <Typography variant="h6">{t('brandingGenerator.previewsTitle')}</Typography>
           <Typography variant="body2" color="text.secondary">
             {t('brandingGenerator.previewsIntro')}
           </Typography>

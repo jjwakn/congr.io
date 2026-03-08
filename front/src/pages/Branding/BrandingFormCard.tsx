@@ -23,14 +23,10 @@ import { BackgroundMode } from './types';
 
 const IMAGE_TYPES = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
 
-const getFirstFile = (value: File | FileList): File | null =>
-  value instanceof File ? value : (value[0] ?? null);
+const getFirstFile = (value: File | FileList): File | null => (value instanceof File ? value : (value[0] ?? null));
 
 const useFilePreviewUrl = (file: File | null) => {
-  const previewUrl = useMemo(
-    () => (file ? URL.createObjectURL(file) : ''),
-    [file],
-  );
+  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : ''), [file]);
 
   useEffect(
     () => () => {
@@ -78,18 +74,12 @@ const BrandingFormCard = ({
     <Card>
       <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Typography variant="h4">{t('brandingGenerator.title')}</Typography>
-        <Typography color="text.secondary">
-          {t('brandingGenerator.subtitle')}
-        </Typography>
+        <Typography color="text.secondary">{t('brandingGenerator.subtitle')}</Typography>
 
-        <Alert severity="warning">
-          {t('brandingGenerator.warningRebuild')}
-        </Alert>
+        <Alert severity="warning">{t('brandingGenerator.warningRebuild')}</Alert>
 
         <Stack spacing={1}>
-          <Typography variant="subtitle2">
-            {t('brandingGenerator.smallLogo')}
-          </Typography>
+          <Typography variant="subtitle2">{t('brandingGenerator.smallLogo')}</Typography>
           <FileUploader
             name="branding-small-logo"
             types={IMAGE_TYPES}
@@ -110,9 +100,7 @@ const BrandingFormCard = ({
         </Stack>
 
         <Stack spacing={1}>
-          <Typography variant="subtitle2">
-            {t('brandingGenerator.bigLogo')}
-          </Typography>
+          <Typography variant="subtitle2">{t('brandingGenerator.bigLogo')}</Typography>
           <FileUploader
             name="branding-big-logo"
             types={IMAGE_TYPES}
@@ -133,36 +121,21 @@ const BrandingFormCard = ({
         </Stack>
 
         <FormControl fullWidth>
-          <InputLabel id="background-mode">
-            {t('brandingGenerator.backgroundMode')}
-          </InputLabel>
+          <InputLabel id="background-mode">{t('brandingGenerator.backgroundMode')}</InputLabel>
           <Select
             labelId="background-mode"
             label={t('brandingGenerator.backgroundMode')}
             value={backgroundMode}
-            onChange={(event) =>
-              onBackgroundModeChange(event.target.value as BackgroundMode)
-            }
+            onChange={(event) => onBackgroundModeChange(event.target.value as BackgroundMode)}
           >
-            <MenuItem value="transparent">
-              {t('brandingGenerator.backgroundTransparent')}
-            </MenuItem>
-            <MenuItem value="white">
-              {t('brandingGenerator.backgroundWhite')}
-            </MenuItem>
-            <MenuItem value="black">
-              {t('brandingGenerator.backgroundBlack')}
-            </MenuItem>
+            <MenuItem value="transparent">{t('brandingGenerator.backgroundTransparent')}</MenuItem>
+            <MenuItem value="white">{t('brandingGenerator.backgroundWhite')}</MenuItem>
+            <MenuItem value="black">{t('brandingGenerator.backgroundBlack')}</MenuItem>
           </Select>
         </FormControl>
 
         <FormControlLabel
-          control={
-            <Switch
-              checked={roundedCorners}
-              onChange={(event) => onRoundedCornersChange(event.target.checked)}
-            />
-          }
+          control={<Switch checked={roundedCorners} onChange={(event) => onRoundedCornersChange(event.target.checked)} />}
           label={t('brandingGenerator.roundedCorners')}
         />
 
@@ -176,11 +149,7 @@ const BrandingFormCard = ({
             max={100}
             step={1}
             value={cornerRadiusPercent}
-            onChange={(_event, value) =>
-              onCornerRadiusPercentChange(
-                Array.isArray(value) ? value[0] : value,
-              )
-            }
+            onChange={(_event, value) => onCornerRadiusPercentChange(Array.isArray(value) ? value[0] : value)}
             valueLabelFormat={(value) => `${value}%`}
             valueLabelDisplay="auto"
           />
@@ -213,14 +182,8 @@ const BrandingFormCard = ({
         {error ? <Alert severity="error">{error}</Alert> : null}
         {success ? <Alert severity="success">{success}</Alert> : null}
 
-        <Button
-          variant="contained"
-          onClick={onGenerate}
-          disabled={!canGenerate}
-        >
-          {isGenerating
-            ? t('brandingGenerator.generating')
-            : t('brandingGenerator.generateButton')}
+        <Button variant="contained" onClick={onGenerate} disabled={!canGenerate}>
+          {isGenerating ? t('brandingGenerator.generating') : t('brandingGenerator.generateButton')}
         </Button>
       </CardContent>
     </Card>

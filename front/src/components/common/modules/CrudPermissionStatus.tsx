@@ -3,9 +3,7 @@ import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutl
 import { Box } from '@mui/material';
 import { CrudPermissionStatusProps } from './CrudPermissionStatus.types';
 
-export const CrudPermissionStatus = ({
-  enabled,
-}: CrudPermissionStatusProps) => (
+export const CrudPermissionStatus = ({ enabled }: CrudPermissionStatusProps) => (
   <Box
     sx={{
       display: 'inline-flex',

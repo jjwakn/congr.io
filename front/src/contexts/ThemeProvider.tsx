@@ -4,10 +4,7 @@ import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { ThemePaletteConfig } from '../types/theme.types';
 import { THEME_KEY, THEME_PALETTE_UPDATED_EVENT } from '../utils/constants';
-import {
-  getThemePaletteConfigFromStorage,
-  setThemePaletteConfigToStorage,
-} from '../utils/storage';
+import { getThemePaletteConfigFromStorage, setThemePaletteConfigToStorage } from '../utils/storage';
 import { getTheme, normalizeThemePaletteConfig } from '../utils/theme';
 
 const getInitialMode = (): PaletteMode => {
@@ -20,14 +17,9 @@ const getInitialMode = (): PaletteMode => {
 
 export const ThemeModeProvider = ({ children }: { children: ReactNode }) => {
   const [mode, setModeState] = useState<PaletteMode>(getInitialMode);
-  const [paletteConfig, setPaletteConfigState] = useState(() =>
-    getThemePaletteConfigFromStorage(),
-  );
+  const [paletteConfig, setPaletteConfigState] = useState(() => getThemePaletteConfigFromStorage());
 
-  const theme = useMemo(
-    () => getTheme({ mode, paletteConfig }),
-    [mode, paletteConfig],
-  );
+  const theme = useMemo(() => getTheme({ mode, paletteConfig }), [mode, paletteConfig]);
 
   const setMode = useCallback((nextMode: PaletteMode) => {
     setModeState(nextMode);
@@ -56,9 +48,7 @@ export const ThemeModeProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <ThemeContext.Provider
-      value={{ mode, toggleMode, setMode, paletteConfig, setPaletteConfig }}
-    >
+    <ThemeContext.Provider value={{ mode, toggleMode, setMode, paletteConfig, setPaletteConfig }}>
       <MuiThemeProvider theme={theme}>
         <CssBaseline />
         {children}

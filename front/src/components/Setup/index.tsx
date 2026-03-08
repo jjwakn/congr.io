@@ -18,29 +18,13 @@ const Setup = () => {
   const { markSetupComplete } = useAppContext();
   const { showNotification } = useNotificationContext();
   const { t } = useTranslation();
-  const {
-    setupData: data,
-    activeStep,
-    setActiveStep,
-    loading: loadingSetup,
-    setLoading: setLoadingSetup,
-    loadingFeatures,
-  } = useSetup();
+  const { setupData: data, activeStep, setActiveStep, loading: loadingSetup, setLoading: setLoadingSetup, loadingFeatures } = useSetup();
   const setupSubmittedRef = useRef(false);
 
-  const loading = useMemo(
-    () => loadingSetup || loadingFeatures,
-    [loadingFeatures, loadingSetup],
-  );
+  const loading = useMemo(() => loadingSetup || loadingFeatures, [loadingFeatures, loadingSetup]);
 
-  const goNext = useCallback(
-    () => setActiveStep((step) => step + 1),
-    [setActiveStep],
-  );
-  const goBack = useCallback(
-    () => setActiveStep((step) => step - 1),
-    [setActiveStep],
-  );
+  const goNext = useCallback(() => setActiveStep((step) => step + 1), [setActiveStep]);
+  const goBack = useCallback(() => setActiveStep((step) => step - 1), [setActiveStep]);
 
   const handleFinish = useCallback(async () => {
     if (setupSubmittedRef.current) return;
@@ -90,12 +74,7 @@ const Setup = () => {
       showNotification(t('setup.success.saved'), { severity: 'success' });
     } catch (err) {
       setupSubmittedRef.current = false;
-      const error =
-        err instanceof HttpRequestError
-          ? err.message || t('setup.error.saveFailed')
-          : err instanceof Error
-            ? err.message
-            : String(err);
+      const error = err instanceof HttpRequestError ? err.message || t('setup.error.saveFailed') : err instanceof Error ? err.message : String(err);
       showNotification(error, { severity: 'error' });
       console.error('Setup Error', error);
     } finally {
@@ -118,30 +97,15 @@ const Setup = () => {
     >
       <Progress activeStep={activeStep} />
 
-      {activeStep === 0 && (
-        <CongregationStep goNext={goNext} loading={loading} />
-      )}
+      {activeStep === 0 && <CongregationStep goNext={goNext} loading={loading} />}
 
-      {activeStep === 1 && (
-        <FeaturesStep goNext={goNext} goBack={goBack} loading={loading} />
-      )}
+      {activeStep === 1 && <FeaturesStep goNext={goNext} goBack={goBack} loading={loading} />}
 
-      {activeStep === 2 && (
-        <LocationsStep goNext={goNext} goBack={goBack} loading={loading} />
-      )}
+      {activeStep === 2 && <LocationsStep goNext={goNext} goBack={goBack} loading={loading} />}
 
-      {activeStep === 3 && (
-        <AdminStep goNext={goNext} goBack={goBack} loading={loading} />
-      )}
+      {activeStep === 3 && <AdminStep goNext={goNext} goBack={goBack} loading={loading} />}
 
-      {activeStep === 4 && (
-        <ConfirmStep
-          data={data}
-          onFinish={handleFinish}
-          disabled={loading}
-          onBack={goBack}
-        />
-      )}
+      {activeStep === 4 && <ConfirmStep data={data} onFinish={handleFinish} disabled={loading} onBack={goBack} />}
     </Box>
   );
 };

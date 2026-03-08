@@ -42,13 +42,7 @@ export const ModuleListTable = <RowType,>({
                   {column.sortKey ? (
                     <TableSortLabel
                       active={sort === column.sortKey}
-                      direction={
-                        sort === column.sortKey
-                          ? direction.toLowerCase() === 'desc'
-                            ? 'desc'
-                            : 'asc'
-                          : 'asc'
-                      }
+                      direction={sort === column.sortKey ? (direction.toLowerCase() === 'desc' ? 'desc' : 'asc') : 'asc'}
                       onClick={() => onSort(column.sortKey as string)}
                     >
                       {column.label}
@@ -82,10 +76,7 @@ export const ModuleListTable = <RowType,>({
               rows.map((row) => (
                 <TableRow key={getRowId(row)}>
                   {columns.map((column) => (
-                    <TableCell
-                      key={`${getRowId(row)}-${column.id}`}
-                      align={column.align}
-                    >
+                    <TableCell key={`${getRowId(row)}-${column.id}`} align={column.align}>
                       {column.render(row)}
                     </TableCell>
                   ))}
@@ -110,9 +101,7 @@ export const ModuleListTable = <RowType,>({
         page={page}
         onPageChange={(_event, nextPage) => onPageChange(nextPage)}
         rowsPerPage={pageSize}
-        onRowsPerPageChange={(event) =>
-          onPageSizeChange(Number(event.target.value))
-        }
+        onRowsPerPageChange={(event) => onPageSizeChange(Number(event.target.value))}
         labelRowsPerPage={rowsPerPageLabel}
         rowsPerPageOptions={[10, 25, 50, 100]}
       />

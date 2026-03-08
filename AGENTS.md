@@ -29,3 +29,7 @@ These rules apply to all agent chats in this repository.
 - Keep only shared domain-level types in `front/src/types`.
 - Move feature-specific/component-specific types to `*.types.ts` files colocated with the feature/component.
 - Keep exactly one React component per `.tsx` file. If a file contains additional components, extract them into separate files.
+- Prefer expression-style conditional rendering in React with a top-level ternary return for two-branch views (`condition ? <A /> : <B />`) when it keeps the component clear.
+- Prefer arrow functions for consistency.
+- Prefer path aliases for project imports (for example `@components/*`, `@utils/*`, `@constants/*`).
+- Avoid deep relative imports when an alias is available.

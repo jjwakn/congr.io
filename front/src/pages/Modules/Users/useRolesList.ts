@@ -4,12 +4,7 @@ import { useModuleList } from '../../../components/common/modules/useModuleList'
 import { RolesService } from '../../../services/roles';
 import type { Role } from '../../../types/role.types';
 import { HttpRequestError, httpRequest } from '../../../utils/http';
-import type {
-  RoleSort,
-  RolesListResponse,
-  SortRolesProps,
-  UseRolesListResult,
-} from './useRolesList.types';
+import type { RoleSort, RolesListResponse, SortRolesProps, UseRolesListResult } from './useRolesList.types';
 
 const sortRoles = ({ data, sort, direction }: SortRolesProps) => {
   const sortDirection = direction === 'DESC' ? -1 : 1;
@@ -32,18 +27,7 @@ export const useRolesList = (): UseRolesListResult => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const {
-    direction,
-    sort,
-    page,
-    pageSize,
-    search,
-    setSearch,
-    setPage,
-    handleSort,
-    handleChangePage,
-    handleChangeRowsPerPage,
-  } = useModuleList({
+  const { direction, sort, page, pageSize, search, setSearch, setPage, handleSort, handleChangePage, handleChangeRowsPerPage } = useModuleList({
     moduleKey: 'roles-list',
     defaultSort: 'name',
     defaultPageSize: 10,
@@ -59,10 +43,7 @@ export const useRolesList = (): UseRolesListResult => {
       });
       setSourceRoles(response.result ?? []);
     } catch (value) {
-      const message =
-        value instanceof HttpRequestError || value instanceof Error
-          ? value.message
-          : t('pages.modules.roles.error.loadFailed');
+      const message = value instanceof HttpRequestError || value instanceof Error ? value.message : t('pages.modules.roles.error.loadFailed');
       setError(message);
     } finally {
       setLoading(false);
@@ -77,13 +58,7 @@ export const useRolesList = (): UseRolesListResult => {
     const normalizedSearch = search.trim().toLowerCase();
     const filtered = normalizedSearch
       ? sourceRoles.filter((role) => {
-          const roleTerms = [
-            role.id,
-            role.name,
-            role.full_access ? 'true' : 'false',
-          ]
-            .join(' ')
-            .toLowerCase();
+          const roleTerms = [role.id, role.name, role.full_access ? 'true' : 'false'].join(' ').toLowerCase();
           return roleTerms.includes(normalizedSearch);
         })
       : sourceRoles;

@@ -13,9 +13,7 @@ export type UserPermission = {
   [key in keyof typeof Module]?: ModuleAction[];
 };
 
-export type PermissionSectionResolver = (controller: {
-  module?: Module;
-}) => Module;
+export type PermissionSectionResolver = (controller: { module?: Module }) => Module;
 
 export interface PermissionMetadata {
   section: Module | PermissionSectionResolver;

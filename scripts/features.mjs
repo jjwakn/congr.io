@@ -30,7 +30,7 @@ const featuresDirPath = join(
   'features',
 );
 
-function validateFeatures() {
+const validateFeatures = () => {
   try {
     console.log('🔍 Validating feature locale files against Features enum...\n');
     
@@ -79,7 +79,7 @@ function validateFeatures() {
     console.error('❌ Error during validation:', error.message);
     return false;
   }
-}
+};
 
 // Run the validation
 const isValid = validateFeatures();

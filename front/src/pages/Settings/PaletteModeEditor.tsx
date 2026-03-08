@@ -2,17 +2,8 @@ import { Box, TextField, Typography } from '@mui/material';
 import { ThemePaletteModeConfig } from '../../types/theme.types';
 import { PaletteModeEditorProps } from './PaletteModeEditor.types';
 
-export const PaletteModeEditor = ({
-  title,
-  values,
-  labels,
-  onChange,
-}: PaletteModeEditorProps) => {
-  const renderColorField = (
-    key: keyof ThemePaletteModeConfig,
-    label: string,
-    value: string,
-  ) => (
+export const PaletteModeEditor = ({ title, values, labels, onChange }: PaletteModeEditorProps) => {
+  const renderColorField = (key: keyof ThemePaletteModeConfig, label: string, value: string) => (
     <TextField
       key={key}
       label={label}
@@ -49,16 +40,8 @@ export const PaletteModeEditor = ({
       </Typography>
       {renderColorField('primary', labels.primary, values.primary)}
       {renderColorField('secondary', labels.secondary, values.secondary)}
-      {renderColorField(
-        'backgroundDefault',
-        labels.backgroundDefault,
-        values.backgroundDefault,
-      )}
-      {renderColorField(
-        'backgroundPaper',
-        labels.backgroundPaper,
-        values.backgroundPaper,
-      )}
+      {renderColorField('backgroundDefault', labels.backgroundDefault, values.backgroundDefault)}
+      {renderColorField('backgroundPaper', labels.backgroundPaper, values.backgroundPaper)}
     </Box>
   );
 };

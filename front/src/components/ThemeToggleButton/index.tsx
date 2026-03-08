@@ -9,12 +9,7 @@ export const ThemeToggleButton = () => {
   const { t } = useTranslation();
 
   return (
-    <IconButton
-      onClick={toggleMode}
-      color="inherit"
-      aria-label={t('footer.themeAriaLabel')}
-      size="small"
-    >
+    <IconButton onClick={toggleMode} color="inherit" aria-label={t('footer.themeAriaLabel')} size="small">
       {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
     </IconButton>
   );

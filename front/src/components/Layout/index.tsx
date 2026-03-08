@@ -2,13 +2,7 @@ import { Box } from '@mui/material';
 import { ReactNode } from 'react';
 import Footer from '../Footer';
 
-const Layout = ({
-  children,
-  showFooter = false,
-}: {
-  children: ReactNode;
-  showFooter?: boolean;
-}) => {
+const Layout = ({ children, showFooter = false }: { children: ReactNode; showFooter?: boolean }) => {
   return (
     <Box
       sx={{
@@ -18,9 +12,7 @@ const Layout = ({
         overflow: 'hidden',
       }}
     >
-      <Box sx={{ width: '100%', height: '100%', overflowY: 'auto' }}>
-        {children}
-      </Box>
+      <Box sx={{ width: '100%', height: '100%', overflowY: 'auto' }}>{children}</Box>
 
       {showFooter ? <Footer /> : null}
     </Box>

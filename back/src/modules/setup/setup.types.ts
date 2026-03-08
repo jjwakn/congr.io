@@ -1,16 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  ArrayMinSize,
-  IsArray,
-  IsEnum,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MaxLength,
-  Min,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayMinSize, IsArray, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
 import { Feature } from 'src/utils/constants';
 import { ThemePaletteConfig } from '../configurations/configurations.types';
 import { Congregation } from '../congregation/congregation.entity';
@@ -40,10 +29,7 @@ export class SetupUserDto {
   name: string;
 }
 
-export class SetupLocationDto implements Pick<
-  Location,
-  'order' | 'name' | 'address'
-> {
+export class SetupLocationDto implements Pick<Location, 'order' | 'name' | 'address'> {
   @Type(() => Number)
   @IsInt()
   @Min(0)
@@ -113,10 +99,7 @@ export interface IsSetupResponse {
   congregation?: SetupCongregationData;
 }
 
-export interface SetupCongregationData extends Pick<
-  Congregation,
-  'id' | 'name' | 'type' | 'features' | 'updated_at'
-> {
+export interface SetupCongregationData extends Pick<Congregation, 'id' | 'name' | 'type' | 'features' | 'updated_at'> {
   locations: Array<Pick<Location, 'id' | 'order' | 'name' | 'address'>>;
   theme_palette: ThemePaletteConfig;
 }

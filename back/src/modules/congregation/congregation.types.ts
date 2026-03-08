@@ -1,9 +1,5 @@
 import { IsOptional } from 'class-validator';
-import {
-  CommonOrder,
-  EntityActionProps,
-  ListParamsQuery,
-} from 'src/common/common.types';
+import { CommonOrder, EntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 import { Congregation } from './congregation.entity';
 

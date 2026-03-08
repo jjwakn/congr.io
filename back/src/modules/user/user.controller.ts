@@ -9,11 +9,7 @@ import { UserGetByIdProps, UserQuery, UserValidateProps } from './user.types';
 
 @ApiTags('user')
 @Controller('user')
-export class UserController extends CommonController<
-  User,
-  UserQuery,
-  UserGetByIdProps
-> {
+export class UserController extends CommonController<User, UserQuery, UserGetByIdProps> {
   protected module = Module.user;
 
   constructor(protected readonly service: UserService) {

@@ -8,16 +8,26 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const backendTarget = env.VITE_DEV_BACKEND_URL || 'http://localhost:4000';
-  const packageJsonRaw = readFileSync(
-    resolve(process.cwd(), 'package.json'),
-    'utf-8',
-  );
+  const packageJsonRaw = readFileSync(resolve(process.cwd(), 'package.json'), 'utf-8');
   const packageJson = JSON.parse(packageJsonRaw) as { version?: string };
   const frontendVersion = packageJson.version ?? '0.0.0';
 
   return {
     define: {
       __FRONTEND_VERSION__: JSON.stringify(frontendVersion),
+    },
+    resolve: {
+      alias: {
+        '@': resolve(process.cwd(), 'src'),
+        '@components': resolve(process.cwd(), 'src/components'),
+        '@constants': resolve(process.cwd(), 'src/constants'),
+        '@contexts': resolve(process.cwd(), 'src/contexts'),
+        '@hooks': resolve(process.cwd(), 'src/hooks'),
+        '@pages': resolve(process.cwd(), 'src/pages'),
+        '@services': resolve(process.cwd(), 'src/services'),
+        '@types': resolve(process.cwd(), 'src/types'),
+        '@utils': resolve(process.cwd(), 'src/utils'),
+      },
     },
     plugins: [
       react(),
@@ -52,24 +62,15 @@ export default defineConfig(({ mode }) => {
             const normalizedId = id.split('\\').join('/');
             if (!normalizedId.includes('/node_modules/')) return undefined;
 
-            if (
-              normalizedId.includes('/@mui/') ||
-              normalizedId.includes('/@emotion/')
-            ) {
+            if (normalizedId.includes('/@mui/') || normalizedId.includes('/@emotion/')) {
               return 'vendor-mui';
             }
 
-            if (
-              normalizedId.includes('/i18next/') ||
-              normalizedId.includes('/react-i18next/')
-            ) {
+            if (normalizedId.includes('/i18next/') || normalizedId.includes('/react-i18next/')) {
               return 'vendor-i18n';
             }
 
-            if (
-              normalizedId.includes('/workbox-') ||
-              normalizedId.includes('virtual:pwa-register')
-            ) {
+            if (normalizedId.includes('/workbox-') || normalizedId.includes('virtual:pwa-register')) {
               return 'vendor-pwa';
             }
 

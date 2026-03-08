@@ -2,7 +2,7 @@ import { RefObject, useCallback, useEffect, useState } from 'react';
 
 let draggingCount = 0;
 
-export default function useDragging({
+const useDragging = ({
   labelRef,
   inputRef,
   multiple,
@@ -14,16 +14,13 @@ export default function useDragging({
   multiple?: boolean;
   handleChanges: (files: File | FileList) => boolean;
   onDrop?: (file: File | FileList) => void;
-}): boolean {
+}): boolean => {
   const [dragging, setDragging] = useState(false);
 
   const handleClick = useCallback(
     (e: MouseEvent) => {
       const target = e.target;
-      if (
-        target instanceof Element &&
-        target.closest('[data-file-uploader-no-open="true"]')
-      ) {
+      if (target instanceof Element && target.closest('[data-file-uploader-no-open="true"]')) {
         return;
       }
 
@@ -93,14 +90,9 @@ export default function useDragging({
       label.removeEventListener('dragover', handleDrag);
       label.removeEventListener('drop', handleDrop);
     };
-  }, [
-    handleClick,
-    handleDragIn,
-    handleDragOut,
-    handleDrag,
-    handleDrop,
-    labelRef,
-  ]);
+  }, [handleClick, handleDragIn, handleDragOut, handleDrag, handleDrop, labelRef]);
 
   return dragging;
-}
+};
+
+export default useDragging;

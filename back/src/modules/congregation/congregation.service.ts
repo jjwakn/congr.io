@@ -6,12 +6,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
 import { Congregation } from './congregation.entity';
-import {
-  CongregationCreateProps,
-  CongregationDeleteProps,
-  CongregationQuery,
-  CongregationUpdateProps,
-} from './congregation.types';
+import { CongregationCreateProps, CongregationDeleteProps, CongregationQuery, CongregationUpdateProps } from './congregation.types';
 
 @Injectable()
 export class CongregationService {
@@ -26,10 +21,7 @@ export class CongregationService {
   ) {}
 
   async list(query: CongregationQuery) {
-    const { result, total } = await findWithFilters<
-      Congregation,
-      CongregationQuery
-    >({
+    const { result, total } = await findWithFilters<Congregation, CongregationQuery>({
       repository: this.repository,
       query,
       searchFields: ['id', 'name', 'type'],
@@ -58,8 +50,7 @@ export class CongregationService {
       },
     });
 
-    if (!result)
-      throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
+    if (!result) throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
 
     return cleanColumns<Congregation>(result);
   }

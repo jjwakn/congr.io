@@ -8,14 +8,10 @@ import { PORT } from './utils/constants';
 
 const swaggerLanguages = ['en', 'es'];
 
-async function bootstrap() {
+const bootstrap = async () => {
   const app = await NestFactory.create(AppModule);
 
-  const config = new DocumentBuilder()
-    .setTitle('congr.io API')
-    .setDescription('API')
-    .setVersion(packageJson.version)
-    .build();
+  const config = new DocumentBuilder().setTitle('congr.io API').setDescription('API').setVersion(packageJson.version).build();
 
   const i18n = app.get(I18nService);
 
@@ -48,5 +44,5 @@ async function bootstrap() {
   });
 
   await app.listen(PORT);
-}
+};
 void bootstrap();

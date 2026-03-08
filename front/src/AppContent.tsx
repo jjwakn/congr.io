@@ -11,12 +11,10 @@ const AppContent = () => {
   const { isLoading, isSetup } = useAppContext();
   const { isAuthenticated, isSessionLoading } = useAuth();
 
-  if (isLoading || isSessionLoading) return <Loading />;
-
-  return (
-    <Suspense fallback={<Loading />}>
-      {!isSetup ? <Setup /> : isAuthenticated ? <Dashboard /> : <Login />}
-    </Suspense>
+  return isLoading || isSessionLoading ? (
+    <Loading />
+  ) : (
+    <Suspense fallback={<Loading />}>{!isSetup ? <Setup /> : isAuthenticated ? <Dashboard /> : <Login />}</Suspense>
   );
 };
 

@@ -14,3 +14,7 @@ Project rules for AI assistants:
 8) Keep TypeScript type/interface declarations in dedicated `*.types.ts` files.
 9) In frontend, keep only shared domain-level types in `front/src/types`; colocate feature/component-specific `*.types.ts` files with those files.
 10) Keep exactly one React component per `.tsx` file; extract additional components into separate files.
+11) Prefer expression-style conditional rendering in React with a top-level ternary return for two-branch views (`condition ? <A /> : <B />`) when it keeps the component clear.
+12) Prefer arrow functions for consistency.
+13) Prefer path aliases for project imports (for example `@components/*`, `@utils/*`, `@constants/*`).
+14) Avoid deep relative imports when an alias is available.

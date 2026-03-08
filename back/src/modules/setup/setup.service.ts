@@ -2,29 +2,16 @@ import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Feature } from 'src/utils/constants';
 import { encryptPassword } from 'src/utils/helpers';
 import { DataSource, IsNull, Repository } from 'typeorm';
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Configuration } from '../configurations/configurations.entity';
 import { ConfigurationsService } from '../configurations/configurations.service';
-import {
-  DEFAULT_THEME_PALETTE_CONFIG,
-  THEME_PALETTE_CONFIG_KEY,
-} from '../configurations/configurations.types';
+import { DEFAULT_THEME_PALETTE_CONFIG, THEME_PALETTE_CONFIG_KEY } from '../configurations/configurations.types';
 import { Congregation } from '../congregation/congregation.entity';
 import { Location } from '../location/location.entity';
 import { Role } from '../role/role.entity';
 import { User } from '../user/user.entity';
-import {
-  IsSetupResponse,
-  SetupCongregationData,
-  SetupProps,
-  SetupResponse,
-} from './setup.types';
+import { IsSetupResponse, SetupCongregationData, SetupProps, SetupResponse } from './setup.types';
 
 @Injectable()
 export class SetupService {
@@ -54,13 +41,8 @@ export class SetupService {
     return this.i18n.t(key, { lang: lang ?? I18nContext.current()?.lang });
   }
 
-  private async mapCongregation(
-    congregation: Congregation,
-  ): Promise<SetupCongregationData> {
-    const themePalette =
-      await this.configurationsService.getThemePaletteConfigByCongregationId(
-        congregation.id,
-      );
+  private async mapCongregation(congregation: Congregation): Promise<SetupCongregationData> {
+    const themePalette = await this.configurationsService.getThemePaletteConfigByCongregationId(congregation.id);
 
     return {
       id: congregation.id,
@@ -110,84 +92,37 @@ export class SetupService {
   }
 
   async setup(data: SetupProps, lang?: string): Promise<SetupResponse> {
-    if (this.setupInProgress)
-      throw new ConflictException(
-        this.translate('errors.setup.alreadySetup', lang),
-      );
+    if (this.setupInProgress) throw new ConflictException(this.translate('errors.setup.alreadySetup', lang));
 
     this.setupInProgress = true;
 
     try {
-      if (!data)
-        throw new BadRequestException(
-          this.translate('errors.setup.missingBody', lang),
-        );
+      if (!data) throw new BadRequestException(this.translate('errors.setup.missingBody', lang));
 
       const { role, user, congregation } = data;
 
-      if (!user)
-        throw new BadRequestException(
-          this.translate('errors.setup.missingUser', lang),
-        );
-      if (!user.username?.trim())
-        throw new BadRequestException(
-          this.translate('errors.setup.missingUserUsername', lang),
-        );
-      if (!user.password)
-        throw new BadRequestException(
-          this.translate('errors.setup.missingUserPassword', lang),
-        );
-      if (!user.name?.trim())
-        throw new BadRequestException(
-          this.translate('errors.setup.missingUserName', lang),
-        );
+      if (!user) throw new BadRequestException(this.translate('errors.setup.missingUser', lang));
+      if (!user.username?.trim()) throw new BadRequestException(this.translate('errors.setup.missingUserUsername', lang));
+      if (!user.password) throw new BadRequestException(this.translate('errors.setup.missingUserPassword', lang));
+      if (!user.name?.trim()) throw new BadRequestException(this.translate('errors.setup.missingUserName', lang));
 
-      if (!role)
-        throw new BadRequestException(
-          this.translate('errors.setup.missingRole', lang),
-        );
-      if (!role.name?.trim())
-        throw new BadRequestException(
-          this.translate('errors.setup.missingRoleName', lang),
-        );
+      if (!role) throw new BadRequestException(this.translate('errors.setup.missingRole', lang));
+      if (!role.name?.trim()) throw new BadRequestException(this.translate('errors.setup.missingRoleName', lang));
 
-      if (!congregation)
-        throw new BadRequestException(
-          this.translate('errors.setup.missingCongregation', lang),
-        );
-      if (!congregation.name?.trim())
-        throw new BadRequestException(
-          this.translate('errors.setup.missingCongregationName', lang),
-        );
-      if (!congregation.type?.trim())
-        throw new BadRequestException(
-          this.translate('errors.setup.missingCongregationType', lang),
-        );
+      if (!congregation) throw new BadRequestException(this.translate('errors.setup.missingCongregation', lang));
+      if (!congregation.name?.trim()) throw new BadRequestException(this.translate('errors.setup.missingCongregationName', lang));
+      if (!congregation.type?.trim()) throw new BadRequestException(this.translate('errors.setup.missingCongregationType', lang));
       if (!congregation.locations || !congregation.locations.length)
-        throw new BadRequestException(
-          this.translate('errors.setup.missingCongregationLocations', lang),
-        );
-      if (
-        congregation.locations.some(
-          (location) => location.order === undefined || location.order === null,
-        )
-      )
-        throw new BadRequestException(
-          this.translate('errors.setup.missingCongregationLocationOrder', lang),
-        );
+        throw new BadRequestException(this.translate('errors.setup.missingCongregationLocations', lang));
+      if (congregation.locations.some((location) => location.order === undefined || location.order === null))
+        throw new BadRequestException(this.translate('errors.setup.missingCongregationLocationOrder', lang));
       if (congregation.locations.some((location) => !location.name?.trim()))
-        throw new BadRequestException(
-          this.translate('errors.setup.missingCongregationLocationName', lang),
-        );
+        throw new BadRequestException(this.translate('errors.setup.missingCongregationLocationName', lang));
 
       if (!congregation.features || !congregation.features.length)
-        throw new BadRequestException(
-          this.translate('errors.setup.missingCongregationFeatures', lang),
-        );
+        throw new BadRequestException(this.translate('errors.setup.missingCongregationFeatures', lang));
       if (congregation.features.some((feature) => !feature))
-        throw new BadRequestException(
-          this.translate('errors.setup.missingCongregationFeature', lang),
-        );
+        throw new BadRequestException(this.translate('errors.setup.missingCongregationFeature', lang));
 
       const encryptedPassword = await encryptPassword(user.password);
 
@@ -210,20 +145,14 @@ export class SetupService {
           }),
         ]);
 
-        if (userCount || roleCount || congregationCount)
-          throw new ConflictException(
-            this.translate('errors.setup.alreadySetup', lang),
-          );
+        if (userCount || roleCount || congregationCount) throw new ConflictException(this.translate('errors.setup.alreadySetup', lang));
 
         const userCreated = userRepository.create({
           username: user.username.trim(),
           password: encryptedPassword,
           name: user.name.trim(),
         });
-        if (!userCreated)
-          throw new InternalServerErrorException(
-            this.translate('errors.setup.errorCreatingUserRepository', lang),
-          );
+        if (!userCreated) throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingUserRepository', lang));
         await userRepository.save(userCreated);
 
         const roleCreated = roleRepository.create({
@@ -231,10 +160,7 @@ export class SetupService {
           full_access: true,
           created_by: userCreated,
         });
-        if (!roleCreated)
-          throw new InternalServerErrorException(
-            this.translate('errors.setup.errorCreatingRoleRepository', lang),
-          );
+        if (!roleCreated) throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingRoleRepository', lang));
         await roleRepository.save(roleCreated);
 
         const locationsCreated = locationRepository.create(
@@ -245,13 +171,7 @@ export class SetupService {
             created_by: userCreated,
           })),
         );
-        if (!locationsCreated.length)
-          throw new InternalServerErrorException(
-            this.translate(
-              'errors.setup.errorCreatingLocationRepository',
-              lang,
-            ),
-          );
+        if (!locationsCreated.length) throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingLocationRepository', lang));
         await locationRepository.save(locationsCreated);
 
         const congregationCreated = congregationRepository.create({
@@ -259,27 +179,16 @@ export class SetupService {
           type: congregation.type.trim(),
           created_by: userCreated,
           locations: locationsCreated,
-          features: congregation.features
-            .map((feature) => feature.toString().trim())
-            .filter(Boolean) as Feature[],
+          features: congregation.features.map((feature) => feature.toString().trim()).filter(Boolean) as Feature[],
         });
-        if (!congregationCreated)
-          throw new InternalServerErrorException(
-            this.translate(
-              'errors.setup.errorCreatingCongregationRepository',
-              lang,
-            ),
-          );
+        if (!congregationCreated) throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingCongregationRepository', lang));
         await congregationRepository.save(congregationCreated);
 
         const themePaletteConfig = configurationsRepository.create({
           congregation_id: congregationCreated.id,
           congregation: congregationCreated,
           config_key: THEME_PALETTE_CONFIG_KEY,
-          config_value: DEFAULT_THEME_PALETTE_CONFIG as unknown as Record<
-            string,
-            unknown
-          >,
+          config_value: DEFAULT_THEME_PALETTE_CONFIG as unknown as Record<string, unknown>,
           created_by: userCreated,
         });
         await configurationsRepository.save(themePaletteConfig);
@@ -297,12 +206,7 @@ export class SetupService {
         });
 
         if (!congregationWithRelations)
-          throw new InternalServerErrorException(
-            this.translate(
-              'errors.setup.errorCreatingCongregationRepository',
-              lang,
-            ),
-          );
+          throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingCongregationRepository', lang));
 
         return {
           isSetup: true,

@@ -1,11 +1,4 @@
-import {
-  Box,
-  Divider,
-  Drawer,
-  IconButton,
-  Typography,
-  useMediaQuery,
-} from '@mui/material';
+import { Box, Divider, Drawer, IconButton, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { LogoSmall } from '../../components/Logos';
 import { DashboardNavigationDrawerProps } from './DashboardNavigationDrawer.types';

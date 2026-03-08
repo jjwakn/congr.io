@@ -1,9 +1,6 @@
 import { Box } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  LogoBackgroundMode,
-  getLogoBackgroundMode,
-} from '../../utils/brandingManifest';
+import { LogoBackgroundMode, getLogoBackgroundMode } from '../../utils/brandingManifest';
 import { LogoFrameProps } from './types';
 
 const resolveBackground = (mode: LogoBackgroundMode): string => {
@@ -35,10 +32,7 @@ const useManifestLogoBackground = () => {
 
 export const LogoFrame = ({ alt, containerSx, children }: LogoFrameProps) => {
   const backgroundMode = useManifestLogoBackground();
-  const backgroundColor = useMemo(
-    () => resolveBackground(backgroundMode),
-    [backgroundMode],
-  );
+  const backgroundColor = useMemo(() => resolveBackground(backgroundMode), [backgroundMode]);
 
   return (
     <Box

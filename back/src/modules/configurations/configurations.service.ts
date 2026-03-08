@@ -1,20 +1,12 @@
 import { I18nService } from 'nestjs-i18n';
 import { RequestType } from 'src/common/common.types';
 import { Repository } from 'typeorm';
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Congregation } from '../congregation/congregation.entity';
 import { User } from '../user/user.entity';
 import { Configuration } from './configurations.entity';
-import {
-  DEFAULT_THEME_PALETTE_CONFIG,
-  THEME_PALETTE_CONFIG_KEY,
-  ThemePaletteConfig,
-} from './configurations.types';
+import { DEFAULT_THEME_PALETTE_CONFIG, THEME_PALETTE_CONFIG_KEY, ThemePaletteConfig } from './configurations.types';
 
 @Injectable()
 export class ConfigurationsService {
@@ -51,32 +43,26 @@ export class ConfigurationsService {
     if (!user) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
 
     const congregationId = user.congregations?.[0]?.id;
-    if (!congregationId)
-      throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
+    if (!congregationId) throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
 
     const congregation = await this.congregationRepository.findOne({
       where: { id: congregationId },
       withDeleted: true,
     });
 
-    if (!congregation)
-      throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
+    if (!congregation) throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
 
     return { congregation, user };
   }
 
-  async getThemePaletteConfig(
-    request: RequestType,
-  ): Promise<ThemePaletteConfig> {
+  async getThemePaletteConfig(request: RequestType): Promise<ThemePaletteConfig> {
     const userId = this.getUserIdOrThrow(request);
     const { congregation } = await this.getFirstCongregationForUser(userId);
 
     return this.getThemePaletteConfigByCongregationId(congregation.id);
   }
 
-  async getThemePaletteConfigByCongregationId(
-    congregationId: string,
-  ): Promise<ThemePaletteConfig> {
+  async getThemePaletteConfigByCongregationId(congregationId: string): Promise<ThemePaletteConfig> {
     const config = await this.repository.findOne({
       where: {
         congregation_id: congregationId,
@@ -88,10 +74,7 @@ export class ConfigurationsService {
       const defaultConfig = this.repository.create({
         congregation_id: congregationId,
         config_key: THEME_PALETTE_CONFIG_KEY,
-        config_value: DEFAULT_THEME_PALETTE_CONFIG as unknown as Record<
-          string,
-          unknown
-        >,
+        config_value: DEFAULT_THEME_PALETTE_CONFIG as unknown as Record<string, unknown>,
       });
 
       await this.repository
@@ -109,28 +92,15 @@ export class ConfigurationsService {
         },
       });
 
-      return (
-        (insertedOrExisting?.config_value as unknown as ThemePaletteConfig) ??
-        DEFAULT_THEME_PALETTE_CONFIG
-      );
+      return (insertedOrExisting?.config_value as unknown as ThemePaletteConfig) ?? DEFAULT_THEME_PALETTE_CONFIG;
     }
 
-    return (
-      (config.config_value as unknown as ThemePaletteConfig) ??
-      DEFAULT_THEME_PALETTE_CONFIG
-    );
+    return (config.config_value as unknown as ThemePaletteConfig) ?? DEFAULT_THEME_PALETTE_CONFIG;
   }
 
-  async upsertThemePaletteConfig({
-    request,
-    themePalette,
-  }: {
-    request: RequestType;
-    themePalette: ThemePaletteConfig;
-  }): Promise<ThemePaletteConfig> {
+  async upsertThemePaletteConfig({ request, themePalette }: { request: RequestType; themePalette: ThemePaletteConfig }): Promise<ThemePaletteConfig> {
     const userId = this.getUserIdOrThrow(request);
-    const { congregation, user } =
-      await this.getFirstCongregationForUser(userId);
+    const { congregation, user } = await this.getFirstCongregationForUser(userId);
 
     const existing = await this.repository.findOne({
       where: {
@@ -143,10 +113,7 @@ export class ConfigurationsService {
     });
 
     if (existing) {
-      existing.config_value = themePalette as unknown as Record<
-        string,
-        unknown
-      >;
+      existing.config_value = themePalette as unknown as Record<string, unknown>;
       existing.updated_by = user;
       await this.repository.save(existing);
       return themePalette;

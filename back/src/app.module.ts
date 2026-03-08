@@ -1,10 +1,4 @@
-import {
-  AcceptLanguageResolver,
-  HeaderResolver,
-  I18nJsonLoader,
-  I18nModule,
-  QueryResolver,
-} from 'nestjs-i18n';
+import { AcceptLanguageResolver, HeaderResolver, I18nJsonLoader, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { join } from 'path';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -41,10 +35,7 @@ import { UserModule } from './modules/user/user.module';
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
-        path:
-          process.env.NODE_ENV !== 'production'
-            ? join(process.cwd(), 'src', 'locales')
-            : join(__dirname, 'locales'),
+        path: process.env.NODE_ENV !== 'production' ? join(process.cwd(), 'src', 'locales') : join(__dirname, 'locales'),
         includeSubfolders: true,
         watch: true,
       },

@@ -1,13 +1,5 @@
 import { User } from 'src/modules/user/user.entity';
-import {
-  Column,
-  CreateDateColumn,
-  DeleteDateColumn,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, DeleteDateColumn, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 
 export abstract class CommonEntity {
