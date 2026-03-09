@@ -1,6 +1,15 @@
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Box, IconButton, Menu, MenuItem } from '@mui/material';
-import { CSSProperties, ChangeEventHandler, MouseEventHandler, ReactNode, useEffect, useId, useRef, useState } from 'react';
+import {
+  CSSProperties,
+  ChangeEventHandler,
+  MouseEventHandler,
+  ReactNode,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { acceptedExt, checkType, getFileSizeMB } from '../../../utils/file';
 import { darkGray, lightGray } from '../../../utils/theme';
@@ -338,7 +347,8 @@ const FileUploader = ({
                   <>{label ? <span>{label}</span> : <span>{t('components.fileUploader.uploadDefault')}</span>}</>
                 ) : (
                   <>
-                    <span>{t('components.fileUploader.uploadedSuccessfully')}</span> {t('components.fileUploader.uploadAnother')}
+                    <span>{t('components.fileUploader.uploadedSuccessfully')}</span>{' '}
+                    {t('components.fileUploader.uploadAnother')}
                   </>
                 )}
               </Box>

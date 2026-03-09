@@ -135,7 +135,9 @@ const BrandingFormCard = ({
         </FormControl>
 
         <FormControlLabel
-          control={<Switch checked={roundedCorners} onChange={(event) => onRoundedCornersChange(event.target.checked)} />}
+          control={
+            <Switch checked={roundedCorners} onChange={(event) => onRoundedCornersChange(event.target.checked)} />
+          }
           label={t('brandingGenerator.roundedCorners')}
         />
 

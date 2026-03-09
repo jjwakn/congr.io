@@ -45,10 +45,14 @@ export class SetupController {
   }
 
   @Post()
-  async setup(@Body() body: SetupProps & { payload?: string | SetupProps }, @I18nLang() lang?: string): Promise<SetupResponse> {
+  async setup(
+    @Body() body: SetupProps & { payload?: string | SetupProps },
+    @I18nLang() lang?: string,
+  ): Promise<SetupResponse> {
     const payload = this.parsePayload(body, lang);
 
-    if (!payload?.congregation) throw new BadRequestException(this.translate('errors.setup.missingCongregationPayload', lang));
+    if (!payload?.congregation)
+      throw new BadRequestException(this.translate('errors.setup.missingCongregationPayload', lang));
 
     const parsedBody = plainToInstance(SetupPayloadDto, payload);
     const validationErrors = validateSync(parsedBody, {

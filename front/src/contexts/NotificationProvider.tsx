@@ -24,7 +24,12 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const action = (
-    <IconButton size="small" aria-label={t('components.notification.closeAriaLabel')} color="inherit" onClick={handleCloseNotification}>
+    <IconButton
+      size="small"
+      aria-label={t('components.notification.closeAriaLabel')}
+      color="inherit"
+      onClick={handleCloseNotification}
+    >
       <CloseIcon fontSize="small" />
     </IconButton>
   );
@@ -44,7 +49,12 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         action={action}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert onClose={handleCloseNotification} severity={notificationSeverity} variant="filled" sx={{ width: '100%' }}>
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notificationSeverity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
           {notificationText}
         </Alert>
       </Snackbar>

@@ -48,8 +48,14 @@ export const ConfirmStep = ({ data, onFinish, disabled, onBack }: ConfirmStepPro
             type: congregationType,
           })}
         >
-          <FieldRow label={t('form.field.name')} value={<Typography variant="body2">{data.congregation.name || '-'}</Typography>} />
-          <FieldRow label={t('form.field.type')} value={<Typography variant="body2">{data.congregation.type || '-'}</Typography>} />
+          <FieldRow
+            label={t('form.field.name')}
+            value={<Typography variant="body2">{data.congregation.name || '-'}</Typography>}
+          />
+          <FieldRow
+            label={t('form.field.type')}
+            value={<Typography variant="body2">{data.congregation.type || '-'}</Typography>}
+          />
         </ConfirmSection>
 
         <ConfirmSection title={t('setup.confirm.sections.features')}>
@@ -89,8 +95,14 @@ export const ConfirmStep = ({ data, onFinish, disabled, onBack }: ConfirmStepPro
         </ConfirmSection>
 
         <ConfirmSection title={t('setup.confirm.sections.admin')}>
-          <FieldRow label={t('form.field.username')} value={<Typography variant="body2">{data.admin.username || '-'}</Typography>} />
-          <FieldRow label={t('form.field.name')} value={<Typography variant="body2">{data.admin.name || '-'}</Typography>} />
+          <FieldRow
+            label={t('form.field.username')}
+            value={<Typography variant="body2">{data.admin.username || '-'}</Typography>}
+          />
+          <FieldRow
+            label={t('form.field.name')}
+            value={<Typography variant="body2">{data.admin.name || '-'}</Typography>}
+          />
           <FieldRow
             label={t('setup.confirm.fullAccessRole')}
             value={<Typography variant="body2">{data.admin.roleName || '-'}</Typography>}

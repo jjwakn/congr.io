@@ -1,7 +1,15 @@
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const DrawTypes = ({ types, minSize, maxSize }: { types?: Array<string>; minSize?: number; maxSize?: number }): null | ReactNode => {
+const DrawTypes = ({
+  types,
+  minSize,
+  maxSize,
+}: {
+  types?: Array<string>;
+  minSize?: number;
+  maxSize?: number;
+}): null | ReactNode => {
   const { t } = useTranslation();
 
   if (types) {

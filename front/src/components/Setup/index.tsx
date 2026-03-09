@@ -18,7 +18,14 @@ const Setup = () => {
   const { markSetupComplete } = useAppContext();
   const { showNotification } = useNotificationContext();
   const { t } = useTranslation();
-  const { setupData: data, activeStep, setActiveStep, loading: loadingSetup, setLoading: setLoadingSetup, loadingFeatures } = useSetup();
+  const {
+    setupData: data,
+    activeStep,
+    setActiveStep,
+    loading: loadingSetup,
+    setLoading: setLoadingSetup,
+    loadingFeatures,
+  } = useSetup();
   const setupSubmittedRef = useRef(false);
 
   const loading = useMemo(() => loadingSetup || loadingFeatures, [loadingFeatures, loadingSetup]);
@@ -75,7 +82,11 @@ const Setup = () => {
     } catch (err) {
       setupSubmittedRef.current = false;
       const error =
-        err instanceof HttpRequestError ? err.message || t('setup.error.saveFailed') : err instanceof Error ? err.message : String(err);
+        err instanceof HttpRequestError
+          ? err.message || t('setup.error.saveFailed')
+          : err instanceof Error
+            ? err.message
+            : String(err);
       showNotification(error, { severity: 'error' });
       console.error(t('setup.log.setupError'), error);
     } finally {

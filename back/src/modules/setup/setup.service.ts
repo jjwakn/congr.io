@@ -102,7 +102,8 @@ export class SetupService {
       const { role, user, congregation } = data;
 
       if (!user) throw new BadRequestException(this.translate('errors.setup.missingUser', lang));
-      if (!user.username?.trim()) throw new BadRequestException(this.translate('errors.setup.missingUserUsername', lang));
+      if (!user.username?.trim())
+        throw new BadRequestException(this.translate('errors.setup.missingUserUsername', lang));
       if (!user.password) throw new BadRequestException(this.translate('errors.setup.missingUserPassword', lang));
       if (!user.name?.trim()) throw new BadRequestException(this.translate('errors.setup.missingUserName', lang));
 
@@ -110,8 +111,10 @@ export class SetupService {
       if (!role.name?.trim()) throw new BadRequestException(this.translate('errors.setup.missingRoleName', lang));
 
       if (!congregation) throw new BadRequestException(this.translate('errors.setup.missingCongregation', lang));
-      if (!congregation.name?.trim()) throw new BadRequestException(this.translate('errors.setup.missingCongregationName', lang));
-      if (!congregation.type?.trim()) throw new BadRequestException(this.translate('errors.setup.missingCongregationType', lang));
+      if (!congregation.name?.trim())
+        throw new BadRequestException(this.translate('errors.setup.missingCongregationName', lang));
+      if (!congregation.type?.trim())
+        throw new BadRequestException(this.translate('errors.setup.missingCongregationType', lang));
       if (!congregation.locations || !congregation.locations.length)
         throw new BadRequestException(this.translate('errors.setup.missingCongregationLocations', lang));
       if (congregation.locations.some((location) => location.order === undefined || location.order === null))
@@ -145,14 +148,16 @@ export class SetupService {
           }),
         ]);
 
-        if (userCount || roleCount || congregationCount) throw new ConflictException(this.translate('errors.setup.alreadySetup', lang));
+        if (userCount || roleCount || congregationCount)
+          throw new ConflictException(this.translate('errors.setup.alreadySetup', lang));
 
         const userCreated = userRepository.create({
           username: user.username.trim(),
           password: encryptedPassword,
           name: user.name.trim(),
         });
-        if (!userCreated) throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingUserRepository', lang));
+        if (!userCreated)
+          throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingUserRepository', lang));
         await userRepository.save(userCreated);
 
         const roleCreated = roleRepository.create({
@@ -160,7 +165,8 @@ export class SetupService {
           full_access: true,
           created_by: userCreated,
         });
-        if (!roleCreated) throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingRoleRepository', lang));
+        if (!roleCreated)
+          throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingRoleRepository', lang));
         await roleRepository.save(roleCreated);
 
         const locationsCreated = locationRepository.create(
@@ -183,7 +189,9 @@ export class SetupService {
           features: congregation.features.map((feature) => feature.toString().trim()).filter(Boolean) as Feature[],
         });
         if (!congregationCreated)
-          throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingCongregationRepository', lang));
+          throw new InternalServerErrorException(
+            this.translate('errors.setup.errorCreatingCongregationRepository', lang),
+          );
         await congregationRepository.save(congregationCreated);
 
         const themePaletteConfig = configurationsRepository.create({
@@ -208,7 +216,9 @@ export class SetupService {
         });
 
         if (!congregationWithRelations)
-          throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingCongregationRepository', lang));
+          throw new InternalServerErrorException(
+            this.translate('errors.setup.errorCreatingCongregationRepository', lang),
+          );
 
         return {
           isSetup: true,

@@ -19,7 +19,11 @@ import {
 } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 
-export abstract class CommonController<Entity, Query extends ListParamsQuery, GetData extends DefaultGetData = DefaultGetData> {
+export abstract class CommonController<
+  Entity,
+  Query extends ListParamsQuery,
+  GetData extends DefaultGetData = DefaultGetData,
+> {
   protected abstract service: {
     list(query: Query): Promise<{
       result: Entity[];
@@ -39,7 +43,11 @@ export abstract class CommonController<Entity, Query extends ListParamsQuery, Ge
     const message = I18nContext.current()?.t('errors.auth.notIncluded');
     const fallbackMessage = I18nContext.current()?.t('errors.auth.unauthorized');
     const resolvedMessage =
-      typeof message === 'string' ? message : typeof fallbackMessage === 'string' ? fallbackMessage : 'errors.auth.unauthorized';
+      typeof message === 'string'
+        ? message
+        : typeof fallbackMessage === 'string'
+          ? fallbackMessage
+          : 'errors.auth.unauthorized';
     return new UnauthorizedException(resolvedMessage);
   }
 
@@ -74,7 +82,11 @@ export abstract class CommonController<Entity, Query extends ListParamsQuery, Ge
   @CommonPermissionDecorator((ctrl: CommonController<Entity, Query>) => ctrl.module, ModuleAction.update)
   @Put(':id')
   @ApiBody({ type: Object })
-  async update(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body() data: Entity, @Req() request: RequestType) {
+  async update(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() data: Entity,
+    @Req() request: RequestType,
+  ) {
     const userId = request.user?.userId;
     if (!userId) throw this.buildUnauthorizedException();
     return this.service.update({ id, data, userId });

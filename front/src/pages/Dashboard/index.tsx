@@ -6,7 +6,14 @@ import { DashboardHeader } from '@pages/Dashboard/DashboardHeader';
 import { DashboardNavigationDrawer } from '@pages/Dashboard/DashboardNavigationDrawer';
 import { Home } from '@pages/Dashboard/Home';
 import { createModuleNavigationItem, createSettingsNavigationItem } from '@utils/dashboard';
-import { getHomePath, getLocalizedPathname, getModuleIdFromPath, getModulePath, isHomePath, isSettingsPath } from '@utils/routes';
+import {
+  getHomePath,
+  getLocalizedPathname,
+  getModuleIdFromPath,
+  getModulePath,
+  isHomePath,
+  isSettingsPath,
+} from '@utils/routes';
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';

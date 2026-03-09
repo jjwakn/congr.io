@@ -35,7 +35,8 @@ import { UserModule } from './modules/user/user.module';
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
-        path: process.env.NODE_ENV !== 'production' ? join(process.cwd(), 'src', 'locales') : join(__dirname, 'locales'),
+        path:
+          process.env.NODE_ENV !== 'production' ? join(process.cwd(), 'src', 'locales') : join(__dirname, 'locales'),
         includeSubfolders: true,
         watch: true,
       },

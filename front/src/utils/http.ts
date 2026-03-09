@@ -92,7 +92,8 @@ export const httpRequest = async <ResponseType>({
   // Converting to query params if method is GET
   if (service.method === 'GET' && jsonData && Object.keys(jsonData).length) {
     const queryParams = Object.entries(jsonData).map(([key, value]) => {
-      if (value === null || value === undefined || value === '') throw new Error(i18n.t('http.error.missingParam', { key }));
+      if (value === null || value === undefined || value === '')
+        throw new Error(i18n.t('http.error.missingParam', { key }));
       if (typeof value === 'object') throw new Error(i18n.t('http.error.missingParam', { key }));
 
       return `${encodeURIComponent(key)}=${encodeURIComponent(value.toString())}`;
@@ -110,7 +111,9 @@ export const httpRequest = async <ResponseType>({
   if (legacyAuthToken && !requestHeaders.Authorization) requestHeaders.Authorization = `Bearer ${legacyAuthToken}`;
 
   if (!isFormData && service.method !== 'GET')
-    requestHeaders['Content-Type'] = requestHeaders['Content-Type'] ? requestHeaders['Content-Type'] : 'application/json';
+    requestHeaders['Content-Type'] = requestHeaders['Content-Type']
+      ? requestHeaders['Content-Type']
+      : 'application/json';
 
   let requestBody: BodyInit | undefined;
   if (service.method !== 'GET') {

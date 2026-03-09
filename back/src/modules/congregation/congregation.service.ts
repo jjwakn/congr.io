@@ -6,7 +6,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
 import { Congregation } from './congregation.entity';
-import { CongregationCreateProps, CongregationDeleteProps, CongregationQuery, CongregationUpdateProps } from './congregation.types';
+import {
+  CongregationCreateProps,
+  CongregationDeleteProps,
+  CongregationQuery,
+  CongregationUpdateProps,
+} from './congregation.types';
 
 @Injectable()
 export class CongregationService {

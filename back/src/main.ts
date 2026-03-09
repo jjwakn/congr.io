@@ -11,7 +11,11 @@ const swaggerLanguages = ['en', 'es'];
 const bootstrap = async () => {
   const app = await NestFactory.create(AppModule);
 
-  const config = new DocumentBuilder().setTitle('congr.io API').setDescription('API').setVersion(packageJson.version).build();
+  const config = new DocumentBuilder()
+    .setTitle('congr.io API')
+    .setDescription('API')
+    .setVersion(packageJson.version)
+    .build();
 
   const i18n = app.get(I18nService);
 

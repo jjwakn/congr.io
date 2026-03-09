@@ -81,7 +81,8 @@ export const DEFAULT_THEME_PALETTE_CONFIG: ThemePaletteConfig = {
   },
 };
 
-export const isHexColor = (value: unknown): value is string => typeof value === 'string' && HEX_COLOR_REGEX.test(value.trim());
+export const isHexColor = (value: unknown): value is string =>
+  typeof value === 'string' && HEX_COLOR_REGEX.test(value.trim());
 
 const normalizeModeConfig = (
   value: Partial<ThemePaletteModeConfig> | undefined,
@@ -93,13 +94,20 @@ const normalizeModeConfig = (
   backgroundPaper: isHexColor(value?.backgroundPaper) ? value.backgroundPaper : defaults.backgroundPaper,
 });
 
-export const normalizeThemePaletteConfig = (value: Partial<ThemePaletteConfig> | null | undefined): ThemePaletteConfig => ({
+export const normalizeThemePaletteConfig = (
+  value: Partial<ThemePaletteConfig> | null | undefined,
+): ThemePaletteConfig => ({
   light: normalizeModeConfig(value?.light, DEFAULT_THEME_PALETTE_CONFIG.light),
   dark: normalizeModeConfig(value?.dark, DEFAULT_THEME_PALETTE_CONFIG.dark),
 });
 
-const getModePalette = ({ mode, paletteConfig }: { mode: PaletteMode; paletteConfig: ThemePaletteConfig }): ThemePaletteModeConfig =>
-  mode === 'dark' ? paletteConfig.dark : paletteConfig.light;
+const getModePalette = ({
+  mode,
+  paletteConfig,
+}: {
+  mode: PaletteMode;
+  paletteConfig: ThemePaletteConfig;
+}): ThemePaletteModeConfig => (mode === 'dark' ? paletteConfig.dark : paletteConfig.light);
 
 export const getTheme = ({ mode, paletteConfig }: { mode: PaletteMode; paletteConfig: ThemePaletteConfig }) => {
   const modePalette = getModePalette({ mode, paletteConfig });

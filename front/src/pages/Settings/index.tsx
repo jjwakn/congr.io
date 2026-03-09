@@ -1,6 +1,18 @@
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
-import { Alert, Box, Button, FormControl, InputLabel, MenuItem, Paper, Select, SelectChangeEvent, Stack, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  SelectChangeEvent,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { changeLanguageWithResources } from '../../../i18n';
@@ -22,15 +34,18 @@ const SettingsPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const updateModeColor = useCallback((mode: keyof ThemePaletteConfig, key: keyof ThemePaletteConfig['light'], value: string) => {
-    setDraft((previous) => ({
-      ...previous,
-      [mode]: {
-        ...previous[mode],
-        [key]: value,
-      },
-    }));
-  }, []);
+  const updateModeColor = useCallback(
+    (mode: keyof ThemePaletteConfig, key: keyof ThemePaletteConfig['light'], value: string) => {
+      setDraft((previous) => ({
+        ...previous,
+        [mode]: {
+          ...previous[mode],
+          [key]: value,
+        },
+      }));
+    },
+    [],
+  );
 
   const handleReset = useCallback(() => {
     const normalized = normalizeThemePaletteConfig(paletteConfig);
@@ -65,7 +80,10 @@ const SettingsPage = () => {
         severity: 'success',
       });
     } catch (value) {
-      const message = value instanceof HttpRequestError || value instanceof Error ? value.message : t('pages.settings.error.saveFailed');
+      const message =
+        value instanceof HttpRequestError || value instanceof Error
+          ? value.message
+          : t('pages.settings.error.saveFailed');
       setError(message);
       showNotification(message, { severity: 'error' });
     } finally {
@@ -89,7 +107,10 @@ const SettingsPage = () => {
         setDraft(normalized);
       } catch (value) {
         if (!active) return;
-        const message = value instanceof HttpRequestError || value instanceof Error ? value.message : t('pages.settings.error.loadFailed');
+        const message =
+          value instanceof HttpRequestError || value instanceof Error
+            ? value.message
+            : t('pages.settings.error.loadFailed');
         setError(message);
       } finally {
         if (active) setIsLoading(false);

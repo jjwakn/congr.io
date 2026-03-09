@@ -19,7 +19,8 @@ const extractCookieValue = (cookieHeader: string | undefined, key: string): stri
   return null;
 };
 
-const cookieTokenExtractor = (request: { headers?: { cookie?: string } }) => extractCookieValue(request?.headers?.cookie, AUTH_COOKIE_NAME);
+const cookieTokenExtractor = (request: { headers?: { cookie?: string } }) =>
+  extractCookieValue(request?.headers?.cookie, AUTH_COOKIE_NAME);
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

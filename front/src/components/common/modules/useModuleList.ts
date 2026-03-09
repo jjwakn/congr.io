@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
-import { ListDirection, ListSortingStorage, ModuleSortingState, UseModuleListProps, UseModuleListState } from './useModuleList.types';
+import {
+  ListDirection,
+  ListSortingStorage,
+  ModuleSortingState,
+  UseModuleListProps,
+  UseModuleListState,
+} from './useModuleList.types';
 
 const LIST_SORTING_STORAGE_VERSION = 1;
 const LIST_SORTING_STORAGE_KEY = `congrio:modules:list-sorting:v${LIST_SORTING_STORAGE_VERSION}`;

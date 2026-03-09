@@ -1,8 +1,14 @@
-import { CaseInsensitiveWhereProps, CommonEntity, FindWithFiltersProps, ListParamsQuery } from 'src/common/common.types';
+import {
+  CaseInsensitiveWhereProps,
+  CommonEntity,
+  FindWithFiltersProps,
+  ListParamsQuery,
+} from 'src/common/common.types';
 import { ColumnType, FindOptionsOrder, FindOptionsWhere, ObjectLiteral, Raw } from 'typeorm';
 import { NUMERIC_COLUMN_TYPES } from './constants';
 
-export const caseInsensitiveWhere = ({ alias, search }: CaseInsensitiveWhereProps) => `LOWER(${alias}) LIKE '%${search.toLowerCase()}%'`;
+export const caseInsensitiveWhere = ({ alias, search }: CaseInsensitiveWhereProps) =>
+  `LOWER(${alias}) LIKE '%${search.toLowerCase()}%'`;
 
 export const findWithFilters = async <Entity extends ObjectLiteral, Query extends ListParamsQuery>({
   repository,
@@ -22,7 +28,9 @@ export const findWithFilters = async <Entity extends ObjectLiteral, Query extend
     if (search)
       searchFields.forEach((field) => {
         orConditions.push({
-          [field]: NUMERIC_COLUMN_TYPES.has(repository.metadata.findColumnWithPropertyName(field as string)?.type as ColumnType)
+          [field]: NUMERIC_COLUMN_TYPES.has(
+            repository.metadata.findColumnWithPropertyName(field as string)?.type as ColumnType,
+          )
             ? Raw((alias) => `${alias}::text LIKE '%${search}%'`)
             : Raw((alias) => caseInsensitiveWhere({ alias, search })),
         } as FindOptionsWhere<Entity>);

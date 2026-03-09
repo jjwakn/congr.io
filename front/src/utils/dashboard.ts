@@ -46,14 +46,21 @@ export const getModuleIcon = (moduleId: string): DashboardNavigationItem['icon']
   }
 };
 
-export const createSettingsNavigationItem = ({ label, language }: CreateSettingsNavigationItemProps): DashboardNavigationItem => ({
+export const createSettingsNavigationItem = ({
+  label,
+  language,
+}: CreateSettingsNavigationItemProps): DashboardNavigationItem => ({
   id: 'settings',
   label,
   icon: createElement(SettingsOutlinedIcon, { fontSize: 'small' }),
   path: getSettingsPath(language),
 });
 
-export const createModuleNavigationItem = ({ moduleId, label, language }: CreateModuleNavigationItemProps): DashboardNavigationItem => ({
+export const createModuleNavigationItem = ({
+  moduleId,
+  label,
+  language,
+}: CreateModuleNavigationItemProps): DashboardNavigationItem => ({
   id: moduleId,
   label,
   icon: getModuleIcon(moduleId),

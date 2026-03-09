@@ -7,14 +7,25 @@ import { useSetup } from '../../../hooks/useSetup';
 import { SetupData } from '../../../types/setup.types';
 import { FormContainer } from '../../common/FormContainer';
 
-export const FeaturesStep = ({ goNext, goBack, loading }: { goNext: () => void; goBack: () => void; loading?: boolean }) => {
+export const FeaturesStep = ({
+  goNext,
+  goBack,
+  loading,
+}: {
+  goNext: () => void;
+  goBack: () => void;
+  loading?: boolean;
+}) => {
   const [expanded, setExpanded] = useState<string | false>(false);
 
   const { t } = useTranslation();
   const { setupData, setSetupData, features } = useSetup();
   const form = useForm<SetupData['features']>({
     defaultValues: {
-      features: setupData.features.features.length > 0 ? setupData.features.features : features.filter((f) => f.required).map((f) => f.id),
+      features:
+        setupData.features.features.length > 0
+          ? setupData.features.features
+          : features.filter((f) => f.required).map((f) => f.id),
     },
   });
   const selectedFeatures = useWatch({

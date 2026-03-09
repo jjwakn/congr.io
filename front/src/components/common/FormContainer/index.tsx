@@ -41,7 +41,13 @@ export const FormContainer = <FormData extends FieldValues>({
               ) : null}
 
               {subtitle ? (
-                <Typography variant="body1" gutterBottom align="center" color="text.secondary" sx={{ mb: 3, whiteSpace: 'pre-line' }}>
+                <Typography
+                  variant="body1"
+                  gutterBottom
+                  align="center"
+                  color="text.secondary"
+                  sx={{ mb: 3, whiteSpace: 'pre-line' }}
+                >
                   {subtitle}
                 </Typography>
               ) : null}

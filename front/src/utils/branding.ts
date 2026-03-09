@@ -56,7 +56,14 @@ const canvasToPngBytes = async (canvas: HTMLCanvasElement): Promise<Uint8Array> 
   return new Uint8Array(buffer);
 };
 
-const drawRoundedRect = (context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) => {
+const drawRoundedRect = (
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) => {
   const boundedRadius = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
   context.beginPath();
   context.moveTo(x + boundedRadius, y);
@@ -144,7 +151,13 @@ const normalizeImageToPng = async (image: HTMLImageElement): Promise<Uint8Array>
   return canvasToPngBytes(canvas);
 };
 
-const renderIcon = async ({ image, size, backgroundMode, roundedCorners, cornerRadiusPercent }: RenderIconInput): Promise<Uint8Array> => {
+const renderIcon = async ({
+  image,
+  size,
+  backgroundMode,
+  roundedCorners,
+  cornerRadiusPercent,
+}: RenderIconInput): Promise<Uint8Array> => {
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
@@ -217,7 +230,10 @@ export const generateBrandingAssets = async ({
   appName,
   shortName,
 }: BrandingGenerationInput): Promise<GeneratedBrandingAssets> => {
-  const [smallLogoImage, bigLogoImage] = await Promise.all([loadImageFromFile(smallLogoFile), loadImageFromFile(bigLogoFile)]);
+  const [smallLogoImage, bigLogoImage] = await Promise.all([
+    loadImageFromFile(smallLogoFile),
+    loadImageFromFile(bigLogoFile),
+  ]);
 
   const [smallLogoPng, bigLogoPng, icon512, icon192, appleTouchIcon] = await Promise.all([
     normalizeImageToPng(smallLogoImage),

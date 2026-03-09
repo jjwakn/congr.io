@@ -42,7 +42,9 @@ export const ModuleListTable = <RowType,>({
                   {column.sortKey ? (
                     <TableSortLabel
                       active={sort === column.sortKey}
-                      direction={sort === column.sortKey ? (direction.toLowerCase() === 'desc' ? 'desc' : 'asc') : 'asc'}
+                      direction={
+                        sort === column.sortKey ? (direction.toLowerCase() === 'desc' ? 'desc' : 'asc') : 'asc'
+                      }
                       onClick={() => onSort(column.sortKey as string)}
                     >
                       {column.label}

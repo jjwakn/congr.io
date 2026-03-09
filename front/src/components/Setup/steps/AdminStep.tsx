@@ -6,7 +6,15 @@ import { useSetup } from '../../../hooks/useSetup';
 import { SetupData } from '../../../types/setup.types';
 import { FormContainer } from '../../common/FormContainer';
 
-export const AdminStep = ({ goNext, goBack, loading }: { goNext: () => void; goBack: () => void; loading?: boolean }) => {
+export const AdminStep = ({
+  goNext,
+  goBack,
+  loading,
+}: {
+  goNext: () => void;
+  goBack: () => void;
+  loading?: boolean;
+}) => {
   const { t } = useTranslation();
   const { setupData, setSetupData } = useSetup();
   const form = useForm<SetupData['admin']>({
