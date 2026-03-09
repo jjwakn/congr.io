@@ -144,7 +144,18 @@ const BrandingPage = () => {
     return () => {
       isCancelled = true;
     };
-  }, [appName, backgroundMode, cornerRadiusPercent, smallLogo, bigLogo, replacePreviewItems, roundedCorners, shortName, t, createPreviewItems]);
+  }, [
+    appName,
+    backgroundMode,
+    cornerRadiusPercent,
+    smallLogo,
+    bigLogo,
+    replacePreviewItems,
+    roundedCorners,
+    shortName,
+    t,
+    createPreviewItems,
+  ]);
 
   const handleGenerate = useCallback(() => {
     if (!smallLogo || !bigLogo) {
@@ -194,7 +205,18 @@ const BrandingPage = () => {
     };
 
     void generateAndDownload();
-  }, [appName, backgroundMode, cornerRadiusPercent, smallLogo, bigLogo, roundedCorners, shortName, t, createPreviewItems, replacePreviewItems]);
+  }, [
+    appName,
+    backgroundMode,
+    cornerRadiusPercent,
+    smallLogo,
+    bigLogo,
+    roundedCorners,
+    shortName,
+    t,
+    createPreviewItems,
+    replacePreviewItems,
+  ]);
 
   return (
     <Box

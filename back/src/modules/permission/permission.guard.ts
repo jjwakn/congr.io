@@ -64,7 +64,7 @@ export class PermissionGuard implements CanActivate {
 
       return !!canDoIt;
     } catch (err) {
-      console.error(err);
+      console.error(this.i18n.t('errors.auth.decodingError'), err);
       throw new UnauthorizedException(this.i18n.t('errors.auth.decodingError'));
     }
   }

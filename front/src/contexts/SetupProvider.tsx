@@ -56,7 +56,7 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
       const error = err instanceof Error ? err.message : String(err);
       showNotification(error, { severity: 'error' });
 
-      console.error('Features Error', error);
+      console.error(t('setup.log.featuresError'), error);
     } finally {
       setLoadingFeatures(false);
     }

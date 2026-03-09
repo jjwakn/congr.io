@@ -304,7 +304,7 @@ export class UserService {
       const user = await this.get({ id: payload.user.id });
       return !!user;
     } catch (e) {
-      console.error(e);
+      console.error(this.i18n.t('errors.token.validationError'), e);
       return false;
     }
   }

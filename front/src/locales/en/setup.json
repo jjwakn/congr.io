@@ -5,6 +5,10 @@
     "featuresNotFound": "Fatal error, features not found",
     "saveFailed": "Setup could not be completed"
   },
+  "log": {
+    "featuresError": "Features load error",
+    "setupError": "Setup error"
+  },
   "success": {
     "saved": "Setup completed successfully"
   },

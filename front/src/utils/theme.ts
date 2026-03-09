@@ -83,7 +83,10 @@ export const DEFAULT_THEME_PALETTE_CONFIG: ThemePaletteConfig = {
 
 export const isHexColor = (value: unknown): value is string => typeof value === 'string' && HEX_COLOR_REGEX.test(value.trim());
 
-const normalizeModeConfig = (value: Partial<ThemePaletteModeConfig> | undefined, defaults: ThemePaletteModeConfig): ThemePaletteModeConfig => ({
+const normalizeModeConfig = (
+  value: Partial<ThemePaletteModeConfig> | undefined,
+  defaults: ThemePaletteModeConfig,
+): ThemePaletteModeConfig => ({
   primary: isHexColor(value?.primary) ? value.primary : defaults.primary,
   secondary: isHexColor(value?.secondary) ? value.secondary : defaults.secondary,
   backgroundDefault: isHexColor(value?.backgroundDefault) ? value.backgroundDefault : defaults.backgroundDefault,

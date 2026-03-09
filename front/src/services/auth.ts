@@ -70,7 +70,7 @@ export const authService = {
       const userData = localStorage.getItem(USER_DATA_KEY);
       return userData ? JSON.parse(userData) : null;
     } catch (error) {
-      console.error('Error parsing user data:', error);
+      console.error(i18n.t('auth.log.userDataParseError'), error);
       return null;
     }
   },

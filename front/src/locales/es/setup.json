@@ -5,6 +5,10 @@
     "featuresNotFound": "Error grave, características no encontradas",
     "saveFailed": "No se pudo completar la configuración"
   },
+  "log": {
+    "featuresError": "Error al cargar características",
+    "setupError": "Error de configuración"
+  },
   "success": {
     "saved": "Configuración completada exitosamente"
   },

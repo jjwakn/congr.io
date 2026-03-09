@@ -41,7 +41,10 @@ export class AuthController {
   async me(@Req() req: Request & { user?: { userId?: string } }) {
     const userId = req.user?.userId;
     const message = I18nContext.current()?.t('errors.auth.notIncluded');
-    if (!userId) throw new UnauthorizedException(typeof message === 'string' ? message : 'Unauthorized');
+    const fallbackMessage = I18nContext.current()?.t('errors.auth.unauthorized');
+    const resolvedMessage =
+      typeof message === 'string' ? message : typeof fallbackMessage === 'string' ? fallbackMessage : 'errors.auth.unauthorized';
+    if (!userId) throw new UnauthorizedException(resolvedMessage);
 
     return {
       user: await this.service.getCurrentUser(userId),

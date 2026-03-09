@@ -91,7 +91,10 @@ export const ConfirmStep = ({ data, onFinish, disabled, onBack }: ConfirmStepPro
         <ConfirmSection title={t('setup.confirm.sections.admin')}>
           <FieldRow label={t('form.field.username')} value={<Typography variant="body2">{data.admin.username || '-'}</Typography>} />
           <FieldRow label={t('form.field.name')} value={<Typography variant="body2">{data.admin.name || '-'}</Typography>} />
-          <FieldRow label={t('setup.confirm.fullAccessRole')} value={<Typography variant="body2">{data.admin.roleName || '-'}</Typography>} />
+          <FieldRow
+            label={t('setup.confirm.fullAccessRole')}
+            value={<Typography variant="body2">{data.admin.roleName || '-'}</Typography>}
+          />
         </ConfirmSection>
       </Box>
     </FormContainer>

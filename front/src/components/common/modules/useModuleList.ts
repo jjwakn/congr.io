@@ -56,7 +56,12 @@ const getInitialSortingState = ({
   };
 };
 
-export const useModuleList = ({ moduleKey, defaultSort, defaultDirection = 'ASC', defaultPageSize = 10 }: UseModuleListProps): UseModuleListState => {
+export const useModuleList = ({
+  moduleKey,
+  defaultSort,
+  defaultDirection = 'ASC',
+  defaultPageSize = 10,
+}: UseModuleListProps): UseModuleListState => {
   const [direction, setDirection] = useState<ListDirection>(
     () =>
       getInitialSortingState({

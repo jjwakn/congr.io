@@ -27,11 +27,12 @@ export const useRolesList = (): UseRolesListResult => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { direction, sort, page, pageSize, search, setSearch, setPage, handleSort, handleChangePage, handleChangeRowsPerPage } = useModuleList({
-    moduleKey: 'roles-list',
-    defaultSort: 'name',
-    defaultPageSize: 10,
-  });
+  const { direction, sort, page, pageSize, search, setSearch, setPage, handleSort, handleChangePage, handleChangeRowsPerPage } =
+    useModuleList({
+      moduleKey: 'roles-list',
+      defaultSort: 'name',
+      defaultPageSize: 10,
+    });
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -43,7 +44,8 @@ export const useRolesList = (): UseRolesListResult => {
       });
       setSourceRoles(response.result ?? []);
     } catch (value) {
-      const message = value instanceof HttpRequestError || value instanceof Error ? value.message : t('pages.modules.roles.error.loadFailed');
+      const message =
+        value instanceof HttpRequestError || value instanceof Error ? value.message : t('pages.modules.roles.error.loadFailed');
       setError(message);
     } finally {
       setLoading(false);

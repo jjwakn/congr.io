@@ -98,7 +98,13 @@ export class ConfigurationsService {
     return (config.config_value as unknown as ThemePaletteConfig) ?? DEFAULT_THEME_PALETTE_CONFIG;
   }
 
-  async upsertThemePaletteConfig({ request, themePalette }: { request: RequestType; themePalette: ThemePaletteConfig }): Promise<ThemePaletteConfig> {
+  async upsertThemePaletteConfig({
+    request,
+    themePalette,
+  }: {
+    request: RequestType;
+    themePalette: ThemePaletteConfig;
+  }): Promise<ThemePaletteConfig> {
     const userId = this.getUserIdOrThrow(request);
     const { congregation, user } = await this.getFirstCongregationForUser(userId);
 

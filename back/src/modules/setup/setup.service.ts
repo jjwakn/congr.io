@@ -171,7 +171,8 @@ export class SetupService {
             created_by: userCreated,
           })),
         );
-        if (!locationsCreated.length) throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingLocationRepository', lang));
+        if (!locationsCreated.length)
+          throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingLocationRepository', lang));
         await locationRepository.save(locationsCreated);
 
         const congregationCreated = congregationRepository.create({
@@ -181,7 +182,8 @@ export class SetupService {
           locations: locationsCreated,
           features: congregation.features.map((feature) => feature.toString().trim()).filter(Boolean) as Feature[],
         });
-        if (!congregationCreated) throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingCongregationRepository', lang));
+        if (!congregationCreated)
+          throw new InternalServerErrorException(this.translate('errors.setup.errorCreatingCongregationRepository', lang));
         await congregationRepository.save(congregationCreated);
 
         const themePaletteConfig = configurationsRepository.create({

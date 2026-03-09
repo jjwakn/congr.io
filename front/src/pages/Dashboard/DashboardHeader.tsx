@@ -4,7 +4,15 @@ import { AppBar, IconButton, Toolbar, Tooltip, Typography } from '@mui/material'
 import { LogoSmall } from '../../components/Logos';
 import { DashboardHeaderProps } from './DashboardHeader.types';
 
-export const DashboardHeader = ({ congregationName, username, homeLabel, logoutLabel, onLogout, onMenuClick, onLogoClick }: DashboardHeaderProps) => (
+export const DashboardHeader = ({
+  congregationName,
+  username,
+  homeLabel,
+  logoutLabel,
+  onLogout,
+  onMenuClick,
+  onLogoClick,
+}: DashboardHeaderProps) => (
   <AppBar position="static">
     <Toolbar
       sx={{

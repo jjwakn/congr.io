@@ -74,9 +74,10 @@ const Setup = () => {
       showNotification(t('setup.success.saved'), { severity: 'success' });
     } catch (err) {
       setupSubmittedRef.current = false;
-      const error = err instanceof HttpRequestError ? err.message || t('setup.error.saveFailed') : err instanceof Error ? err.message : String(err);
+      const error =
+        err instanceof HttpRequestError ? err.message || t('setup.error.saveFailed') : err instanceof Error ? err.message : String(err);
       showNotification(error, { severity: 'error' });
-      console.error('Setup Error', error);
+      console.error(t('setup.log.setupError'), error);
     } finally {
       setLoadingSetup(false);
     }

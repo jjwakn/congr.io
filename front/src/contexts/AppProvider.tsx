@@ -98,7 +98,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const error = err instanceof Error ? err.message : String(err);
         showNotification(error, { severity: 'error' });
 
-        console.error('AppProvider Error', error);
+        console.error(t('app.log.appProviderError'), error);
 
         const storedIsSetup = getIsSetupFromStorage();
         if (!isSetup && !storedIsSetup) {

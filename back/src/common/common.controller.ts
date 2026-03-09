@@ -3,7 +3,20 @@ import type { CommonEntity, DefaultGetData, ListParamsQuery, RequestType } from 
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { CommonPermissionDecorator, PermissionGuard } from 'src/modules/permission/permission.guard';
 import { Module, ModuleAction } from 'src/utils/constants';
-import { Body, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, Req, UnauthorizedException, UseGuards, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 
 export abstract class CommonController<Entity, Query extends ListParamsQuery, GetData extends DefaultGetData = DefaultGetData> {
@@ -24,7 +37,10 @@ export abstract class CommonController<Entity, Query extends ListParamsQuery, Ge
 
   private buildUnauthorizedException() {
     const message = I18nContext.current()?.t('errors.auth.notIncluded');
-    return new UnauthorizedException(typeof message === 'string' ? message : 'Unauthorized');
+    const fallbackMessage = I18nContext.current()?.t('errors.auth.unauthorized');
+    const resolvedMessage =
+      typeof message === 'string' ? message : typeof fallbackMessage === 'string' ? fallbackMessage : 'errors.auth.unauthorized';
+    return new UnauthorizedException(resolvedMessage);
   }
 
   @UseGuards(AuthGuard, PermissionGuard)

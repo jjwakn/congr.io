@@ -1,5 +1,13 @@
 {
   "error": {
     "missingRootElement": "Missing root element"
+  },
+  "log": {
+    "appProviderError": "AppProvider error"
+  },
+  "warn": {
+    "storageRead": "Error reading localStorage key {{key}}",
+    "storageWrite": "Error writing localStorage key {{key}}",
+    "storageRemove": "Error removing localStorage key {{key}}"
   }
 }

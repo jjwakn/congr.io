@@ -1,3 +1,4 @@
+import i18n from '../../i18n';
 import { Congregation } from '../types/congregation.types';
 import { ThemePaletteConfig } from '../types/theme.types';
 import { CONGREGATION_KEY, IS_SETUP_KEY, THEME_PALETTE_CONFIG_KEY, THEME_PALETTE_UPDATED_EVENT } from './constants';
@@ -8,7 +9,7 @@ export const getLocalStorageItem = <T>(key: string, defaultValue: T): T => {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
-    console.warn(`${key}`, error);
+    console.warn(i18n.t('app.warn.storageRead', { key }), error);
     return defaultValue;
   }
 };
@@ -17,7 +18,7 @@ export const setLocalStorageItem = <T>(key: string, value: T): void => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.warn(`${key}`, error);
+    console.warn(i18n.t('app.warn.storageWrite', { key }), error);
   }
 };
 
@@ -41,7 +42,7 @@ export const clearCongregationFromStorage = (): void => {
   try {
     localStorage.removeItem(CONGREGATION_KEY);
   } catch (error) {
-    console.warn(`${CONGREGATION_KEY}`, error);
+    console.warn(i18n.t('app.warn.storageRemove', { key: CONGREGATION_KEY }), error);
   }
 };
 
