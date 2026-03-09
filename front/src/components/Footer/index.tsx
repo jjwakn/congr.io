@@ -1,9 +1,9 @@
+import { ThemeToggleButton } from '@components/ThemeToggleButton';
 import { Box, FormControl, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { smallOptionStyle } from '@utils/theme';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { changeLanguageWithResources } from '../../../i18n';
-import { smallOptionStyle } from '../../utils/theme';
-import { ThemeToggleButton } from '../ThemeToggleButton';
 
 const Footer = () => {
   const { i18n, t } = useTranslation();

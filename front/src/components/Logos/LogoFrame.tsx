@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
+import { LogoBackgroundMode, getLogoBackgroundMode } from '@utils/brandingManifest';
 import { useEffect, useMemo, useState } from 'react';
-import { LogoBackgroundMode, getLogoBackgroundMode } from '../../utils/brandingManifest';
 import { LogoFrameProps } from './types';
 
 const resolveBackground = (mode: LogoBackgroundMode): string => {

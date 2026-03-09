@@ -1,5 +1,5 @@
 import { CSSProperties, PaletteMode, ThemeOptions, createTheme } from '@mui/material/styles';
-import { ThemePaletteConfig, ThemePaletteModeConfig } from '../types/theme.types';
+import { ThemePaletteConfig, ThemePaletteModeConfig } from '@/types/theme.types';
 
 export const darkGray = '#666';
 export const lightGray = '#999';

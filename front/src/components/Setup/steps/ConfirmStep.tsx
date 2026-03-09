@@ -1,9 +1,9 @@
+import { FormContainer } from '@components/common/FormContainer';
+import { useSetup } from '@hooks/useSetup';
 import { Box, Chip, Divider, Typography } from '@mui/material';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useSetup } from '../../../hooks/useSetup';
-import { FormContainer } from '../../common/FormContainer';
 import ConfirmSection from './ConfirmSection';
 import { ConfirmStepFormData, ConfirmStepProps } from './ConfirmStep.types';
 import FieldRow from './FieldRow';
@@ -37,6 +37,7 @@ export const ConfirmStep = ({ data, onFinish, disabled, onBack }: ConfirmStepPro
       disabled={disabled}
       onCancel={onBack}
       cancelText={t('form.field.back')}
+      stackActionsOnSmallScreen
     >
       <Typography variant="h6" gutterBottom>
         {t('setup.confirm.review')}
@@ -63,9 +64,32 @@ export const ConfirmStep = ({ data, onFinish, disabled, onBack }: ConfirmStepPro
             label={t('setup.confirm.sections.features')}
             value={
               data.features.features.length > 0 ? (
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                    flexWrap: 'wrap',
+                    '@media (max-width:420px)': {
+                      flexDirection: 'column',
+                      flexWrap: 'nowrap',
+                      alignItems: 'stretch',
+                    },
+                  }}
+                >
                   {data.features.features.map((feature) => (
-                    <Chip key={feature} label={featureTitleById.get(feature) ?? feature} />
+                    <Chip
+                      key={feature}
+                      label={featureTitleById.get(feature) ?? feature}
+                      sx={{
+                        maxWidth: '100%',
+                        '@media (max-width:420px)': {
+                          width: '100%',
+                          '& .MuiChip-label': {
+                            textAlign: 'left',
+                          },
+                        },
+                      }}
+                    />
                   ))}
                 </Box>
               ) : (

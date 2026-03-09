@@ -6,7 +6,11 @@ import { BadRequestException, ConflictException, Injectable, InternalServerError
 import { InjectRepository } from '@nestjs/typeorm';
 import { Configuration } from '../configurations/configurations.entity';
 import { ConfigurationsService } from '../configurations/configurations.service';
-import { DEFAULT_THEME_PALETTE_CONFIG, THEME_PALETTE_CONFIG_KEY } from '../configurations/configurations.types';
+import {
+  DEFAULT_THEME_PALETTE_CONFIG,
+  THEME_PALETTE_CONFIG_KEY,
+  ThemePaletteConfig,
+} from '../configurations/configurations.types';
 import { Congregation } from '../congregation/congregation.entity';
 import { Location } from '../location/location.entity';
 import { Role } from '../role/role.entity';
@@ -41,8 +45,12 @@ export class SetupService {
     return this.i18n.t(key, { lang: lang ?? I18nContext.current()?.lang });
   }
 
-  private async mapCongregation(congregation: Congregation): Promise<SetupCongregationData> {
-    const themePalette = await this.configurationsService.getThemePaletteConfigByCongregationId(congregation.id);
+  private async mapCongregation(
+    congregation: Congregation,
+    themePalette?: ThemePaletteConfig,
+  ): Promise<SetupCongregationData> {
+    const resolvedThemePalette =
+      themePalette ?? (await this.configurationsService.getThemePaletteConfigByCongregationId(congregation.id));
 
     return {
       id: congregation.id,
@@ -56,7 +64,7 @@ export class SetupService {
         name: location.name,
         address: location.address,
       })),
-      theme_palette: themePalette,
+      theme_palette: resolvedThemePalette,
     };
   }
 
@@ -222,7 +230,7 @@ export class SetupService {
 
         return {
           isSetup: true,
-          congregation: await this.mapCongregation(congregationWithRelations),
+          congregation: await this.mapCongregation(congregationWithRelations, DEFAULT_THEME_PALETTE_CONFIG),
         };
       });
     } finally {

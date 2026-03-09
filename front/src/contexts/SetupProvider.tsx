@@ -1,10 +1,10 @@
+import { useNotificationContext } from '@hooks/useNotifications';
+import { FeaturesService } from '@services/features';
+import { httpRequest } from '@utils/http';
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNotificationContext } from '../hooks/useNotifications';
-import { FeaturesService } from '../services/features';
-import { Feature } from '../types/feature.types';
-import { SetupData } from '../types/setup.types';
-import { httpRequest } from '../utils/http';
+import { Feature } from '@/types/feature.types';
+import { SetupData } from '@/types/setup.types';
 import { SetupContext } from './SetupContext';
 
 const initialSetupData: SetupData = {

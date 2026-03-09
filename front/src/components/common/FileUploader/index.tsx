@@ -1,5 +1,7 @@
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Box, IconButton, Menu, MenuItem } from '@mui/material';
+import { acceptedExt, checkType, getFileSizeMB } from '@utils/file';
+import { darkGray, lightGray } from '@utils/theme';
 import {
   CSSProperties,
   ChangeEventHandler,
@@ -11,8 +13,6 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { acceptedExt, checkType, getFileSizeMB } from '../../../utils/file';
-import { darkGray, lightGray } from '../../../utils/theme';
 import DrawTypes from './DrawTypes';
 import ImageAdd from './ImageAdd';
 import { UploaderWrapper } from './UploadWrapper';

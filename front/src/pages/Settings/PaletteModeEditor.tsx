@@ -1,5 +1,5 @@
 import { Box, TextField, Typography } from '@mui/material';
-import { ThemePaletteModeConfig } from '../../types/theme.types';
+import { ThemePaletteModeConfig } from '@/types/theme.types';
 import { PaletteModeEditorProps } from './PaletteModeEditor.types';
 
 export const PaletteModeEditor = ({ title, values, labels, onChange }: PaletteModeEditorProps) => {

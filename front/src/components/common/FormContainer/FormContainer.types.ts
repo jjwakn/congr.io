@@ -13,4 +13,5 @@ export interface FormContainerProps<FormData extends FieldValues> {
   submitText: string;
   loadingTooltip?: string;
   cancelText?: string;
+  stackActionsOnSmallScreen?: boolean;
 }

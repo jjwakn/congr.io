@@ -1,9 +1,9 @@
+import { useModuleList } from '@components/common/modules/useModuleList';
+import { RolesService } from '@services/roles';
+import { HttpRequestError, httpRequest } from '@utils/http';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useModuleList } from '../../../components/common/modules/useModuleList';
-import { RolesService } from '../../../services/roles';
-import type { Role } from '../../../types/role.types';
-import { HttpRequestError, httpRequest } from '../../../utils/http';
+import type { Role } from '@/types/role.types';
 import type { RoleSort, RolesListResponse, SortRolesProps, UseRolesListResult } from './useRolesList.types';
 
 const sortRoles = ({ data, sort, direction }: SortRolesProps) => {

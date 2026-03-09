@@ -1,6 +1,6 @@
+import { Congregation } from '@/types/congregation.types';
+import { ThemePaletteConfig } from '@/types/theme.types';
 import i18n from '../../i18n';
-import { Congregation } from '../types/congregation.types';
-import { ThemePaletteConfig } from '../types/theme.types';
 import { CONGREGATION_KEY, IS_SETUP_KEY, THEME_PALETTE_CONFIG_KEY, THEME_PALETTE_UPDATED_EVENT } from './constants';
 import { DEFAULT_THEME_PALETTE_CONFIG, normalizeThemePaletteConfig } from './theme';
 

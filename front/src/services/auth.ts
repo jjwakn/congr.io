@@ -1,7 +1,7 @@
+import { LoginCredentials } from '@contexts/AuthContext.types';
+import { HttpRequestError, ModuleType, httpRequest } from '@utils/http';
+import { User } from '@/types/user.types';
 import i18n from '../../i18n';
-import { LoginCredentials } from '../contexts/AuthContext.types';
-import { User } from '../types/user.types';
-import { HttpRequestError, ModuleType, httpRequest } from '../utils/http';
 import { LoginResponse } from './auth.types';
 
 const USER_DATA_KEY = 'user_data';

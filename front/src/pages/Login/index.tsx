@@ -3,7 +3,7 @@ import { LoginCredentials } from '@contexts/AuthContext.types';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
 import { Box, Button, Card, CardContent, CircularProgress, TextField } from '@mui/material';
-import { type KeyboardEvent, useRef } from 'react';
+import { type KeyboardEvent, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
@@ -25,28 +25,31 @@ const Login = () => {
     },
   });
 
-  const onSubmit = async (values: LoginCredentials) => {
-    try {
-      await login(values);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t('auth.loginFailed');
-      showNotification(message, { severity: 'error' });
-    }
-  };
+  const onSubmit = useCallback(
+    async (values: LoginCredentials) => {
+      try {
+        await login(values);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : t('auth.loginFailed');
+        showNotification(message, { severity: 'error' });
+      }
+    },
+    [login, showNotification, t],
+  );
 
-  const handleUsernameKeyDown = (event: KeyboardEvent) => {
+  const handleUsernameKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Enter') {
       event.preventDefault();
       passwordInputRef.current?.focus();
     }
-  };
+  }, []);
 
-  const handlePasswordKeyDown = (event: KeyboardEvent) => {
+  const handlePasswordKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Enter') {
       event.preventDefault();
       formRef.current?.requestSubmit();
     }
-  };
+  }, []);
 
   return (
     <Box

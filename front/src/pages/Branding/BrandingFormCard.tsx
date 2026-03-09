@@ -1,3 +1,4 @@
+import FileUploader from '@components/common/FileUploader';
 import {
   Alert,
   Box,
@@ -17,7 +18,6 @@ import {
 } from '@mui/material';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import FileUploader from '../../components/common/FileUploader';
 import { BrandingFormCardProps } from './BrandingFormCard.types';
 import { BackgroundMode } from './types';
 

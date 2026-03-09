@@ -1,11 +1,11 @@
+import { ThemeContext } from '@contexts/ThemeContext';
 import { CssBaseline, ThemeProvider as MuiThemeProvider } from '@mui/material';
 import { PaletteMode } from '@mui/material';
+import { THEME_KEY, THEME_PALETTE_UPDATED_EVENT } from '@utils/constants';
+import { getThemePaletteConfigFromStorage, setThemePaletteConfigToStorage } from '@utils/storage';
+import { getTheme, normalizeThemePaletteConfig } from '@utils/theme';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { ThemeContext } from '../contexts/ThemeContext';
-import { ThemePaletteConfig } from '../types/theme.types';
-import { THEME_KEY, THEME_PALETTE_UPDATED_EVENT } from '../utils/constants';
-import { getThemePaletteConfigFromStorage, setThemePaletteConfigToStorage } from '../utils/storage';
-import { getTheme, normalizeThemePaletteConfig } from '../utils/theme';
+import { ThemePaletteConfig } from '@/types/theme.types';
 
 const getInitialMode = (): PaletteMode => {
   const savedMode = localStorage.getItem(THEME_KEY) as PaletteMode | null;

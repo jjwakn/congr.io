@@ -9,7 +9,8 @@ These rules apply to all agent chats in this repository.
 ## User-Facing Text and i18n
 
 - Do not hardcode user-facing text in code.
-- Any text shown to users must use translation keys.
+- Any text shown to users must use translation keys, including user-facing errors and warnings.
+- When possible, log/error/warning messages should also use translation keys.
 - Keep wording style consistent with existing product copy.
 - Store translations in JSON locale files.
 - Frontend keys must be added in both:

@@ -1,3 +1,5 @@
+import { FormContainer } from '@components/common/FormContainer';
+import { useSetup } from '@hooks/useSetup';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -6,9 +8,7 @@ import { Box, Button, IconButton, List, ListItem, TextField, Typography } from '
 import { useCallback } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useSetup } from '../../../hooks/useSetup';
-import { SetupData } from '../../../types/setup.types';
-import { FormContainer } from '../../common/FormContainer';
+import { SetupData } from '@/types/setup.types';
 
 export const LocationsStep = ({
   goNext,

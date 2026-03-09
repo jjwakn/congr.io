@@ -1,5 +1,5 @@
+import type { BackgroundMode, BrandingGenerationInput, GeneratedBrandingAssets } from '@pages/Branding/types';
 import i18n from '../../i18n';
-import type { BackgroundMode, BrandingGenerationInput, GeneratedBrandingAssets } from '../pages/Branding/types';
 
 const PREFERRED_ICON_PADDING = 0.7;
 const CHIP_SCALE = 0.88;

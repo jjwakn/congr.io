@@ -1,6 +1,6 @@
+import { AuthContext } from '@contexts/AuthContext';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AuthContext } from '../contexts/AuthContext';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

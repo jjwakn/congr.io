@@ -6,4 +6,5 @@ export interface DashboardModuleView {
 
 export interface ModulesRendererProps {
   module: DashboardModuleView;
+  showSummary?: boolean;
 }

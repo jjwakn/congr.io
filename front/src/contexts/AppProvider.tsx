@@ -1,10 +1,6 @@
-import { ReactNode, useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNotificationContext } from '../hooks/useNotifications';
-import { SetupService } from '../services/setup';
-import { Congregation } from '../types/congregation.types';
-import { IsSetupResponse } from '../types/setup.types';
-import { httpRequest } from '../utils/http';
+import { useNotificationContext } from '@hooks/useNotifications';
+import { SetupService } from '@services/setup';
+import { httpRequest } from '@utils/http';
 import {
   clearCongregationFromStorage,
   getCongregationFromStorage,
@@ -12,8 +8,12 @@ import {
   setCongregationToStorage,
   setIsSetupToStorage,
   setThemePaletteConfigToStorage,
-} from '../utils/storage';
-import { DEFAULT_THEME_PALETTE_CONFIG } from '../utils/theme';
+} from '@utils/storage';
+import { DEFAULT_THEME_PALETTE_CONFIG } from '@utils/theme';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Congregation } from '@/types/congregation.types';
+import { IsSetupResponse } from '@/types/setup.types';
 import { AppContext } from './AppContext';
 
 let setupStatusRequest: Promise<IsSetupResponse> | null = null;

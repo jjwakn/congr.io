@@ -1,11 +1,11 @@
+import { CrudPermissionStatus } from '@components/common/modules/CrudPermissionStatus';
+import { ModuleListActions } from '@components/common/modules/ModuleListActions';
+import { ModuleListTable } from '@components/common/modules/ModuleListTable';
+import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
 import { Alert, Box, TextField, Typography } from '@mui/material';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CrudPermissionStatus } from '../../../components/common/modules/CrudPermissionStatus';
-import { ModuleListActions } from '../../../components/common/modules/ModuleListActions';
-import { ModuleListTable } from '../../../components/common/modules/ModuleListTable';
-import type { ModuleListColumn } from '../../../components/common/modules/ModuleListTable.types';
-import type { Role } from '../../../types/role.types';
+import type { Role } from '@/types/role.types';
 import type { CrudAction } from './RolesSection.types';
 import { useRolesList } from './useRolesList';
 

@@ -1,5 +1,5 @@
 import type { PaletteMode } from '@mui/material';
-import type { ThemePaletteConfig } from '../types/theme.types';
+import type { ThemePaletteConfig } from '@/types/theme.types';
 
 export interface ThemeContextType {
   mode: PaletteMode;

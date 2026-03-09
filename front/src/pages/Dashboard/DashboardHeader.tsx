@@ -1,7 +1,7 @@
+import { LogoSmall } from '@components/Logos';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import { AppBar, IconButton, Toolbar, Tooltip, Typography } from '@mui/material';
-import { LogoSmall } from '../../components/Logos';
 import { DashboardHeaderProps } from './DashboardHeader.types';
 
 export const DashboardHeader = ({
@@ -45,7 +45,7 @@ export const DashboardHeader = ({
         {congregationName || 'Congr.io'}
       </Typography>
 
-      <Typography variant="caption" sx={{ mr: 0.75, display: { xs: 'none', sm: 'inline' } }}>
+      <Typography variant="caption" sx={{ mr: 1, display: { xs: 'none', sm: 'inline' } }}>
         {username}
       </Typography>
 

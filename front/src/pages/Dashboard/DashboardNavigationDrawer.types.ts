@@ -1,4 +1,4 @@
-import type { DashboardNavigationItem } from '../../utils/dashboard';
+import type { DashboardNavigationItem } from '@utils/dashboard';
 
 export interface DashboardNavigationDrawerProps {
   items: DashboardNavigationItem[];

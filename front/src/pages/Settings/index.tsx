@@ -1,3 +1,5 @@
+import { useNotificationContext } from '@hooks/useNotifications';
+import { useTheme } from '@hooks/useTheme';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import {
@@ -13,19 +15,18 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { ConfigurationsService } from '@services/configurations';
+import { FRONTEND_VERSION } from '@utils/constants';
+import { HttpRequestError, httpRequest } from '@utils/http';
+import { normalizeThemePaletteConfig } from '@utils/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ThemePaletteConfig } from '@/types/theme.types';
 import { changeLanguageWithResources } from '../../../i18n';
-import { useNotificationContext } from '../../hooks/useNotifications';
-import { useTheme } from '../../hooks/useTheme';
-import { ConfigurationsService } from '../../services/configurations';
-import { ThemePaletteConfig } from '../../types/theme.types';
-import { FRONTEND_VERSION } from '../../utils/constants';
-import { HttpRequestError, httpRequest } from '../../utils/http';
-import { normalizeThemePaletteConfig } from '../../utils/theme';
 import { PaletteModeEditor } from './PaletteModeEditor';
+import { SettingsPageProps } from './settings.types';
 
-const SettingsPage = () => {
+const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
   const { i18n, t } = useTranslation();
   const { mode, toggleMode, paletteConfig, setPaletteConfig } = useTheme();
   const { showNotification } = useNotificationContext();
@@ -134,14 +135,16 @@ const SettingsPage = () => {
         gap: 2,
       }}
     >
-      <Box>
-        <Typography variant="h4" gutterBottom>
-          {t('pages.settings.title')}
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          {t('pages.settings.subtitle')}
-        </Typography>
-      </Box>
+      {showHeader ? (
+        <Box>
+          <Typography variant="h4" gutterBottom>
+            {t('pages.settings.title')}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {t('pages.settings.subtitle')}
+          </Typography>
+        </Box>
+      ) : null}
 
       {error ? <Alert severity="error">{error}</Alert> : null}
 

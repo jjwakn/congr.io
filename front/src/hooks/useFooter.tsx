@@ -1,6 +1,6 @@
+import { FooterContext } from '@contexts/FooterContext';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FooterContext } from '../contexts/FooterContext';
 
 export const useFooter = () => {
   const context = useContext(FooterContext);

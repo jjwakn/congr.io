@@ -1,6 +1,6 @@
+import { authService } from '@services/auth';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { authService } from '../services/auth';
-import { User } from '../types/user.types';
+import { User } from '@/types/user.types';
 import { AuthContext } from './AuthContext';
 import { LoginCredentials } from './AuthContext.types';
 

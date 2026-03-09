@@ -1,4 +1,4 @@
-import type { SetupData } from '../../../types/setup.types';
+import type { SetupData } from '@/types/setup.types';
 
 export interface ConfirmStepProps {
   data: SetupData;

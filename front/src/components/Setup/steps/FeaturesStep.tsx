@@ -1,11 +1,11 @@
+import { FormContainer } from '@components/common/FormContainer';
+import { useSetup } from '@hooks/useSetup';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Checkbox, Typography } from '@mui/material';
 import { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useSetup } from '../../../hooks/useSetup';
-import { SetupData } from '../../../types/setup.types';
-import { FormContainer } from '../../common/FormContainer';
+import { SetupData } from '@/types/setup.types';
 
 export const FeaturesStep = ({
   goNext,

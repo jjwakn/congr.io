@@ -15,6 +15,7 @@ export const FormContainer = <FormData extends FieldValues>({
   loadingTooltip,
   onCancel,
   cancelText,
+  stackActionsOnSmallScreen,
 }: FormContainerProps<FormData>) => {
   const { t } = useTranslation();
 
@@ -60,6 +61,11 @@ export const FormContainer = <FormData extends FieldValues>({
                   display: 'flex',
                   gap: '1rem',
                   alignItems: 'center',
+                  flexDirection: 'row',
+                  '@media (max-width:420px)': {
+                    flexDirection: stackActionsOnSmallScreen ? 'column' : 'row',
+                    alignItems: stackActionsOnSmallScreen ? 'stretch' : 'center',
+                  },
                 }}
               >
                 {onCancel ? (

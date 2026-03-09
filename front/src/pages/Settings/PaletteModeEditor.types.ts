@@ -1,4 +1,4 @@
-import type { ThemePaletteModeConfig } from '../../types/theme.types';
+import type { ThemePaletteModeConfig } from '@/types/theme.types';
 
 export interface PaletteModeEditorProps {
   title: string;

@@ -1,29 +1,25 @@
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import { useSetup } from '@hooks/useSetup';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box } from '@mui/material';
+import { DashboardContentRoutes } from '@pages/Dashboard/DashboardContentRoutes';
 import { DashboardHeader } from '@pages/Dashboard/DashboardHeader';
 import { DashboardNavigationDrawer } from '@pages/Dashboard/DashboardNavigationDrawer';
-import { Home } from '@pages/Dashboard/Home';
+import type { DashboardModuleView } from '@pages/Modules';
 import { createModuleNavigationItem, createSettingsNavigationItem } from '@utils/dashboard';
 import {
   getHomePath,
   getLocalizedPathname,
   getModuleIdFromPath,
   getModulePath,
+  getSettingsPath,
   isHomePath,
   isSettingsPath,
 } from '@utils/routes';
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PWABadge from '@/PWABadge';
-
-const ModulesRenderer = lazy(async () => {
-  const module = await import('@pages/Modules');
-  return { default: module.ModulesRenderer };
-});
-const SettingsPage = lazy(() => import('@pages/Settings'));
 
 const Dashboard = () => {
   const { i18n, t } = useTranslation();
@@ -43,7 +39,7 @@ const Dashboard = () => {
   }, [features]);
 
   const congregationType = congregation?.type ?? '';
-  const availableModules = useMemo(() => {
+  const availableModules = useMemo<DashboardModuleView[]>(() => {
     const moduleIds = congregation?.features ?? [];
 
     return moduleIds.map((moduleId) => {
@@ -55,16 +51,12 @@ const Dashboard = () => {
         id: moduleId,
         title,
         description,
-        path: getModulePath(moduleId, i18n.language),
       };
     });
-  }, [congregation?.features, congregationType, featureById, i18n.language]);
+  }, [congregation?.features, congregationType, featureById]);
+  const settingsPath = useMemo(() => getSettingsPath(i18n.language), [i18n.language]);
 
   const pathname = location.pathname;
-  const moduleIdFromPath = getModuleIdFromPath(pathname);
-  const isHomeSelected = isHomePath(pathname);
-  const isSettingsSelected = isSettingsPath(pathname);
-  const selectedModule = availableModules.find((module) => module.id === moduleIdFromPath) ?? null;
 
   const navigationItems = useMemo(
     () => [
@@ -129,7 +121,15 @@ const Dashboard = () => {
   }, [availableModules, i18n.language, navigate, pathname]);
 
   return (
-    <Box sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      sx={{
+        height: '100%',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       <DashboardHeader
         congregationName={congregation?.name || 'Congr.io'}
         username={user?.username}
@@ -152,29 +152,17 @@ const Dashboard = () => {
           onClose={() => setIsDrawerOpen(false)}
         />
 
-        <Box sx={{ flex: 1, p: { xs: 1.5, md: 2 }, overflowY: 'auto' }}>
-          {isSettingsSelected ? (
-            <Suspense fallback={<Typography variant="body1">{t('pages.dashboard.loading')}</Typography>}>
-              <SettingsPage />
-            </Suspense>
-          ) : isHomeSelected ? (
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              <Home title={t('pages.dashboard.welcomeTitle')} subtitle={t('pages.dashboard.successMessage')} />
-            </Paper>
-          ) : (
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              {!availableModules.length ? (
-                <Typography variant="body1">{t('pages.dashboard.noModules')}</Typography>
-              ) : selectedModule ? (
-                <Suspense fallback={<Typography variant="body1">{t('pages.dashboard.loading')}</Typography>}>
-                  <ModulesRenderer module={selectedModule} />
-                </Suspense>
-              ) : (
-                <Typography variant="body1">{t('pages.dashboard.moduleNotFound')}</Typography>
-              )}
-            </Paper>
-          )}
-        </Box>
+        <DashboardContentRoutes
+          availableModules={availableModules}
+          homeTitle={t('pages.dashboard.welcomeTitle')}
+          homeSubtitle={t('pages.dashboard.successMessage')}
+          settingsTitle={t('pages.settings.title')}
+          settingsSubtitle={t('pages.settings.subtitle')}
+          loadingLabel={t('pages.dashboard.loading')}
+          noModulesLabel={t('pages.dashboard.noModules')}
+          moduleNotFoundLabel={t('pages.dashboard.moduleNotFound')}
+          settingsPath={settingsPath}
+        />
       </Box>
 
       <PWABadge />

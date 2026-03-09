@@ -1,5 +1,5 @@
-import type { ListDirection } from '../../../components/common/modules/useModuleList.types';
-import type { Role } from '../../../types/role.types';
+import type { ListDirection } from '@components/common/modules/useModuleList.types';
+import type { Role } from '@/types/role.types';
 
 export interface RolesListResponse {
   result: Role[];

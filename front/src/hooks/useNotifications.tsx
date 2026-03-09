@@ -1,6 +1,6 @@
+import { NotificationContext } from '@contexts/NotificationContext';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NotificationContext } from '../contexts/NotificationContext';
 
 export const useNotificationContext = () => {
   const context = useContext(NotificationContext);

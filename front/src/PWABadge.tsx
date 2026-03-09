@@ -1,7 +1,7 @@
+import { httpRequest } from '@utils/http';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useTranslation } from 'react-i18next';
 import './PWABadge.css';
-import { httpRequest } from './utils/http';
 
 /**
  * This function will register a periodic sync check every hour, you can modify the interval as needed.
