@@ -11,6 +11,8 @@
   "missingCongregation": "Missing in request: congregation",
   "missingCongregationName": "Missing property in Congregation: name",
   "missingCongregationType": "Missing property in Congregation: type",
+  "missingCongregationTimezone": "Missing property in Congregation: timezone",
+  "invalidCongregationTimezone": "Invalid congregation timezone",
   "missingCongregationLocations": "Missing property in Congregation: locations",
   "missingCongregationLocationOrder": "Missing property in Congregation: location.order",
   "missingCongregationLocationName": "Missing property in Congregation: location.name",

@@ -57,6 +57,10 @@ export const ConfirmStep = ({ data, onFinish, disabled, onBack }: ConfirmStepPro
             label={t('form.field.type')}
             value={<Typography variant="body2">{data.congregation.type || '-'}</Typography>}
           />
+          <FieldRow
+            label={t('form.field.timezone')}
+            value={<Typography variant="body2">{data.congregation.timezone || '-'}</Typography>}
+          />
         </ConfirmSection>
 
         <ConfirmSection title={t('setup.confirm.sections.features')}>

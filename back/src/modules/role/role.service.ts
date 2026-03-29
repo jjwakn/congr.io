@@ -1,8 +1,8 @@
 import { I18nService } from 'nestjs-i18n';
 import { DefaultGetData } from 'src/common/common.types';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
-import { Repository } from 'typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { IsNull, Not, Repository } from 'typeorm';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
 import { Role } from './role.entity';
@@ -72,6 +72,30 @@ export class RoleService {
   }
 
   async remove({ id, userId }: RoleDeleteProps) {
+    const role = await this.repository.findOne({
+      where: {
+        id,
+        deleted_at: IsNull(),
+        deleted_by: IsNull(),
+      },
+    });
+
+    if (!role) throw new NotFoundException(this.i18n.t('errors.role.notFound'));
+
+    if (role.full_access && role.enabled) {
+      const remainingFullAccessRoles = await this.repository.count({
+        where: {
+          id: Not(id),
+          full_access: true,
+          enabled: true,
+          deleted_at: IsNull(),
+          deleted_by: IsNull(),
+        },
+      });
+
+      if (!remainingFullAccessRoles) throw new ConflictException(this.i18n.t('errors.role.cannotDeleteLastFullAccess'));
+    }
+
     const deleted_by = await this.userRepository.findOne({
       where: { id: userId },
       withDeleted: true,

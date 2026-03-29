@@ -6,7 +6,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
-import { AuthLoginResult, LoginProps } from './auth.types';
+import { AuthLoginResult, AuthSessionResult, LoginProps } from './auth.types';
 
 const MAX_FAILED_LOGIN_ATTEMPTS = 10;
 
@@ -170,5 +170,18 @@ export class AuthService {
     if (!user) throw new UnauthorizedException(this.getInvalidCredentialsMessage());
 
     return this.sanitizeUser(user);
+  }
+
+  async getCurrentSession(userId: string): Promise<AuthSessionResult> {
+    const user = await this.getCurrentUser(userId);
+    const { fullAccess, permissions } = mergePermissions(user.roles ?? []);
+
+    return {
+      user,
+      auth: {
+        fullAccess,
+        permissions,
+      },
+    };
   }
 }

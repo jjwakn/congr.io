@@ -5,6 +5,7 @@
   "field": {
     "name": "Nombre",
     "type": "Tipo",
+    "timezone": "Zona horaria",
     "address": "Dirección",
     "username": "Usuario",
     "password": "Contraseña",

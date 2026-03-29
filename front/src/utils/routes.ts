@@ -18,8 +18,10 @@ const SETTINGS_SEGMENT: LocalizedValue = {
 };
 
 const MODULE_SLUGS: Record<string, LocalizedValue> = {
+  roles: { en: 'roles', es: 'roles' },
   users: { en: 'users', es: 'usuarios' },
   members: { en: 'members', es: 'miembros' },
+  processes: { en: 'processes', es: 'procesos' },
   events_calendar: { en: 'events-calendar', es: 'eventos' },
   events_attendance: {
     en: 'events-attendance',

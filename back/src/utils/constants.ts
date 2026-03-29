@@ -15,11 +15,15 @@ export enum Module {
   role = 'role',
   congregation = 'congregation',
   configuration = 'configuration',
+  process = 'process',
+  event = 'event',
+  event_type = 'event_type',
 }
 
 export enum Feature {
   Users = 'users',
   Members = 'members',
+  Processes = 'processes',
   EventsCalendar = 'events_calendar',
   EventsAttendance = 'events_attendance',
   Ministries = 'ministries',
@@ -40,10 +44,16 @@ export const permission: PermissionType = {
   role: {
     permissions: CRUD,
   },
-  congregation: {
+  configuration: {
     permissions: CRUD,
   },
-  configuration: {
+  process: {
+    permissions: CRUD,
+  },
+  event: {
+    permissions: CRUD,
+  },
+  event_type: {
     permissions: CRUD,
   },
 };
@@ -90,6 +100,9 @@ export const FeatureTree: FeatureTreeType = {
   },
   [Feature.Members]: {
     prerequisites: [],
+  },
+  [Feature.Processes]: {
+    prerequisites: [Feature.Members, Feature.EventsCalendar],
   },
   [Feature.EventsCalendar]: {
     prerequisites: [],

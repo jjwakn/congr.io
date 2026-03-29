@@ -1,4 +1,5 @@
 {
   "notFound": "Role not found",
-  "notFoundWithId": "Role not found. ID: {{id}}"
+  "notFoundWithId": "Role not found. ID: {{id}}",
+  "cannotDeleteLastFullAccess": "You cannot delete the last full access role"
 }

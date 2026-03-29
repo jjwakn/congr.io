@@ -24,7 +24,7 @@ import PWABadge from '@/PWABadge';
 const Dashboard = () => {
   const { i18n, t } = useTranslation();
   const { congregation } = useAppContext();
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
   const { features } = useSetup();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const location = useLocation();
@@ -39,10 +39,17 @@ const Dashboard = () => {
   }, [features]);
 
   const congregationType = congregation?.type ?? '';
+  const rolesModuleView = useMemo<DashboardModuleView>(
+    () => ({
+      id: 'roles',
+      title: t('pages.modules.roles.title'),
+      description: t('pages.modules.roles.description'),
+    }),
+    [t],
+  );
   const availableModules = useMemo<DashboardModuleView[]>(() => {
     const moduleIds = congregation?.features ?? [];
-
-    return moduleIds.map((moduleId) => {
+    const modules = moduleIds.map((moduleId) => {
       const feature = featureById.get(moduleId);
       const title = feature?.title ?? moduleId;
       const description = (feature?.description ?? '').replace('{type}', congregationType);
@@ -53,7 +60,15 @@ const Dashboard = () => {
         description,
       };
     });
-  }, [congregation?.features, congregationType, featureById]);
+
+    if (moduleIds.includes('users') && hasPermission('role', 'get')) modules.push(rolesModuleView);
+
+    return modules.sort((left, right) =>
+      left.title.localeCompare(right.title, i18n.language, {
+        sensitivity: 'base',
+      }),
+    );
+  }, [congregation?.features, congregationType, featureById, hasPermission, i18n.language, rolesModuleView]);
   const settingsPath = useMemo(() => getSettingsPath(i18n.language), [i18n.language]);
 
   const pathname = location.pathname;

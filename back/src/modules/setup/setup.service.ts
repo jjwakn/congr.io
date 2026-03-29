@@ -1,5 +1,6 @@
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Feature } from 'src/utils/constants';
+import { isValidTimeZone, normalizeTimeZone } from 'src/utils/datetime';
 import { encryptPassword } from 'src/utils/helpers';
 import { DataSource, IsNull, Repository } from 'typeorm';
 import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
@@ -56,6 +57,7 @@ export class SetupService {
       id: congregation.id,
       name: congregation.name,
       type: congregation.type,
+      timezone: congregation.timezone,
       features: congregation.features,
       updated_at: congregation.updated_at,
       locations: (congregation.locations ?? []).map((location) => ({
@@ -123,6 +125,10 @@ export class SetupService {
         throw new BadRequestException(this.translate('errors.setup.missingCongregationName', lang));
       if (!congregation.type?.trim())
         throw new BadRequestException(this.translate('errors.setup.missingCongregationType', lang));
+      if (!congregation.timezone?.trim())
+        throw new BadRequestException(this.translate('errors.setup.missingCongregationTimezone', lang));
+      if (!isValidTimeZone(congregation.timezone.trim()))
+        throw new BadRequestException(this.translate('errors.setup.invalidCongregationTimezone', lang));
       if (!congregation.locations || !congregation.locations.length)
         throw new BadRequestException(this.translate('errors.setup.missingCongregationLocations', lang));
       if (congregation.locations.some((location) => location.order === undefined || location.order === null))
@@ -192,6 +198,7 @@ export class SetupService {
         const congregationCreated = congregationRepository.create({
           name: congregation.name.trim(),
           type: congregation.type.trim(),
+          timezone: normalizeTimeZone(congregation.timezone),
           created_by: userCreated,
           locations: locationsCreated,
           features: congregation.features.map((feature) => feature.toString().trim()).filter(Boolean) as Feature[],

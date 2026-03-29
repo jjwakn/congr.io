@@ -11,6 +11,7 @@ const __dirname = dirname(__filename);
 const Features = {
   Users: 'users',
   Members: 'members',
+  Processes: 'processes',
   EventsCalendar: 'events_calendar',
   EventsAttendance: 'events_attendance',
   Ministries: 'ministries',

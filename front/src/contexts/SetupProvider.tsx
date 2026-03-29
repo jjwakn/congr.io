@@ -1,5 +1,6 @@
 import { useNotificationContext } from '@hooks/useNotifications';
 import { FeaturesService } from '@services/features';
+import { getBrowserTimeZone } from '@utils/datetime';
 import { httpRequest } from '@utils/http';
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +12,7 @@ const initialSetupData: SetupData = {
   congregation: {
     name: '',
     type: '',
+    timezone: getBrowserTimeZone(),
   },
   features: { features: [] },
   locations: { locations: [] },

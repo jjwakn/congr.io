@@ -7,8 +7,11 @@ import { AppLoggerMiddleware } from './middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigurationsModule } from './modules/configurations/configurations.module';
 import { CongregationModule } from './modules/congregation/congregation.module';
+import { EventTypeModule } from './modules/event-type/event-type.module';
+import { EventModule } from './modules/event/event.module';
 import { FeatureModule } from './modules/feature/feature.module';
 import { PermissionModule } from './modules/permission/permission.module';
+import { ProcessModule } from './modules/process/process.module';
 import { RoleModule } from './modules/role/role.module';
 import { SetupModule } from './modules/setup/setup.module';
 import { UserModule } from './modules/user/user.module';
@@ -51,7 +54,10 @@ import { UserModule } from './modules/user/user.module';
     PermissionModule,
     FeatureModule,
     ConfigurationsModule,
+    EventTypeModule,
+    EventModule,
     AuthModule,
+    ProcessModule,
     UserModule,
     RoleModule,
     CongregationModule,

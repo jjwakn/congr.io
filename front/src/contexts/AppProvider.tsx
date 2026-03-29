@@ -1,5 +1,6 @@
 import { useNotificationContext } from '@hooks/useNotifications';
 import { SetupService } from '@services/setup';
+import { toTimestamp } from '@utils/datetime';
 import { httpRequest } from '@utils/http';
 import {
   clearCongregationFromStorage,
@@ -17,13 +18,6 @@ import { IsSetupResponse } from '@/types/setup.types';
 import { AppContext } from './AppContext';
 
 let setupStatusRequest: Promise<IsSetupResponse> | null = null;
-
-const toTimestamp = (value?: Date | string | null): number => {
-  if (!value) return 0;
-  const date = value instanceof Date ? value : new Date(value);
-  const timestamp = date.getTime();
-  return Number.isNaN(timestamp) ? 0 : timestamp;
-};
 
 const shouldSyncCongregation = (localCongregation: Congregation | null, remoteCongregation: Congregation): boolean => {
   if (!localCongregation) return true;

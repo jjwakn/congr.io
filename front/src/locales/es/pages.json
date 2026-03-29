@@ -14,30 +14,81 @@
     "common": {
       "refresh": "Actualizar",
       "search": "Buscar",
-      "searchPlaceholder": "Buscar por nombre de rol",
-      "rowsPerPage": "Filas por página",
-      "loading": "Cargando roles...",
-      "empty": "No se encontraron roles."
+      "rowsPerPage": "Filas por página"
+    },
+    "users": {
+      "empty": "La gestión de usuarios aparecerá aquí."
     },
     "roles": {
       "title": "Roles",
-      "description": "Revisa el acceso de cada rol y sus permisos CRUD.",
+      "description": "Administra roles y permisos por sección.",
+      "sectionTitle": "Matriz de Permisos",
+      "sectionDescription": "Revisa el acceso de cada rol por sección y acción CRUD.",
+      "searchPlaceholder": "Buscar por nombre de rol",
+      "loading": "Cargando roles...",
+      "empty": "No se encontraron roles.",
+      "actions": {
+        "create": "Crear rol",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "save": "Guardar cambios"
+      },
       "columns": {
         "role": "Rol",
         "fullAccess": "Acceso total",
-        "get": "Leer",
+        "actions": "Acciones",
+        "get": "Ver",
         "create": "Crear",
         "update": "Actualizar",
         "delete": "Eliminar"
       },
+      "form": {
+        "fullAccess": "Acceso total",
+        "fullAccessHint": "Cuando el acceso total está habilitado, este rol puede acceder a todas las secciones y acciones."
+      },
+      "dialogs": {
+        "createTitle": "Crear rol",
+        "editTitle": "Editar rol",
+        "deleteTitle": "Eliminar rol",
+        "deleteMessage": "¿Seguro que deseas eliminar {{name}}?"
+      },
+      "permissions": {
+        "columns": {
+          "section": "Sección"
+        },
+        "sections": {
+          "user": "Usuarios",
+          "role": "Roles",
+          "congregation": "Congregación",
+          "configuration": "Configuración",
+          "process": "Procesos",
+          "event": "Eventos",
+          "event_type": "Tipos de evento"
+        }
+      },
+      "success": {
+        "created": "El rol se creó correctamente.",
+        "updated": "El rol se actualizó correctamente.",
+        "deleted": "El rol se eliminó correctamente."
+      },
       "error": {
-        "loadFailed": "No se pudieron cargar los roles."
+        "accessDenied": "No tienes permiso para administrar roles.",
+        "loadFailed": "No se pudieron cargar los roles.",
+        "permissionsLoadFailed": "No se pudo cargar la metadata de permisos.",
+        "loadRoleFailed": "No se pudo cargar el rol seleccionado.",
+        "saveFailed": "No se pudo guardar el rol.",
+        "deleteFailed": "No se pudo eliminar el rol."
       }
     }
   },
   "settings": {
     "title": "Configuración",
-    "subtitle": "Administra la apariencia y el idioma de tu congregación.",
+    "subtitle": "Administra la congregación y la apariencia.",
+    "congregation": {
+      "title": "Configuración de la Congregación",
+      "subtitle": "Actualiza los datos principales de la congregación usados en la aplicación.",
+      "timezoneHelp": "Usa una zona horaria IANA como America/Guatemala."
+    },
     "themeMode": {
       "label": "Modo de tema",
       "light": "Claro",
@@ -65,11 +116,12 @@
     },
     "frontendVersion": "Versión del frontend: {{version}}",
     "success": {
-      "saved": "La paleta de tema se guardó correctamente."
+      "saved": "La configuración se guardó correctamente."
     },
     "error": {
-      "saveFailed": "No se pudo guardar la paleta de tema.",
-      "loadFailed": "No se pudo cargar la paleta de tema."
+      "saveFailed": "No se pudo guardar la configuración.",
+      "loadFailed": "No se pudo cargar la paleta de tema.",
+      "invalidHex": "Ingresa un color hexadecimal válido como #1976d2."
     }
   }
 }

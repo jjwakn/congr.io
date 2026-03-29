@@ -68,6 +68,11 @@ export class SetupCongregationDto {
   @MaxLength(120)
   type: string;
 
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  timezone: string;
+
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
@@ -110,7 +115,10 @@ export interface IsSetupResponse {
   congregation?: SetupCongregationData;
 }
 
-export interface SetupCongregationData extends Pick<Congregation, 'id' | 'name' | 'type' | 'features' | 'updated_at'> {
+export interface SetupCongregationData extends Pick<
+  Congregation,
+  'id' | 'name' | 'type' | 'timezone' | 'features' | 'updated_at'
+> {
   locations: Array<Pick<Location, 'id' | 'order' | 'name' | 'address'>>;
   theme_palette: ThemePaletteConfig;
 }

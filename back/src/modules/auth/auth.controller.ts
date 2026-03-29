@@ -50,9 +50,7 @@ export class AuthController {
           : 'errors.auth.unauthorized';
     if (!userId) throw new UnauthorizedException(resolvedMessage);
 
-    return {
-      user: await this.service.getCurrentUser(userId),
-    };
+    return this.service.getCurrentSession(userId);
   }
 
   @Post('logout')

@@ -3,6 +3,7 @@ import ConfirmStep from '@components/Setup/steps/ConfirmStep';
 import CongregationStep from '@components/Setup/steps/CongregationStep';
 import FeaturesStep from '@components/Setup/steps/FeaturesStep';
 import LocationsStep from '@components/Setup/steps/LocationsStep';
+import TimezoneStep from '@components/Setup/steps/TimezoneStep';
 import { useAppContext } from '@hooks/useAppContext';
 import { useNotificationContext } from '@hooks/useNotifications';
 import { useSetup } from '@hooks/useSetup';
@@ -52,6 +53,7 @@ const Setup = () => {
         congregation: {
           name: data.congregation.name.trim(),
           type: data.congregation.type.trim(),
+          timezone: data.congregation.timezone.trim(),
           locations: data.locations.locations.map((location) => ({
             order: location.order,
             name: location.name.trim(),
@@ -137,9 +139,11 @@ const Setup = () => {
 
         {activeStep === 2 && <LocationsStep goNext={goNext} goBack={goBack} loading={loading} />}
 
-        {activeStep === 3 && <AdminStep goNext={goNext} goBack={goBack} loading={loading} />}
+        {activeStep === 3 && <TimezoneStep goNext={goNext} goBack={goBack} loading={loading} />}
 
-        {activeStep === 4 && <ConfirmStep data={data} onFinish={handleFinish} disabled={loading} onBack={goBack} />}
+        {activeStep === 4 && <AdminStep goNext={goNext} goBack={goBack} loading={loading} />}
+
+        {activeStep === 5 && <ConfirmStep data={data} onFinish={handleFinish} disabled={loading} onBack={goBack} />}
       </Box>
     </Box>
   );

@@ -9,7 +9,7 @@ import { CongregationQuery } from './congregation.types';
 @ApiTags('congregation')
 @Controller('congregation')
 export class CongregationController extends CommonController<Congregation, CongregationQuery> {
-  protected module = Module.congregation;
+  protected module = Module.configuration;
 
   constructor(protected readonly service: CongregationService) {
     super();

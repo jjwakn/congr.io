@@ -5,13 +5,9 @@ export interface PermissionModuleType {
   permissions: ModuleAction[];
 }
 
-export type PermissionType = {
-  [key in Module]: PermissionModuleType;
-};
+export type PermissionType = Partial<Record<Module, PermissionModuleType>>;
 
-export type UserPermission = {
-  [key in keyof typeof Module]?: ModuleAction[];
-};
+export type UserPermission = Partial<Record<Module, ModuleAction[]>>;
 
 export type PermissionSectionResolver = (controller: { module?: Module }) => Module;
 

@@ -15,6 +15,7 @@ export const findWithFilters = async <Entity extends ObjectLiteral, Query extend
   query,
   searchFields = [],
   booleanFields = [],
+  baseWhere = {} as FindOptionsWhere<Entity>,
 }: FindWithFiltersProps<Entity, Query>) => {
   const search = query.search?.trim() ?? '';
   const paginate = 'size' in query && 'page' in query;
@@ -46,12 +47,13 @@ export const findWithFilters = async <Entity extends ObjectLiteral, Query extend
   const where =
     orConditions.length > 0
       ? (orConditions.map((cond) => ({
+          ...baseWhere,
           ...cond,
           ...andConditions,
         })) as FindOptionsWhere<Entity>[])
       : Object.keys(andConditions).length > 0
-        ? (andConditions as FindOptionsWhere<Entity>)
-        : {};
+        ? ({ ...baseWhere, ...andConditions } as FindOptionsWhere<Entity>)
+        : baseWhere;
 
   const [result, total] = await repository.findAndCount({
     ...(paginate && { take: query.size, skip: query.size * query.page }),

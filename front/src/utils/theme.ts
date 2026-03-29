@@ -101,6 +101,9 @@ export const normalizeThemePaletteConfig = (
   dark: normalizeModeConfig(value?.dark, DEFAULT_THEME_PALETTE_CONFIG.dark),
 });
 
+export const areThemePaletteConfigsEqual = (left: ThemePaletteConfig, right: ThemePaletteConfig): boolean =>
+  JSON.stringify(left) === JSON.stringify(right);
+
 const getModePalette = ({
   mode,
   paletteConfig,

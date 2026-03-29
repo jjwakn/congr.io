@@ -1,4 +1,6 @@
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import AltRouteOutlinedIcon from '@mui/icons-material/AltRouteOutlined';
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
@@ -29,10 +31,14 @@ interface CreateModuleNavigationItemProps {
 
 export const getModuleIcon = (moduleId: string): DashboardNavigationItem['icon'] => {
   switch (moduleId) {
+    case 'roles':
+      return createElement(AdminPanelSettingsOutlinedIcon, { fontSize: 'small' });
     case 'users':
       return createElement(PeopleAltOutlinedIcon, { fontSize: 'small' });
     case 'members':
       return createElement(GroupsOutlinedIcon, { fontSize: 'small' });
+    case 'processes':
+      return createElement(AltRouteOutlinedIcon, { fontSize: 'small' });
     case 'events_calendar':
       return createElement(EventOutlinedIcon, { fontSize: 'small' });
     case 'events_attendance':

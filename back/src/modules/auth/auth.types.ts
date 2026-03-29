@@ -22,6 +22,11 @@ export interface AuthLoginResult {
   auth: { fullAccess: boolean; permissions: UserPermission };
 }
 
+export interface AuthSessionResult {
+  user: User;
+  auth: { fullAccess: boolean; permissions: UserPermission };
+}
+
 export type UserValidated = AuthLoginResult;
 
 export interface JWTPayload {

@@ -9,7 +9,7 @@ import { SetupData } from '@/types/setup.types';
 export const CongregationStep = ({ goNext, loading }: { goNext: () => void; loading?: boolean }) => {
   const { t } = useTranslation();
   const { setupData, setSetupData } = useSetup();
-  const form = useForm<SetupData['congregation']>({
+  const form = useForm<Pick<SetupData['congregation'], 'name' | 'type'>>({
     defaultValues: {
       name: setupData['congregation'].name,
       type: setupData['congregation'].type || t('setup.form.defaultType'),
@@ -23,15 +23,23 @@ export const CongregationStep = ({ goNext, loading }: { goNext: () => void; load
   });
 
   const handleNext = useCallback(
-    (values: SetupData['congregation']) => {
-      setSetupData((prev) => ({ ...prev, congregation: values }));
+    (values: Pick<SetupData['congregation'], 'name' | 'type'>) => {
+      setSetupData((prev) => ({
+        ...prev,
+        congregation: {
+          ...prev.congregation,
+          ...values,
+          name: values.name.trim(),
+          type: values.type.trim(),
+        },
+      }));
       goNext();
     },
     [goNext, setSetupData],
   );
 
   return (
-    <FormContainer<SetupData['congregation']>
+    <FormContainer<Pick<SetupData['congregation'], 'name' | 'type'>>
       form={form}
       onSubmit={handleNext}
       title={t('setup.form.title')}
@@ -62,6 +70,8 @@ export const CongregationStep = ({ goNext, loading }: { goNext: () => void; load
               disableClearable
               clearIcon={null}
               freeSolo
+              inputValue={field.value ?? ''}
+              onInputChange={(_event, newValue) => field.onChange(newValue)}
               onChange={(_e, newValue) => field.onChange(newValue)}
               filterOptions={(options, params) => {
                 const filtered = filter(options, params);

@@ -1,8 +1,9 @@
 import { I18nService } from 'nestjs-i18n';
 import { DefaultGetData } from 'src/common/common.types';
+import { isValidTimeZone, normalizeTimeZone } from 'src/utils/datetime';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
 import { Repository } from 'typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
 import { Congregation } from './congregation.entity';
@@ -61,22 +62,36 @@ export class CongregationService {
   }
 
   async create({ data, userId }: CongregationCreateProps) {
+    if (data.timezone && !isValidTimeZone(data.timezone.trim()))
+      throw new BadRequestException(this.i18n.t('errors.congregation.invalidTimezone'));
+
     const created_by = await this.userRepository.findOne({
       where: { id: userId },
       withDeleted: true,
     });
 
-    const created = this.repository.create({ ...data, created_by });
+    const created = this.repository.create({
+      ...data,
+      timezone: normalizeTimeZone(data.timezone),
+      created_by,
+    });
     return this.repository.save(created);
   }
 
   async update({ id, data, userId }: CongregationUpdateProps) {
+    if (data.timezone && !isValidTimeZone(data.timezone.trim()))
+      throw new BadRequestException(this.i18n.t('errors.congregation.invalidTimezone'));
+
     const updated_by = await this.userRepository.findOne({
       where: { id: userId },
       withDeleted: true,
     });
 
-    await this.repository.update(id, { ...data, updated_by });
+    await this.repository.update(id, {
+      ...data,
+      ...(data.timezone ? { timezone: normalizeTimeZone(data.timezone) } : {}),
+      updated_by,
+    });
     return cleanColumns<Congregation>(
       this.repository.findOne({
         where: { id },

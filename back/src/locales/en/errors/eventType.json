@@ -1,0 +1,4 @@
+{
+  "notFound": "Event type not found",
+  "inUse": "This event type cannot be deleted because it is linked to a process step or existing events"
+}
