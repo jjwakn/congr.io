@@ -7,13 +7,10 @@ export class PermissionService {
   list() {
     return Object.keys(permission)
       .sort((a, b) => (a > b ? 1 : -1))
-      .map(
-        (k) =>
-          ({
-            id: k,
-            permissions: (permission[k] as PermissionModuleType).permissions,
-          }) as PermissionModuleType,
-      );
+      .map((k) => ({
+        id: k,
+        permissions: (permission[k] as PermissionModuleType).permissions,
+      }));
   }
 
   listActions() {

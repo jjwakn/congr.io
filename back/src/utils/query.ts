@@ -15,7 +15,7 @@ export const findWithFilters = async <Entity extends ObjectLiteral, Query extend
   query,
   searchFields = [],
   booleanFields = [],
-  baseWhere = {} as FindOptionsWhere<Entity>,
+  baseWhere = {},
 }: FindWithFiltersProps<Entity, Query>) => {
   const search = query.search?.trim() ?? '';
   const paginate = 'size' in query && 'page' in query;

@@ -20,6 +20,7 @@ export interface CreateEditDialogProps {
   onEnter?: () => void;
   maxWidth?: DialogProps['maxWidth'];
   fullWidth?: boolean;
+  mobileFullScreen?: boolean;
   contentSx?: SxProps<Theme>;
   children?: ReactNode;
   labels: CreateEditDialogLabels;

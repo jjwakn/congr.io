@@ -1,10 +1,14 @@
 import { I18nService } from 'nestjs-i18n';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { SchemaObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import packageJson from '../package.json';
 import { AppModule } from './app.module';
 import { PORT } from './utils/constants';
+
+type SwaggerSchema = {
+  example?: unknown;
+  properties?: Record<string, SwaggerSchema>;
+};
 
 const swaggerLanguages = ['en', 'es'];
 
@@ -24,10 +28,10 @@ const bootstrap = async () => {
 
     // Iterate over schemas and replace 'example' keys if they match i18n keys
     for (const schemaName in document.components?.schemas) {
-      const schema = document.components.schemas[schemaName] as SchemaObject;
+      const schema = document.components.schemas[schemaName] as SwaggerSchema;
       if (schema.properties) {
         for (const propName in schema.properties) {
-          const prop = schema.properties[propName] as SchemaObject;
+          const prop = schema.properties[propName];
           if (typeof prop.example === 'string') {
             prop.example = i18n.t(prop.example as never, { lang });
           }

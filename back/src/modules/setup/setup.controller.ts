@@ -24,7 +24,7 @@ export class SetupController {
       throw new BadRequestException(this.translate('errors.setup.missingBody', lang));
     }
 
-    if (body.payload === undefined || body.payload === null) return body as SetupProps;
+    if (body.payload === undefined || body.payload === null) return body;
 
     if (typeof body.payload === 'string') {
       try {

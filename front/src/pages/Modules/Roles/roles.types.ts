@@ -65,7 +65,9 @@ export interface RoleDetailsDialogProps {
   role: Role | null;
   sections: PermissionSection[];
   actions: PermissionAction[];
+  editDisabled?: boolean;
   onClose: () => void;
+  onEdit?: () => void;
 }
 
 export interface PermissionsMatrixProps {

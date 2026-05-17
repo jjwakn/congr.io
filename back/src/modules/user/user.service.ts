@@ -97,7 +97,7 @@ export class UserService {
     return {
       ...cleanColumns<User>(result),
       roles: result?.roles.filter((r) => r.enabled) ?? [],
-    } as User;
+    };
   }
 
   async create({ data, userId }: UserCreateProps) {

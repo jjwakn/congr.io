@@ -65,7 +65,9 @@ export interface UserFormDialogProps {
 export interface UserDetailsDialogProps {
   open: boolean;
   user: User | null;
+  editDisabled?: boolean;
   onClose: () => void;
+  onEdit?: () => void;
 }
 
 export interface UserRelationOption {

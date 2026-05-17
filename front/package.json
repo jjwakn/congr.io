@@ -1,6 +1,6 @@
 {
   "name": "front",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "API",
   "author": "JJ",
   "license": "Apache-2.0",
@@ -45,7 +45,7 @@
     "workbox-window": "^7.4.0"
   },
   "resolutions": {
-    "sharp": "0.32.6",
+    "sharp": "0.33.5",
     "sharp-ico": "0.1.5"
   }
 }

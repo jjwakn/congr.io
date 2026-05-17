@@ -242,6 +242,15 @@ export const RolesManagement = () => {
     [showNotification, t],
   );
 
+  const handleEditRoleDetails = useCallback(() => {
+    if (!roleDetails) return;
+
+    setDialogMode('edit');
+    setSelectedRole(roleDetails);
+    setDialogOpen(true);
+    window.setTimeout(() => setRoleDetails(null), 0);
+  }, [roleDetails]);
+
   const handleSubmitRole = useCallback(
     async (values: RoleFormValues) => {
       setSubmitting(true);
@@ -477,7 +486,9 @@ export const RolesManagement = () => {
         role={roleDetails}
         sections={permissionSections}
         actions={permissionActions}
+        editDisabled={submitting || deleting || metadataLoading || !isPermissionMetadataReady}
         onClose={() => setRoleDetails(null)}
+        onEdit={canUpdate ? handleEditRoleDetails : undefined}
       />
 
       <ConfirmDialog

@@ -7,5 +7,7 @@ export interface ViewDialogProps {
   closeLabel: string;
   onClose: () => void;
   maxWidth?: DialogProps['maxWidth'];
+  mobileFullScreen?: boolean;
+  titleAction?: ReactNode;
   children?: ReactNode;
 }

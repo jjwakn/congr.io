@@ -1,6 +1,6 @@
 {
   "name": "congr.io",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "private": true,
   "license": "Apache-2.0",
   "workspaces": [
@@ -21,11 +21,12 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.39.2",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/node": "^25.0.10",
-    "@typescript-eslint/eslint-plugin": "^8.53.1",
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
@@ -33,7 +34,33 @@
     "husky": "^9.1.7",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.1",
-    "wait-on": "^9.0.3"
+    "typescript-eslint": "^8.59.3",
+    "wait-on": "^9.0.10"
+  },
+  "resolutions": {
+    "sharp": "0.33.5",
+    "sharp-ico": "0.1.5",
+    "@eslint/eslintrc/ajv": "6.14.0",
+    "eslint/ajv": "6.14.0",
+    "eslint/@eslint/eslintrc/ajv": "6.14.0",
+    "eslint/file-entry-cache/flat-cache/flatted": "3.4.2",
+    "@eslint/eslintrc/minimatch": "3.1.5",
+    "eslint/minimatch": "3.1.5",
+    "eslint/@eslint/config-array/minimatch": "3.1.5",
+    "@trivago/prettier-plugin-sort-imports/minimatch": "9.0.7",
+    "typeorm/glob/minimatch": "9.0.7",
+    "@eslint/eslintrc/minimatch/brace-expansion": "1.1.13",
+    "eslint/minimatch/brace-expansion": "1.1.13",
+    "eslint/@eslint/config-array/minimatch/brace-expansion": "1.1.13",
+    "@trivago/prettier-plugin-sort-imports/minimatch/brace-expansion": "2.0.3",
+    "typeorm/glob/minimatch/brace-expansion": "2.0.3",
+    "@nestjs/swagger/lodash": "4.18.1",
+    "@trivago/prettier-plugin-sort-imports/lodash-es": "4.18.1",
+    "**/path-to-regexp": "8.4.2",
+    "**/anymatch/picomatch": "2.3.2",
+    "**/readdirp/picomatch": "2.3.2",
+    "**/tinyglobby/picomatch": "4.0.4",
+    "**/qs": "6.15.2",
+    "**/cosmiconfig/yaml": "1.10.3"
   }
 }

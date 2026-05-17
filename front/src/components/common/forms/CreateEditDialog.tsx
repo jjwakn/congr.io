@@ -7,6 +7,8 @@ import {
   DialogTitle,
   type SxProps,
   type Theme,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { useMemo } from 'react';
 import { CreateEditDialogProps } from './CreateEditDialog.types';
@@ -43,10 +45,13 @@ export const CreateEditDialog = ({
   onEnter,
   maxWidth = 'md',
   fullWidth = true,
+  mobileFullScreen = true,
   contentSx,
   children,
   labels,
 }: CreateEditDialogProps) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const title = useMemo(
     () => (mode === 'create' ? labels.createTitle : labels.editTitle),
     [labels.createTitle, labels.editTitle, mode],
@@ -63,6 +68,7 @@ export const CreateEditDialog = ({
       onClose={submitting ? undefined : onClose}
       fullWidth={fullWidth}
       maxWidth={maxWidth}
+      fullScreen={mobileFullScreen && isMobile}
       TransitionProps={onEnter ? { onEnter } : undefined}
     >
       <DialogTitle>{title}</DialogTitle>

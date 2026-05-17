@@ -1,13 +1,15 @@
 import { ViewDialog } from '@components/common/forms/ViewDialog';
-import { Box, FormControlLabel, Switch, TextField } from '@mui/material';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import { Box, FormControlLabel, IconButton, Switch, TextField, Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { UserRelationSummary } from './UserRelationSummary';
 import type { UserDetailsDialogProps } from './users.types';
 
 const getNames = <Entity extends { name: string }>(values?: Entity[]) => values?.map((value) => value.name) ?? [];
 
-export const UserDetailsDialog = ({ open, user, onClose }: UserDetailsDialogProps) => {
+export const UserDetailsDialog = ({ open, user, editDisabled, onClose, onEdit }: UserDetailsDialogProps) => {
   const { t } = useTranslation();
+  const editLabel = t('pages.modules.users.actions.edit');
 
   return (
     <ViewDialog
@@ -16,6 +18,17 @@ export const UserDetailsDialog = ({ open, user, onClose }: UserDetailsDialogProp
       closeLabel={t('form.field.close')}
       onClose={onClose}
       maxWidth="md"
+      titleAction={
+        user && onEdit ? (
+          <Tooltip title={editLabel}>
+            <span>
+              <IconButton aria-label={editLabel} color="secondary" disabled={editDisabled} onClick={onEdit}>
+                <EditOutlinedIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        ) : undefined
+      }
     >
       <Box
         sx={{

@@ -195,6 +195,15 @@ export const UsersManagement = () => {
     [loadUser, t],
   );
 
+  const handleEditUserDetails = useCallback(() => {
+    if (!userDetails) return;
+
+    setDialogMode('edit');
+    setSelectedUser(userDetails);
+    setDialogOpen(true);
+    window.setTimeout(() => setUserDetails(null), 0);
+  }, [userDetails]);
+
   const handleSubmitUser = useCallback(
     async (values: UserFormValues) => {
       setSubmitting(true);
@@ -422,7 +431,13 @@ export const UsersManagement = () => {
         }}
       />
 
-      <UserDetailsDialog open={Boolean(userDetails)} user={userDetails} onClose={() => setUserDetails(null)} />
+      <UserDetailsDialog
+        open={Boolean(userDetails)}
+        user={userDetails}
+        editDisabled={submitting || deleting || metadataLoading}
+        onClose={() => setUserDetails(null)}
+        onEdit={canUpdate ? handleEditUserDetails : undefined}
+      />
 
       <ConfirmDialog
         open={Boolean(userPendingDelete)}
