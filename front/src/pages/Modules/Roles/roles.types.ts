@@ -1,15 +1,8 @@
+import type { CreateEditDialogMode } from '@components/common/forms/CreateEditDialog.types';
 import type { ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import type { ListDirection } from '@components/common/modules/useModuleList.types';
 import type { PermissionAction, PermissionMap, PermissionSection } from '@/types/permission.types';
 import type { Role } from '@/types/role.types';
-
-export interface RolesModuleProps {
-  title: string;
-  description: string;
-  showSummary?: boolean;
-}
-
-export type RolesManagementProps = RolesModuleProps;
 
 export interface RolesListResponse {
   result: Role[];
@@ -47,7 +40,7 @@ export interface SortRolesProps {
   direction: ListDirection;
 }
 
-export type RoleDialogMode = 'create' | 'edit';
+export type RoleDialogMode = CreateEditDialogMode;
 
 export interface RoleFormValues {
   [key: string]: string | boolean | PermissionMap;
@@ -67,20 +60,20 @@ export interface RoleFormDialogProps {
   onSubmit: (values: RoleFormValues) => void;
 }
 
+export interface RoleDetailsDialogProps {
+  open: boolean;
+  role: Role | null;
+  sections: PermissionSection[];
+  actions: PermissionAction[];
+  onClose: () => void;
+}
+
 export interface PermissionsMatrixProps {
   actions: PermissionAction[];
   disabled: boolean;
   value: PermissionMap;
   sections: PermissionSection[];
   onToggle: (sectionId: string, action: PermissionAction) => void;
-}
-
-export interface DeleteRoleDialogProps {
-  open: boolean;
-  roleName: string;
-  deleting: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
 }
 
 export interface RolePermissionColumn {

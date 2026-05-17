@@ -1,0 +1,84 @@
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  type SxProps,
+  type Theme,
+} from '@mui/material';
+import { useMemo } from 'react';
+import { CreateEditDialogProps } from './CreateEditDialog.types';
+
+const DEFAULT_CONTENT_SX = {
+  mt: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2,
+} as const;
+
+const mergeSx = (...values: Array<SxProps<Theme> | undefined>): SxProps<Theme> =>
+  values.reduce<Array<Exclude<SxProps<Theme>, null | undefined | false>>>((accumulator, value) => {
+    if (!value) return accumulator;
+
+    if (Array.isArray(value)) {
+      value.forEach((nestedValue) => {
+        if (nestedValue) accumulator.push(nestedValue);
+      });
+
+      return accumulator;
+    }
+
+    accumulator.push(value);
+    return accumulator;
+  }, []) as SxProps<Theme>;
+
+export const CreateEditDialog = ({
+  open,
+  mode,
+  submitting,
+  onClose,
+  onSubmit,
+  onEnter,
+  maxWidth = 'md',
+  fullWidth = true,
+  contentSx,
+  children,
+  labels,
+}: CreateEditDialogProps) => {
+  const title = useMemo(
+    () => (mode === 'create' ? labels.createTitle : labels.editTitle),
+    [labels.createTitle, labels.editTitle, mode],
+  );
+
+  const submitLabel = useMemo(
+    () => (mode === 'create' ? labels.createSubmit : labels.editSubmit),
+    [labels.createSubmit, labels.editSubmit, mode],
+  );
+
+  return (
+    <Dialog
+      open={open}
+      onClose={submitting ? undefined : onClose}
+      fullWidth={fullWidth}
+      maxWidth={maxWidth}
+      TransitionProps={onEnter ? { onEnter } : undefined}
+    >
+      <DialogTitle>{title}</DialogTitle>
+
+      <DialogContent>
+        <Box sx={mergeSx(DEFAULT_CONTENT_SX, contentSx)}>{children}</Box>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={onClose} disabled={submitting}>
+          {labels.cancel}
+        </Button>
+        <Button onClick={onSubmit} variant="contained" disabled={submitting}>
+          {submitLabel}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};

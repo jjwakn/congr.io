@@ -1,7 +1,8 @@
-import { Box, Paper, Typography } from '@mui/material';
+import { SectionTitle } from '@components/common/modules/SectionTitle';
+import { Box, Paper } from '@mui/material';
 import { DashboardSectionFrameProps } from './DashboardSectionFrame.types';
 
-export const DashboardSectionFrame = ({ title, subtitle, children }: DashboardSectionFrameProps) => (
+export const DashboardSectionFrame = ({ title, children }: DashboardSectionFrameProps) => (
   <Paper
     variant="outlined"
     sx={{
@@ -24,12 +25,7 @@ export const DashboardSectionFrame = ({ title, subtitle, children }: DashboardSe
         zIndex: 2,
       }}
     >
-      <Typography variant="h4">{title}</Typography>
-      {subtitle ? (
-        <Typography variant="body1" color="text.secondary">
-          {subtitle}
-        </Typography>
-      ) : null}
+      <SectionTitle title={title} />
     </Box>
 
     <Box

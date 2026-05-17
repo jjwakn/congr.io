@@ -16,7 +16,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ModuleListTableProps } from './ModuleListTable.types';
+import type { ModuleListHeaderCell, ModuleListTableProps } from './ModuleListTable.types';
 
 const DEFAULT_FIXED_END_COLUMN_IDS = ['actions'];
 
@@ -72,6 +72,23 @@ const toSxArray = (...values: Array<SxProps<Theme> | undefined>): SxProps<Theme>
     accumulator.push(value);
     return accumulator;
   }, []) as SxProps<Theme>;
+
+const getSortLabelSx = (align?: ModuleListHeaderCell['align']): SxProps<Theme> =>
+  align === 'center'
+    ? {
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        position: 'relative',
+        pl: 2.5,
+        pr: 2.5,
+        '& .MuiTableSortLabel-icon': {
+          position: 'absolute',
+          right: 6,
+          margin: 0,
+        },
+      }
+    : {};
 
 export const ModuleListTable = <RowType,>({
   headerRows,
@@ -245,6 +262,7 @@ export const ModuleListTable = <RowType,>({
                         direction={
                           sort === cell.sortKey ? (direction.toLowerCase() === 'desc' ? 'desc' : 'asc') : 'asc'
                         }
+                        sx={getSortLabelSx(cell.align)}
                         onClick={() => onSort(cell.sortKey as string)}
                       >
                         {cell.label}

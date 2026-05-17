@@ -14,16 +14,61 @@
     "common": {
       "refresh": "Refresh",
       "search": "Search",
-      "rowsPerPage": "Rows per page"
+      "rowsPerPage": "Rows per page",
+      "view": "View"
     },
     "users": {
-      "empty": "User management will appear here."
+      "title": "Users",
+      "searchPlaceholder": "Search by name or username",
+      "loading": "Loading users...",
+      "empty": "No users found.",
+      "actions": {
+        "create": "Create user",
+        "edit": "Edit",
+        "delete": "Delete",
+        "save": "Save changes"
+      },
+      "columns": {
+        "name": "Name",
+        "username": "Username",
+        "enabled": "Enabled",
+        "actions": "Actions"
+      },
+      "form": {
+        "enabled": "Enabled",
+        "enabledHint": "Disabled users cannot access the app.",
+        "passwordHint": "Leave blank to keep the current password.",
+        "roles": "Roles",
+        "congregations": "Congregations",
+        "locations": "Locations",
+        "locationsHint": "Locations are limited to the selected congregation context.",
+        "noRoles": "No roles available.",
+        "noCongregations": "No congregations available.",
+        "noLocations": "No locations available."
+      },
+      "dialogs": {
+        "createTitle": "Create user",
+        "editTitle": "Edit user",
+        "viewTitle": "User details",
+        "deleteTitle": "Delete user",
+        "deleteMessage": "Are you sure you want to delete {{name}}?"
+      },
+      "success": {
+        "created": "User created successfully.",
+        "updated": "User updated successfully.",
+        "deleted": "User deleted successfully."
+      },
+      "error": {
+        "accessDenied": "You do not have permission to manage users.",
+        "loadFailed": "Could not load users.",
+        "rolesLoadFailed": "Could not load roles.",
+        "loadUserFailed": "Could not load the selected user.",
+        "saveFailed": "Could not save the user.",
+        "deleteFailed": "Could not delete the user."
+      }
     },
     "roles": {
       "title": "Roles",
-      "description": "Manage roles and section permissions.",
-      "sectionTitle": "Permissions Matrix",
-      "sectionDescription": "Review each role's access by section and CRUD action.",
       "searchPlaceholder": "Search by role name",
       "loading": "Loading roles...",
       "empty": "No roles found.",
@@ -49,6 +94,7 @@
       "dialogs": {
         "createTitle": "Create role",
         "editTitle": "Edit role",
+        "viewTitle": "Role details",
         "deleteTitle": "Delete role",
         "deleteMessage": "Are you sure you want to delete {{name}}?"
       },

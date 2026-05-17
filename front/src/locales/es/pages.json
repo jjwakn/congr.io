@@ -14,16 +14,61 @@
     "common": {
       "refresh": "Actualizar",
       "search": "Buscar",
-      "rowsPerPage": "Filas por página"
+      "rowsPerPage": "Filas por página",
+      "view": "Ver"
     },
     "users": {
-      "empty": "La gestión de usuarios aparecerá aquí."
+      "title": "Usuarios",
+      "searchPlaceholder": "Buscar por nombre o usuario",
+      "loading": "Cargando usuarios...",
+      "empty": "No se encontraron usuarios.",
+      "actions": {
+        "create": "Crear usuario",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "save": "Guardar cambios"
+      },
+      "columns": {
+        "name": "Nombre",
+        "username": "Usuario",
+        "enabled": "Activo",
+        "actions": "Acciones"
+      },
+      "form": {
+        "enabled": "Activo",
+        "enabledHint": "Los usuarios desactivados no pueden acceder a la aplicación.",
+        "passwordHint": "Déjalo en blanco para conservar la contraseña actual.",
+        "roles": "Roles",
+        "congregations": "Congregaciones",
+        "locations": "Ubicaciones",
+        "locationsHint": "Las ubicaciones están limitadas al contexto de la congregación seleccionada.",
+        "noRoles": "No hay roles disponibles.",
+        "noCongregations": "No hay congregaciones disponibles.",
+        "noLocations": "No hay ubicaciones disponibles."
+      },
+      "dialogs": {
+        "createTitle": "Crear usuario",
+        "editTitle": "Editar usuario",
+        "viewTitle": "Detalles del usuario",
+        "deleteTitle": "Eliminar usuario",
+        "deleteMessage": "¿Seguro que deseas eliminar {{name}}?"
+      },
+      "success": {
+        "created": "El usuario se creó correctamente.",
+        "updated": "El usuario se actualizó correctamente.",
+        "deleted": "El usuario se eliminó correctamente."
+      },
+      "error": {
+        "accessDenied": "No tienes permiso para administrar usuarios.",
+        "loadFailed": "No se pudieron cargar los usuarios.",
+        "rolesLoadFailed": "No se pudieron cargar los roles.",
+        "loadUserFailed": "No se pudo cargar el usuario seleccionado.",
+        "saveFailed": "No se pudo guardar el usuario.",
+        "deleteFailed": "No se pudo eliminar el usuario."
+      }
     },
     "roles": {
       "title": "Roles",
-      "description": "Administra roles y permisos por sección.",
-      "sectionTitle": "Matriz de Permisos",
-      "sectionDescription": "Revisa el acceso de cada rol por sección y acción CRUD.",
       "searchPlaceholder": "Buscar por nombre de rol",
       "loading": "Cargando roles...",
       "empty": "No se encontraron roles.",
@@ -49,6 +94,7 @@
       "dialogs": {
         "createTitle": "Crear rol",
         "editTitle": "Editar rol",
+        "viewTitle": "Detalles del rol",
         "deleteTitle": "Eliminar rol",
         "deleteMessage": "¿Seguro que deseas eliminar {{name}}?"
       },

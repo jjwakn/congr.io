@@ -1,39 +1,23 @@
 import { Box, Typography } from '@mui/material';
 import { DashboardSectionFrame } from '@pages/Dashboard/DashboardSectionFrame';
-import type { DashboardModuleView } from '@pages/Modules';
-import { getHomePath, getModuleIdFromPath } from '@utils/routes';
-import { Suspense, lazy, useMemo } from 'react';
-import type { ReactNode } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import type { DashboardModuleView } from '@pages/Modules/modules.types';
+import { getModuleRoute } from '@pages/Modules/routes';
+import { getHomePath } from '@utils/routes';
+import { Suspense, lazy } from 'react';
+import { Route, Routes } from 'react-router-dom';
 import { DashboardContentRoutesProps } from './DashboardContentRoutes.types';
 
-const ModulesRenderer = lazy(async () => {
-  const module = await import('@pages/Modules');
-  return { default: module.ModulesRenderer };
-});
 const SettingsPage = lazy(() => import('@pages/Settings'));
-
-const withFullHeight = (content: ReactNode) => <Box sx={{ height: '100%', minHeight: 0 }}>{content}</Box>;
 
 export const DashboardContentRoutes = ({
   availableModules,
   homeTitle,
   homeSubtitle,
   settingsTitle,
-  settingsSubtitle,
   loadingLabel,
-  noModulesLabel,
   moduleNotFoundLabel,
   settingsPath,
 }: DashboardContentRoutesProps) => {
-  const location = useLocation();
-
-  const selectedModule = useMemo<DashboardModuleView | null>(() => {
-    const moduleIdFromPath = getModuleIdFromPath(location.pathname);
-    if (!moduleIdFromPath) return null;
-    return availableModules.find((module) => module.id === moduleIdFromPath) ?? null;
-  }, [availableModules, location.pathname]);
-
   const fallback = <Typography variant="body1">{loadingLabel}</Typography>;
 
   return (
@@ -51,52 +35,53 @@ export const DashboardContentRoutes = ({
         <Routes>
           <Route
             path={getHomePath()}
-            element={withFullHeight(
+            element={
               <DashboardSectionFrame title={homeTitle}>
                 <Typography variant="body1" color="text.secondary">
                   {homeSubtitle}
                 </Typography>
-              </DashboardSectionFrame>,
-            )}
+              </DashboardSectionFrame>
+            }
           />
 
           <Route
             path={settingsPath}
-            element={withFullHeight(
-              <DashboardSectionFrame title={settingsTitle} subtitle={settingsSubtitle}>
+            element={
+              <DashboardSectionFrame title={settingsTitle}>
                 <Suspense fallback={fallback}>
                   <SettingsPage showHeader={false} />
                 </Suspense>
-              </DashboardSectionFrame>,
-            )}
+              </DashboardSectionFrame>
+            }
           />
+
+          {availableModules.map((module: DashboardModuleView) => {
+            const route = getModuleRoute(module.id);
+            if (!route) return null;
+
+            const ModuleComponent = route.Component;
+
+            return (
+              <Route
+                key={module.id}
+                path={module.path}
+                element={
+                  <DashboardSectionFrame title={module.title}>
+                    <ModuleComponent />
+                  </DashboardSectionFrame>
+                }
+              />
+            );
+          })}
 
           <Route
             path="*"
             element={
-              !availableModules.length
-                ? withFullHeight(
-                    <DashboardSectionFrame title={noModulesLabel}>
-                      <Typography variant="body1" color="text.secondary">
-                        {noModulesLabel}
-                      </Typography>
-                    </DashboardSectionFrame>,
-                  )
-                : selectedModule
-                  ? withFullHeight(
-                      <DashboardSectionFrame title={selectedModule.title} subtitle={selectedModule.description}>
-                        <Suspense fallback={fallback}>
-                          <ModulesRenderer module={selectedModule} showSummary={false} />
-                        </Suspense>
-                      </DashboardSectionFrame>,
-                    )
-                  : withFullHeight(
-                      <DashboardSectionFrame title={moduleNotFoundLabel}>
-                        <Typography variant="body1" color="text.secondary">
-                          {moduleNotFoundLabel}
-                        </Typography>
-                      </DashboardSectionFrame>,
-                    )
+              <DashboardSectionFrame title={moduleNotFoundLabel}>
+                <Typography variant="body1" color="text.secondary">
+                  {moduleNotFoundLabel}
+                </Typography>
+              </DashboardSectionFrame>
             }
           />
         </Routes>

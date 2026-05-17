@@ -1,15 +1,14 @@
+import { ConfirmDialog } from '@components/common/forms/ConfirmDialog';
 import { CrudPermissionStatus } from '@components/common/modules/CrudPermissionStatus';
-import { ModuleListTable } from '@components/common/modules/ModuleListTable';
 import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
+import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
-import { ModuleSectionActions } from '@components/common/modules/ModuleSectionActions';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import { Alert, Box, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import { Alert } from '@mui/material';
 import { PermissionsService } from '@services/permissions';
 import { RolesService } from '@services/roles';
 import { HttpRequestError, httpRequest } from '@utils/http';
@@ -17,15 +16,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PermissionAction, PermissionSection } from '@/types/permission.types';
 import type { Role } from '@/types/role.types';
-import { DeleteRoleDialog } from './DeleteRoleDialog';
+import { RoleDetailsDialog } from './RoleDetailsDialog';
 import { RoleFormDialog } from './RoleFormDialog';
-import type {
-  RoleDialogMode,
-  RoleFormValues,
-  RolePermissionColumn,
-  RoleTableSchema,
-  RolesManagementProps,
-} from './roles.types';
+import type { RoleDialogMode, RoleFormValues, RolePermissionColumn, RoleTableSchema } from './roles.types';
 import { useRolesList } from './useRolesList';
 
 const getErrorMessage = (value: unknown, fallback: string) =>
@@ -125,7 +118,7 @@ const createRoleTableSchema = (
   };
 };
 
-export const RolesManagement = ({ title, description, showSummary = true }: RolesManagementProps) => {
+export const RolesManagement = () => {
   const { t } = useTranslation();
   const { showNotification } = useNotificationContext();
   const { hasPermission } = useAuth();
@@ -158,13 +151,12 @@ export const RolesManagement = ({ title, description, showSummary = true }: Role
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<RoleDialogMode>('create');
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [roleDetails, setRoleDetails] = useState<Role | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [loadingRoleId, setLoadingRoleId] = useState<string | null>(null);
   const [rolePendingDelete, setRolePendingDelete] = useState<Role | null>(null);
   const [deleting, setDeleting] = useState(false);
   const isPermissionMetadataReady = permissionSections.length > 0 && permissionActions.length > 0;
-  const sectionTitle = showSummary ? title : t('pages.modules.roles.sectionTitle');
-  const sectionDescription = showSummary ? description : t('pages.modules.roles.sectionDescription');
 
   const refreshMetadata = useCallback(async () => {
     if (!canView) {
@@ -352,51 +344,48 @@ export const RolesManagement = ({ title, description, showSummary = true }: Role
       ),
       {
         id: 'actions',
-        minWidth: 112,
+        minWidth: 148,
         align: 'right',
-        render: (role) => {
-          const isBusy = loadingRoleId === role.id || submitting || deleting;
-          const hasActions = canUpdate || canDelete;
-
-          if (!hasActions) {
-            return (
-              <Typography variant="body2" color="text.secondary">
-                -
-              </Typography>
-            );
-          }
-
-          return (
-            <Stack direction="row" spacing={1} justifyContent="flex-end">
-              {canUpdate ? (
-                <Tooltip title={t('pages.modules.roles.actions.edit')}>
-                  <span>
-                    <IconButton
-                      size="small"
-                      color="secondary"
-                      disabled={isBusy || metadataLoading || !isPermissionMetadataReady}
-                      onClick={() => {
-                        void handleOpenEdit(role.id);
-                      }}
-                    >
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              ) : null}
-
-              {canDelete ? (
-                <Tooltip title={t('pages.modules.roles.actions.delete')}>
-                  <span>
-                    <IconButton size="small" color="error" disabled={isBusy} onClick={() => setRolePendingDelete(role)}>
-                      <DeleteOutlineRoundedIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              ) : null}
-            </Stack>
-          );
-        },
+        render: (role) => (
+          <ModuleRowActions
+            row={role}
+            actions={[
+              {
+                id: 'view-role',
+                label: t('pages.modules.common.view'),
+                icon: VisibilityOutlinedIcon,
+                color: 'primary',
+                disabled: metadataLoading || !isPermissionMetadataReady,
+                onClick: (currentRole) => setRoleDetails(currentRole),
+              },
+              {
+                id: 'edit-role',
+                label: t('pages.modules.roles.actions.edit'),
+                icon: EditOutlinedIcon,
+                color: 'secondary',
+                hidden: !canUpdate,
+                disabled: (currentRole) =>
+                  loadingRoleId === currentRole.id ||
+                  submitting ||
+                  deleting ||
+                  metadataLoading ||
+                  !isPermissionMetadataReady,
+                onClick: (currentRole) => {
+                  void handleOpenEdit(currentRole.id);
+                },
+              },
+              {
+                id: 'delete-role',
+                label: t('pages.modules.roles.actions.delete'),
+                icon: DeleteOutlineRoundedIcon,
+                color: 'error',
+                hidden: !canDelete,
+                disabled: (currentRole) => loadingRoleId === currentRole.id || submitting || deleting,
+                onClick: (currentRole) => setRolePendingDelete(currentRole),
+              },
+            ]}
+          />
+        ),
       },
     ],
     [
@@ -418,99 +407,97 @@ export const RolesManagement = ({ title, description, showSummary = true }: Role
   }
 
   return (
-    <ModuleSection
-      title={sectionTitle}
-      description={sectionDescription}
-      actions={
-        <ModuleSectionActions
-          actions={[
-            ...(canCreate
-              ? [
-                  {
-                    id: 'create-role',
-                    label: t('pages.modules.roles.actions.create'),
-                    icon: AddRoundedIcon,
-                    color: 'primary' as const,
-                    disabled: metadataLoading || !isPermissionMetadataReady || submitting,
-                    onClick: handleOpenCreate,
-                  },
-                ]
-              : []),
-            {
-              id: 'refresh-roles',
-              label: t('pages.modules.common.refresh'),
-              icon: RefreshRoundedIcon,
-              color: 'secondary' as const,
-              disabled: loading || metadataLoading,
-              onClick: handleRefresh,
-            },
-          ]}
-        />
+    <ModuleSection<Role>
+      createAction={
+        canCreate
+          ? {
+              id: 'create-role',
+              label: t('pages.modules.roles.actions.create'),
+              disabled: metadataLoading || !isPermissionMetadataReady || submitting,
+              onClick: handleOpenCreate,
+            }
+          : undefined
       }
+      refreshAction={{
+        id: 'refresh-roles',
+        label: t('pages.modules.common.refresh'),
+        disabled: loading || metadataLoading,
+        onClick: handleRefresh,
+      }}
+      alerts={
+        <>
+          {rolesError ? <Alert severity="error">{rolesError}</Alert> : null}
+          {metadataError ? <Alert severity="error">{metadataError}</Alert> : null}
+        </>
+      }
+      search={{
+        label: t('pages.modules.common.search'),
+        placeholder: t('pages.modules.roles.searchPlaceholder'),
+        value: search,
+        onChange: setSearch,
+        sx: {
+          width: { xs: '100%', sm: 320 },
+        },
+      }}
+      table={{
+        headerRows: tableSchema.headerRows,
+        columns,
+        rows: roles,
+        getRowId: (role) => role.id,
+        loading,
+        loadingLabel: t('pages.modules.roles.loading'),
+        emptyLabel: t('pages.modules.roles.empty'),
+        sort,
+        direction,
+        onSort: handleSort,
+        page,
+        pageSize,
+        total,
+        onPageChange: handleChangePage,
+        onPageSizeChange: handleChangeRowsPerPage,
+        rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+        fixedStartColumnIds: ['name'],
+      }}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        {rolesError ? <Alert severity="error">{rolesError}</Alert> : null}
-        {metadataError ? <Alert severity="error">{metadataError}</Alert> : null}
+      <RoleFormDialog
+        open={dialogOpen}
+        mode={dialogMode}
+        role={selectedRole}
+        sections={permissionSections}
+        actions={permissionActions}
+        submitting={submitting}
+        onClose={handleCloseDialog}
+        onSubmit={(values) => {
+          void handleSubmitRole(values);
+        }}
+      />
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-          <TextField
-            size="small"
-            label={t('pages.modules.common.search')}
-            placeholder={t('pages.modules.roles.searchPlaceholder')}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            sx={{
-              width: { xs: '100%', sm: 320 },
-            }}
-          />
-        </Stack>
+      <RoleDetailsDialog
+        open={Boolean(roleDetails)}
+        role={roleDetails}
+        sections={permissionSections}
+        actions={permissionActions}
+        onClose={() => setRoleDetails(null)}
+      />
 
-        <ModuleListTable
-          headerRows={tableSchema.headerRows}
-          columns={columns}
-          rows={roles}
-          getRowId={(role) => role.id}
-          loading={loading}
-          loadingLabel={t('pages.modules.roles.loading')}
-          emptyLabel={t('pages.modules.roles.empty')}
-          sort={sort}
-          direction={direction}
-          onSort={handleSort}
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          onPageChange={handleChangePage}
-          onPageSizeChange={handleChangeRowsPerPage}
-          rowsPerPageLabel={t('pages.modules.common.rowsPerPage')}
-          fixedStartColumnIds={['name']}
-        />
-
-        <RoleFormDialog
-          open={dialogOpen}
-          mode={dialogMode}
-          role={selectedRole}
-          sections={permissionSections}
-          actions={permissionActions}
-          submitting={submitting}
-          onClose={handleCloseDialog}
-          onSubmit={(values) => {
-            void handleSubmitRole(values);
-          }}
-        />
-
-        <DeleteRoleDialog
-          open={Boolean(rolePendingDelete)}
-          roleName={rolePendingDelete?.name ?? ''}
-          deleting={deleting}
-          onClose={() => {
-            if (deleting) return;
-            setRolePendingDelete(null);
-          }}
-          onConfirm={() => {
-            void handleConfirmDelete();
-          }}
-        />
-      </Box>
+      <ConfirmDialog
+        open={Boolean(rolePendingDelete)}
+        title={t('pages.modules.roles.dialogs.deleteTitle')}
+        message={t('pages.modules.roles.dialogs.deleteMessage', {
+          name: rolePendingDelete?.name ?? '',
+        })}
+        confirmLabel={t('form.common.delete')}
+        cancelLabel={t('form.field.cancel')}
+        confirming={deleting}
+        confirmColor="error"
+        onClose={() => {
+          if (deleting) return;
+          setRolePendingDelete(null);
+        }}
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
+      />
     </ModuleSection>
   );
 };

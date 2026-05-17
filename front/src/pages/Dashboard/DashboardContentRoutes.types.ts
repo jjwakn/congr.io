@@ -1,13 +1,11 @@
-import type { DashboardModuleView } from '@pages/Modules';
+import type { DashboardModuleView } from '@pages/Modules/modules.types';
 
 export interface DashboardContentRoutesProps {
   availableModules: DashboardModuleView[];
   homeTitle: string;
   homeSubtitle: string;
   settingsTitle: string;
-  settingsSubtitle: string;
   loadingLabel: string;
-  noModulesLabel: string;
   moduleNotFoundLabel: string;
   settingsPath: string;
 }

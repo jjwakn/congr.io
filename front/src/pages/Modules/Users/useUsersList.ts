@@ -1,14 +1,14 @@
 import { useModuleList } from '@components/common/modules/useModuleList';
-import { RolesService } from '@services/roles';
+import { UsersService } from '@services/users';
 import { HttpRequestError, httpRequest } from '@utils/http';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Role } from '@/types/role.types';
-import type { RoleSort, RolesListResponse, UseRolesListProps, UseRolesListResult } from './roles.types';
+import type { User } from '@/types/user.types';
+import type { UseUsersListProps, UseUsersListResult, UserSort, UsersListResponse } from './users.types';
 
-export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRolesListResult => {
+export const useUsersList = ({ enabled = true }: UseUsersListProps = {}): UseUsersListResult => {
   const { t } = useTranslation();
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,13 +25,13 @@ export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRol
     handleChangePage,
     handleChangeRowsPerPage,
   } = useModuleList({
-    moduleKey: 'roles-list',
+    moduleKey: 'users-list',
     defaultSort: 'name',
   });
 
   const refresh = useCallback(async () => {
     if (!enabled) {
-      setRoles([]);
+      setUsers([]);
       setTotal(0);
       setError('');
       setLoading(false);
@@ -43,8 +43,8 @@ export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRol
 
     try {
       const normalizedSearch = search.trim();
-      const response = await httpRequest<RolesListResponse>({
-        service: RolesService.list,
+      const response = await httpRequest<UsersListResponse>({
+        service: UsersService.list,
         data: {
           page,
           size: pageSize,
@@ -53,13 +53,14 @@ export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRol
           ...(normalizedSearch ? { search: normalizedSearch } : {}),
         },
       });
-      setRoles(response.result ?? []);
+
+      setUsers(response.result ?? []);
       setTotal(response.total ?? 0);
     } catch (value) {
       const message =
         value instanceof HttpRequestError || value instanceof Error
           ? value.message
-          : t('pages.modules.roles.error.loadFailed');
+          : t('pages.modules.users.error.loadFailed');
       setError(message);
     } finally {
       setLoading(false);
@@ -68,7 +69,7 @@ export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRol
 
   useEffect(() => {
     if (!enabled) {
-      setRoles([]);
+      setUsers([]);
       setTotal(0);
       setError('');
       setLoading(false);
@@ -86,14 +87,14 @@ export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRol
   }, [page, pageSize, setPage, total]);
 
   return {
-    roles,
+    users,
     total,
     loading,
     error,
     refresh,
     search,
     setSearch,
-    sort: sort as RoleSort,
+    sort: sort as UserSort,
     direction,
     page,
     pageSize,

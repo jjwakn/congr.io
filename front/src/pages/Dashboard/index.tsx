@@ -5,7 +5,8 @@ import { Box } from '@mui/material';
 import { DashboardContentRoutes } from '@pages/Dashboard/DashboardContentRoutes';
 import { DashboardHeader } from '@pages/Dashboard/DashboardHeader';
 import { DashboardNavigationDrawer } from '@pages/Dashboard/DashboardNavigationDrawer';
-import type { DashboardModuleView } from '@pages/Modules';
+import type { DashboardModuleView } from '@pages/Modules/modules.types';
+import { canRenderModuleRoute } from '@pages/Modules/routes';
 import { createModuleNavigationItem, createSettingsNavigationItem } from '@utils/dashboard';
 import {
   getHomePath,
@@ -38,48 +39,47 @@ const Dashboard = () => {
     return byId;
   }, [features]);
 
-  const congregationType = congregation?.type ?? '';
-  const rolesModuleView = useMemo<DashboardModuleView>(
-    () => ({
-      id: 'roles',
-      title: t('pages.modules.roles.title'),
-      description: t('pages.modules.roles.description'),
-    }),
-    [t],
-  );
   const availableModules = useMemo<DashboardModuleView[]>(() => {
     const moduleIds = congregation?.features ?? [];
     const modules = moduleIds.map((moduleId) => {
       const feature = featureById.get(moduleId);
-      const title = feature?.title ?? moduleId;
-      const description = (feature?.description ?? '').replace('{type}', congregationType);
 
       return {
         id: moduleId,
-        title,
-        description,
+        title: feature?.title ?? moduleId,
+        path: getModulePath(moduleId, i18n.language),
       };
     });
 
-    if (moduleIds.includes('users') && hasPermission('role', 'get')) modules.push(rolesModuleView);
+    if (moduleIds.includes('users') && hasPermission('role', 'get')) {
+      modules.push({
+        id: 'roles',
+        title: t('pages.modules.roles.title'),
+        path: getModulePath('roles', i18n.language),
+      });
+    }
 
     return modules.sort((left, right) =>
       left.title.localeCompare(right.title, i18n.language, {
         sensitivity: 'base',
       }),
     );
-  }, [congregation?.features, congregationType, featureById, hasPermission, i18n.language, rolesModuleView]);
+  }, [congregation?.features, featureById, hasPermission, i18n.language, t]);
+  const renderableModules = useMemo(
+    () => availableModules.filter((module) => canRenderModuleRoute(module.id)),
+    [availableModules],
+  );
   const settingsPath = useMemo(() => getSettingsPath(i18n.language), [i18n.language]);
 
   const pathname = location.pathname;
 
   const navigationItems = useMemo(
     () => [
-      ...availableModules.map((module) =>
+      ...renderableModules.map((module) =>
         createModuleNavigationItem({
           moduleId: module.id,
           label: module.title,
-          language: i18n.language,
+          path: module.path,
         }),
       ),
       createSettingsNavigationItem({
@@ -87,7 +87,7 @@ const Dashboard = () => {
         language: i18n.language,
       }),
     ],
-    [availableModules, i18n.language, t],
+    [i18n.language, renderableModules, t],
   );
 
   const selectedPath = getLocalizedPathname(pathname, i18n.language);
@@ -119,10 +119,12 @@ const Dashboard = () => {
     if (isSettingsPath(pathname)) return;
 
     const routeModuleId = getModuleIdFromPath(pathname);
-    const isValidRoute = routeModuleId ? availableModules.some((module) => module.id === routeModuleId) : false;
+    const matchedModule = routeModuleId
+      ? (renderableModules.find((module) => module.id === routeModuleId) ?? null)
+      : null;
 
-    if (isValidRoute && routeModuleId) {
-      const localizedPath = getModulePath(routeModuleId, i18n.language);
+    if (matchedModule) {
+      const localizedPath = matchedModule.path;
       if (pathname === localizedPath) return;
 
       navigate(localizedPath, { replace: true });
@@ -133,7 +135,7 @@ const Dashboard = () => {
     if (pathname === fallbackPath) return;
 
     navigate(fallbackPath, { replace: true });
-  }, [availableModules, i18n.language, navigate, pathname]);
+  }, [i18n.language, navigate, pathname, renderableModules]);
 
   return (
     <Box
@@ -168,13 +170,11 @@ const Dashboard = () => {
         />
 
         <DashboardContentRoutes
-          availableModules={availableModules}
+          availableModules={renderableModules}
           homeTitle={t('pages.dashboard.welcomeTitle')}
           homeSubtitle={t('pages.dashboard.successMessage')}
           settingsTitle={t('pages.settings.title')}
-          settingsSubtitle={t('pages.settings.subtitle')}
           loadingLabel={t('pages.dashboard.loading')}
-          noModulesLabel={t('pages.dashboard.noModules')}
           moduleNotFoundLabel={t('pages.dashboard.moduleNotFound')}
           settingsPath={settingsPath}
         />

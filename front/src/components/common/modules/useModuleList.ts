@@ -66,7 +66,7 @@ export const useModuleList = ({
   moduleKey,
   defaultSort,
   defaultDirection = 'ASC',
-  defaultPageSize = 10,
+  defaultPageSize = 50,
 }: UseModuleListProps): UseModuleListState => {
   const [direction, setDirection] = useState<ListDirection>(
     () =>

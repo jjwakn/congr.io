@@ -9,7 +9,7 @@ import HowToRegOutlinedIcon from '@mui/icons-material/HowToRegOutlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { type ReactNode, createElement } from 'react';
-import { getModulePath, getSettingsPath } from './routes';
+import { getSettingsPath } from './routes';
 
 export interface DashboardNavigationItem {
   id: string;
@@ -26,7 +26,7 @@ interface CreateSettingsNavigationItemProps {
 interface CreateModuleNavigationItemProps {
   moduleId: string;
   label: string;
-  language?: string;
+  path: string;
 }
 
 export const getModuleIcon = (moduleId: string): DashboardNavigationItem['icon'] => {
@@ -65,10 +65,10 @@ export const createSettingsNavigationItem = ({
 export const createModuleNavigationItem = ({
   moduleId,
   label,
-  language,
+  path,
 }: CreateModuleNavigationItemProps): DashboardNavigationItem => ({
   id: moduleId,
   label,
   icon: getModuleIcon(moduleId),
-  path: getModulePath(moduleId, language),
+  path,
 });
