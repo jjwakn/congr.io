@@ -66,13 +66,15 @@ const createRoleTableSchema = (
   const permissionColumns: RolePermissionColumn[] = [];
 
   sections.forEach((section) => {
-    actions.forEach((action) => {
-      permissionColumns.push({
-        id: `${section.id}-${action}`,
-        sectionId: section.id,
-        action,
+    actions
+      .filter((action) => section.permissions.includes(action))
+      .forEach((action) => {
+        permissionColumns.push({
+          id: `${section.id}-${action}`,
+          sectionId: section.id,
+          action,
+        });
       });
-    });
   });
 
   return {
@@ -96,7 +98,7 @@ const createRoleTableSchema = (
             defaultValue: section.id,
           }),
           align: 'center' as const,
-          colSpan: actions.length,
+          colSpan: actions.filter((action) => section.permissions.includes(action)).length,
         })),
         {
           id: 'actions',

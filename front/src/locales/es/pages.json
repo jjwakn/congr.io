@@ -26,7 +26,10 @@
         "create": "Crear usuario",
         "edit": "Editar",
         "delete": "Eliminar",
-        "save": "Guardar cambios"
+        "save": "Guardar cambios",
+        "changeOwnPassword": "Cambiar contraseña",
+        "setTemporaryPassword": "Asignar contraseña temporal",
+        "savePassword": "Guardar contraseña"
       },
       "columns": {
         "name": "Nombre",
@@ -50,13 +53,18 @@
         "createTitle": "Crear usuario",
         "editTitle": "Editar usuario",
         "viewTitle": "Detalles del usuario",
+        "changeOwnPasswordTitle": "Cambiar contraseña",
+        "setTemporaryPasswordTitle": "Asignar contraseña temporal a {{name}}",
+        "requiredPasswordTitle": "Cambiar contraseña temporal",
         "deleteTitle": "Eliminar usuario",
         "deleteMessage": "¿Seguro que deseas eliminar {{name}}?"
       },
       "success": {
         "created": "El usuario se creó correctamente.",
         "updated": "El usuario se actualizó correctamente.",
-        "deleted": "El usuario se eliminó correctamente."
+        "deleted": "El usuario se eliminó correctamente.",
+        "passwordUpdated": "La contraseña se actualizó correctamente.",
+        "temporaryPasswordSet": "La contraseña temporal se asignó correctamente."
       },
       "error": {
         "accessDenied": "No tienes permiso para administrar usuarios.",
@@ -64,7 +72,10 @@
         "rolesLoadFailed": "No se pudieron cargar los roles.",
         "loadUserFailed": "No se pudo cargar el usuario seleccionado.",
         "saveFailed": "No se pudo guardar el usuario.",
-        "deleteFailed": "No se pudo eliminar el usuario."
+        "deleteFailed": "No se pudo eliminar el usuario.",
+        "changePasswordFailed": "No se pudo cambiar la contraseña.",
+        "passwordsDoNotMatch": "Las contraseñas no coinciden.",
+        "newPasswordMustBeDifferent": "La nueva contraseña debe ser diferente de la contraseña actual."
       }
     },
     "roles": {
@@ -85,7 +96,8 @@
         "get": "Ver",
         "create": "Crear",
         "update": "Actualizar",
-        "delete": "Eliminar"
+        "delete": "Eliminar",
+        "change_password": "Cambiar contraseña"
       },
       "form": {
         "fullAccess": "Acceso total",

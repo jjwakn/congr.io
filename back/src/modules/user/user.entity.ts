@@ -26,6 +26,9 @@ export class User extends CommonEntity {
   @Column({ type: 'timestamp', nullable: true })
   locked_at?: Date | null;
 
+  @Column({ nullable: false, default: false })
+  password_change_required: boolean;
+
   @ManyToMany(() => Role, { onDelete: 'NO ACTION', onUpdate: 'NO ACTION' })
   @JoinTable({
     name: 'user_role',

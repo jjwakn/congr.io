@@ -1,5 +1,16 @@
 {
   "notFound": "Usuario no encontrado",
   "usernameExists": "Usuario ya existe",
-  "usernameExistsWithValue": "Usuario ya existe: {{username}}"
+  "usernameExistsWithValue": "Usuario ya existe: {{username}}",
+  "selfUpdateRestricted": "Solo puedes actualizar tu propio nombre desde esta pantalla.",
+  "cannotDeleteSelf": "No puedes eliminar tu propia cuenta de usuario.",
+  "usePasswordAction": "Usa la acción de contraseña para cambiar la contraseña de un usuario.",
+  "cannotSetTemporaryPasswordForSelf": "Usa tu propio formulario de cambio de contraseña para actualizar tu contraseña.",
+  "currentPasswordInvalid": "La contraseña actual es incorrecta.",
+  "passwordChangeNotRequired": "No se requiere un cambio de contraseña para este usuario.",
+  "newPasswordMustBeDifferent": "La nueva contraseña debe ser diferente de la contraseña actual.",
+  "currentPasswordRequired": "La contraseña actual es requerida.",
+  "passwordRequired": "La contraseña es requerida.",
+  "passwordConfirmationRequired": "La confirmación de contraseña es requerida.",
+  "passwordConfirmationMismatch": "La confirmación de contraseña no coincide."
 }

@@ -1,3 +1,5 @@
+import { PasswordChangeDialog } from '@components/auth/PasswordChangeDialog';
+import type { PasswordChangeValues } from '@components/auth/PasswordChangeDialog.types';
 import { ConfirmDialog } from '@components/common/forms/ConfirmDialog';
 import { CrudPermissionStatus } from '@components/common/modules/CrudPermissionStatus';
 import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
@@ -9,6 +11,7 @@ import { useNotificationContext } from '@hooks/useNotifications';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 import { Alert } from '@mui/material';
 import { RolesService } from '@services/roles';
 import { UsersService } from '@services/users';
@@ -39,11 +42,12 @@ export const UsersManagement = () => {
   const { t } = useTranslation();
   const { showNotification } = useNotificationContext();
   const { congregation } = useAppContext();
-  const { hasPermission } = useAuth();
+  const { user: authUser, hasPermission, refreshSession } = useAuth();
   const canView = hasPermission('user', 'get');
   const canCreate = hasPermission('user', 'create');
   const canUpdate = hasPermission('user', 'update');
   const canDelete = hasPermission('user', 'delete');
+  const canChangePassword = hasPermission('user', 'change_password');
 
   const {
     users,
@@ -73,6 +77,8 @@ export const UsersManagement = () => {
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
   const [userPendingDelete, setUserPendingDelete] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [passwordUser, setPasswordUser] = useState<User | null>(null);
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
 
   const congregationOptions = useMemo<Congregation[]>(() => (congregation ? [congregation] : []), [congregation]);
   const locationOptions = useMemo<Location[]>(() => congregation?.locations ?? [], [congregation?.locations]);
@@ -93,6 +99,11 @@ export const UsersManagement = () => {
       locations: mergeById(metadata.locations, selectedUser?.locations),
     }),
     [metadata, selectedUser],
+  );
+
+  const isCurrentUser = useCallback(
+    (value: User | null | undefined) => Boolean(authUser?.id && value?.id === authUser.id),
+    [authUser?.id],
   );
 
   const refreshMetadata = useCallback(async () => {
@@ -221,15 +232,22 @@ export const UsersManagement = () => {
         } else if (selectedUser) {
           await httpRequest<User>({
             service: UsersService.update,
-            data: {
-              id: selectedUser.id,
-              ...values,
-            },
+            data: isCurrentUser(selectedUser)
+              ? {
+                  id: selectedUser.id,
+                  name: values.name,
+                }
+              : {
+                  id: selectedUser.id,
+                  ...values,
+                },
           });
 
           showNotification(t('pages.modules.users.success.updated'), {
             severity: 'success',
           });
+
+          if (isCurrentUser(selectedUser)) await refreshSession();
         }
 
         setDialogOpen(false);
@@ -243,7 +261,57 @@ export const UsersManagement = () => {
         setSubmitting(false);
       }
     },
-    [dialogMode, refresh, selectedUser, showNotification, t],
+    [dialogMode, isCurrentUser, refresh, refreshSession, selectedUser, showNotification, t],
+  );
+
+  const handleClosePasswordDialog = () => {
+    if (passwordSubmitting) return;
+
+    setPasswordUser(null);
+  };
+
+  const handleSubmitPassword = useCallback(
+    async (values: PasswordChangeValues) => {
+      if (!passwordUser) return;
+
+      const isOwnPassword = isCurrentUser(passwordUser);
+      setPasswordSubmitting(true);
+
+      try {
+        await httpRequest<User>({
+          service: isOwnPassword ? UsersService.changeOwnPassword : UsersService.setTemporaryPassword,
+          data: isOwnPassword
+            ? values
+            : {
+                id: passwordUser.id,
+                password: values.password,
+                password_confirmation: values.password_confirmation,
+              },
+        });
+
+        showNotification(
+          t(
+            isOwnPassword
+              ? 'pages.modules.users.success.passwordUpdated'
+              : 'pages.modules.users.success.temporaryPasswordSet',
+          ),
+          {
+            severity: 'success',
+          },
+        );
+
+        setPasswordUser(null);
+        if (isOwnPassword) await refreshSession();
+        await refresh();
+      } catch (value) {
+        showNotification(getErrorMessage(value, t('pages.modules.users.error.changePasswordFailed')), {
+          severity: 'error',
+        });
+      } finally {
+        setPasswordSubmitting(false);
+      }
+    },
+    [isCurrentUser, passwordUser, refresh, refreshSession, showNotification, t],
   );
 
   const handleConfirmDelete = useCallback(async () => {
@@ -293,7 +361,7 @@ export const UsersManagement = () => {
       },
       {
         id: 'actions',
-        minWidth: 148,
+        minWidth: 188,
         align: 'right',
         render: (user) => (
           <ModuleRowActions
@@ -316,10 +384,22 @@ export const UsersManagement = () => {
                 color: 'secondary',
                 hidden: !canUpdate,
                 disabled: (currentUser) =>
-                  loadingUserId === currentUser.id || submitting || deleting || metadataLoading,
+                  loadingUserId === currentUser.id || submitting || deleting || passwordSubmitting || metadataLoading,
                 onClick: (currentUser) => {
                   void handleOpenEdit(currentUser.id);
                 },
+              },
+              {
+                id: 'change-user-password',
+                label: isCurrentUser(user)
+                  ? t('pages.modules.users.actions.changeOwnPassword')
+                  : t('pages.modules.users.actions.setTemporaryPassword'),
+                icon: VpnKeyOutlinedIcon,
+                color: 'default',
+                hidden: (currentUser) => !isCurrentUser(currentUser) && !canChangePassword,
+                disabled: (currentUser) =>
+                  loadingUserId === currentUser.id || submitting || deleting || passwordSubmitting,
+                onClick: (currentUser) => setPasswordUser(currentUser),
               },
               {
                 id: 'delete-user',
@@ -327,7 +407,12 @@ export const UsersManagement = () => {
                 icon: DeleteOutlineRoundedIcon,
                 color: 'error',
                 hidden: !canDelete,
-                disabled: (currentUser) => loadingUserId === currentUser.id || submitting || deleting,
+                disabled: (currentUser) =>
+                  isCurrentUser(currentUser) ||
+                  loadingUserId === currentUser.id ||
+                  submitting ||
+                  deleting ||
+                  passwordSubmitting,
                 onClick: (currentUser) => setUserPendingDelete(currentUser),
               },
             ]}
@@ -335,7 +420,20 @@ export const UsersManagement = () => {
         ),
       },
     ],
-    [canDelete, canUpdate, deleting, handleOpenDetails, handleOpenEdit, loadingUserId, metadataLoading, submitting, t],
+    [
+      canChangePassword,
+      canDelete,
+      canUpdate,
+      deleting,
+      handleOpenDetails,
+      handleOpenEdit,
+      isCurrentUser,
+      loadingUserId,
+      metadataLoading,
+      passwordSubmitting,
+      submitting,
+      t,
+    ],
   );
 
   if (!canView) {
@@ -425,6 +523,7 @@ export const UsersManagement = () => {
         user={selectedUser}
         metadata={dialogMetadata}
         submitting={submitting}
+        isSelfEdit={isCurrentUser(selectedUser)}
         onClose={handleCloseDialog}
         onSubmit={(values) => {
           void handleSubmitUser(values);
@@ -434,9 +533,18 @@ export const UsersManagement = () => {
       <UserDetailsDialog
         open={Boolean(userDetails)}
         user={userDetails}
-        editDisabled={submitting || deleting || metadataLoading}
+        editDisabled={submitting || deleting || passwordSubmitting || metadataLoading}
         onClose={() => setUserDetails(null)}
         onEdit={canUpdate ? handleEditUserDetails : undefined}
+      />
+
+      <PasswordChangeDialog
+        open={Boolean(passwordUser)}
+        variant={isCurrentUser(passwordUser) ? 'own' : 'temporary'}
+        userName={passwordUser?.name}
+        submitting={passwordSubmitting}
+        onClose={handleClosePasswordDialog}
+        onSubmit={handleSubmitPassword}
       />
 
       <ConfirmDialog

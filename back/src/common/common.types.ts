@@ -66,11 +66,6 @@ export interface FindWithFiltersProps<Entity extends ObjectLiteral, Query extend
   baseWhere?: FindOptionsWhere<Entity>;
 }
 
-export interface CaseInsensitiveWhereProps {
-  alias: string;
-  search: string;
-}
-
 export interface EntityActionProps {
   userId: string;
 }

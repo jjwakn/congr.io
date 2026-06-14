@@ -73,7 +73,7 @@ generated_roles AS (
               COALESCE(
                 (
                   SELECT array_agg(action)
-                  FROM unnest(ARRAY['get', 'create', 'update', 'delete']::text[]) AS action
+                  FROM unnest(ARRAY['get', 'create', 'update', 'delete', 'change_password']::text[]) AS action
                   WHERE random() > 0.45
                 ),
                 ARRAY['get']::text[]

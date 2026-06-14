@@ -37,13 +37,13 @@ export type UserDialogMode = CreateEditDialogMode;
 
 export interface UserFormValues {
   [key: string]: string | boolean | string[] | undefined;
-  username: string;
+  username?: string;
   password?: string;
   name: string;
-  enabled: boolean;
-  roles_ids: string[];
-  congregations_ids: string[];
-  locations_ids: string[];
+  enabled?: boolean;
+  roles_ids?: string[];
+  congregations_ids?: string[];
+  locations_ids?: string[];
 }
 
 export interface UserMetadata {
@@ -58,6 +58,7 @@ export interface UserFormDialogProps {
   user: User | null;
   metadata: UserMetadata;
   submitting: boolean;
+  isSelfEdit?: boolean;
   onClose: () => void;
   onSubmit: (values: UserFormValues) => void;
 }

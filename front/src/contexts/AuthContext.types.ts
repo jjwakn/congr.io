@@ -14,6 +14,7 @@ export interface AuthContextType {
   isSessionLoading: boolean;
   isLoading: boolean;
   hasPermission: (section: string, action: PermissionAction) => boolean;
+  refreshSession: () => Promise<void>;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
 }

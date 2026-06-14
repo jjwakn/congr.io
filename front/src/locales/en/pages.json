@@ -26,7 +26,10 @@
         "create": "Create user",
         "edit": "Edit",
         "delete": "Delete",
-        "save": "Save changes"
+        "save": "Save changes",
+        "changeOwnPassword": "Change password",
+        "setTemporaryPassword": "Set temporary password",
+        "savePassword": "Save password"
       },
       "columns": {
         "name": "Name",
@@ -50,13 +53,18 @@
         "createTitle": "Create user",
         "editTitle": "Edit user",
         "viewTitle": "User details",
+        "changeOwnPasswordTitle": "Change password",
+        "setTemporaryPasswordTitle": "Set temporary password for {{name}}",
+        "requiredPasswordTitle": "Change temporary password",
         "deleteTitle": "Delete user",
         "deleteMessage": "Are you sure you want to delete {{name}}?"
       },
       "success": {
         "created": "User created successfully.",
         "updated": "User updated successfully.",
-        "deleted": "User deleted successfully."
+        "deleted": "User deleted successfully.",
+        "passwordUpdated": "Password updated successfully.",
+        "temporaryPasswordSet": "Temporary password set successfully."
       },
       "error": {
         "accessDenied": "You do not have permission to manage users.",
@@ -64,7 +72,10 @@
         "rolesLoadFailed": "Could not load roles.",
         "loadUserFailed": "Could not load the selected user.",
         "saveFailed": "Could not save the user.",
-        "deleteFailed": "Could not delete the user."
+        "deleteFailed": "Could not delete the user.",
+        "changePasswordFailed": "Could not change the password.",
+        "passwordsDoNotMatch": "Passwords do not match.",
+        "newPasswordMustBeDifferent": "The new password must be different from the current password."
       }
     },
     "roles": {
@@ -85,7 +96,8 @@
         "get": "Read",
         "create": "Create",
         "update": "Update",
-        "delete": "Delete"
+        "delete": "Delete",
+        "change_password": "Change password"
       },
       "form": {
         "fullAccess": "Full access",

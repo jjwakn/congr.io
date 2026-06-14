@@ -13,7 +13,16 @@ const mapOptions = <Entity extends { id: string; name: string }>(values: Entity[
 
 const getRelationIds = <Entity extends { id: string }>(values?: Entity[]) => values?.map((value) => value.id) ?? [];
 
-export const UserFormDialog = ({ open, mode, user, metadata, submitting, onClose, onSubmit }: UserFormDialogProps) => {
+export const UserFormDialog = ({
+  open,
+  mode,
+  user,
+  metadata,
+  submitting,
+  isSelfEdit = false,
+  onClose,
+  onSubmit,
+}: UserFormDialogProps) => {
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -29,6 +38,8 @@ export const UserFormDialog = ({ open, mode, user, metadata, submitting, onClose
   const roleOptions = useMemo(() => mapOptions(metadata.roles), [metadata.roles]);
   const congregationOptions = useMemo(() => mapOptions(metadata.congregations), [metadata.congregations]);
   const locationOptions = useMemo(() => mapOptions(metadata.locations), [metadata.locations]);
+  const showPasswordField = mode === 'create';
+  const showAccessFields = !isSelfEdit;
 
   const resetState = useCallback(() => {
     setUsername(user?.username ?? '');
@@ -54,12 +65,12 @@ export const UserFormDialog = ({ open, mode, user, metadata, submitting, onClose
     const normalizedName = name.trim();
     let hasError = false;
 
-    if (!normalizedUsername) {
+    if (showAccessFields && !normalizedUsername) {
       setUsernameError(`${t('form.field.username')} ${t('form.error.isRequired')}`);
       hasError = true;
     }
 
-    if (mode === 'create' && !normalizedPassword) {
+    if (showPasswordField && !normalizedPassword) {
       setPasswordError(`${t('form.field.password')} ${t('form.error.isRequired')}`);
       hasError = true;
     }
@@ -71,9 +82,16 @@ export const UserFormDialog = ({ open, mode, user, metadata, submitting, onClose
 
     if (hasError) return;
 
+    if (isSelfEdit) {
+      onSubmit({
+        name: normalizedName,
+      });
+      return;
+    }
+
     onSubmit({
       username: normalizedUsername,
-      ...(normalizedPassword ? { password: normalizedPassword } : {}),
+      ...(showPasswordField ? { password: normalizedPassword } : {}),
       name: normalizedName,
       enabled,
       roles_ids: roleIds,
@@ -111,21 +129,24 @@ export const UserFormDialog = ({ open, mode, user, metadata, submitting, onClose
           gap: 2,
         }}
       >
-        <TextField
-          autoFocus
-          fullWidth
-          label={t('form.field.username')}
-          value={username}
-          onChange={(event) => {
-            setUsername(event.target.value);
-            if (usernameError) setUsernameError('');
-          }}
-          error={Boolean(usernameError)}
-          helperText={usernameError}
-          disabled={submitting}
-        />
+        {showAccessFields ? (
+          <TextField
+            autoFocus
+            fullWidth
+            label={t('form.field.username')}
+            value={username}
+            onChange={(event) => {
+              setUsername(event.target.value);
+              if (usernameError) setUsernameError('');
+            }}
+            error={Boolean(usernameError)}
+            helperText={usernameError}
+            disabled={submitting}
+          />
+        ) : null}
 
         <TextField
+          autoFocus={!showAccessFields}
           fullWidth
           label={t('form.field.name')}
           value={name}
@@ -138,60 +159,72 @@ export const UserFormDialog = ({ open, mode, user, metadata, submitting, onClose
           disabled={submitting}
         />
 
-        <TextField
-          fullWidth
-          type="password"
-          label={t('form.field.password')}
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value);
-            if (passwordError) setPasswordError('');
-          }}
-          error={Boolean(passwordError)}
-          helperText={passwordError || (mode === 'edit' ? t('pages.modules.users.form.passwordHint') : undefined)}
-          disabled={submitting}
-        />
-
-        <Box>
-          <FormControlLabel
-            control={
-              <Switch checked={enabled} disabled={submitting} onChange={(event) => setEnabled(event.target.checked)} />
-            }
-            label={t('pages.modules.users.form.enabled')}
+        {showPasswordField ? (
+          <TextField
+            fullWidth
+            type="password"
+            label={t('form.field.password')}
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              if (passwordError) setPasswordError('');
+            }}
+            error={Boolean(passwordError)}
+            helperText={passwordError}
+            disabled={submitting}
           />
-          <Typography variant="body2" color="text.secondary">
-            {t('pages.modules.users.form.enabledHint')}
-          </Typography>
-        </Box>
+        ) : null}
+
+        {showAccessFields ? (
+          <Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={enabled}
+                  disabled={submitting}
+                  onChange={(event) => setEnabled(event.target.checked)}
+                />
+              }
+              label={t('pages.modules.users.form.enabled')}
+            />
+            <Typography variant="body2" color="text.secondary">
+              {t('pages.modules.users.form.enabledHint')}
+            </Typography>
+          </Box>
+        ) : null}
       </Box>
 
-      <UserRelationSelect
-        label={t('pages.modules.users.form.roles')}
-        options={roleOptions}
-        value={roleIds}
-        disabled={submitting}
-        emptyText={t('pages.modules.users.form.noRoles')}
-        onChange={setRoleIds}
-      />
+      {showAccessFields ? (
+        <>
+          <UserRelationSelect
+            label={t('pages.modules.users.form.roles')}
+            options={roleOptions}
+            value={roleIds}
+            disabled={submitting}
+            emptyText={t('pages.modules.users.form.noRoles')}
+            onChange={setRoleIds}
+          />
 
-      <UserRelationSelect
-        label={t('pages.modules.users.form.congregations')}
-        options={congregationOptions}
-        value={congregationIds}
-        disabled={submitting}
-        emptyText={t('pages.modules.users.form.noCongregations')}
-        onChange={setCongregationIds}
-      />
+          <UserRelationSelect
+            label={t('pages.modules.users.form.congregations')}
+            options={congregationOptions}
+            value={congregationIds}
+            disabled={submitting}
+            emptyText={t('pages.modules.users.form.noCongregations')}
+            onChange={setCongregationIds}
+          />
 
-      <UserRelationSelect
-        label={t('pages.modules.users.form.locations')}
-        options={locationOptions}
-        value={locationIds}
-        disabled={submitting}
-        emptyText={t('pages.modules.users.form.noLocations')}
-        helperText={t('pages.modules.users.form.locationsHint')}
-        onChange={setLocationIds}
-      />
+          <UserRelationSelect
+            label={t('pages.modules.users.form.locations')}
+            options={locationOptions}
+            value={locationIds}
+            disabled={submitting}
+            emptyText={t('pages.modules.users.form.noLocations')}
+            helperText={t('pages.modules.users.form.locationsHint')}
+            onChange={setLocationIds}
+          />
+        </>
+      ) : null}
     </CreateEditDialog>
   );
 };

@@ -6,12 +6,73 @@ import type { PermissionAction, PermissionMap } from '@/types/permission.types';
 import { PermissionsMatrix } from './PermissionsMatrix';
 import { RoleFormDialogProps } from './roles.types';
 
-const togglePermission = (permissions: PermissionMap, sectionId: string, action: PermissionAction): PermissionMap => {
+const REQUIRED_PERMISSION_ACTIONS: Partial<Record<PermissionAction, PermissionAction[]>> = {
+  create: ['get'],
+  update: ['get'],
+  delete: ['update', 'get', 'create'],
+  change_password: ['get'],
+};
+
+const getRequiredActions = (action: PermissionAction, supportedActions: PermissionAction[]) => {
+  const requiredActions = new Set<PermissionAction>();
+
+  const visitAction = (currentAction: PermissionAction) => {
+    (REQUIRED_PERMISSION_ACTIONS[currentAction] ?? []).forEach((requiredAction) => {
+      if (!supportedActions.includes(requiredAction) || requiredActions.has(requiredAction)) return;
+
+      requiredActions.add(requiredAction);
+      visitAction(requiredAction);
+    });
+  };
+
+  visitAction(action);
+
+  return supportedActions.filter((supportedAction) => requiredActions.has(supportedAction));
+};
+
+const getDependentActions = (action: PermissionAction, supportedActions: PermissionAction[]) =>
+  supportedActions.filter(
+    (supportedAction) =>
+      supportedAction !== action && getRequiredActions(supportedAction, supportedActions).includes(action),
+  );
+
+const normalizeSectionActions = (actions: PermissionAction[], supportedActions: PermissionAction[]) => {
+  const normalizedActions = new Set(actions.filter((action) => supportedActions.includes(action)));
+
+  normalizedActions.forEach((action) => {
+    getRequiredActions(action, supportedActions).forEach((requiredAction) => normalizedActions.add(requiredAction));
+  });
+
+  return supportedActions.filter((action) => normalizedActions.has(action));
+};
+
+const normalizePermissions = (permissions: PermissionMap, sections: RoleFormDialogProps['sections']): PermissionMap =>
+  sections.reduce<PermissionMap>((normalizedPermissions, section) => {
+    const normalizedActions = normalizeSectionActions(permissions[section.id] ?? [], section.permissions);
+
+    if (normalizedActions.length) normalizedPermissions[section.id] = normalizedActions;
+
+    return normalizedPermissions;
+  }, {});
+
+const togglePermission = (
+  permissions: PermissionMap,
+  sectionId: string,
+  action: PermissionAction,
+  supportedActions: PermissionAction[],
+): PermissionMap => {
   const nextPermissions = { ...permissions };
-  const currentActions = nextPermissions[sectionId] ?? [];
-  const nextActions = currentActions.includes(action)
-    ? currentActions.filter((value) => value !== action)
-    : [...currentActions, action];
+  const currentActions = new Set(nextPermissions[sectionId]?.filter((value) => supportedActions.includes(value)) ?? []);
+
+  if (currentActions.has(action)) {
+    currentActions.delete(action);
+    getDependentActions(action, supportedActions).forEach((dependentAction) => currentActions.delete(dependentAction));
+  } else {
+    currentActions.add(action);
+    getRequiredActions(action, supportedActions).forEach((requiredAction) => currentActions.add(requiredAction));
+  }
+
+  const nextActions = supportedActions.filter((value) => currentActions.has(value));
 
   if (nextActions.length) nextPermissions[sectionId] = nextActions;
   else delete nextPermissions[sectionId];
@@ -38,9 +99,9 @@ export const RoleFormDialog = ({
   const resetState = useCallback(() => {
     setName(role?.name ?? '');
     setFullAccess(Boolean(role?.full_access));
-    setPermissions(role?.permissions ?? {});
+    setPermissions(normalizePermissions(role?.permissions ?? {}, sections));
     setNameError('');
-  }, [role]);
+  }, [role, sections]);
 
   const handleClose = () => {
     if (submitting) return;
@@ -58,7 +119,7 @@ export const RoleFormDialog = ({
     onSubmit({
       name: normalizedName,
       full_access: fullAccess,
-      permissions: fullAccess ? {} : permissions,
+      permissions: fullAccess ? {} : normalizePermissions(permissions, sections),
     });
   };
 
@@ -119,7 +180,12 @@ export const RoleFormDialog = ({
         disabled={submitting || fullAccess}
         value={permissions}
         sections={sections}
-        onToggle={(sectionId, action) => setPermissions((current) => togglePermission(current, sectionId, action))}
+        onToggle={(sectionId, action) => {
+          const section = sections.find(({ id }) => id === sectionId);
+          if (!section) return;
+
+          setPermissions((current) => togglePermission(current, sectionId, action, section.permissions));
+        }}
       />
     </CreateEditDialog>
   );

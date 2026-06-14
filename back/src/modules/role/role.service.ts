@@ -1,5 +1,6 @@
 import { I18nService } from 'nestjs-i18n';
 import { DefaultGetData, Direction } from 'src/common/common.types';
+import { ModuleAction } from 'src/utils/constants';
 import { cleanColumns } from 'src/utils/query';
 import { IsNull, Not, Repository } from 'typeorm';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
@@ -8,24 +9,22 @@ import { User } from '../user/user.entity';
 import { Role } from './role.entity';
 import { RoleCreateProps, RoleDeleteProps, RoleQuery, RoleUpdateProps } from './role.types';
 
-const PERMISSION_ACTIONS = ['get', 'create', 'update', 'delete'] as const;
+const PERMISSION_ACTIONS = Object.values(ModuleAction);
 
-const hasRolePermission = (role: Role, sectionId: string, action: (typeof PERMISSION_ACTIONS)[number]): boolean => {
+const hasRolePermission = (role: Role, sectionId: string, action: ModuleAction): boolean => {
   if (role.full_access) return true;
 
   return role.permissions?.[sectionId]?.includes(action) ?? false;
 };
 
-const parsePermissionSort = (
-  order?: string,
-): { sectionId: string; action: (typeof PERMISSION_ACTIONS)[number] } | null => {
+const parsePermissionSort = (order?: string): { sectionId: string; action: ModuleAction } | null => {
   if (!order) return null;
 
   const separatorIndex = order.lastIndexOf('-');
   if (separatorIndex <= 0) return null;
 
   const sectionId = order.slice(0, separatorIndex);
-  const action = order.slice(separatorIndex + 1) as (typeof PERMISSION_ACTIONS)[number];
+  const action = order.slice(separatorIndex + 1) as ModuleAction;
 
   return PERMISSION_ACTIONS.includes(action)
     ? {

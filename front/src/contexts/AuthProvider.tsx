@@ -13,6 +13,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(sessionData?.user ?? null);
   const [auth, setAuth] = useState<AuthPermissions | null>(sessionData?.auth ?? null);
 
+  const refreshSession = useCallback(async () => {
+    const session = await authService.me();
+    setUser(session?.user ?? null);
+    setAuth(session?.auth ?? null);
+  }, []);
+
   useEffect(() => {
     let active = true;
 
@@ -75,6 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isSessionLoading,
         isLoading,
         hasPermission,
+        refreshSession,
         login,
         logout,
       }}

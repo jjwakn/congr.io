@@ -8,6 +8,7 @@ export enum ModuleAction {
   create = 'create',
   update = 'update',
   delete = 'delete',
+  change_password = 'change_password',
 }
 
 export enum Module {
@@ -39,7 +40,7 @@ const CRUD: ModuleAction[] = [ModuleAction.get, ModuleAction.create, ModuleActio
 
 export const permission: PermissionType = {
   user: {
-    permissions: CRUD,
+    permissions: [...CRUD, ModuleAction.change_password],
   },
   role: {
     permissions: CRUD,
