@@ -1,6 +1,6 @@
 {
   "name": "congr.io",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "private": true,
   "license": "Apache-2.0",
   "workspaces": [
@@ -61,6 +61,7 @@
     "**/readdirp/picomatch": "2.3.2",
     "**/tinyglobby/picomatch": "4.0.4",
     "**/qs": "6.15.2",
-    "**/cosmiconfig/yaml": "1.10.3"
+    "**/cosmiconfig/yaml": "1.10.3",
+    "**/shell-quote": "1.8.4"
   }
 }
