@@ -3,6 +3,4 @@ import { ThemeContextType } from './ThemeContext.types';
 
 export type { ThemeContextType };
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(
-  undefined,
-);
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

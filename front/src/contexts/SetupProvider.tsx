@@ -1,16 +1,18 @@
+import { useNotificationContext } from '@hooks/useNotifications';
+import { FeaturesService } from '@services/features';
+import { getBrowserTimeZone } from '@utils/datetime';
+import { httpRequest } from '@utils/http';
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNotificationContext } from '../hooks/useNotifications';
-import { FeaturesService } from '../services/features';
-import { Feature } from '../types/feature.types';
-import { SetupData } from '../types/setup.types';
-import { httpRequest } from '../utils/http';
+import { Feature } from '@/types/feature.types';
+import { SetupData } from '@/types/setup.types';
 import { SetupContext } from './SetupContext';
 
 const initialSetupData: SetupData = {
   congregation: {
     name: '',
     type: '',
+    timezone: getBrowserTimeZone(),
   },
   features: { features: [] },
   locations: { locations: [] },
@@ -27,19 +29,13 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
   const { showNotification } = useNotificationContext();
   const { t } = useTranslation();
 
-  const setSetupData = useCallback(
-    (data: SetupData | ((prev: SetupData) => SetupData)) => {
-      setSetupDataState(data);
-    },
-    [],
-  );
+  const setSetupData = useCallback((data: SetupData | ((prev: SetupData) => SetupData)) => {
+    setSetupDataState(data);
+  }, []);
 
-  const setActiveStep = useCallback(
-    (step: number | ((prev: number) => number)) => {
-      setActiveStepState(step);
-    },
-    [],
-  );
+  const setActiveStep = useCallback((step: number | ((prev: number) => number)) => {
+    setActiveStepState(step);
+  }, []);
 
   const setLoading = useCallback((loading: boolean) => {
     setLoadingState(loading);
@@ -62,7 +58,7 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
       const error = err instanceof Error ? err.message : String(err);
       showNotification(error, { severity: 'error' });
 
-      console.error('Features Error', error);
+      console.error(t('setup.log.featuresError'), error);
     } finally {
       setLoadingFeatures(false);
     }

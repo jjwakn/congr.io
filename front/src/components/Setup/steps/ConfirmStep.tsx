@@ -1,23 +1,17 @@
+import { FormContainer } from '@components/common/FormContainer';
+import { useSetup } from '@hooks/useSetup';
 import { Box, Chip, Divider, Typography } from '@mui/material';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useSetup } from '../../../hooks/useSetup';
-import { FormContainer } from '../../common/FormContainer';
 import ConfirmSection from './ConfirmSection';
 import { ConfirmStepFormData, ConfirmStepProps } from './ConfirmStep.types';
 import FieldRow from './FieldRow';
 
-export const ConfirmStep = ({
-  data,
-  onFinish,
-  disabled,
-  onBack,
-}: ConfirmStepProps) => {
+export const ConfirmStep = ({ data, onFinish, disabled, onBack }: ConfirmStepProps) => {
   const { t } = useTranslation();
   const { features } = useSetup();
-  const congregationType =
-    data.congregation.type || t('setup.form.defaultType');
+  const congregationType = data.congregation.type || t('setup.form.defaultType');
 
   const form = useForm<ConfirmStepFormData>({
     defaultValues: {
@@ -43,6 +37,7 @@ export const ConfirmStep = ({
       disabled={disabled}
       onCancel={onBack}
       cancelText={t('form.field.back')}
+      stackActionsOnSmallScreen
     >
       <Typography variant="h6" gutterBottom>
         {t('setup.confirm.review')}
@@ -56,19 +51,15 @@ export const ConfirmStep = ({
         >
           <FieldRow
             label={t('form.field.name')}
-            value={
-              <Typography variant="body2">
-                {data.congregation.name || '-'}
-              </Typography>
-            }
+            value={<Typography variant="body2">{data.congregation.name || '-'}</Typography>}
           />
           <FieldRow
             label={t('form.field.type')}
-            value={
-              <Typography variant="body2">
-                {data.congregation.type || '-'}
-              </Typography>
-            }
+            value={<Typography variant="body2">{data.congregation.type || '-'}</Typography>}
+          />
+          <FieldRow
+            label={t('form.field.timezone')}
+            value={<Typography variant="body2">{data.congregation.timezone || '-'}</Typography>}
           />
         </ConfirmSection>
 
@@ -77,18 +68,36 @@ export const ConfirmStep = ({
             label={t('setup.confirm.sections.features')}
             value={
               data.features.features.length > 0 ? (
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                    flexWrap: 'wrap',
+                    '@media (max-width:420px)': {
+                      flexDirection: 'column',
+                      flexWrap: 'nowrap',
+                      alignItems: 'stretch',
+                    },
+                  }}
+                >
                   {data.features.features.map((feature) => (
                     <Chip
                       key={feature}
                       label={featureTitleById.get(feature) ?? feature}
+                      sx={{
+                        maxWidth: '100%',
+                        '@media (max-width:420px)': {
+                          width: '100%',
+                          '& .MuiChip-label': {
+                            textAlign: 'left',
+                          },
+                        },
+                      }}
                     />
                   ))}
                 </Box>
               ) : (
-                <Typography variant="body2">
-                  {t('setup.confirm.none')}
-                </Typography>
+                <Typography variant="body2">{t('setup.confirm.none')}</Typography>
               )
             }
           />
@@ -101,19 +110,13 @@ export const ConfirmStep = ({
               data.locations.locations.length > 0 ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {data.locations.locations.map((location) => (
-                    <Typography
-                      variant="body2"
-                      key={`${location.order}-${location.name}-${location.address}`}
-                    >
-                      {location.order}. {location.name} -{' '}
-                      {location.address || '-'}
+                    <Typography variant="body2" key={`${location.order}-${location.name}-${location.address}`}>
+                      {location.order}. {location.name} - {location.address || '-'}
                     </Typography>
                   ))}
                 </Box>
               ) : (
-                <Typography variant="body2">
-                  {t('setup.confirm.none')}
-                </Typography>
+                <Typography variant="body2">{t('setup.confirm.none')}</Typography>
               )
             }
           />
@@ -122,25 +125,15 @@ export const ConfirmStep = ({
         <ConfirmSection title={t('setup.confirm.sections.admin')}>
           <FieldRow
             label={t('form.field.username')}
-            value={
-              <Typography variant="body2">
-                {data.admin.username || '-'}
-              </Typography>
-            }
+            value={<Typography variant="body2">{data.admin.username || '-'}</Typography>}
           />
           <FieldRow
             label={t('form.field.name')}
-            value={
-              <Typography variant="body2">{data.admin.name || '-'}</Typography>
-            }
+            value={<Typography variant="body2">{data.admin.name || '-'}</Typography>}
           />
           <FieldRow
             label={t('setup.confirm.fullAccessRole')}
-            value={
-              <Typography variant="body2">
-                {data.admin.roleName || '-'}
-              </Typography>
-            }
+            value={<Typography variant="body2">{data.admin.roleName || '-'}</Typography>}
           />
         </ConfirmSection>
       </Box>

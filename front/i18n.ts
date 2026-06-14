@@ -50,17 +50,13 @@ const resolveInitialLanguage = (): SupportedLanguage => {
   return FALLBACK_LANGUAGE;
 };
 
-const loadLanguageBundle = async (
-  language: SupportedLanguage,
-): Promise<TranslationBundle> => {
+const loadLanguageBundle = async (language: SupportedLanguage): Promise<TranslationBundle> => {
   const loader = translationLoaders[language];
   const bundle = await loader();
   return bundle.default;
 };
 
-export const ensureLanguageResources = async (
-  language: string,
-): Promise<SupportedLanguage> => {
+export const ensureLanguageResources = async (language: string): Promise<SupportedLanguage> => {
   const normalizedLanguage = normalizeLanguage(language);
   if (loadedLanguages.has(normalizedLanguage)) return normalizedLanguage;
 
@@ -102,9 +98,7 @@ export const initializeI18n = async (): Promise<typeof i18n> => {
   return initializationPromise;
 };
 
-export const changeLanguageWithResources = async (
-  language: string,
-): Promise<void> => {
+export const changeLanguageWithResources = async (language: string): Promise<void> => {
   const normalizedLanguage = await ensureLanguageResources(language);
   if (normalizeLanguage(i18n.language) !== normalizedLanguage) {
     await i18n.changeLanguage(normalizedLanguage);

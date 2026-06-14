@@ -6,13 +6,12 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
-import { AuthLoginResult, LoginProps } from './auth.types';
+import { AuthLoginResult, AuthSessionResult, LoginProps } from './auth.types';
 
 const MAX_FAILED_LOGIN_ATTEMPTS = 10;
 
 // Used to keep credential checks timing-consistent for non-existent users.
-const DUMMY_PASSWORD_HASH =
-  '$2b$10$LxQj8vHf2yG5REwX8L9i1O8MzY5mQ8I1z6V/8jQv3H3e2W7r9N5gK';
+const DUMMY_PASSWORD_HASH = '$2b$10$LxQj8vHf2yG5REwX8L9i1O8MzY5mQ8I1z6V/8jQv3H3e2W7r9N5gK';
 
 @Injectable()
 export class AuthService {
@@ -52,9 +51,7 @@ export class AuthService {
   private async registerFailedLoginAttempt(user: User): Promise<boolean> {
     const nextAttempts = (user.failed_login_attempts ?? 0) + 1;
     const shouldLock = nextAttempts > MAX_FAILED_LOGIN_ATTEMPTS;
-    const lockedAt = shouldLock
-      ? (user.locked_at ?? new Date())
-      : (user.locked_at ?? null);
+    const lockedAt = shouldLock ? (user.locked_at ?? new Date()) : (user.locked_at ?? null);
 
     await this.userRepository.update(
       { id: user.id },
@@ -85,10 +82,7 @@ export class AuthService {
     user.locked_at = null;
   }
 
-  async validateUser({
-    username,
-    password,
-  }: LoginProps): Promise<AuthLoginResult> {
+  async validateUser({ username, password }: LoginProps): Promise<AuthLoginResult> {
     const fullUser = await this.userRepository.findOne({
       where: {
         username,
@@ -112,15 +106,13 @@ export class AuthService {
     if (!fullUser || !isPasswordValid) {
       if (fullUser) {
         const isLocked = await this.registerFailedLoginAttempt(fullUser);
-        if (isLocked)
-          throw new UnauthorizedException(this.getLockedAccountMessage());
+        if (isLocked) throw new UnauthorizedException(this.getLockedAccountMessage());
       }
 
       throw new UnauthorizedException(this.getInvalidCredentialsMessage());
     }
 
-    if (fullUser.locked_at)
-      throw new UnauthorizedException(this.getLockedAccountMessage());
+    if (fullUser.locked_at) throw new UnauthorizedException(this.getLockedAccountMessage());
 
     await this.resetFailedLoginAttempt(fullUser);
 
@@ -175,9 +167,21 @@ export class AuthService {
         deleted_by: true,
       },
     });
-    if (!user)
-      throw new UnauthorizedException(this.getInvalidCredentialsMessage());
+    if (!user) throw new UnauthorizedException(this.getInvalidCredentialsMessage());
 
     return this.sanitizeUser(user);
+  }
+
+  async getCurrentSession(userId: string): Promise<AuthSessionResult> {
+    const user = await this.getCurrentUser(userId);
+    const { fullAccess, permissions } = mergePermissions(user.roles ?? []);
+
+    return {
+      user,
+      auth: {
+        fullAccess,
+        permissions,
+      },
+    };
   }
 }

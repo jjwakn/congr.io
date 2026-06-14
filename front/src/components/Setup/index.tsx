@@ -1,18 +1,19 @@
+import AdminStep from '@components/Setup/steps/AdminStep';
+import ConfirmStep from '@components/Setup/steps/ConfirmStep';
+import CongregationStep from '@components/Setup/steps/CongregationStep';
+import FeaturesStep from '@components/Setup/steps/FeaturesStep';
+import LocationsStep from '@components/Setup/steps/LocationsStep';
+import TimezoneStep from '@components/Setup/steps/TimezoneStep';
+import { useAppContext } from '@hooks/useAppContext';
+import { useNotificationContext } from '@hooks/useNotifications';
+import { useSetup } from '@hooks/useSetup';
 import { Box } from '@mui/material';
+import { SetupService } from '@services/setup';
+import { HttpRequestError, httpRequest } from '@utils/http';
 import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAppContext } from '../../hooks/useAppContext';
-import { useNotificationContext } from '../../hooks/useNotifications';
-import { useSetup } from '../../hooks/useSetup';
-import { SetupService } from '../../services/setup';
-import { SetupSubmitResponse } from '../../types/setup.types';
-import { HttpRequestError, httpRequest } from '../../utils/http';
+import { SetupSubmitResponse } from '@/types/setup.types';
 import Progress from './Progress';
-import AdminStep from './steps/AdminStep';
-import ConfirmStep from './steps/ConfirmStep';
-import CongregationStep from './steps/CongregationStep';
-import FeaturesStep from './steps/FeaturesStep';
-import LocationsStep from './steps/LocationsStep';
 
 const Setup = () => {
   const { markSetupComplete } = useAppContext();
@@ -28,19 +29,10 @@ const Setup = () => {
   } = useSetup();
   const setupSubmittedRef = useRef(false);
 
-  const loading = useMemo(
-    () => loadingSetup || loadingFeatures,
-    [loadingFeatures, loadingSetup],
-  );
+  const loading = useMemo(() => loadingSetup || loadingFeatures, [loadingFeatures, loadingSetup]);
 
-  const goNext = useCallback(
-    () => setActiveStep((step) => step + 1),
-    [setActiveStep],
-  );
-  const goBack = useCallback(
-    () => setActiveStep((step) => step - 1),
-    [setActiveStep],
-  );
+  const goNext = useCallback(() => setActiveStep((step) => step + 1), [setActiveStep]);
+  const goBack = useCallback(() => setActiveStep((step) => step - 1), [setActiveStep]);
 
   const handleFinish = useCallback(async () => {
     if (setupSubmittedRef.current) return;
@@ -61,6 +53,7 @@ const Setup = () => {
         congregation: {
           name: data.congregation.name.trim(),
           type: data.congregation.type.trim(),
+          timezone: data.congregation.timezone.trim(),
           locations: data.locations.locations.map((location) => ({
             order: location.order,
             name: location.name.trim(),
@@ -97,7 +90,7 @@ const Setup = () => {
             ? err.message
             : String(err);
       showNotification(error, { severity: 'error' });
-      console.error('Setup Error', error);
+      console.error(t('setup.log.setupError'), error);
     } finally {
       setLoadingSetup(false);
     }
@@ -106,42 +99,52 @@ const Setup = () => {
   return (
     <Box
       sx={{
-        height: 'fit-content',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         flexDirection: 'column',
         width: '100%',
+        height: '100%',
         minHeight: '100%',
         backgroundColor: ({ palette }) => palette.background.paper,
       }}
     >
-      <Progress activeStep={activeStep} />
+      <Box
+        component="header"
+        sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
+          width: '100%',
+          px: 2,
+          pt: 2,
+          pb: 1,
+          backgroundColor: ({ palette }) => palette.background.paper,
+        }}
+      >
+        <Progress activeStep={activeStep} />
+      </Box>
 
-      {activeStep === 0 && (
-        <CongregationStep goNext={goNext} loading={loading} />
-      )}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          pb: 2,
+        }}
+      >
+        {activeStep === 0 && <CongregationStep goNext={goNext} loading={loading} />}
 
-      {activeStep === 1 && (
-        <FeaturesStep goNext={goNext} goBack={goBack} loading={loading} />
-      )}
+        {activeStep === 1 && <FeaturesStep goNext={goNext} goBack={goBack} loading={loading} />}
 
-      {activeStep === 2 && (
-        <LocationsStep goNext={goNext} goBack={goBack} loading={loading} />
-      )}
+        {activeStep === 2 && <LocationsStep goNext={goNext} goBack={goBack} loading={loading} />}
 
-      {activeStep === 3 && (
-        <AdminStep goNext={goNext} goBack={goBack} loading={loading} />
-      )}
+        {activeStep === 3 && <TimezoneStep goNext={goNext} goBack={goBack} loading={loading} />}
 
-      {activeStep === 4 && (
-        <ConfirmStep
-          data={data}
-          onFinish={handleFinish}
-          disabled={loading}
-          onBack={goBack}
-        />
-      )}
+        {activeStep === 4 && <AdminStep goNext={goNext} goBack={goBack} loading={loading} />}
+
+        {activeStep === 5 && <ConfirmStep data={data} onFinish={handleFinish} disabled={loading} onBack={goBack} />}
+      </Box>
     </Box>
   );
 };

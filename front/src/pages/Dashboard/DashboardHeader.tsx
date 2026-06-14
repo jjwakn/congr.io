@@ -1,13 +1,7 @@
+import { LogoSmall } from '@components/Logos';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
-import {
-  AppBar,
-  IconButton,
-  Toolbar,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { LogoSmall } from '../../components/Logos';
+import { AppBar, IconButton, Toolbar, Tooltip, Typography } from '@mui/material';
 import { DashboardHeaderProps } from './DashboardHeader.types';
 
 export const DashboardHeader = ({
@@ -26,22 +20,11 @@ export const DashboardHeader = ({
         px: { xs: 1, sm: 2 },
       }}
     >
-      <IconButton
-        color="inherit"
-        size="small"
-        onClick={onMenuClick}
-        sx={{ mr: 0.5, display: 'inline-flex' }}
-      >
+      <IconButton color="inherit" size="small" onClick={onMenuClick} sx={{ mr: 0.5, display: 'inline-flex' }}>
         <MenuRoundedIcon fontSize="small" />
       </IconButton>
 
-      <IconButton
-        color="inherit"
-        size="small"
-        onClick={onLogoClick}
-        aria-label={homeLabel}
-        sx={{ mr: 0.25 }}
-      >
+      <IconButton color="inherit" size="small" onClick={onLogoClick} aria-label={homeLabel} sx={{ mr: 0.25 }}>
         <LogoSmall
           alt={congregationName || 'Congr.io'}
           size={22}
@@ -62,21 +45,12 @@ export const DashboardHeader = ({
         {congregationName || 'Congr.io'}
       </Typography>
 
-      <Typography
-        variant="caption"
-        sx={{ mr: 0.75, display: { xs: 'none', sm: 'inline' } }}
-      >
+      <Typography variant="caption" sx={{ mr: 1, display: { xs: 'none', sm: 'inline' } }}>
         {username}
       </Typography>
 
       <Tooltip title={logoutLabel}>
-        <IconButton
-          color="inherit"
-          size="small"
-          onClick={onLogout}
-          aria-label={logoutLabel}
-          sx={{ ml: 0.25 }}
-        >
+        <IconButton color="inherit" size="small" onClick={onLogout} aria-label={logoutLabel} sx={{ ml: 0.25 }}>
           <LogoutRoundedIcon fontSize="small" />
         </IconButton>
       </Tooltip>

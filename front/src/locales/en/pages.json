@@ -14,30 +14,139 @@
     "common": {
       "refresh": "Refresh",
       "search": "Search",
-      "searchPlaceholder": "Search by role name",
       "rowsPerPage": "Rows per page",
-      "loading": "Loading roles...",
-      "empty": "No roles found."
+      "view": "View"
+    },
+    "users": {
+      "title": "Users",
+      "searchPlaceholder": "Search by name or username",
+      "loading": "Loading users...",
+      "empty": "No users found.",
+      "actions": {
+        "create": "Create user",
+        "edit": "Edit",
+        "delete": "Delete",
+        "save": "Save changes",
+        "changeOwnPassword": "Change password",
+        "setTemporaryPassword": "Set temporary password",
+        "savePassword": "Save password"
+      },
+      "columns": {
+        "name": "Name",
+        "username": "Username",
+        "enabled": "Enabled",
+        "actions": "Actions"
+      },
+      "form": {
+        "enabled": "Enabled",
+        "enabledHint": "Disabled users cannot access the app.",
+        "passwordHint": "Leave blank to keep the current password.",
+        "roles": "Roles",
+        "congregations": "Congregations",
+        "locations": "Locations",
+        "locationsHint": "Locations are limited to the selected congregation context.",
+        "noRoles": "No roles available.",
+        "noCongregations": "No congregations available.",
+        "noLocations": "No locations available."
+      },
+      "dialogs": {
+        "createTitle": "Create user",
+        "editTitle": "Edit user",
+        "viewTitle": "User details",
+        "changeOwnPasswordTitle": "Change password",
+        "setTemporaryPasswordTitle": "Set temporary password for {{name}}",
+        "requiredPasswordTitle": "Change temporary password",
+        "deleteTitle": "Delete user",
+        "deleteMessage": "Are you sure you want to delete {{name}}?"
+      },
+      "success": {
+        "created": "User created successfully.",
+        "updated": "User updated successfully.",
+        "deleted": "User deleted successfully.",
+        "passwordUpdated": "Password updated successfully.",
+        "temporaryPasswordSet": "Temporary password set successfully."
+      },
+      "error": {
+        "accessDenied": "You do not have permission to manage users.",
+        "loadFailed": "Could not load users.",
+        "rolesLoadFailed": "Could not load roles.",
+        "loadUserFailed": "Could not load the selected user.",
+        "saveFailed": "Could not save the user.",
+        "deleteFailed": "Could not delete the user.",
+        "changePasswordFailed": "Could not change the password.",
+        "passwordsDoNotMatch": "Passwords do not match.",
+        "newPasswordMustBeDifferent": "The new password must be different from the current password."
+      }
     },
     "roles": {
       "title": "Roles",
-      "description": "Review role access and CRUD permissions.",
+      "searchPlaceholder": "Search by role name",
+      "loading": "Loading roles...",
+      "empty": "No roles found.",
+      "actions": {
+        "create": "Create role",
+        "edit": "Edit",
+        "delete": "Delete",
+        "save": "Save changes"
+      },
       "columns": {
         "role": "Role",
         "fullAccess": "Full Access",
+        "actions": "Actions",
         "get": "Read",
         "create": "Create",
         "update": "Update",
-        "delete": "Delete"
+        "delete": "Delete",
+        "change_password": "Change password"
+      },
+      "form": {
+        "fullAccess": "Full access",
+        "fullAccessHint": "When full access is enabled, this role can access every section and action."
+      },
+      "dialogs": {
+        "createTitle": "Create role",
+        "editTitle": "Edit role",
+        "viewTitle": "Role details",
+        "deleteTitle": "Delete role",
+        "deleteMessage": "Are you sure you want to delete {{name}}?"
+      },
+      "permissions": {
+        "columns": {
+          "section": "Section"
+        },
+        "sections": {
+          "user": "Users",
+          "role": "Roles",
+          "congregation": "Congregation",
+          "configuration": "Configuration",
+          "process": "Processes",
+          "event": "Events",
+          "event_type": "Event Types"
+        }
+      },
+      "success": {
+        "created": "Role created successfully.",
+        "updated": "Role updated successfully.",
+        "deleted": "Role deleted successfully."
       },
       "error": {
-        "loadFailed": "Could not load roles."
+        "accessDenied": "You do not have permission to manage roles.",
+        "loadFailed": "Could not load roles.",
+        "permissionsLoadFailed": "Could not load permission metadata.",
+        "loadRoleFailed": "Could not load the selected role.",
+        "saveFailed": "Could not save the role.",
+        "deleteFailed": "Could not delete the role."
       }
     }
   },
   "settings": {
     "title": "Configuration",
-    "subtitle": "Manage appearance and language settings for your congregation.",
+    "subtitle": "Manage congregation and appearance settings.",
+    "congregation": {
+      "title": "Congregation Settings",
+      "subtitle": "Update the main congregation details used across the app.",
+      "timezoneHelp": "Use an IANA timezone like America/Guatemala."
+    },
     "themeMode": {
       "label": "Theme Mode",
       "light": "Light",
@@ -65,11 +174,12 @@
     },
     "frontendVersion": "Frontend version: {{version}}",
     "success": {
-      "saved": "Theme palette saved successfully."
+      "saved": "Configuration saved successfully."
     },
     "error": {
-      "saveFailed": "Could not save the theme palette.",
-      "loadFailed": "Could not load the theme palette."
+      "saveFailed": "Could not save the configuration.",
+      "loadFailed": "Could not load the theme palette.",
+      "invalidHex": "Enter a valid hex color like #1976d2."
     }
   }
 }

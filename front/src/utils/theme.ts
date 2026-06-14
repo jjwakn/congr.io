@@ -1,13 +1,5 @@
-import {
-  CSSProperties,
-  PaletteMode,
-  ThemeOptions,
-  createTheme,
-} from '@mui/material/styles';
-import {
-  ThemePaletteConfig,
-  ThemePaletteModeConfig,
-} from '../types/theme.types';
+import { CSSProperties, PaletteMode, ThemeOptions, createTheme } from '@mui/material/styles';
+import { ThemePaletteConfig, ThemePaletteModeConfig } from '@/types/theme.types';
 
 export const darkGray = '#666';
 export const lightGray = '#999';
@@ -97,15 +89,9 @@ const normalizeModeConfig = (
   defaults: ThemePaletteModeConfig,
 ): ThemePaletteModeConfig => ({
   primary: isHexColor(value?.primary) ? value.primary : defaults.primary,
-  secondary: isHexColor(value?.secondary)
-    ? value.secondary
-    : defaults.secondary,
-  backgroundDefault: isHexColor(value?.backgroundDefault)
-    ? value.backgroundDefault
-    : defaults.backgroundDefault,
-  backgroundPaper: isHexColor(value?.backgroundPaper)
-    ? value.backgroundPaper
-    : defaults.backgroundPaper,
+  secondary: isHexColor(value?.secondary) ? value.secondary : defaults.secondary,
+  backgroundDefault: isHexColor(value?.backgroundDefault) ? value.backgroundDefault : defaults.backgroundDefault,
+  backgroundPaper: isHexColor(value?.backgroundPaper) ? value.backgroundPaper : defaults.backgroundPaper,
 });
 
 export const normalizeThemePaletteConfig = (
@@ -115,22 +101,18 @@ export const normalizeThemePaletteConfig = (
   dark: normalizeModeConfig(value?.dark, DEFAULT_THEME_PALETTE_CONFIG.dark),
 });
 
+export const areThemePaletteConfigsEqual = (left: ThemePaletteConfig, right: ThemePaletteConfig): boolean =>
+  JSON.stringify(left) === JSON.stringify(right);
+
 const getModePalette = ({
   mode,
   paletteConfig,
 }: {
   mode: PaletteMode;
   paletteConfig: ThemePaletteConfig;
-}): ThemePaletteModeConfig =>
-  mode === 'dark' ? paletteConfig.dark : paletteConfig.light;
+}): ThemePaletteModeConfig => (mode === 'dark' ? paletteConfig.dark : paletteConfig.light);
 
-export const getTheme = ({
-  mode,
-  paletteConfig,
-}: {
-  mode: PaletteMode;
-  paletteConfig: ThemePaletteConfig;
-}) => {
+export const getTheme = ({ mode, paletteConfig }: { mode: PaletteMode; paletteConfig: ThemePaletteConfig }) => {
   const modePalette = getModePalette({ mode, paletteConfig });
 
   return createTheme({

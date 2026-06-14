@@ -11,6 +11,8 @@
   "missingCongregation": "No encontrado en request: congregation",
   "missingCongregationName": "Propiedad faltante en Congregation: name",
   "missingCongregationType": "Propiedad faltante en Congregation: type",
+  "missingCongregationTimezone": "Propiedad faltante en Congregation: timezone",
+  "invalidCongregationTimezone": "Zona horaria de congregación inválida",
   "missingCongregationLocations": "Propiedad faltante en Congregation: locations",
   "missingCongregationLocationOrder": "Propiedad faltante en Congregation: location.order",
   "missingCongregationLocationName": "Propiedad faltante en Congregation: location.name",

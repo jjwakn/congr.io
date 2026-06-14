@@ -1,5 +1,5 @@
-import type { Feature } from '../types/feature.types';
-import type { SetupData } from '../types/setup.types';
+import type { Feature } from '@/types/feature.types';
+import type { SetupData } from '@/types/setup.types';
 
 export interface SetupContextType {
   setupData: SetupData;

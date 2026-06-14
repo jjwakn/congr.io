@@ -1,11 +1,19 @@
-import { Box, LinearProgress } from '@mui/material';
+import { LinearProgress } from '@mui/material';
 import { ProgressProps } from './Progress.types';
+
+const TOTAL_SETUP_STEPS = 6;
 
 const Progress = ({ activeStep }: ProgressProps) => {
   return (
-    <Box sx={{ width: '100%', padding: 2 }}>
-      <LinearProgress variant="determinate" value={(100 / 5) * activeStep} />
-    </Box>
+    <LinearProgress
+      variant="determinate"
+      value={(100 / TOTAL_SETUP_STEPS) * activeStep}
+      sx={{
+        width: '100%',
+        height: 4,
+        borderRadius: 999,
+      }}
+    />
   );
 };
 

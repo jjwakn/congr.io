@@ -1,5 +1,5 @@
 import { styled } from '@mui/material/styles';
-import { darkGray } from '../../../utils/theme';
+import { darkGray } from '@utils/theme';
 
 export const UploaderWrapper = styled('label', {
   shouldForwardProp: (prop) => prop !== 'overRide',

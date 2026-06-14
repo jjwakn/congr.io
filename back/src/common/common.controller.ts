@@ -1,15 +1,7 @@
 import { I18nContext } from 'nestjs-i18n';
-import type {
-  CommonEntity,
-  DefaultGetData,
-  ListParamsQuery,
-  RequestType,
-} from 'src/common/common.types';
+import type { CommonEntity, DefaultGetData, ListParamsQuery, RequestType } from 'src/common/common.types';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
-import {
-  CommonPermissionDecorator,
-  PermissionGuard,
-} from 'src/modules/permission/permission.guard';
+import { CommonPermissionDecorator, PermissionGuard } from 'src/modules/permission/permission.guard';
 import { Module, ModuleAction } from 'src/utils/constants';
 import {
   Body,
@@ -39,11 +31,7 @@ export abstract class CommonController<
     }>;
     get(data: GetData): Promise<Entity & CommonEntity>;
     create(params: { data: Entity; userId: string }): Promise<Entity>;
-    update(params: {
-      id: string;
-      data: Entity;
-      userId: string;
-    }): Promise<Entity & CommonEntity>;
+    update(params: { id: string; data: Entity; userId: string }): Promise<Entity & CommonEntity>;
     remove(params: { id: string; userId: string }): Promise<{
       deleted: boolean;
     }>;
@@ -53,16 +41,18 @@ export abstract class CommonController<
 
   private buildUnauthorizedException() {
     const message = I18nContext.current()?.t('errors.auth.notIncluded');
-    return new UnauthorizedException(
-      typeof message === 'string' ? message : 'Unauthorized',
-    );
+    const fallbackMessage = I18nContext.current()?.t('errors.auth.unauthorized');
+    const resolvedMessage =
+      typeof message === 'string'
+        ? message
+        : typeof fallbackMessage === 'string'
+          ? fallbackMessage
+          : 'errors.auth.unauthorized';
+    return new UnauthorizedException(resolvedMessage);
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @CommonPermissionDecorator(
-    (ctrl: CommonController<Entity, Query>) => ctrl.module,
-    ModuleAction.get,
-  )
+  @CommonPermissionDecorator((ctrl: CommonController<Entity, Query>) => ctrl.module, ModuleAction.get)
   @Get()
   async list(
     @Query(new ValidationPipe({ transform: true, whitelist: true }))
@@ -72,20 +62,14 @@ export abstract class CommonController<
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @CommonPermissionDecorator(
-    (ctrl: CommonController<Entity, Query>) => ctrl.module,
-    ModuleAction.get,
-  )
+  @CommonPermissionDecorator((ctrl: CommonController<Entity, Query>) => ctrl.module, ModuleAction.get)
   @Get(':id')
   async get(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.service.get({ id } as GetData);
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @CommonPermissionDecorator(
-    (ctrl: CommonController<Entity, Query>) => ctrl.module,
-    ModuleAction.create,
-  )
+  @CommonPermissionDecorator((ctrl: CommonController<Entity, Query>) => ctrl.module, ModuleAction.create)
   @Post()
   @ApiBody({ type: Object }) // Can be overridden in child controllers
   async create(@Body() data: Entity, @Req() request: RequestType) {
@@ -95,10 +79,7 @@ export abstract class CommonController<
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @CommonPermissionDecorator(
-    (ctrl: CommonController<Entity, Query>) => ctrl.module,
-    ModuleAction.update,
-  )
+  @CommonPermissionDecorator((ctrl: CommonController<Entity, Query>) => ctrl.module, ModuleAction.update)
   @Put(':id')
   @ApiBody({ type: Object })
   async update(
@@ -112,15 +93,9 @@ export abstract class CommonController<
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @CommonPermissionDecorator(
-    (ctrl: CommonController<Entity, Query>) => ctrl.module,
-    ModuleAction.delete,
-  )
+  @CommonPermissionDecorator((ctrl: CommonController<Entity, Query>) => ctrl.module, ModuleAction.delete)
   @Delete(':id')
-  async remove(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-    @Req() request: RequestType,
-  ) {
+  async remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() request: RequestType) {
     const userId = request.user?.userId;
     if (!userId) throw this.buildUnauthorizedException();
     return this.service.remove({ id, userId });

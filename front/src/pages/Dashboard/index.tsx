@@ -1,51 +1,35 @@
-import { Box, Paper, Typography } from '@mui/material';
-import {
-  Suspense,
-  lazy,
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useState,
-} from 'react';
-import { useTranslation } from 'react-i18next';
-import PWABadge from '../../PWABadge';
-import { useAppContext } from '../../hooks/useAppContext';
-import { useAuth } from '../../hooks/useAuth';
-import { useSetup } from '../../hooks/useSetup';
-import {
-  createModuleNavigationItem,
-  createSettingsNavigationItem,
-} from '../../utils/dashboard';
+import { useAppContext } from '@hooks/useAppContext';
+import { useAuth } from '@hooks/useAuth';
+import { useSetup } from '@hooks/useSetup';
+import { Box } from '@mui/material';
+import { DashboardContentRoutes } from '@pages/Dashboard/DashboardContentRoutes';
+import { DashboardHeader } from '@pages/Dashboard/DashboardHeader';
+import { DashboardNavigationDrawer } from '@pages/Dashboard/DashboardNavigationDrawer';
+import type { DashboardModuleView } from '@pages/Modules/modules.types';
+import { canRenderModuleRoute } from '@pages/Modules/routes';
+import { createModuleNavigationItem, createSettingsNavigationItem } from '@utils/dashboard';
 import {
   getHomePath,
   getLocalizedPathname,
   getModuleIdFromPath,
   getModulePath,
+  getSettingsPath,
   isHomePath,
   isSettingsPath,
-} from '../../utils/routes';
-import { DashboardHeader } from './DashboardHeader';
-import { DashboardNavigationDrawer } from './DashboardNavigationDrawer';
-import { Home } from './Home';
-
-const ModulesRenderer = lazy(async () => {
-  const module = await import('../Modules');
-  return { default: module.ModulesRenderer };
-});
-const SettingsPage = lazy(() => import('../Settings'));
+} from '@utils/routes';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
+import PWABadge from '@/PWABadge';
 
 const Dashboard = () => {
   const { i18n, t } = useTranslation();
   const { congregation } = useAppContext();
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
   const { features } = useSetup();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [, rerenderRoute] = useReducer((value: number) => value + 1, 0);
-
-  const refreshRoute = useCallback(() => {
-    rerenderRoute();
-  }, []);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const featureById = useMemo(() => {
     const byId = new Map<string, (typeof features)[number]>();
@@ -55,41 +39,47 @@ const Dashboard = () => {
     return byId;
   }, [features]);
 
-  const congregationType = congregation?.type ?? '';
-  const availableModules = useMemo(() => {
+  const availableModules = useMemo<DashboardModuleView[]>(() => {
     const moduleIds = congregation?.features ?? [];
-
-    return moduleIds.map((moduleId) => {
+    const modules = moduleIds.map((moduleId) => {
       const feature = featureById.get(moduleId);
-      const title = feature?.title ?? moduleId;
-      const description = (feature?.description ?? '').replace(
-        '{type}',
-        congregationType,
-      );
 
       return {
         id: moduleId,
-        title,
-        description,
+        title: feature?.title ?? moduleId,
         path: getModulePath(moduleId, i18n.language),
       };
     });
-  }, [congregation?.features, congregationType, featureById, i18n.language]);
 
-  const pathname = window.location.pathname;
-  const moduleIdFromPath = getModuleIdFromPath(pathname);
-  const isHomeSelected = isHomePath(pathname);
-  const isSettingsSelected = isSettingsPath(pathname);
-  const selectedModule =
-    availableModules.find((module) => module.id === moduleIdFromPath) ?? null;
+    if (moduleIds.includes('users') && hasPermission('role', 'get')) {
+      modules.push({
+        id: 'roles',
+        title: t('pages.modules.roles.title'),
+        path: getModulePath('roles', i18n.language),
+      });
+    }
+
+    return modules.sort((left, right) =>
+      left.title.localeCompare(right.title, i18n.language, {
+        sensitivity: 'base',
+      }),
+    );
+  }, [congregation?.features, featureById, hasPermission, i18n.language, t]);
+  const renderableModules = useMemo(
+    () => availableModules.filter((module) => canRenderModuleRoute(module.id)),
+    [availableModules],
+  );
+  const settingsPath = useMemo(() => getSettingsPath(i18n.language), [i18n.language]);
+
+  const pathname = location.pathname;
 
   const navigationItems = useMemo(
     () => [
-      ...availableModules.map((module) =>
+      ...renderableModules.map((module) =>
         createModuleNavigationItem({
           moduleId: module.id,
           label: module.title,
-          language: i18n.language,
+          path: module.path,
         }),
       ),
       createSettingsNavigationItem({
@@ -97,71 +87,66 @@ const Dashboard = () => {
         language: i18n.language,
       }),
     ],
-    [availableModules, i18n.language, t],
+    [i18n.language, renderableModules, t],
   );
 
   const selectedPath = getLocalizedPathname(pathname, i18n.language);
 
-  const navigateToPath = useCallback((nextPath: string) => {
-    if (window.location.pathname === nextPath) return;
+  const navigateToPath = useCallback(
+    (nextPath: string) => {
+      if (pathname === nextPath) return;
 
-    window.history.pushState(null, '', nextPath);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, []);
+      navigate(nextPath);
+    },
+    [navigate, pathname],
+  );
 
   const navigateHome = useCallback(() => {
     navigateToPath(getHomePath());
   }, [navigateToPath]);
 
   useEffect(() => {
-    const handlePopState = () => {
-      refreshRoute();
-    };
+    const localizedPath = getLocalizedPathname(pathname, i18n.language);
+    if (pathname === localizedPath) return;
 
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [refreshRoute]);
+    navigate(`${localizedPath}${location.search}${location.hash}`, {
+      replace: true,
+    });
+  }, [i18n.language, location.hash, location.search, navigate, pathname]);
 
   useEffect(() => {
-    const localizedPath = getLocalizedPathname(
-      window.location.pathname,
-      i18n.language,
-    );
-    if (window.location.pathname === localizedPath) return;
+    if (isHomePath(pathname)) return;
+    if (isSettingsPath(pathname)) return;
 
-    window.history.replaceState(null, '', localizedPath);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, [i18n.language]);
+    const routeModuleId = getModuleIdFromPath(pathname);
+    const matchedModule = routeModuleId
+      ? (renderableModules.find((module) => module.id === routeModuleId) ?? null)
+      : null;
 
-  useEffect(() => {
-    if (isHomePath(window.location.pathname)) return;
-    if (isSettingsPath(window.location.pathname)) return;
+    if (matchedModule) {
+      const localizedPath = matchedModule.path;
+      if (pathname === localizedPath) return;
 
-    const routeModuleId = getModuleIdFromPath(window.location.pathname);
-    const isValidRoute = routeModuleId
-      ? availableModules.some((module) => module.id === routeModuleId)
-      : false;
-
-    if (isValidRoute && routeModuleId) {
-      const localizedPath = getModulePath(routeModuleId, i18n.language);
-      if (window.location.pathname === localizedPath) return;
-
-      window.history.replaceState(null, '', localizedPath);
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      navigate(localizedPath, { replace: true });
       return;
     }
 
     const fallbackPath = getHomePath();
-    if (window.location.pathname === fallbackPath) return;
+    if (pathname === fallbackPath) return;
 
-    window.history.replaceState(null, '', fallbackPath);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, [availableModules, i18n.language]);
+    navigate(fallbackPath, { replace: true });
+  }, [i18n.language, navigate, pathname, renderableModules]);
 
   return (
-    <Box sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      sx={{
+        height: '100%',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       <DashboardHeader
         congregationName={congregation?.name || 'Congr.io'}
         username={user?.username}
@@ -184,48 +169,15 @@ const Dashboard = () => {
           onClose={() => setIsDrawerOpen(false)}
         />
 
-        <Box sx={{ flex: 1, p: { xs: 1.5, md: 2 }, overflowY: 'auto' }}>
-          {isSettingsSelected ? (
-            <Suspense
-              fallback={
-                <Typography variant="body1">
-                  {t('pages.dashboard.loading')}
-                </Typography>
-              }
-            >
-              <SettingsPage />
-            </Suspense>
-          ) : isHomeSelected ? (
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              <Home
-                title={t('pages.dashboard.welcomeTitle')}
-                subtitle={t('pages.dashboard.successMessage')}
-              />
-            </Paper>
-          ) : (
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              {!availableModules.length ? (
-                <Typography variant="body1">
-                  {t('pages.dashboard.noModules')}
-                </Typography>
-              ) : selectedModule ? (
-                <Suspense
-                  fallback={
-                    <Typography variant="body1">
-                      {t('pages.dashboard.loading')}
-                    </Typography>
-                  }
-                >
-                  <ModulesRenderer module={selectedModule} />
-                </Suspense>
-              ) : (
-                <Typography variant="body1">
-                  {t('pages.dashboard.moduleNotFound')}
-                </Typography>
-              )}
-            </Paper>
-          )}
-        </Box>
+        <DashboardContentRoutes
+          availableModules={renderableModules}
+          homeTitle={t('pages.dashboard.welcomeTitle')}
+          homeSubtitle={t('pages.dashboard.successMessage')}
+          settingsTitle={t('pages.settings.title')}
+          loadingLabel={t('pages.dashboard.loading')}
+          moduleNotFoundLabel={t('pages.dashboard.moduleNotFound')}
+          settingsPath={settingsPath}
+        />
       </Box>
 
       <PWABadge />

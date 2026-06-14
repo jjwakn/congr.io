@@ -1,9 +1,5 @@
-import { IsOptional } from 'class-validator';
-import {
-  CommonOrder,
-  EntityActionProps,
-  ListParamsQuery,
-} from 'src/common/common.types';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { CommonOrder, EntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from './user.entity';
 
@@ -31,6 +27,19 @@ export interface UserDeleteProps extends EntityActionProps {
   id: string;
 }
 
+export interface UserChangeOwnPasswordProps extends EntityActionProps {
+  data: UserChangeOwnPasswordDto;
+}
+
+export interface UserCompleteTemporaryPasswordProps extends EntityActionProps {
+  data: UserCompleteTemporaryPasswordDto;
+}
+
+export interface UserSetTemporaryPasswordProps extends EntityActionProps {
+  id: string;
+  data: UserSetTemporaryPasswordDto;
+}
+
 enum Order {
   name = 'name',
   username = 'username',
@@ -52,4 +61,66 @@ export class UserValidateProps {
     example: 'abc.def.ghi',
   })
   token: string;
+}
+
+export class UserChangeOwnPasswordDto {
+  @ApiProperty({
+    required: true,
+    example: 'current-password',
+  })
+  @IsString({ message: 'errors.user.currentPasswordRequired' })
+  @IsNotEmpty({ message: 'errors.user.currentPasswordRequired' })
+  current_password: string;
+
+  @ApiProperty({
+    required: true,
+    example: 'new-password',
+  })
+  @IsString({ message: 'errors.user.passwordRequired' })
+  @IsNotEmpty({ message: 'errors.user.passwordRequired' })
+  password: string;
+
+  @ApiProperty({
+    required: true,
+    example: 'new-password',
+  })
+  @IsString({ message: 'errors.user.passwordConfirmationRequired' })
+  @IsNotEmpty({ message: 'errors.user.passwordConfirmationRequired' })
+  password_confirmation: string;
+}
+
+export class UserCompleteTemporaryPasswordDto {
+  @ApiProperty({
+    required: true,
+    example: 'new-password',
+  })
+  @IsString({ message: 'errors.user.passwordRequired' })
+  @IsNotEmpty({ message: 'errors.user.passwordRequired' })
+  password: string;
+
+  @ApiProperty({
+    required: true,
+    example: 'new-password',
+  })
+  @IsString({ message: 'errors.user.passwordConfirmationRequired' })
+  @IsNotEmpty({ message: 'errors.user.passwordConfirmationRequired' })
+  password_confirmation: string;
+}
+
+export class UserSetTemporaryPasswordDto {
+  @ApiProperty({
+    required: true,
+    example: 'temporary-password',
+  })
+  @IsString({ message: 'errors.user.passwordRequired' })
+  @IsNotEmpty({ message: 'errors.user.passwordRequired' })
+  password: string;
+
+  @ApiProperty({
+    required: true,
+    example: 'temporary-password',
+  })
+  @IsString({ message: 'errors.user.passwordConfirmationRequired' })
+  @IsNotEmpty({ message: 'errors.user.passwordConfirmationRequired' })
+  password_confirmation: string;
 }

@@ -5,11 +5,18 @@
   "field": {
     "name": "Name",
     "type": "Type",
+    "timezone": "Timezone",
     "address": "Address",
     "username": "Username",
     "password": "Password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "temporaryPassword": "Temporary password",
+    "confirmTemporaryPassword": "Confirm temporary password",
     "next": "Next",
     "cancel": "Cancel",
+    "close": "Close",
     "back": "Back",
     "selectAll": "Select All",
     "add": "Add"

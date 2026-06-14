@@ -11,6 +11,7 @@ const __dirname = dirname(__filename);
 const Features = {
   Users: 'users',
   Members: 'members',
+  Processes: 'processes',
   EventsCalendar: 'events_calendar',
   EventsAttendance: 'events_attendance',
   Ministries: 'ministries',
@@ -30,7 +31,7 @@ const featuresDirPath = join(
   'features',
 );
 
-function validateFeatures() {
+const validateFeatures = () => {
   try {
     console.log('🔍 Validating feature locale files against Features enum...\n');
     
@@ -79,7 +80,7 @@ function validateFeatures() {
     console.error('❌ Error during validation:', error.message);
     return false;
   }
-}
+};
 
 // Run the validation
 const isValid = validateFeatures();

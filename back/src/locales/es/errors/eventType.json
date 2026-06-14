@@ -1,0 +1,4 @@
+{
+  "notFound": "Tipo de evento no encontrado",
+  "inUse": "Este tipo de evento no se puede eliminar porque está vinculado a un paso de proceso o a eventos existentes"
+}

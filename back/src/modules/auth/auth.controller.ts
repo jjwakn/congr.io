@@ -1,15 +1,6 @@
 import type { Request, Response } from 'express';
 import { I18nContext } from 'nestjs-i18n';
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  Res,
-  UnauthorizedException,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
@@ -34,10 +25,7 @@ export class AuthController {
 
   @Post('login')
   @ApiBody({ type: LoginProps })
-  async login(
-    @Body() data: LoginProps,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async login(@Body() data: LoginProps, @Res({ passthrough: true }) res: Response) {
     const result = await this.service.login(data);
 
     res.cookie(AUTH_COOKIE_NAME, result.token, this.getCookieOptions());
@@ -53,14 +41,16 @@ export class AuthController {
   async me(@Req() req: Request & { user?: { userId?: string } }) {
     const userId = req.user?.userId;
     const message = I18nContext.current()?.t('errors.auth.notIncluded');
-    if (!userId)
-      throw new UnauthorizedException(
-        typeof message === 'string' ? message : 'Unauthorized',
-      );
+    const fallbackMessage = I18nContext.current()?.t('errors.auth.unauthorized');
+    const resolvedMessage =
+      typeof message === 'string'
+        ? message
+        : typeof fallbackMessage === 'string'
+          ? fallbackMessage
+          : 'errors.auth.unauthorized';
+    if (!userId) throw new UnauthorizedException(resolvedMessage);
 
-    return {
-      user: await this.service.getCurrentUser(userId),
-    };
+    return this.service.getCurrentSession(userId);
   }
 
   @Post('logout')

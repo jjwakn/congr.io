@@ -1,10 +1,10 @@
+import { FormContainer } from '@components/common/FormContainer';
+import { useSetup } from '@hooks/useSetup';
 import { Box, TextField } from '@mui/material';
 import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useSetup } from '../../../hooks/useSetup';
-import { SetupData } from '../../../types/setup.types';
-import { FormContainer } from '../../common/FormContainer';
+import { SetupData } from '@/types/setup.types';
 
 export const AdminStep = ({
   goNext,

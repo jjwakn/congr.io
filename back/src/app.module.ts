@@ -1,10 +1,4 @@
-import {
-  AcceptLanguageResolver,
-  HeaderResolver,
-  I18nJsonLoader,
-  I18nModule,
-  QueryResolver,
-} from 'nestjs-i18n';
+import { AcceptLanguageResolver, HeaderResolver, I18nJsonLoader, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { join } from 'path';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -13,8 +7,11 @@ import { AppLoggerMiddleware } from './middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigurationsModule } from './modules/configurations/configurations.module';
 import { CongregationModule } from './modules/congregation/congregation.module';
+import { EventTypeModule } from './modules/event-type/event-type.module';
+import { EventModule } from './modules/event/event.module';
 import { FeatureModule } from './modules/feature/feature.module';
 import { PermissionModule } from './modules/permission/permission.module';
+import { ProcessModule } from './modules/process/process.module';
 import { RoleModule } from './modules/role/role.module';
 import { SetupModule } from './modules/setup/setup.module';
 import { UserModule } from './modules/user/user.module';
@@ -42,9 +39,7 @@ import { UserModule } from './modules/user/user.module';
       fallbackLanguage: 'en',
       loaderOptions: {
         path:
-          process.env.NODE_ENV !== 'production'
-            ? join(process.cwd(), 'src', 'locales')
-            : join(__dirname, 'locales'),
+          process.env.NODE_ENV !== 'production' ? join(process.cwd(), 'src', 'locales') : join(__dirname, 'locales'),
         includeSubfolders: true,
         watch: true,
       },
@@ -59,7 +54,10 @@ import { UserModule } from './modules/user/user.module';
     PermissionModule,
     FeatureModule,
     ConfigurationsModule,
+    EventTypeModule,
+    EventModule,
     AuthModule,
+    ProcessModule,
     UserModule,
     RoleModule,
     CongregationModule,

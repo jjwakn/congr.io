@@ -1,10 +1,7 @@
-import { ReactNode, useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNotificationContext } from '../hooks/useNotifications';
-import { SetupService } from '../services/setup';
-import { Congregation } from '../types/congregation.types';
-import { IsSetupResponse } from '../types/setup.types';
-import { httpRequest } from '../utils/http';
+import { useNotificationContext } from '@hooks/useNotifications';
+import { SetupService } from '@services/setup';
+import { toTimestamp } from '@utils/datetime';
+import { httpRequest } from '@utils/http';
 import {
   clearCongregationFromStorage,
   getCongregationFromStorage,
@@ -12,23 +9,17 @@ import {
   setCongregationToStorage,
   setIsSetupToStorage,
   setThemePaletteConfigToStorage,
-} from '../utils/storage';
-import { DEFAULT_THEME_PALETTE_CONFIG } from '../utils/theme';
+} from '@utils/storage';
+import { DEFAULT_THEME_PALETTE_CONFIG } from '@utils/theme';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Congregation } from '@/types/congregation.types';
+import { IsSetupResponse } from '@/types/setup.types';
 import { AppContext } from './AppContext';
 
 let setupStatusRequest: Promise<IsSetupResponse> | null = null;
 
-const toTimestamp = (value?: Date | string | null): number => {
-  if (!value) return 0;
-  const date = value instanceof Date ? value : new Date(value);
-  const timestamp = date.getTime();
-  return Number.isNaN(timestamp) ? 0 : timestamp;
-};
-
-const shouldSyncCongregation = (
-  localCongregation: Congregation | null,
-  remoteCongregation: Congregation,
-): boolean => {
+const shouldSyncCongregation = (localCongregation: Congregation | null, remoteCongregation: Congregation): boolean => {
   if (!localCongregation) return true;
 
   const localUpdated = toTimestamp(localCongregation.updated_at);
@@ -51,15 +42,9 @@ const fetchSetupStatus = (forceRefresh = false) => {
 };
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [isSetup, setIsSetup] = useState<boolean>(() =>
-    getIsSetupFromStorage(),
-  );
-  const [congregation, setCongregation] = useState<Congregation | null>(() =>
-    getCongregationFromStorage(),
-  );
-  const [isLoading, setIsLoading] = useState<boolean>(
-    () => !getIsSetupFromStorage(),
-  );
+  const [isSetup, setIsSetup] = useState<boolean>(() => getIsSetupFromStorage());
+  const [congregation, setCongregation] = useState<Congregation | null>(() => getCongregationFromStorage());
+  const [isLoading, setIsLoading] = useState<boolean>(() => !getIsSetupFromStorage());
   const { showNotification } = useNotificationContext();
   const { t } = useTranslation();
 
@@ -86,8 +71,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setIsSetupToStorage(setupStatus);
 
         if (setupStatus && data?.congregation) {
-          const localCongregation =
-            congregation ?? getCongregationFromStorage();
+          const localCongregation = congregation ?? getCongregationFromStorage();
 
           if (shouldSyncCongregation(localCongregation, data.congregation)) {
             setCongregation(data.congregation);
@@ -96,22 +80,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             setCongregation(localCongregation);
           }
 
-          setThemePaletteConfigToStorage(
-            data.congregation.theme_palette ?? DEFAULT_THEME_PALETTE_CONFIG,
-          );
+          setThemePaletteConfigToStorage(data.congregation.theme_palette ?? DEFAULT_THEME_PALETTE_CONFIG);
         } else if (!setupStatus) {
           setCongregation(null);
           clearCongregationFromStorage();
           setThemePaletteConfigToStorage(DEFAULT_THEME_PALETTE_CONFIG);
         }
 
-        if (!data || !data.isSetup)
-          showNotification(t('setup.error.notFound'), { severity: 'warning' });
+        if (!data || !data.isSetup) showNotification(t('setup.error.notFound'), { severity: 'warning' });
       } catch (err) {
         const error = err instanceof Error ? err.message : String(err);
         showNotification(error, { severity: 'error' });
 
-        console.error('AppProvider Error', error);
+        console.error(t('app.log.appProviderError'), error);
 
         const storedIsSetup = getIsSetupFromStorage();
         if (!isSetup && !storedIsSetup) {
@@ -131,9 +112,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setIsSetupToStorage(true);
     setCongregation(nextCongregation);
     setCongregationToStorage(nextCongregation);
-    setThemePaletteConfigToStorage(
-      nextCongregation.theme_palette ?? DEFAULT_THEME_PALETTE_CONFIG,
-    );
+    setThemePaletteConfigToStorage(nextCongregation.theme_palette ?? DEFAULT_THEME_PALETTE_CONFIG);
     setupStatusRequest = Promise.resolve({
       isSetup: true,
       congregation: nextCongregation,

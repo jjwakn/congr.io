@@ -15,6 +15,10 @@ export class Congregation extends CommonEntity {
   @Column({ nullable: false })
   type: string;
 
+  @ApiProperty({ example: 'America/Guatemala' })
+  @Column({ nullable: false, default: 'UTC' })
+  timezone: string;
+
   @ManyToMany(() => Location, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

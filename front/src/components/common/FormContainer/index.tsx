@@ -1,12 +1,4 @@
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Card, CardContent, CircularProgress, Tooltip, Typography } from '@mui/material';
 import { FieldValues, FormProvider } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { FormContainerProps } from './FormContainer.types';
@@ -23,6 +15,7 @@ export const FormContainer = <FormData extends FieldValues>({
   loadingTooltip,
   onCancel,
   cancelText,
+  stackActionsOnSmallScreen,
 }: FormContainerProps<FormData>) => {
   const { t } = useTranslation();
 
@@ -68,25 +61,20 @@ export const FormContainer = <FormData extends FieldValues>({
                   display: 'flex',
                   gap: '1rem',
                   alignItems: 'center',
+                  flexDirection: 'row',
+                  '@media (max-width:420px)': {
+                    flexDirection: stackActionsOnSmallScreen ? 'column' : 'row',
+                    alignItems: stackActionsOnSmallScreen ? 'stretch' : 'center',
+                  },
                 }}
               >
                 {onCancel ? (
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    disabled={disabled}
-                    onClick={onCancel}
-                  >
+                  <Button fullWidth variant="outlined" disabled={disabled} onClick={onCancel}>
                     {cancelText ?? t('form.field.cancel')}
                   </Button>
                 ) : null}
 
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  disabled={disabled}
-                >
+                <Button type="submit" fullWidth variant="contained" disabled={disabled}>
                   {submitText}
                 </Button>
 

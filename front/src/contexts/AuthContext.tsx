@@ -3,6 +3,4 @@ import { AuthContextType, LoginCredentials } from './AuthContext.types';
 
 export type { AuthContextType, LoginCredentials };
 
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined,
-);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);

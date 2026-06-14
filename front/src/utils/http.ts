@@ -1,10 +1,6 @@
 import i18n from '../../i18n';
 import { API_URL } from './constants';
-import {
-  HttpRequestErrorParams,
-  HttpRequestProps,
-  ModuleType,
-} from './http.types';
+import { HttpRequestErrorParams, HttpRequestProps, ModuleType } from './http.types';
 
 export type { ModuleType } from './http.types';
 
@@ -14,11 +10,7 @@ export class HttpRequestError<TPayload = unknown> extends Error {
   statusCode: number;
   payload: TPayload | null;
 
-  constructor({
-    statusCode,
-    message,
-    payload = null,
-  }: HttpRequestErrorParams<TPayload>) {
+  constructor({ statusCode, message, payload = null }: HttpRequestErrorParams<TPayload>) {
     super(message);
     this.name = 'HttpRequestError';
     this.statusCode = statusCode;
@@ -35,9 +27,7 @@ const getLegacyAuthToken = () => {
   }
 };
 
-const parseResponseBody = async (
-  response: Response,
-): Promise<unknown | null> => {
+const parseResponseBody = async (response: Response): Promise<unknown | null> => {
   if (response.status === 204) return null;
 
   const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
@@ -73,21 +63,14 @@ export const httpRequest = async <ResponseType>({
   const cleanBaseURL = baseURL.replace(/\/+$/, '');
   const cleanServiceURL = service.url.replace(/^\/+/, '');
 
-  let url = isAbsoluteUrl
-    ? service.url
-    : cleanServiceURL
-      ? `${cleanBaseURL}/${cleanServiceURL}`
-      : cleanBaseURL;
+  let url = isAbsoluteUrl ? service.url : cleanServiceURL ? `${cleanBaseURL}/${cleanServiceURL}` : cleanBaseURL;
 
-  const isFormData =
-    typeof FormData !== 'undefined' && data instanceof FormData;
-  const jsonData =
-    data && !isFormData ? ({ ...data } as Record<string, unknown>) : undefined;
+  const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
+  const jsonData = data && !isFormData ? ({ ...data } as Record<string, unknown>) : undefined;
 
   // Replacing path params
   if (url.match(/{[A-z]+}/gi)) {
-    if (!jsonData || !Object.keys(jsonData).length)
-      throw new Error(i18n.t('http.error.emptyData'));
+    if (!jsonData || !Object.keys(jsonData).length) throw new Error(i18n.t('http.error.emptyData'));
 
     const pathParams = url
       .split('/')
@@ -95,8 +78,7 @@ export const httpRequest = async <ResponseType>({
       .map((x: string) => x.replace('{', '').replace('}', ''));
 
     pathParams.forEach((param) => {
-      if (!(param in jsonData))
-        throw new Error(i18n.t('http.error.paramNotFound', { param, url }));
+      if (!(param in jsonData)) throw new Error(i18n.t('http.error.paramNotFound', { param, url }));
 
       const value = jsonData[param] ?? '';
 
@@ -112,12 +94,9 @@ export const httpRequest = async <ResponseType>({
     const queryParams = Object.entries(jsonData).map(([key, value]) => {
       if (value === null || value === undefined || value === '')
         throw new Error(i18n.t('http.error.missingParam', { key }));
-      if (typeof value === 'object')
-        throw new Error(i18n.t('http.error.missingParam', { key }));
+      if (typeof value === 'object') throw new Error(i18n.t('http.error.missingParam', { key }));
 
-      return `${encodeURIComponent(key)}=${encodeURIComponent(
-        value.toString(),
-      )}`;
+      return `${encodeURIComponent(key)}=${encodeURIComponent(value.toString())}`;
     });
 
     const separator = url.includes('?') ? '&' : '?';
@@ -129,8 +108,7 @@ export const httpRequest = async <ResponseType>({
     ...headers,
   };
   const legacyAuthToken = getLegacyAuthToken();
-  if (legacyAuthToken && !requestHeaders.Authorization)
-    requestHeaders.Authorization = `Bearer ${legacyAuthToken}`;
+  if (legacyAuthToken && !requestHeaders.Authorization) requestHeaders.Authorization = `Bearer ${legacyAuthToken}`;
 
   if (!isFormData && service.method !== 'GET')
     requestHeaders['Content-Type'] = requestHeaders['Content-Type']
@@ -140,8 +118,7 @@ export const httpRequest = async <ResponseType>({
   let requestBody: BodyInit | undefined;
   if (service.method !== 'GET') {
     if (isFormData) requestBody = data as FormData;
-    else if (jsonData && Object.keys(jsonData).length)
-      requestBody = JSON.stringify(jsonData);
+    else if (jsonData && Object.keys(jsonData).length) requestBody = JSON.stringify(jsonData);
   }
 
   const response = await fetch(url, {

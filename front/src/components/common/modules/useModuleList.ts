@@ -10,8 +10,7 @@ import {
 const LIST_SORTING_STORAGE_VERSION = 1;
 const LIST_SORTING_STORAGE_KEY = `congrio:modules:list-sorting:v${LIST_SORTING_STORAGE_VERSION}`;
 
-const isDirection = (value: unknown): value is ListDirection =>
-  value === 'ASC' || value === 'DESC';
+const isDirection = (value: unknown): value is ListDirection => value === 'ASC' || value === 'DESC';
 
 const readSortingStorage = (): ListSortingStorage => {
   if (typeof window === 'undefined') return {};
@@ -32,10 +31,7 @@ const writeSortingStorage = (value: ListSortingStorage) => {
   if (typeof window === 'undefined') return;
 
   try {
-    window.localStorage.setItem(
-      LIST_SORTING_STORAGE_KEY,
-      JSON.stringify(value),
-    );
+    window.localStorage.setItem(LIST_SORTING_STORAGE_KEY, JSON.stringify(value));
   } catch {
     // Ignore storage write failures and keep in-memory list controls.
   }
@@ -61,14 +57,8 @@ const getInitialSortingState = ({
   const stored = storage[moduleKey];
 
   return {
-    sort:
-      stored && typeof stored.sort === 'string' && stored.sort.trim()
-        ? stored.sort
-        : defaultSort,
-    direction:
-      stored && isDirection(stored.direction)
-        ? stored.direction
-        : defaultDirection,
+    sort: stored && typeof stored.sort === 'string' && stored.sort.trim() ? stored.sort : defaultSort,
+    direction: stored && isDirection(stored.direction) ? stored.direction : defaultDirection,
   };
 };
 
@@ -76,7 +66,7 @@ export const useModuleList = ({
   moduleKey,
   defaultSort,
   defaultDirection = 'ASC',
-  defaultPageSize = 10,
+  defaultPageSize = 50,
 }: UseModuleListProps): UseModuleListState => {
   const [direction, setDirection] = useState<ListDirection>(
     () =>
@@ -125,9 +115,7 @@ export const useModuleList = ({
     handleSort: (value) => {
       setPage(0);
       setSort(value);
-      setDirection((currentDirection) =>
-        sort === value && currentDirection === 'ASC' ? 'DESC' : 'ASC',
-      );
+      setDirection((currentDirection) => (sort === value && currentDirection === 'ASC' ? 'DESC' : 'ASC'));
     },
     handleChangePage: (value) => {
       setPage(value);

@@ -1,5 +1,7 @@
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Box, IconButton, Menu, MenuItem } from '@mui/material';
+import { acceptedExt, checkType, getFileSizeMB } from '@utils/file';
+import { darkGray, lightGray } from '@utils/theme';
 import {
   CSSProperties,
   ChangeEventHandler,
@@ -11,8 +13,6 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { acceptedExt, checkType, getFileSizeMB } from '../../../utils/file';
-import { darkGray, lightGray } from '../../../utils/theme';
 import DrawTypes from './DrawTypes';
 import ImageAdd from './ImageAdd';
 import { UploaderWrapper } from './UploadWrapper';
@@ -117,15 +117,13 @@ const FileUploader = ({
 
     if (maxSize && getFileSizeMB(file.size) > maxSize) {
       setError(true);
-      if (onSizeError)
-        onSizeError(t('components.fileUploader.onSizeTooBigError'));
+      if (onSizeError) onSizeError(t('components.fileUploader.onSizeTooBigError'));
       return false;
     }
 
     if (minSize && getFileSizeMB(file.size) < minSize) {
       setError(true);
-      if (onSizeError)
-        onSizeError(t('components.fileUploader.onSizeTooSmallError'));
+      if (onSizeError) onSizeError(t('components.fileUploader.onSizeTooSmallError'));
       return false;
     }
     return true;
@@ -185,12 +183,7 @@ const FileUploader = ({
   const showFloatingMenu = Boolean(showMenu && uploaded && hasCustomZone);
 
   return (
-    <UploaderWrapper
-      overRide={hasCustomZone}
-      ref={labelRef}
-      htmlFor={name}
-      onClick={uploaded ? blockEvent : undefined}
-    >
+    <UploaderWrapper overRide={hasCustomZone} ref={labelRef} htmlFor={name} onClick={uploaded ? blockEvent : undefined}>
       <input
         onChange={handleInputChange}
         accept={acceptedExt(types)}
@@ -223,18 +216,9 @@ const FileUploader = ({
           >
             <MoreVertIcon />
           </IconButton>
-          <Menu
-            id={menuId}
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-          >
-            <MenuItem onClick={handleReplaceClick}>
-              {t('form.common.replace')}
-            </MenuItem>
-            <MenuItem onClick={handleDeleteFile}>
-              {t('form.common.delete')}
-            </MenuItem>
+          <Menu id={menuId} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+            <MenuItem onClick={handleReplaceClick}>{t('form.common.replace')}</MenuItem>
+            <MenuItem onClick={handleDeleteFile}>{t('form.common.delete')}</MenuItem>
           </Menu>
         </>
       )}
@@ -252,9 +236,7 @@ const FileUploader = ({
             position: 'relative',
             boxSizing: 'border-box',
             cursor: uploaded ? 'default' : 'pointer',
-            backgroundColor: previewImage
-              ? (previewBackgroundColor ?? 'transparent')
-              : 'transparent',
+            backgroundColor: previewImage ? (previewBackgroundColor ?? 'transparent') : 'transparent',
           }}
         >
           {showFloatingMenu && (
@@ -281,18 +263,9 @@ const FileUploader = ({
               >
                 <MoreVertIcon />
               </IconButton>
-              <Menu
-                id={menuId}
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-              >
-                <MenuItem onClick={handleReplaceClick}>
-                  {t('form.common.replace')}
-                </MenuItem>
-                <MenuItem onClick={handleDeleteFile}>
-                  {t('form.common.delete')}
-                </MenuItem>
+              <Menu id={menuId} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+                <MenuItem onClick={handleReplaceClick}>{t('form.common.replace')}</MenuItem>
+                <MenuItem onClick={handleDeleteFile}>{t('form.common.delete')}</MenuItem>
               </Menu>
             </>
           )}
@@ -349,8 +322,7 @@ const FileUploader = ({
               flexGrow: 1,
               '> span': {
                 fontSize: '12px',
-                color: ({ palette }) =>
-                  error ? palette.error.main : palette.text.secondary,
+                color: ({ palette }) => (error ? palette.error.main : palette.text.secondary),
               },
               '.file-types': {
                 overflow: 'hidden',
@@ -372,18 +344,10 @@ const FileUploader = ({
                 }}
               >
                 {!file && !uploaded ? (
-                  <>
-                    {label ? (
-                      <span>{label}</span>
-                    ) : (
-                      <span>{t('components.fileUploader.uploadDefault')}</span>
-                    )}
-                  </>
+                  <>{label ? <span>{label}</span> : <span>{t('components.fileUploader.uploadDefault')}</span>}</>
                 ) : (
                   <>
-                    <span>
-                      {t('components.fileUploader.uploadedSuccessfully')}
-                    </span>{' '}
+                    <span>{t('components.fileUploader.uploadedSuccessfully')}</span>{' '}
                     {t('components.fileUploader.uploadAnother')}
                   </>
                 )}

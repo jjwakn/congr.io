@@ -1,9 +1,6 @@
 import { BrandingManifest, LogoBackgroundMode } from './brandingManifest.types';
 
-export type {
-  BrandingManifest,
-  LogoBackgroundMode,
-} from './brandingManifest.types';
+export type { BrandingManifest, LogoBackgroundMode } from './brandingManifest.types';
 
 const MANIFEST_PATH = '/manifest.webmanifest';
 let manifestRequest: Promise<BrandingManifest | null> | null = null;
@@ -27,11 +24,10 @@ const fetchBrandingManifest = async (): Promise<BrandingManifest | null> => {
   }
 };
 
-export const getBrandingManifest =
-  async (): Promise<BrandingManifest | null> => {
-    if (!manifestRequest) manifestRequest = fetchBrandingManifest();
-    return manifestRequest;
-  };
+export const getBrandingManifest = async (): Promise<BrandingManifest | null> => {
+  if (!manifestRequest) manifestRequest = fetchBrandingManifest();
+  return manifestRequest;
+};
 
 export const getLogoBackgroundMode = async (): Promise<LogoBackgroundMode> => {
   const manifest = await getBrandingManifest();

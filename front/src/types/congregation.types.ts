@@ -11,6 +11,7 @@ export interface Congregation extends CommonEntity {
   id: string;
   name: string;
   type: string;
+  timezone: string;
   features?: string[];
   locations: Location[];
   theme_palette?: ThemePaletteConfig;

@@ -1,59 +1,39 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import Layout from '@components/Layout';
+import Loading from '@components/Loading';
+import { AppProvider } from '@contexts/AppProvider';
+import { AuthProvider } from '@contexts/AuthProvider';
+import { SetupProvider } from '@contexts/SetupProvider';
+import { getLocalizedPathname, isBrandingPath } from '@utils/routes';
+import { Suspense, lazy, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import Layout from './components/Layout';
-import Loading from './components/Loading';
-import { AppProvider } from './contexts/AppProvider';
-import { AuthProvider } from './contexts/AuthProvider';
-import { SetupProvider } from './contexts/SetupProvider';
-import { getLocalizedPathname, isBrandingPath } from './utils/routes';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const AppShell = lazy(() => import('./AppShell'));
-const BrandingPage = lazy(() => import('./pages/Branding'));
-
-const usePathname = () => {
-  const [pathname, setPathname] = useState(() => window.location.pathname);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      setPathname(window.location.pathname);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
-
-  return pathname;
-};
+const AppShell = lazy(() => import('@/AppShell'));
+const BrandingPage = lazy(() => import('@pages/Branding'));
 
 const App = () => {
-  const pathname = usePathname();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { i18n } = useTranslation();
+  const pathname = useMemo(() => location.pathname, [location.pathname]);
+  const isBranding = useMemo(() => isBrandingPath(pathname), [pathname]);
 
   useEffect(() => {
     const localizedPathname = getLocalizedPathname(pathname, i18n.language);
     if (localizedPathname === pathname) return;
 
-    const { search, hash } = window.location;
-    window.history.replaceState(
-      null,
-      '',
-      `${localizedPathname}${search}${hash}`,
-    );
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, [i18n.language, pathname]);
+    navigate(`${localizedPathname}${location.search}${location.hash}`, {
+      replace: true,
+    });
+  }, [i18n.language, location.hash, location.search, navigate, pathname]);
 
-  if (isBrandingPath(pathname))
-    return (
-      <Layout>
-        <Suspense fallback={<Loading />}>
-          <BrandingPage />
-        </Suspense>
-      </Layout>
-    );
-
-  return (
+  return isBranding ? (
+    <Layout>
+      <Suspense fallback={<Loading />}>
+        <BrandingPage />
+      </Suspense>
+    </Layout>
+  ) : (
     <AppProvider>
       <AuthProvider>
         <SetupProvider>

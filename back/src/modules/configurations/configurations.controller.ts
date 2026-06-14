@@ -1,17 +1,11 @@
 import type { RequestType } from 'src/common/common.types';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
-import {
-  PermissionDecorator,
-  PermissionGuard,
-} from 'src/modules/permission/permission.guard';
+import { PermissionDecorator, PermissionGuard } from 'src/modules/permission/permission.guard';
 import { Module, ModuleAction } from 'src/utils/constants';
 import { Body, Controller, Get, Put, Req, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { ConfigurationsService } from './configurations.service';
-import {
-  ThemePaletteConfig,
-  ThemePaletteConfigDto,
-} from './configurations.types';
+import { ThemePaletteConfig, ThemePaletteConfigDto } from './configurations.types';
 
 @ApiTags('configurations')
 @Controller('configurations')
@@ -29,10 +23,7 @@ export class ConfigurationsController {
   @PermissionDecorator(Module.configuration, ModuleAction.update)
   @Put('theme')
   @ApiBody({ type: ThemePaletteConfigDto })
-  updateTheme(
-    @Req() request: RequestType,
-    @Body() payload: ThemePaletteConfigDto,
-  ): Promise<ThemePaletteConfig> {
+  updateTheme(@Req() request: RequestType, @Body() payload: ThemePaletteConfigDto): Promise<ThemePaletteConfig> {
     return this.service.upsertThemePaletteConfig({
       request,
       themePalette: payload,

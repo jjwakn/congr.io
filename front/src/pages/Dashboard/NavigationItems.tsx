@@ -1,16 +1,7 @@
-import {
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-} from '@mui/material';
+import { List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { NavigationItemsProps } from './DashboardNavigationDrawer.types';
 
-export const NavigationItems = ({
-  items,
-  selectedPath,
-  onNavigate,
-}: NavigationItemsProps) => (
+export const NavigationItems = ({ items, selectedPath, onNavigate }: NavigationItemsProps) => (
   <List disablePadding>
     {items.map((item) => (
       <ListItemButton

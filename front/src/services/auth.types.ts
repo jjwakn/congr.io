@@ -1,5 +1,7 @@
-import type { User } from '../types/user.types';
+import type { AuthPermissions } from '@/types/auth.types';
+import type { User } from '@/types/user.types';
 
-export interface LoginResponse {
+export interface AuthSessionResponse {
   user: User;
+  auth: AuthPermissions;
 }

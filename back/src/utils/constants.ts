@@ -8,6 +8,7 @@ export enum ModuleAction {
   create = 'create',
   update = 'update',
   delete = 'delete',
+  change_password = 'change_password',
 }
 
 export enum Module {
@@ -15,11 +16,15 @@ export enum Module {
   role = 'role',
   congregation = 'congregation',
   configuration = 'configuration',
+  process = 'process',
+  event = 'event',
+  event_type = 'event_type',
 }
 
 export enum Feature {
   Users = 'users',
   Members = 'members',
+  Processes = 'processes',
   EventsCalendar = 'events_calendar',
   EventsAttendance = 'events_attendance',
   Ministries = 'ministries',
@@ -31,24 +36,25 @@ export enum Feature {
 export const PORT = process.env.PORT ?? 4000;
 export const TOKEN_SECRET = process.env.TOKEN_SECRET ?? '123';
 
-const CRUD: ModuleAction[] = [
-  ModuleAction.get,
-  ModuleAction.create,
-  ModuleAction.update,
-  ModuleAction.delete,
-];
+const CRUD: ModuleAction[] = [ModuleAction.get, ModuleAction.create, ModuleAction.update, ModuleAction.delete];
 
 export const permission: PermissionType = {
   user: {
-    permissions: CRUD,
+    permissions: [...CRUD, ModuleAction.change_password],
   },
   role: {
     permissions: CRUD,
   },
-  congregation: {
+  configuration: {
     permissions: CRUD,
   },
-  configuration: {
+  process: {
+    permissions: CRUD,
+  },
+  event: {
+    permissions: CRUD,
+  },
+  event_type: {
     permissions: CRUD,
   },
 };
@@ -95,6 +101,9 @@ export const FeatureTree: FeatureTreeType = {
   },
   [Feature.Members]: {
     prerequisites: [],
+  },
+  [Feature.Processes]: {
+    prerequisites: [Feature.Members, Feature.EventsCalendar],
   },
   [Feature.EventsCalendar]: {
     prerequisites: [],

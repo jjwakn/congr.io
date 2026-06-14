@@ -1,10 +1,6 @@
 /// <reference lib="webworker" />
 import { clientsClaim } from 'workbox-core';
-import {
-  cleanupOutdatedCaches,
-  createHandlerBoundToURL,
-  precacheAndRoute,
-} from 'workbox-precaching';
+import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 
 declare let self: ServiceWorkerGlobalScope;
@@ -20,9 +16,7 @@ let allowlist: RegExp[] | undefined;
 if (import.meta.env.DEV) allowlist = [/^\/$/];
 
 // to allow work offline
-registerRoute(
-  new NavigationRoute(createHandlerBoundToURL('index.html'), { allowlist }),
-);
+registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html'), { allowlist }));
 
 self.skipWaiting();
 clientsClaim();

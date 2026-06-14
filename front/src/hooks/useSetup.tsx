@@ -1,6 +1,6 @@
+import { SetupContext } from '@contexts/SetupContext';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SetupContext } from '../contexts/SetupContext';
 
 export const useSetup = () => {
   const context = useContext(SetupContext);

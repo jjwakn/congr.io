@@ -6,6 +6,7 @@ export interface User extends CommonEntity {
   username: string;
   password?: string;
   name: string;
+  password_change_required: boolean;
   roles: Role[];
   congregations: Congregation[];
   locations: Location[];

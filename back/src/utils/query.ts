@@ -1,36 +1,54 @@
-import {
-  CaseInsensitiveWhereProps,
-  CommonEntity,
-  FindWithFiltersProps,
-  ListParamsQuery,
-} from 'src/common/common.types';
-import {
-  ColumnType,
-  FindOptionsOrder,
-  FindOptionsWhere,
-  ObjectLiteral,
-  Raw,
-} from 'typeorm';
-import { NUMERIC_COLUMN_TYPES } from './constants';
+import { CommonEntity, FindWithFiltersProps, ListParamsQuery } from 'src/common/common.types';
+import { ColumnType, FindOptionsOrder, FindOptionsWhere, ObjectLiteral, Raw } from 'typeorm';
 
-export const caseInsensitiveWhere = ({
-  alias,
-  search,
-}: CaseInsensitiveWhereProps) =>
-  `LOWER(${alias}) LIKE '%${search.toLowerCase()}%'`;
+const TEXT_COLUMN_TYPES = new Set<ColumnType>([
+  String,
+  'char',
+  'nchar',
+  'nvarchar',
+  'varchar',
+  'character',
+  'character varying',
+  'text',
+  'tinytext',
+  'mediumtext',
+  'longtext',
+  'citext',
+  'clob',
+]);
 
-export async function findWithFilters<
-  Entity extends ObjectLiteral,
-  Query extends ListParamsQuery,
->({
+const isTextColumnType = (type?: ColumnType) => Boolean(type && TEXT_COLUMN_TYPES.has(type));
+
+const escapeLikePattern = (value: string) => value.replace(/[\\%_]/g, '\\$&');
+
+const getSearchParamName = (field: string) => `search_${field.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+
+const normalizeColumnAlias = (alias: string) => {
+  const unquotedAliasMatch = alias.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)$/);
+
+  if (!unquotedAliasMatch) return alias;
+
+  const [, tableAlias, columnAlias] = unquotedAliasMatch;
+  return `"${tableAlias}"."${columnAlias}"`;
+};
+
+const getSearchExpression = (alias: string, columnType?: ColumnType) =>
+  isTextColumnType(columnType)
+    ? `LOWER(${normalizeColumnAlias(alias)})`
+    : `LOWER(CAST(${normalizeColumnAlias(alias)} AS text))`;
+
+export const findWithFilters = async <Entity extends ObjectLiteral, Query extends ListParamsQuery>({
   repository,
   query,
   searchFields = [],
   booleanFields = [],
-}: FindWithFiltersProps<Entity, Query>) {
+  baseWhere = {},
+}: FindWithFiltersProps<Entity, Query>) => {
   const search = query.search?.trim() ?? '';
-  const paginate = 'size' in query && 'page' in query;
-  const sort = 'order' in query && 'direction' in query;
+  const pageSize = Number(query.size);
+  const page = Number(query.page);
+  const paginate = Number.isFinite(pageSize) && pageSize > 0 && Number.isFinite(page) && page >= 0;
+  const sort = Boolean(query.order && query.direction);
   const find = 'search' in query || booleanFields.some((f) => f in query);
 
   const orConditions: FindOptionsWhere<Entity>[] = [];
@@ -39,13 +57,14 @@ export async function findWithFilters<
   if (find) {
     if (search)
       searchFields.forEach((field) => {
+        const fieldName = String(field);
+        const columnType = repository.metadata.findColumnWithPropertyName(fieldName)?.type;
+        const searchParamName = getSearchParamName(fieldName);
+
         orConditions.push({
-          [field]: NUMERIC_COLUMN_TYPES.has(
-            repository.metadata.findColumnWithPropertyName(field as string)
-              ?.type as ColumnType,
-          )
-            ? Raw((alias) => `${alias}::text LIKE '%${search}%'`)
-            : Raw((alias) => caseInsensitiveWhere({ alias, search })),
+          [field]: Raw((alias) => `${getSearchExpression(alias, columnType)} LIKE :${searchParamName} ESCAPE '\\'`, {
+            [searchParamName]: `%${escapeLikePattern(search.toLowerCase())}%`,
+          }),
         } as FindOptionsWhere<Entity>);
       });
 
@@ -59,15 +78,16 @@ export async function findWithFilters<
   const where =
     orConditions.length > 0
       ? (orConditions.map((cond) => ({
+          ...baseWhere,
           ...cond,
           ...andConditions,
         })) as FindOptionsWhere<Entity>[])
       : Object.keys(andConditions).length > 0
-        ? (andConditions as FindOptionsWhere<Entity>)
-        : {};
+        ? ({ ...baseWhere, ...andConditions } as FindOptionsWhere<Entity>)
+        : baseWhere;
 
   const [result, total] = await repository.findAndCount({
-    ...(paginate && { take: query.size, skip: query.size * query.page }),
+    ...(paginate && { take: pageSize, skip: pageSize * page }),
     ...(sort && {
       order: { [query.order]: query.direction } as FindOptionsOrder<Entity>,
     }),
@@ -75,7 +95,7 @@ export async function findWithFilters<
   });
 
   return { result, total };
-}
+};
 
 export const cleanColumns = <T extends CommonEntity>(entity: CommonEntity) => {
   const newEntity: T & CommonEntity = { ...entity } as T;

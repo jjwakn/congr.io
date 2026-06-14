@@ -1,22 +1,14 @@
+import { FormContainer } from '@components/common/FormContainer';
+import { useSetup } from '@hooks/useSetup';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import {
-  Box,
-  Button,
-  IconButton,
-  List,
-  ListItem,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Button, IconButton, List, ListItem, TextField, Typography } from '@mui/material';
 import { useCallback } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useSetup } from '../../../hooks/useSetup';
-import { SetupData } from '../../../types/setup.types';
-import { FormContainer } from '../../common/FormContainer';
+import { SetupData } from '@/types/setup.types';
 
 export const LocationsStep = ({
   goNext,
@@ -167,10 +159,7 @@ export const LocationsStep = ({
               }}
             >
               <Box sx={{ display: 'flex' }}>
-                <Typography
-                  variant="body2"
-                  sx={{ minWidth: '20px', fontWeight: 'bold', mt: 1.5 }}
-                >
+                <Typography variant="body2" sx={{ minWidth: '20px', fontWeight: 'bold', mt: 1.5 }}>
                   {field.order}.
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -213,9 +202,7 @@ export const LocationsStep = ({
                   })}
                   variant="outlined"
                   error={!!form.formState.errors.locations?.[index]?.name}
-                  helperText={
-                    form.formState.errors.locations?.[index]?.name?.message
-                  }
+                  helperText={form.formState.errors.locations?.[index]?.name?.message}
                 />
 
                 <TextField
@@ -227,9 +214,7 @@ export const LocationsStep = ({
                   multiline
                   rows={2}
                   error={!!form.formState.errors.locations?.[index]?.address}
-                  helperText={
-                    form.formState.errors.locations?.[index]?.address?.message
-                  }
+                  helperText={form.formState.errors.locations?.[index]?.address?.message}
                 />
               </Box>
             </Box>
@@ -237,13 +222,7 @@ export const LocationsStep = ({
         ))}
 
         <ListItem>
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={handleAdd}
-            sx={{ mt: 1 }}
-          >
+          <Button fullWidth variant="outlined" startIcon={<AddIcon />} onClick={handleAdd} sx={{ mt: 1 }}>
             {t('form.field.add')}
           </Button>
         </ListItem>

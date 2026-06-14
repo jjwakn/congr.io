@@ -40,10 +40,7 @@ export class SetupUserDto {
   name: string;
 }
 
-export class SetupLocationDto implements Pick<
-  Location,
-  'order' | 'name' | 'address'
-> {
+export class SetupLocationDto implements Pick<Location, 'order' | 'name' | 'address'> {
   @Type(() => Number)
   @IsInt()
   @Min(0)
@@ -70,6 +67,11 @@ export class SetupCongregationDto {
   @IsNotEmpty()
   @MaxLength(120)
   type: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  timezone: string;
 
   @IsArray()
   @ArrayMinSize(1)
@@ -115,7 +117,7 @@ export interface IsSetupResponse {
 
 export interface SetupCongregationData extends Pick<
   Congregation,
-  'id' | 'name' | 'type' | 'features' | 'updated_at'
+  'id' | 'name' | 'type' | 'timezone' | 'features' | 'updated_at'
 > {
   locations: Array<Pick<Location, 'id' | 'order' | 'name' | 'address'>>;
   theme_palette: ThemePaletteConfig;

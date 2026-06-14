@@ -3,9 +3,7 @@ import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutl
 import { Box } from '@mui/material';
 import { CrudPermissionStatusProps } from './CrudPermissionStatus.types';
 
-export const CrudPermissionStatus = ({
-  enabled,
-}: CrudPermissionStatusProps) => (
+export const CrudPermissionStatus = ({ enabled, color = 'default' }: CrudPermissionStatusProps) => (
   <Box
     sx={{
       display: 'inline-flex',
@@ -14,7 +12,11 @@ export const CrudPermissionStatus = ({
     }}
   >
     {enabled ? (
-      <CheckCircleOutlineRoundedIcon color="success" fontSize="small" />
+      <CheckCircleOutlineRoundedIcon
+        color={color === 'default' ? 'success' : undefined}
+        fontSize="small"
+        sx={color === 'darkSuccess' ? { color: 'success.dark' } : undefined}
+      />
     ) : (
       <RemoveCircleOutlineRoundedIcon color="disabled" fontSize="small" />
     )}

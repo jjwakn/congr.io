@@ -9,21 +9,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notificationText, setNotificationText] = useState('');
-  const [notificationDuration, setNotificationDuration] = useState<
-    null | number
-  >(null);
-  const [notificationSeverity, setNotificationSeverity] =
-    useState<AlertProps['severity']>('info');
+  const [notificationDuration, setNotificationDuration] = useState<null | number>(null);
+  const [notificationSeverity, setNotificationSeverity] = useState<AlertProps['severity']>('info');
 
-  const showNotification: ShowNotificationType = useCallback(
-    (message, { autohide, severity } = { autohide: true }) => {
-      setNotificationDuration(autohide ? 6000 : null);
-      setNotificationText(message);
-      setNotificationOpen(true);
-      setNotificationSeverity(severity ?? 'info');
-    },
-    [],
-  );
+  const showNotification: ShowNotificationType = useCallback((message, { autohide, severity } = { autohide: true }) => {
+    setNotificationDuration(autohide ? 6000 : null);
+    setNotificationText(message);
+    setNotificationOpen(true);
+    setNotificationSeverity(severity ?? 'info');
+  }, []);
 
   const handleCloseNotification = useCallback(() => {
     setNotificationOpen(false);

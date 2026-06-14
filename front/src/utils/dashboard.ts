@@ -1,4 +1,6 @@
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import AltRouteOutlinedIcon from '@mui/icons-material/AltRouteOutlined';
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
@@ -7,7 +9,7 @@ import HowToRegOutlinedIcon from '@mui/icons-material/HowToRegOutlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { type ReactNode, createElement } from 'react';
-import { getModulePath, getSettingsPath } from './routes';
+import { getSettingsPath } from './routes';
 
 export interface DashboardNavigationItem {
   id: string;
@@ -24,17 +26,19 @@ interface CreateSettingsNavigationItemProps {
 interface CreateModuleNavigationItemProps {
   moduleId: string;
   label: string;
-  language?: string;
+  path: string;
 }
 
-export const getModuleIcon = (
-  moduleId: string,
-): DashboardNavigationItem['icon'] => {
+export const getModuleIcon = (moduleId: string): DashboardNavigationItem['icon'] => {
   switch (moduleId) {
+    case 'roles':
+      return createElement(AdminPanelSettingsOutlinedIcon, { fontSize: 'small' });
     case 'users':
       return createElement(PeopleAltOutlinedIcon, { fontSize: 'small' });
     case 'members':
       return createElement(GroupsOutlinedIcon, { fontSize: 'small' });
+    case 'processes':
+      return createElement(AltRouteOutlinedIcon, { fontSize: 'small' });
     case 'events_calendar':
       return createElement(EventOutlinedIcon, { fontSize: 'small' });
     case 'events_attendance':
@@ -61,10 +65,10 @@ export const createSettingsNavigationItem = ({
 export const createModuleNavigationItem = ({
   moduleId,
   label,
-  language,
+  path,
 }: CreateModuleNavigationItemProps): DashboardNavigationItem => ({
   id: moduleId,
   label,
   icon: getModuleIcon(moduleId),
-  path: getModulePath(moduleId, language),
+  path,
 });

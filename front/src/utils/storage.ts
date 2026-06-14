@@ -1,22 +1,15 @@
-import { Congregation } from '../types/congregation.types';
-import { ThemePaletteConfig } from '../types/theme.types';
-import {
-  CONGREGATION_KEY,
-  IS_SETUP_KEY,
-  THEME_PALETTE_CONFIG_KEY,
-  THEME_PALETTE_UPDATED_EVENT,
-} from './constants';
-import {
-  DEFAULT_THEME_PALETTE_CONFIG,
-  normalizeThemePaletteConfig,
-} from './theme';
+import { Congregation } from '@/types/congregation.types';
+import { ThemePaletteConfig } from '@/types/theme.types';
+import i18n from '../../i18n';
+import { CONGREGATION_KEY, IS_SETUP_KEY, THEME_PALETTE_CONFIG_KEY, THEME_PALETTE_UPDATED_EVENT } from './constants';
+import { DEFAULT_THEME_PALETTE_CONFIG, normalizeThemePaletteConfig } from './theme';
 
 export const getLocalStorageItem = <T>(key: string, defaultValue: T): T => {
   try {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
-    console.warn(`${key}`, error);
+    console.warn(i18n.t('app.warn.storageRead', { key }), error);
     return defaultValue;
   }
 };
@@ -25,7 +18,7 @@ export const setLocalStorageItem = <T>(key: string, value: T): void => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.warn(`${key}`, error);
+    console.warn(i18n.t('app.warn.storageWrite', { key }), error);
   }
 };
 
@@ -49,7 +42,7 @@ export const clearCongregationFromStorage = (): void => {
   try {
     localStorage.removeItem(CONGREGATION_KEY);
   } catch (error) {
-    console.warn(`${CONGREGATION_KEY}`, error);
+    console.warn(i18n.t('app.warn.storageRemove', { key: CONGREGATION_KEY }), error);
   }
 };
 
@@ -59,16 +52,11 @@ const emitThemePaletteUpdated = (): void => {
 };
 
 export const getThemePaletteConfigFromStorage = (): ThemePaletteConfig => {
-  const stored = getLocalStorageItem<ThemePaletteConfig | null>(
-    THEME_PALETTE_CONFIG_KEY,
-    null,
-  );
+  const stored = getLocalStorageItem<ThemePaletteConfig | null>(THEME_PALETTE_CONFIG_KEY, null);
   return normalizeThemePaletteConfig(stored ?? DEFAULT_THEME_PALETTE_CONFIG);
 };
 
-export const setThemePaletteConfigToStorage = (
-  value: ThemePaletteConfig,
-): void => {
+export const setThemePaletteConfigToStorage = (value: ThemePaletteConfig): void => {
   setLocalStorageItem(THEME_PALETTE_CONFIG_KEY, value);
   emitThemePaletteUpdated();
 };

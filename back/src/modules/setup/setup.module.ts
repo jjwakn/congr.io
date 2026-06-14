@@ -8,13 +8,7 @@ import { SetupController } from './setup.controller';
 import { SetupService } from './setup.service';
 
 @Module({
-  imports: [
-    UserModule,
-    RoleModule,
-    CongregationModule,
-    ConfigurationsModule,
-    LocationModule,
-  ],
+  imports: [UserModule, RoleModule, CongregationModule, ConfigurationsModule, LocationModule],
   providers: [SetupService],
   controllers: [SetupController],
   exports: [SetupService],

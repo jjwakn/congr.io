@@ -1,4 +1,4 @@
-import type { Congregation } from '../types/congregation.types';
+import type { Congregation } from '@/types/congregation.types';
 
 export interface AppContextType {
   isSetup: boolean;

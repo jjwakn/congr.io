@@ -1,4 +1,4 @@
-import { ModuleType } from '../utils/http';
+import { ModuleType } from '@utils/http';
 
 export const ConfigurationsService: ModuleType = {
   getTheme: { url: 'configurations/theme', method: 'GET' },

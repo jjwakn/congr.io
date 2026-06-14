@@ -5,11 +5,18 @@
   "field": {
     "name": "Nombre",
     "type": "Tipo",
+    "timezone": "Zona horaria",
     "address": "Dirección",
     "username": "Usuario",
     "password": "Contraseña",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "temporaryPassword": "Contraseña temporal",
+    "confirmTemporaryPassword": "Confirmar contraseña temporal",
     "next": "Siguiente",
     "cancel": "Cancelar",
+    "close": "Cerrar",
     "back": "Regresar",
     "selectAll": "Seleccionar Todos",
     "add": "Añadir"

@@ -2,7 +2,7 @@ import { Transform } from 'class-transformer';
 import { IsNumber, IsOptional } from 'class-validator';
 import { User } from 'src/modules/user/user.entity';
 import { Module } from 'src/utils/constants';
-import { ObjectLiteral, Repository } from 'typeorm';
+import { FindOptionsWhere, ObjectLiteral, Repository } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 
 //#region Enums
@@ -58,19 +58,12 @@ export interface CommonEntity {
   [key: string]: any;
 }
 
-export interface FindWithFiltersProps<
-  Entity extends ObjectLiteral,
-  Query extends ListParamsQuery,
-> {
+export interface FindWithFiltersProps<Entity extends ObjectLiteral, Query extends ListParamsQuery> {
   repository: Repository<Entity>;
   query: Query;
   searchFields?: (keyof Entity)[];
   booleanFields?: (keyof Entity)[];
-}
-
-export interface CaseInsensitiveWhereProps {
-  alias: string;
-  search: string;
+  baseWhere?: FindOptionsWhere<Entity>;
 }
 
 export interface EntityActionProps {

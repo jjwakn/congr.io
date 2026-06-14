@@ -1,0 +1,5 @@
+{
+  "notFound": "Evento no encontrado",
+  "invalidDateTime": "Fecha y hora de evento inválidas",
+  "invalidDateRange": "La fecha y hora de finalización del evento deben ser posteriores al inicio"
+}

@@ -9,10 +9,6 @@ export const FooterProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <FooterContext.Provider
-      value={{ children: node, setChildren: addChildren }}
-    >
-      {children}
-    </FooterContext.Provider>
+    <FooterContext.Provider value={{ children: node, setChildren: addChildren }}>{children}</FooterContext.Provider>
   );
 };

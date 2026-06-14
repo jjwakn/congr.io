@@ -6,10 +6,7 @@ import { Congregation } from './congregation.entity';
 import { CongregationService } from './congregation.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Congregation]),
-    forwardRef(() => UserModule),
-  ],
+  imports: [TypeOrmModule.forFeature([Congregation]), forwardRef(() => UserModule)],
   providers: [CongregationService],
   controllers: [CongregationController],
   exports: [CongregationService, TypeOrmModule],

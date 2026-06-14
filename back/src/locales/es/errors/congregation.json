@@ -1,5 +1,6 @@
 {
   "notFound": "Congregación no encontrada",
   "notFoundWithId": "Congregación no encontrada. ID: {{id}}",
-  "logoNotFound": "Logo de congregación no encontrado"
+  "logoNotFound": "Logo de congregación no encontrado",
+  "invalidTimezone": "Zona horaria de congregación inválida"
 }

@@ -1,9 +1,5 @@
+import type { BackgroundMode, BrandingGenerationInput, GeneratedBrandingAssets } from '@pages/Branding/types';
 import i18n from '../../i18n';
-import type {
-  BackgroundMode,
-  BrandingGenerationInput,
-  GeneratedBrandingAssets,
-} from '../pages/Branding/types';
 
 const PREFERRED_ICON_PADDING = 0.7;
 const CHIP_SCALE = 0.88;
@@ -40,22 +36,16 @@ const backgroundFillByMode: Record<BackgroundMode, string | null> = {
   black: '#000000',
 };
 
-const getThemeColor = (
-  backgroundMode: BrandingGenerationInput['backgroundMode'],
-) => {
+const getThemeColor = (backgroundMode: BrandingGenerationInput['backgroundMode']) => {
   if (backgroundMode === 'black') return '#000000';
   return '#ffffff';
 };
 
-const canvasToPngBytes = async (
-  canvas: HTMLCanvasElement,
-): Promise<Uint8Array> => {
+const canvasToPngBytes = async (canvas: HTMLCanvasElement): Promise<Uint8Array> => {
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((value) => {
       if (!value) {
-        reject(
-          new Error(i18n.t('brandingGenerator.errors.pngGenerationFailed')),
-        );
+        reject(new Error(i18n.t('brandingGenerator.errors.pngGenerationFailed')));
         return;
       }
       resolve(value);
@@ -74,21 +64,13 @@ const drawRoundedRect = (
   height: number,
   radius: number,
 ) => {
-  const boundedRadius = Math.max(
-    0,
-    Math.min(radius, Math.min(width, height) / 2),
-  );
+  const boundedRadius = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
   context.beginPath();
   context.moveTo(x + boundedRadius, y);
   context.lineTo(x + width - boundedRadius, y);
   context.quadraticCurveTo(x + width, y, x + width, y + boundedRadius);
   context.lineTo(x + width, y + height - boundedRadius);
-  context.quadraticCurveTo(
-    x + width,
-    y + height,
-    x + width - boundedRadius,
-    y + height,
-  );
+  context.quadraticCurveTo(x + width, y + height, x + width - boundedRadius, y + height);
   context.lineTo(x + boundedRadius, y + height);
   context.quadraticCurveTo(x, y + height, x, y + height - boundedRadius);
   context.lineTo(x, y + boundedRadius);
@@ -100,12 +82,10 @@ const parsePngDimensions = (png: Uint8Array) => {
   const signature = Array.from(png.subarray(0, 8))
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');
-  if (signature !== PNG_SIGNATURE)
-    throw new Error(i18n.t('brandingGenerator.errors.invalidPng'));
+  if (signature !== PNG_SIGNATURE) throw new Error(i18n.t('brandingGenerator.errors.invalidPng'));
 
   const headerType = new TextDecoder().decode(png.subarray(12, 16));
-  if (headerType !== 'IHDR')
-    throw new Error(i18n.t('brandingGenerator.errors.invalidPngHeader'));
+  if (headerType !== 'IHDR') throw new Error(i18n.t('brandingGenerator.errors.invalidPngHeader'));
 
   const view = new DataView(png.buffer, png.byteOffset, png.byteLength);
   const width = view.getUint32(16, false);
@@ -159,15 +139,12 @@ const loadImageFromFile = (file: File): Promise<HTMLImageElement> =>
     image.src = url;
   });
 
-const normalizeImageToPng = async (
-  image: HTMLImageElement,
-): Promise<Uint8Array> => {
+const normalizeImageToPng = async (image: HTMLImageElement): Promise<Uint8Array> => {
   const canvas = document.createElement('canvas');
   canvas.width = Math.max(1, image.width);
   canvas.height = Math.max(1, image.height);
   const context = canvas.getContext('2d');
-  if (!context)
-    throw new Error(i18n.t('brandingGenerator.errors.canvasUnavailable'));
+  if (!context) throw new Error(i18n.t('brandingGenerator.errors.canvasUnavailable'));
 
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
@@ -185,8 +162,7 @@ const renderIcon = async ({
   canvas.width = size;
   canvas.height = size;
   const context = canvas.getContext('2d');
-  if (!context)
-    throw new Error(i18n.t('brandingGenerator.errors.canvasUnavailable'));
+  if (!context) throw new Error(i18n.t('brandingGenerator.errors.canvasUnavailable'));
 
   context.clearRect(0, 0, size, size);
 
@@ -198,14 +174,7 @@ const renderIcon = async ({
 
   if (chipFill) {
     context.fillStyle = chipFill;
-    drawRoundedRect(
-      context,
-      chipStart,
-      chipStart,
-      chipSize,
-      chipSize,
-      roundedCorners ? cornerRadius : 0,
-    );
+    drawRoundedRect(context, chipStart, chipStart, chipSize, chipSize, roundedCorners ? cornerRadius : 0);
     context.fill();
   }
 
@@ -266,32 +235,31 @@ export const generateBrandingAssets = async ({
     loadImageFromFile(bigLogoFile),
   ]);
 
-  const [smallLogoPng, bigLogoPng, icon512, icon192, appleTouchIcon] =
-    await Promise.all([
-      normalizeImageToPng(smallLogoImage),
-      normalizeImageToPng(bigLogoImage),
-      renderIcon({
-        image: smallLogoImage,
-        size: 512,
-        backgroundMode,
-        roundedCorners,
-        cornerRadiusPercent,
-      }),
-      renderIcon({
-        image: smallLogoImage,
-        size: 192,
-        backgroundMode,
-        roundedCorners,
-        cornerRadiusPercent,
-      }),
-      renderIcon({
-        image: smallLogoImage,
-        size: 180,
-        backgroundMode,
-        roundedCorners,
-        cornerRadiusPercent,
-      }),
-    ]);
+  const [smallLogoPng, bigLogoPng, icon512, icon192, appleTouchIcon] = await Promise.all([
+    normalizeImageToPng(smallLogoImage),
+    normalizeImageToPng(bigLogoImage),
+    renderIcon({
+      image: smallLogoImage,
+      size: 512,
+      backgroundMode,
+      roundedCorners,
+      cornerRadiusPercent,
+    }),
+    renderIcon({
+      image: smallLogoImage,
+      size: 192,
+      backgroundMode,
+      roundedCorners,
+      cornerRadiusPercent,
+    }),
+    renderIcon({
+      image: smallLogoImage,
+      size: 180,
+      backgroundMode,
+      roundedCorners,
+      cornerRadiusPercent,
+    }),
+  ]);
 
   const [favicon48, favicon32, favicon16] = await Promise.all([
     renderIcon({
@@ -375,9 +343,7 @@ export const downloadBlob = (blob: Blob, fileName: string) => {
 };
 
 export const createPngObjectUrl = (pngBytes: Uint8Array): string =>
-  URL.createObjectURL(
-    new Blob([new Uint8Array(pngBytes).buffer], { type: 'image/png' }),
-  );
+  URL.createObjectURL(new Blob([new Uint8Array(pngBytes).buffer], { type: 'image/png' }));
 
 export const createZipBlob = (entries: ZipEntry[]): Blob => {
   const encoder = new TextEncoder();
@@ -445,9 +411,7 @@ export const createZipBlob = (entries: ZipEntry[]): Blob => {
   endView.setUint32(16, toUint32LE(offset), true);
   endView.setUint16(20, 0, true);
 
-  const blobParts = [...localParts, ...centralParts, endRecord].map(
-    toArrayBuffer,
-  );
+  const blobParts = [...localParts, ...centralParts, endRecord].map(toArrayBuffer);
 
   return new Blob(blobParts, {
     type: 'application/zip',

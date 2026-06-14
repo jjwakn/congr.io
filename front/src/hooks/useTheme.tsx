@@ -1,6 +1,6 @@
+import { ThemeContext } from '@contexts/ThemeContext';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ThemeContext } from '../contexts/ThemeContext';
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
