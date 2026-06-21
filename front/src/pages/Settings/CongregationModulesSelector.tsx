@@ -39,6 +39,8 @@ export const CongregationModulesSelector = ({
     onChange(features.filter(({ id }) => next.has(id)).map(({ id }) => id));
   };
 
+  const allSelected = features.length > 0 && features.every(({ id }) => selectedSet.has(id));
+
   return (
     <Box>
       <Typography variant="subtitle1" fontWeight={600} gutterBottom>
@@ -47,6 +49,20 @@ export const CongregationModulesSelector = ({
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
         {t('pages.settings.congregation.modules.description')}
       </Typography>
+
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Checkbox
+          checked={allSelected}
+          disabled={disabled}
+          inputProps={{ 'aria-label': t('form.field.selectAll') }}
+          onChange={(_event, checked) => {
+            onChange(
+              checked ? features.map(({ id }) => id) : features.filter(({ required }) => required).map(({ id }) => id),
+            );
+          }}
+        />
+        <Typography fontWeight={600}>{t('form.field.selectAll')}</Typography>
+      </Box>
 
       {features.map((feature) => (
         <Box key={feature.id} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>

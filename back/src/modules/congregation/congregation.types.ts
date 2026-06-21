@@ -1,5 +1,17 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { CommonOrder, EntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { Feature } from 'src/utils/constants';
 import { ApiProperty } from '@nestjs/swagger';
@@ -34,6 +46,23 @@ export interface CongregationDeletionPreview {
   configurations: number;
 }
 
+export class CongregationLocationDto {
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  order: number;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(160)
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(240)
+  address?: string;
+}
+
 export class CongregationDto {
   @ApiProperty({ example: 'Casa de Libertad' })
   @IsString()
@@ -64,6 +93,19 @@ export class CongregationDto {
   @IsEnum(Feature, { each: true })
   @IsOptional()
   features?: Feature[];
+
+  @ApiProperty({ required: false, type: [CongregationLocationDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CongregationLocationDto)
+  @IsOptional()
+  locations?: CongregationLocationDto[];
+
+  @ApiProperty({ required: false, type: [String], format: 'uuid' })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  user_ids?: string[];
 }
 
 enum Order {

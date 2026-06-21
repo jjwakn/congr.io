@@ -158,6 +158,32 @@
       "createAction": "Añadir congregación",
       "created": "La congregación se creó correctamente.",
       "createFailed": "No se pudo crear la congregación.",
+      "createWizard": {
+        "steps": {
+          "congregation": "Congregación",
+          "modules": "Módulos",
+          "locations": "Ubicaciones",
+          "timezone": "Zona horaria",
+          "users": "Usuarios",
+          "review": "Revisión"
+        },
+        "headings": {
+          "congregation": "Información de la congregación",
+          "users": "Asignar usuarios"
+        },
+        "usersDescription": "Selecciona los usuarios que tendrán acceso a esta congregación. Tu cuenta siempre estará incluida.",
+        "searchUsers": "Buscar usuarios o roles",
+        "fullAccessRole": "{{role}} · Acceso total",
+        "noRoles": "Sin roles de acceso",
+        "usersLoadFailed": "No se pudieron cargar los usuarios para asignarlos a la congregación.",
+        "errors": {
+          "congregation": "Ingresa el nombre y tipo de congregación.",
+          "modules": "Selecciona al menos un módulo.",
+          "locations": "Añade al menos una ubicación e ingresa el nombre de cada ubicación.",
+          "timezone": "Selecciona una zona horaria.",
+          "users": "Selecciona al menos un usuario."
+        }
+      },
       "editTitle": "Editar {{name}}",
       "editAction": "Editar",
       "current": "Congregación actual",

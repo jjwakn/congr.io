@@ -1,9 +1,10 @@
 import { I18nService } from 'nestjs-i18n';
+import { randomUUID } from 'node:crypto';
 import { Feature, FeatureTree } from 'src/utils/constants';
 import { isValidTimeZone, normalizeTimeZone } from 'src/utils/datetime';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
 import { DataSource, EntityManager, In, IsNull, Repository } from 'typeorm';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
 import { Congregation } from './congregation.entity';
@@ -88,6 +89,32 @@ export class CongregationService {
     };
   }
 
+  async listCreationUsers() {
+    const users = await this.userRepository.find({
+      where: { enabled: true, deleted_at: IsNull() },
+      relations: { roles: true },
+      order: { name: 'ASC' },
+    });
+
+    const result = users
+      .map((user) => {
+        delete user.password;
+        return { ...user, roles: (user.roles ?? []).filter(({ enabled }) => enabled) };
+      })
+      .sort((left, right) => {
+        const leftFullAccess = left.roles.some(({ full_access }) => full_access);
+        const rightFullAccess = right.roles.some(({ full_access }) => full_access);
+        if (leftFullAccess !== rightFullAccess) return leftFullAccess ? -1 : 1;
+
+        const leftRole = [...left.roles].sort((a, b) => a.name.localeCompare(b.name))[0]?.name ?? '';
+        const rightRole = [...right.roles].sort((a, b) => a.name.localeCompare(b.name))[0]?.name ?? '';
+        if (Boolean(leftRole) !== Boolean(rightRole)) return leftRole ? -1 : 1;
+        return leftRole.localeCompare(rightRole) || left.name.localeCompare(right.name);
+      });
+
+    return { result, total: result.length };
+  }
+
   async get({ id, userId }: CongregationGetProps) {
     await this.assertUserCongregation(userId, id);
     const result = await this.repository.findOne({
@@ -114,24 +141,63 @@ export class CongregationService {
     if (data.timezone && !isValidTimeZone(data.timezone.trim()))
       throw new BadRequestException(this.i18n.t('errors.congregation.invalidTimezone'));
 
-    const created_by = await this.userRepository.findOne({
-      where: { id: userId },
-      withDeleted: true,
-      relations: { congregations: true },
-    });
+    const { locations = [], user_ids = [], ...congregationData } = data;
+    const selectedUserIds = Array.from(new Set([userId, ...user_ids]));
 
-    if (!created_by) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
+    return this.dataSource.transaction(async (manager) => {
+      const userRepository = manager.getRepository(User);
+      const congregationRepository = manager.getRepository(Congregation);
+      const users = await userRepository.find({
+        where: { id: In(selectedUserIds), enabled: true, deleted_at: IsNull() },
+        relations: { congregations: true },
+      });
 
-    const created = this.repository.create({
-      ...data,
-      timezone: normalizeTimeZone(data.timezone),
-      features: this.normalizeFeatures(data.features),
-      created_by,
+      if (users.length !== selectedUserIds.length)
+        throw new NotAcceptableException(this.i18n.t('errors.user.notFound'));
+
+      const createdBy = users.find(({ id }) => id === userId);
+      if (!createdBy) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
+
+      const created = congregationRepository.create({
+        ...congregationData,
+        timezone: normalizeTimeZone(data.timezone),
+        features: this.normalizeFeatures(data.features),
+        created_by: createdBy,
+      });
+      const congregation = await congregationRepository.save(created);
+
+      const locationIds: string[] = [];
+      for (const location of locations) {
+        const locationId = randomUUID();
+        locationIds.push(locationId);
+        await manager.query(
+          'INSERT INTO "location" ("id", "order", "name", "address", "created_by") VALUES ($1, $2, $3, $4, $5)',
+          [locationId, location.order, location.name.trim(), location.address?.trim() ?? '', userId],
+        );
+        await manager.query(
+          'INSERT INTO "congregation_location" ("congregation_id", "congregation_location_id") VALUES ($1, $2)',
+          [congregation.id, locationId],
+        );
+      }
+
+      if (locationIds.length)
+        await manager.query(
+          'INSERT INTO "user_location" ("user_id", "location_id") SELECT "users"."user_id", "locations"."location_id" FROM unnest($1::uuid[]) AS "users"("user_id") CROSS JOIN unnest($2::uuid[]) AS "locations"("location_id") ON CONFLICT DO NOTHING',
+          [selectedUserIds, locationIds],
+        );
+
+      users.forEach((user) => {
+        user.congregations = [...(user.congregations ?? []), congregation];
+      });
+      await userRepository.save(users);
+
+      const result = await congregationRepository.findOne({
+        where: { id: congregation.id },
+        relations: { locations: true },
+      });
+      if (!result) throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
+      return cleanColumns<Congregation>(result);
     });
-    const result = await this.repository.save(created);
-    created_by.congregations = [...(created_by.congregations ?? []), result];
-    await this.userRepository.save(created_by);
-    return result;
   }
 
   async update({ id, data, userId }: CongregationUpdateProps) {
@@ -144,8 +210,12 @@ export class CongregationService {
       withDeleted: true,
     });
 
+    const congregationData = { ...data };
+    delete congregationData.locations;
+    delete congregationData.user_ids;
+
     await this.repository.update(id, {
-      ...data,
+      ...congregationData,
       ...(data.timezone ? { timezone: normalizeTimeZone(data.timezone) } : {}),
       ...(data.features ? { features: this.normalizeFeatures(data.features) } : {}),
       updated_by,

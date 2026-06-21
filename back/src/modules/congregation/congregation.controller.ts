@@ -36,6 +36,12 @@ export class CongregationController {
     return this.service.list({ query, userId: getRequestUserIdOrThrow(request) });
   }
 
+  @PermissionDecorator(Module.congregation, ModuleAction.create)
+  @Get('creation-users')
+  creationUsers() {
+    return this.service.listCreationUsers();
+  }
+
   @PermissionDecorator(Module.congregation, ModuleAction.get)
   @Get(':id')
   get(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() request: RequestType) {

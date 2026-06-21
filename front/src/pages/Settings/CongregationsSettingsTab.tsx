@@ -17,10 +17,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Congregation } from '@/types/congregation.types';
 import type { ThemePaletteConfig } from '@/types/theme.types';
+import { CongregationCreateWizardDialog } from './CongregationCreateWizardDialog';
 import { CongregationDeleteDialog } from './CongregationDeleteDialog';
 import { CongregationEditDialog } from './CongregationEditDialog';
-import { CongregationFormDialog } from './CongregationFormDialog';
-import type { CongregationDeletionPreview, CongregationEditValues, CongregationSettingsDraft } from './settings.types';
+import type { CongregationCreateValues, CongregationDeletionPreview, CongregationEditValues } from './settings.types';
 
 const getErrorMessage = (value: unknown, fallback: string) =>
   value instanceof HttpRequestError || value instanceof Error ? value.message : fallback;
@@ -48,11 +48,17 @@ export const CongregationsSettingsTab = () => {
   const [loadingDeleteId, setLoadingDeleteId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  const handleCreate = async (values: CongregationSettingsDraft) => {
+  const handleCreate = async (values: CongregationCreateValues) => {
     setSubmitting(true);
     setError('');
     try {
-      await httpRequest<Congregation>({ service: CongregationsService.create, data: { ...values } });
+      await httpRequest<Congregation>({
+        service: CongregationsService.create,
+        data: {
+          ...values,
+          locations: values.locations.map(({ order, name, address }) => ({ order, name, address })),
+        },
+      });
       await refreshSession();
       setCreateOpen(false);
       showNotification(t('pages.settings.congregation.created'), { severity: 'success' });
@@ -262,12 +268,16 @@ export const CongregationsSettingsTab = () => {
         </Typography>
       </ModuleSection>
 
-      <CongregationFormDialog
-        open={createOpen}
-        submitting={submitting}
-        onClose={() => setCreateOpen(false)}
-        onSubmit={(values) => void handleCreate(values)}
-      />
+      {user?.id && createOpen ? (
+        <CongregationCreateWizardDialog
+          open
+          submitting={submitting}
+          currentUserId={user.id}
+          features={features}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={(values) => void handleCreate(values)}
+        />
+      ) : null}
 
       {editCongregation ? (
         <CongregationEditDialog

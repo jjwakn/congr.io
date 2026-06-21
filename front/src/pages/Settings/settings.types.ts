@@ -2,6 +2,7 @@ import type { SelectChangeEvent } from '@mui/material';
 import type { Congregation } from '@/types/congregation.types';
 import type { Feature } from '@/types/feature.types';
 import type { ThemePaletteConfig } from '@/types/theme.types';
+import type { User } from '@/types/user.types';
 
 export interface SettingsPageProps {
   showHeader?: boolean;
@@ -16,11 +17,30 @@ export interface CongregationSettingsDraft {
   features?: string[];
 }
 
-export interface CongregationFormDialogProps {
+export interface CongregationCreationLocation {
+  order: number;
+  name: string;
+  address: string;
+}
+
+export interface CongregationCreateValues extends CongregationSettingsDraft {
+  features: string[];
+  locations: CongregationCreationLocation[];
+  user_ids: string[];
+}
+
+export interface CongregationCreationUsersResponse {
+  result: User[];
+  total: number;
+}
+
+export interface CongregationCreateWizardDialogProps {
   open: boolean;
   submitting: boolean;
+  currentUserId: string;
+  features: Feature[];
   onClose: () => void;
-  onSubmit: (values: CongregationSettingsDraft) => void;
+  onSubmit: (values: CongregationCreateValues) => void;
 }
 
 export interface CongregationEditDialogProps {
