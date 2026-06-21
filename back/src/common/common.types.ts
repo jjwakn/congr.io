@@ -70,6 +70,10 @@ export interface EntityActionProps {
   userId: string;
 }
 
+export interface CongregationEntityActionProps extends EntityActionProps {
+  congregationId?: string;
+}
+
 export interface DefaultGetData {
   id: string;
 }

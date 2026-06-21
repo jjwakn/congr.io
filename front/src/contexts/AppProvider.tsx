@@ -21,6 +21,7 @@ let setupStatusRequest: Promise<IsSetupResponse> | null = null;
 
 const shouldSyncCongregation = (localCongregation: Congregation | null, remoteCongregation: Congregation): boolean => {
   if (!localCongregation) return true;
+  if (localCongregation.id !== remoteCongregation.id) return false;
 
   const localUpdated = toTimestamp(localCongregation.updated_at);
   const remoteUpdated = toTimestamp(remoteCongregation.updated_at);
@@ -119,6 +120,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  const selectCongregation = useCallback((nextCongregation: Congregation) => {
+    setCongregation(nextCongregation);
+    setCongregationToStorage(nextCongregation);
+  }, []);
+
   useEffect(() => {
     void checkIsSetup();
   }, [checkIsSetup]);
@@ -131,6 +137,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         refreshIsSetup: () => checkIsSetup(true),
         markSetupComplete,
+        selectCongregation,
       }}
     >
       {children}

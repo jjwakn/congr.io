@@ -4,7 +4,14 @@ import { useRef } from 'react';
 import { ThemePaletteModeConfig } from '@/types/theme.types';
 import { PaletteModeEditorProps } from './PaletteModeEditor.types';
 
-export const PaletteModeEditor = ({ title, values, errors, labels, onChange }: PaletteModeEditorProps) => {
+export const PaletteModeEditor = ({
+  title,
+  disabled = false,
+  values,
+  errors,
+  labels,
+  onChange,
+}: PaletteModeEditorProps) => {
   const colorInputsRef = useRef<Partial<Record<keyof ThemePaletteModeConfig, HTMLInputElement | null>>>({});
 
   const getPickerValue = (value: string): string => {
@@ -33,6 +40,7 @@ export const PaletteModeEditor = ({ title, values, errors, labels, onChange }: P
     >
       <TextField
         label={label}
+        disabled={disabled}
         value={value}
         onChange={(event) => onChange(key, event.target.value)}
         size="small"
@@ -67,6 +75,7 @@ export const PaletteModeEditor = ({ title, values, errors, labels, onChange }: P
 
         <IconButton
           aria-label={label}
+          disabled={disabled}
           onClick={() => colorInputsRef.current[key]?.click()}
           sx={{
             width: 40,

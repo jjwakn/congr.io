@@ -37,9 +37,10 @@ export class EventService {
     private readonly i18n: I18nService,
   ) {}
 
-  private async getContext(userId: string) {
+  private async getContext(userId: string, congregationId?: string) {
     return getUserCongregationContext({
       userId,
+      congregationId,
       userRepository: this.userRepository,
       congregationRepository: this.congregationRepository,
       i18n: this.i18n,
@@ -128,8 +129,8 @@ export class EventService {
     return cleanColumns<Event>(result);
   }
 
-  async list({ query, userId }: EventListProps) {
-    const { congregation } = await this.getContext(userId);
+  async list({ query, userId, congregationId }: EventListProps) {
+    const { congregation } = await this.getContext(userId, congregationId);
 
     const { result, total } = await findWithFilters<Event, EventQuery>({
       repository: this.repository,
@@ -163,13 +164,13 @@ export class EventService {
     };
   }
 
-  async get({ id, userId }: EventGetProps) {
-    const { congregation } = await this.getContext(userId);
+  async get({ id, userId, congregationId }: EventGetProps) {
+    const { congregation } = await this.getContext(userId, congregationId);
     return this.loadEventOrThrow({ id, congregationId: congregation.id });
   }
 
-  async create({ data, userId }: EventCreateProps) {
-    const { user, congregation } = await this.getContext(userId);
+  async create({ data, userId, congregationId }: EventCreateProps) {
+    const { user, congregation } = await this.getContext(userId, congregationId);
     const normalized = this.normalizeEvent(data);
     const eventType = await this.resolveEventTypeOrThrow({
       id: normalized.type_id,
@@ -195,11 +196,11 @@ export class EventService {
     });
 
     const result = await this.repository.save(created);
-    return this.get({ id: result.id, userId });
+    return this.get({ id: result.id, userId, congregationId });
   }
 
-  async update({ id, data, userId }: EventUpdateProps) {
-    const { user, congregation } = await this.getContext(userId);
+  async update({ id, data, userId, congregationId }: EventUpdateProps) {
+    const { user, congregation } = await this.getContext(userId, congregationId);
 
     const existing = await this.repository.findOne({
       where: {
@@ -232,11 +233,11 @@ export class EventService {
     existing.updated_by = user;
 
     await this.repository.save(existing);
-    return this.get({ id, userId });
+    return this.get({ id, userId, congregationId });
   }
 
-  async remove({ id, userId }: EventDeleteProps) {
-    const { user, congregation } = await this.getContext(userId);
+  async remove({ id, userId, congregationId }: EventDeleteProps) {
+    const { user, congregation } = await this.getContext(userId, congregationId);
 
     const existing = await this.repository.findOne({
       where: {

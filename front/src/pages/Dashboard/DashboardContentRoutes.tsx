@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material';
 import { DashboardSectionFrame } from '@pages/Dashboard/DashboardSectionFrame';
 import type { DashboardModuleView } from '@pages/Modules/modules.types';
 import { getModuleRoute } from '@pages/Modules/routes';
-import { getHomePath } from '@utils/routes';
+import { getHomePath, getSettingsPaths } from '@utils/routes';
 import { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { DashboardContentRoutesProps } from './DashboardContentRoutes.types';
@@ -44,16 +44,19 @@ export const DashboardContentRoutes = ({
             }
           />
 
-          <Route
-            path={settingsPath}
-            element={
-              <DashboardSectionFrame title={settingsTitle}>
-                <Suspense fallback={fallback}>
-                  <SettingsPage showHeader={false} />
-                </Suspense>
-              </DashboardSectionFrame>
-            }
-          />
+          {Array.from(new Set([settingsPath, ...getSettingsPaths()])).map((path) => (
+            <Route
+              key={path}
+              path={path}
+              element={
+                <DashboardSectionFrame title={settingsTitle}>
+                  <Suspense fallback={fallback}>
+                    <SettingsPage showHeader={false} />
+                  </Suspense>
+                </DashboardSectionFrame>
+              }
+            />
+          ))}
 
           {availableModules.map((module: DashboardModuleView) => {
             const route = getModuleRoute(module.id);

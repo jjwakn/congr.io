@@ -19,3 +19,5 @@
 13. Prefer arrow functions for consistency.
 14. Prefer path aliases for project imports (for example `@components/*`, `@utils/*`, `@constants/*`).
 15. Avoid deep relative imports when an alias is available.
+16. Every UI section or tab that manages a persisted model must use the shared CRUD components and file structure, even when embedded inside Settings or another parent page.
+17. Permission-gate persisted-model sections/tabs and their create, view, update, and delete actions independently using the model's backend permission module.

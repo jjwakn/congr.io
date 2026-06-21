@@ -14,8 +14,10 @@ const MODULES_SEGMENT: LocalizedValue = {
 
 const SETTINGS_SEGMENT: LocalizedValue = {
   en: 'settings',
-  es: 'configuracion',
+  es: 'preferencias',
 };
+
+const LEGACY_SETTINGS_SEGMENTS = ['configuracion'];
 
 const MODULE_SLUGS: Record<string, LocalizedValue> = {
   roles: { en: 'roles', es: 'roles' },
@@ -98,8 +100,17 @@ export const getSettingsPath = (language?: string): string => {
 
 export const isSettingsPath = (pathname: string): boolean => {
   const segments = splitPath(pathname);
-  return segments.length === 1 && matchesLocalizedSegment(segments[0], SETTINGS_SEGMENT);
+  return (
+    segments.length === 1 &&
+    (matchesLocalizedSegment(segments[0], SETTINGS_SEGMENT) || LEGACY_SETTINGS_SEGMENTS.includes(segments[0]))
+  );
 };
+
+export const getSettingsPaths = (): string[] => [
+  `/${SETTINGS_SEGMENT.en}`,
+  `/${SETTINGS_SEGMENT.es}`,
+  ...LEGACY_SETTINGS_SEGMENTS.map((segment) => `/${segment}`),
+];
 
 export const getModulePath = (moduleId: string, language?: string): string => `/${getModuleSlug(moduleId, language)}`;
 

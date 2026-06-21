@@ -95,7 +95,7 @@ generated_roles AS (
             )
             ELSE NULL
           END,
-          'configuration',
+          'congregation',
           CASE
             WHEN random() > 0.25 THEN to_jsonb(
               COALESCE(
@@ -161,7 +161,7 @@ generated_roles AS (
 INSERT INTO "role" ("name", "permissions", "full_access", "enabled")
 SELECT
   name,
-  COALESCE(permissions, '{"configuration":["get"]}'),
+  COALESCE(permissions, '{"congregation":["get"]}'),
   FALSE,
   TRUE
 FROM generated_roles

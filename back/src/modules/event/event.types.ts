@@ -1,17 +1,17 @@
 import { Type } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
-import { CommonOrder, EntityActionProps, ListParamsQuery } from 'src/common/common.types';
+import { CommonOrder, CongregationEntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 
-export interface EventGetProps extends EntityActionProps {
+export interface EventGetProps extends CongregationEntityActionProps {
   id: string;
 }
 
-export interface EventListProps extends EntityActionProps {
+export interface EventListProps extends CongregationEntityActionProps {
   query: EventQuery;
 }
 
-export interface EventCreateProps extends EntityActionProps {
+export interface EventCreateProps extends CongregationEntityActionProps {
   data: EventDto;
 }
 
@@ -19,7 +19,7 @@ export interface EventUpdateProps extends EventCreateProps {
   id: string;
 }
 
-export interface EventDeleteProps extends EntityActionProps {
+export interface EventDeleteProps extends CongregationEntityActionProps {
   id: string;
 }
 

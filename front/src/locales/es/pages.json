@@ -8,14 +8,17 @@
     "noModules": "No hay módulos disponibles para esta congregación.",
     "moduleNotFound": "Módulo no encontrado. Selecciona uno en la barra lateral.",
     "logout": "Cerrar sesión",
-    "settings": "Configuración"
+    "settings": "Preferencias",
+    "switchCongregation": "Cambiar congregación",
+    "congregationSwitchFailed": "No se pudo cambiar de congregación."
   },
   "modules": {
     "common": {
       "refresh": "Actualizar",
       "search": "Buscar",
       "rowsPerPage": "Filas por página",
-      "view": "Ver"
+      "view": "Ver",
+      "emptyValue": "Sin especificar"
     },
     "users": {
       "title": "Usuarios",
@@ -118,7 +121,7 @@
           "user": "Usuarios",
           "role": "Roles",
           "congregation": "Congregación",
-          "configuration": "Configuración",
+          "configuration": "Preferencias",
           "process": "Procesos",
           "event": "Eventos",
           "event_type": "Tipos de evento"
@@ -140,12 +143,89 @@
     }
   },
   "settings": {
-    "title": "Configuración",
-    "subtitle": "Administra la congregación y la apariencia.",
+    "title": "Preferencias",
+    "subtitle": "Administra congregaciones, preferencias de interfaz y tipos de evento.",
+    "tabs": {
+      "congregations": "Preferencias de congregación",
+      "ui": "Interfaz",
+      "eventTypes": "Tipos de evento"
+    },
     "congregation": {
-      "title": "Configuración de la Congregación",
-      "subtitle": "Actualiza los datos principales de la congregación usados en la aplicación.",
-      "timezoneHelp": "Usa una zona horaria IANA como America/Guatemala."
+      "title": "Preferencias de congregación",
+      "subtitle": "Administra las congregaciones asignadas a tu cuenta.",
+      "timezoneHelp": "Usa una zona horaria IANA como America/Guatemala.",
+      "createTitle": "Añadir congregación",
+      "createAction": "Añadir congregación",
+      "created": "La congregación se creó correctamente.",
+      "createFailed": "No se pudo crear la congregación.",
+      "createWizard": {
+        "steps": {
+          "congregation": "Congregación",
+          "modules": "Módulos",
+          "locations": "Ubicaciones",
+          "timezone": "Zona horaria",
+          "users": "Usuarios",
+          "review": "Revisión"
+        },
+        "headings": {
+          "congregation": "Información de la congregación",
+          "users": "Asignar usuarios"
+        },
+        "usersDescription": "Selecciona los usuarios que tendrán acceso a esta congregación. Tu cuenta siempre estará incluida.",
+        "searchUsers": "Buscar usuarios o roles",
+        "fullAccessRole": "{{role}} · Acceso total",
+        "noRoles": "Sin roles de acceso",
+        "usersLoadFailed": "No se pudieron cargar los usuarios para asignarlos a la congregación.",
+        "errors": {
+          "congregation": "Ingresa el nombre y tipo de congregación.",
+          "modules": "Selecciona al menos un módulo.",
+          "locations": "Añade al menos una ubicación e ingresa el nombre de cada ubicación.",
+          "timezone": "Selecciona una zona horaria.",
+          "users": "Selecciona al menos un usuario."
+        }
+      },
+      "editTitle": "Editar {{name}}",
+      "editAction": "Editar",
+      "current": "Congregación actual",
+      "actions": "Acciones",
+      "loading": "Cargando congregaciones...",
+      "empty": "No se encontraron congregaciones.",
+      "palette": "Paleta de colores",
+      "paletteLoading": "Cargando paleta de colores...",
+      "editTabs": {
+        "info": "Información",
+        "palette": "Paleta"
+      },
+      "modules": {
+        "title": "Módulos disponibles",
+        "description": "Elige los módulos habilitados para esta congregación. Los módulos requeridos y sus requisitos se seleccionan automáticamente.",
+        "column": "Módulos"
+      },
+      "delete": {
+        "action": "Eliminar",
+        "title": "Eliminar {{name}}",
+        "dataLossWarning": "Eliminar esta congregación borrará permanentemente la información que le pertenece. Esta acción no se puede deshacer.",
+        "previewDescription": "Los siguientes registros serán eliminados o desvinculados:",
+        "finalWarning": "Esta es la confirmación final. Se perderá toda la información de la congregación listada anteriormente.",
+        "typeName": "Escribe {{name}} exactamente para confirmar.",
+        "confirmationLabel": "Nombre de la congregación",
+        "continue": "Continuar",
+        "confirm": "Eliminar congregación",
+        "previewFailed": "No se pudo calcular el impacto de eliminar la congregación.",
+        "success": "La congregación se eliminó correctamente.",
+        "failed": "No se pudo eliminar la congregación.",
+        "counts": {
+          "usersDeleted": "{{count}} usuarios exclusivos serán eliminados",
+          "usersDetached": "{{count}} usuarios compartidos serán desvinculados",
+          "locationsDeleted": "{{count}} ubicaciones exclusivas serán eliminadas",
+          "locationsDetached": "{{count}} ubicaciones compartidas serán desvinculadas",
+          "events": "{{count}} eventos serán eliminados",
+          "eventTypes": "{{count}} tipos de evento serán eliminados",
+          "processes": "{{count}} procesos serán eliminados",
+          "processSteps": "{{count}} pasos de proceso serán eliminados",
+          "configurations": "{{count}} registros de configuración serán eliminados"
+        }
+      }
     },
     "themeMode": {
       "label": "Modo de tema",
@@ -170,16 +250,53 @@
     },
     "actions": {
       "save": "Guardar",
-      "reset": "Restablecer"
+      "reset": "Restablecer",
+      "discard": "Descartar"
     },
     "frontendVersion": "Versión del frontend: {{version}}",
     "success": {
-      "saved": "La configuración se guardó correctamente."
+      "saved": "Las preferencias se guardaron correctamente."
     },
     "error": {
-      "saveFailed": "No se pudo guardar la configuración.",
+      "saveFailed": "No se pudieron guardar las preferencias.",
       "loadFailed": "No se pudo cargar la paleta de tema.",
       "invalidHex": "Ingresa un color hexadecimal válido como #1976d2."
+    },
+    "eventTypes": {
+      "title": "Tipos de evento",
+      "searchPlaceholder": "Buscar por nombre o descripción",
+      "loading": "Cargando tipos de evento...",
+      "empty": "No se encontraron tipos de evento.",
+      "actions": {
+        "create": "Crear tipo de evento",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "save": "Guardar cambios"
+      },
+      "fields": {
+        "description": "Descripción",
+        "enabled": "Activo",
+        "enabledHint": "Los tipos de evento desactivados no pueden seleccionarse para eventos nuevos.",
+        "actions": "Acciones"
+      },
+      "dialogs": {
+        "createTitle": "Crear tipo de evento",
+        "editTitle": "Editar tipo de evento",
+        "viewTitle": "Detalles del tipo de evento",
+        "deleteTitle": "Eliminar tipo de evento",
+        "deleteMessage": "¿Seguro que deseas eliminar {{name}}?"
+      },
+      "success": {
+        "created": "El tipo de evento se creó correctamente.",
+        "updated": "El tipo de evento se actualizó correctamente.",
+        "deleted": "El tipo de evento se eliminó correctamente."
+      },
+      "error": {
+        "loadFailed": "No se pudieron cargar los tipos de evento.",
+        "loadOneFailed": "No se pudo cargar el tipo de evento seleccionado.",
+        "saveFailed": "No se pudo guardar el tipo de evento.",
+        "deleteFailed": "No se pudo eliminar el tipo de evento."
+      }
     }
   }
 }

@@ -5,5 +5,6 @@ export interface AppContextType {
   congregation: Congregation | null;
   refreshIsSetup: () => Promise<void>;
   markSetupComplete: (congregation: Congregation) => void;
+  selectCongregation: (congregation: Congregation) => void;
   isLoading: boolean;
 }
