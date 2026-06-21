@@ -8,14 +8,17 @@
     "noModules": "No modules available for this congregation.",
     "moduleNotFound": "Module not found. Select one from the sidebar.",
     "logout": "Logout",
-    "settings": "Configuration"
+    "settings": "Settings",
+    "switchCongregation": "Switch congregation",
+    "congregationSwitchFailed": "Could not switch congregations."
   },
   "modules": {
     "common": {
       "refresh": "Refresh",
       "search": "Search",
       "rowsPerPage": "Rows per page",
-      "view": "View"
+      "view": "View",
+      "emptyValue": "Not provided"
     },
     "users": {
       "title": "Users",
@@ -118,7 +121,7 @@
           "user": "Users",
           "role": "Roles",
           "congregation": "Congregation",
-          "configuration": "Configuration",
+          "configuration": "Settings",
           "process": "Processes",
           "event": "Events",
           "event_type": "Event Types"
@@ -140,12 +143,24 @@
     }
   },
   "settings": {
-    "title": "Configuration",
-    "subtitle": "Manage congregation and appearance settings.",
+    "title": "Settings",
+    "subtitle": "Manage congregations, interface preferences, and event types.",
+    "tabs": {
+      "congregations": "Congregation Settings",
+      "ui": "UI",
+      "eventTypes": "Event Types"
+    },
     "congregation": {
       "title": "Congregation Settings",
-      "subtitle": "Update the main congregation details used across the app.",
-      "timezoneHelp": "Use an IANA timezone like America/Guatemala."
+      "subtitle": "Manage the congregations assigned to your account.",
+      "timezoneHelp": "Use an IANA timezone like America/Guatemala.",
+      "createTitle": "Add congregation",
+      "createAction": "Add congregation",
+      "created": "Congregation created successfully.",
+      "createFailed": "Could not create the congregation.",
+      "current": "Current congregation",
+      "palette": "Color palette",
+      "paletteLoading": "Loading color palette..."
     },
     "themeMode": {
       "label": "Theme Mode",
@@ -174,12 +189,48 @@
     },
     "frontendVersion": "Frontend version: {{version}}",
     "success": {
-      "saved": "Configuration saved successfully."
+      "saved": "Settings saved successfully."
     },
     "error": {
-      "saveFailed": "Could not save the configuration.",
+      "saveFailed": "Could not save the settings.",
       "loadFailed": "Could not load the theme palette.",
       "invalidHex": "Enter a valid hex color like #1976d2."
+    },
+    "eventTypes": {
+      "title": "Event Types",
+      "searchPlaceholder": "Search by name or description",
+      "loading": "Loading event types...",
+      "empty": "No event types found.",
+      "actions": {
+        "create": "Create event type",
+        "edit": "Edit",
+        "delete": "Delete",
+        "save": "Save changes"
+      },
+      "fields": {
+        "description": "Description",
+        "enabled": "Enabled",
+        "enabledHint": "Disabled event types cannot be selected for new events.",
+        "actions": "Actions"
+      },
+      "dialogs": {
+        "createTitle": "Create event type",
+        "editTitle": "Edit event type",
+        "viewTitle": "Event type details",
+        "deleteTitle": "Delete event type",
+        "deleteMessage": "Are you sure you want to delete {{name}}?"
+      },
+      "success": {
+        "created": "Event type created successfully.",
+        "updated": "Event type updated successfully.",
+        "deleted": "Event type deleted successfully."
+      },
+      "error": {
+        "loadFailed": "Could not load event types.",
+        "loadOneFailed": "Could not load the selected event type.",
+        "saveFailed": "Could not save the event type.",
+        "deleteFailed": "Could not delete the event type."
+      }
     }
   }
 }

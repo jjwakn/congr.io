@@ -43,9 +43,10 @@ export class ProcessService {
     private readonly i18n: I18nService,
   ) {}
 
-  private async getContext(userId: string) {
+  private async getContext(userId: string, congregationId?: string) {
     return getUserCongregationContext({
       userId,
+      congregationId,
       userRepository: this.userRepository,
       congregationRepository: this.congregationRepository,
       i18n: this.i18n,
@@ -198,8 +199,8 @@ export class ProcessService {
     }
   }
 
-  async list({ query, userId }: ProcessListProps) {
-    const { congregation } = await this.getContext(userId);
+  async list({ query, userId, congregationId }: ProcessListProps) {
+    const { congregation } = await this.getContext(userId, congregationId);
 
     const { result, total } = await findWithFilters<Process, ProcessQuery>({
       repository: this.repository,
@@ -247,13 +248,13 @@ export class ProcessService {
     };
   }
 
-  async get({ id, userId }: ProcessGetProps) {
-    const { congregation } = await this.getContext(userId);
+  async get({ id, userId, congregationId }: ProcessGetProps) {
+    const { congregation } = await this.getContext(userId, congregationId);
     return this.loadProcessOrThrow({ id, congregationId: congregation.id });
   }
 
-  async create({ data, userId }: ProcessCreateProps) {
-    const { user, congregation } = await this.getContext(userId);
+  async create({ data, userId, congregationId }: ProcessCreateProps) {
+    const { user, congregation } = await this.getContext(userId, congregationId);
 
     const createdProcess = await this.dataSource.transaction(async (manager) => {
       const processRepository = manager.getRepository(Process);
@@ -284,8 +285,8 @@ export class ProcessService {
     });
   }
 
-  async update({ id, data, userId }: ProcessUpdateProps) {
-    const { user, congregation } = await this.getContext(userId);
+  async update({ id, data, userId, congregationId }: ProcessUpdateProps) {
+    const { user, congregation } = await this.getContext(userId, congregationId);
 
     await this.dataSource.transaction(async (manager) => {
       const processRepository = manager.getRepository(Process);
@@ -322,8 +323,8 @@ export class ProcessService {
     return this.loadProcessOrThrow({ id, congregationId: congregation.id });
   }
 
-  async remove({ id, userId }: ProcessDeleteProps) {
-    const { user, congregation } = await this.getContext(userId);
+  async remove({ id, userId, congregationId }: ProcessDeleteProps) {
+    const { user, congregation } = await this.getContext(userId, congregationId);
 
     await this.dataSource.transaction(async (manager) => {
       const processRepository = manager.getRepository(Process);

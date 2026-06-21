@@ -38,6 +38,8 @@ export const setCongregationToStorage = (value: Congregation): void => {
   setLocalStorageItem(CONGREGATION_KEY, value);
 };
 
+export const getSelectedCongregationId = (): string | null => getCongregationFromStorage()?.id ?? null;
+
 export const clearCongregationFromStorage = (): void => {
   try {
     localStorage.removeItem(CONGREGATION_KEY);

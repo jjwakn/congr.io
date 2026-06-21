@@ -1,13 +1,18 @@
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
+import { useNotificationContext } from '@hooks/useNotifications';
 import { useSetup } from '@hooks/useSetup';
+import { useTheme } from '@hooks/useTheme';
 import { Box } from '@mui/material';
 import { DashboardContentRoutes } from '@pages/Dashboard/DashboardContentRoutes';
 import { DashboardHeader } from '@pages/Dashboard/DashboardHeader';
 import { DashboardNavigationDrawer } from '@pages/Dashboard/DashboardNavigationDrawer';
 import type { DashboardModuleView } from '@pages/Modules/modules.types';
 import { canRenderModuleRoute } from '@pages/Modules/routes';
+import { ConfigurationsService } from '@services/configurations';
+import { CongregationsService } from '@services/congregations';
 import { createModuleNavigationItem, createSettingsNavigationItem } from '@utils/dashboard';
+import { HttpRequestError, httpRequest } from '@utils/http';
 import {
   getHomePath,
   getLocalizedPathname,
@@ -21,11 +26,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PWABadge from '@/PWABadge';
+import type { Congregation } from '@/types/congregation.types';
+import type { ThemePaletteConfig } from '@/types/theme.types';
 
 const Dashboard = () => {
   const { i18n, t } = useTranslation();
-  const { congregation } = useAppContext();
+  const { congregation, selectCongregation } = useAppContext();
   const { user, logout, hasPermission } = useAuth();
+  const { showNotification } = useNotificationContext();
+  const { setPaletteConfig } = useTheme();
   const { features } = useSetup();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const location = useLocation();
@@ -105,6 +114,47 @@ const Dashboard = () => {
     navigateToPath(getHomePath());
   }, [navigateToPath]);
 
+  const userCongregations = useMemo(() => user?.congregations ?? [], [user?.congregations]);
+
+  const handleCongregationChange = useCallback(
+    async (congregationId: string) => {
+      const membership = userCongregations.find(({ id }) => id === congregationId);
+      if (!membership) return;
+
+      try {
+        const selected = await httpRequest<Congregation>({
+          service: CongregationsService.get,
+          data: { id: congregationId },
+          headers: { 'X-Congregation-Id': congregationId },
+        });
+        selectCongregation(selected);
+
+        const palette = await httpRequest<ThemePaletteConfig>({
+          service: ConfigurationsService.getTheme,
+          headers: { 'X-Congregation-Id': congregationId },
+        });
+        setPaletteConfig(palette);
+      } catch (value) {
+        const message =
+          value instanceof HttpRequestError || value instanceof Error
+            ? value.message
+            : t('pages.dashboard.congregationSwitchFailed');
+        showNotification(message, { severity: 'error' });
+      }
+    },
+    [selectCongregation, setPaletteConfig, showNotification, t, userCongregations],
+  );
+
+  useEffect(() => {
+    if (!userCongregations.length) return;
+
+    const selectedIsAvailable = userCongregations.some(({ id }) => id === congregation?.id);
+    const nextCongregationId = selectedIsAvailable ? congregation?.id : userCongregations[0].id;
+    if (!nextCongregationId || (selectedIsAvailable && congregation?.locations)) return;
+
+    void handleCongregationChange(nextCongregationId);
+  }, [congregation?.id, congregation?.locations, handleCongregationChange, userCongregations]);
+
   useEffect(() => {
     const localizedPath = getLocalizedPathname(pathname, i18n.language);
     if (pathname === localizedPath) return;
@@ -149,12 +199,16 @@ const Dashboard = () => {
     >
       <DashboardHeader
         congregationName={congregation?.name || 'Congr.io'}
+        congregationId={congregation?.id}
+        congregations={userCongregations}
         username={user?.username}
         homeLabel={t('pages.dashboard.home')}
         logoutLabel={t('pages.dashboard.logout')}
+        switchCongregationLabel={t('pages.dashboard.switchCongregation')}
         onLogout={logout}
         onMenuClick={() => setIsDrawerOpen(true)}
         onLogoClick={navigateHome}
+        onCongregationChange={(congregationId) => void handleCongregationChange(congregationId)}
       />
 
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>

@@ -12,18 +12,18 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { CommonOrder, EntityActionProps, ListParamsQuery } from 'src/common/common.types';
+import { CommonOrder, CongregationEntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 
-export interface ProcessGetProps extends EntityActionProps {
+export interface ProcessGetProps extends CongregationEntityActionProps {
   id: string;
 }
 
-export interface ProcessListProps extends EntityActionProps {
+export interface ProcessListProps extends CongregationEntityActionProps {
   query: ProcessQuery;
 }
 
-export interface ProcessCreateProps extends EntityActionProps {
+export interface ProcessCreateProps extends CongregationEntityActionProps {
   data: ProcessDto;
 }
 
@@ -31,7 +31,7 @@ export interface ProcessUpdateProps extends ProcessCreateProps {
   id: string;
 }
 
-export interface ProcessDeleteProps extends EntityActionProps {
+export interface ProcessDeleteProps extends CongregationEntityActionProps {
   id: string;
 }
 

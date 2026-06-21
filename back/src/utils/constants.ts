@@ -45,7 +45,7 @@ export const permission: PermissionType = {
   role: {
     permissions: CRUD,
   },
-  configuration: {
+  congregation: {
     permissions: CRUD,
   },
   process: {

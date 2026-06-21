@@ -6,11 +6,13 @@ import { NotFoundException } from '@nestjs/common';
 
 export const getUserCongregationContext = async ({
   userId,
+  congregationId,
   userRepository,
   congregationRepository,
   i18n,
 }: {
   userId: string;
+  congregationId?: string;
   userRepository: Repository<User>;
   congregationRepository: Repository<Congregation>;
   i18n: I18nService;
@@ -28,11 +30,12 @@ export const getUserCongregationContext = async ({
 
   if (!user) throw new NotFoundException(i18n.t('errors.user.notFound'));
 
-  const congregationId = user.congregations?.[0]?.id;
-  if (!congregationId) throw new NotFoundException(i18n.t('errors.congregation.notFound'));
+  const resolvedCongregationId = congregationId ?? user.congregations?.[0]?.id;
+  const hasCongregation = user.congregations?.some(({ id }) => id === resolvedCongregationId);
+  if (!resolvedCongregationId || !hasCongregation) throw new NotFoundException(i18n.t('errors.congregation.notFound'));
 
   const congregation = await congregationRepository.findOne({
-    where: { id: congregationId },
+    where: { id: resolvedCongregationId },
     withDeleted: true,
   });
 

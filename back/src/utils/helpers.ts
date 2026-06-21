@@ -2,7 +2,7 @@ import { genSalt, hash } from 'bcrypt';
 import { TokenPayload } from 'src/common/common.types';
 import { UserPermission } from 'src/modules/permission/permission.types';
 import { Role } from 'src/modules/role/role.entity';
-import { ModuleAction } from './constants';
+import { Module, ModuleAction } from './constants';
 
 export const decodeToken = (token: string) => {
   const base64Payload = token.split('.')[1];
@@ -27,6 +27,14 @@ export const mergePermissions = (roles: Role[]) => {
           });
         });
     });
+
+  const legacyConfigurationPermissions = permissions[Module.configuration] ?? [];
+  if (legacyConfigurationPermissions.length) {
+    const congregationPermissions = permissions[Module.congregation] ?? [];
+    permissions[Module.congregation] = Array.from(
+      new Set([...congregationPermissions, ...legacyConfigurationPermissions]),
+    );
+  }
 
   return { fullAccess, permissions };
 };

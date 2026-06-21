@@ -37,6 +37,9 @@ These rules apply to all agent chats in this repository.
 
 ### New Frontend CRUD Models
 
+- Every UI section or tab that manages a persisted model must use the shared CRUD pattern below. This applies even when the CRUD is embedded inside Settings or another parent page rather than exposed as a standalone module route.
+- Permission-gate the section/tab and each create, view, update, and delete action independently using the model's backend permission module.
+
 - Use the existing module CRUD UI pattern before creating model-specific layouts:
   - `ModuleSection`
   - `ModuleListTable`

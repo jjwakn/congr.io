@@ -2,7 +2,7 @@ import type { RequestType } from 'src/common/common.types';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { PermissionDecorator, PermissionGuard } from 'src/modules/permission/permission.guard';
 import { Module, ModuleAction } from 'src/utils/constants';
-import { getRequestUserIdOrThrow } from 'src/utils/request';
+import { getRequestCongregationId, getRequestUserIdOrThrow } from 'src/utils/request';
 import {
   Body,
   Controller,
@@ -37,6 +37,7 @@ export class EventTypeController {
     return this.service.list({
       query,
       userId: getRequestUserIdOrThrow(request),
+      congregationId: getRequestCongregationId(request),
     });
   }
 
@@ -46,6 +47,7 @@ export class EventTypeController {
     return this.service.get({
       id,
       userId: getRequestUserIdOrThrow(request),
+      congregationId: getRequestCongregationId(request),
     });
   }
 
@@ -59,6 +61,7 @@ export class EventTypeController {
     return this.service.create({
       data,
       userId: getRequestUserIdOrThrow(request),
+      congregationId: getRequestCongregationId(request),
     });
   }
 
@@ -74,6 +77,7 @@ export class EventTypeController {
       id,
       data,
       userId: getRequestUserIdOrThrow(request),
+      congregationId: getRequestCongregationId(request),
     });
   }
 
@@ -83,6 +87,7 @@ export class EventTypeController {
     return this.service.remove({
       id,
       userId: getRequestUserIdOrThrow(request),
+      congregationId: getRequestCongregationId(request),
     });
   }
 }

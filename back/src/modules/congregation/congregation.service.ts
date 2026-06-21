@@ -1,8 +1,7 @@
 import { I18nService } from 'nestjs-i18n';
-import { DefaultGetData } from 'src/common/common.types';
 import { isValidTimeZone, normalizeTimeZone } from 'src/utils/datetime';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
-import { Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
@@ -10,6 +9,8 @@ import { Congregation } from './congregation.entity';
 import {
   CongregationCreateProps,
   CongregationDeleteProps,
+  CongregationGetProps,
+  CongregationListProps,
   CongregationQuery,
   CongregationUpdateProps,
 } from './congregation.types';
@@ -26,12 +27,34 @@ export class CongregationService {
     private readonly i18n: I18nService,
   ) {}
 
-  async list(query: CongregationQuery) {
+  private async getUserWithCongregations(userId: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      withDeleted: true,
+      relations: { congregations: true },
+    });
+    if (!user) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
+    return user;
+  }
+
+  private async assertUserCongregation(userId: string, congregationId: string) {
+    const user = await this.getUserWithCongregations(userId);
+    if (!user.congregations?.some(({ id }) => id === congregationId))
+      throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
+    return user;
+  }
+
+  async list({ query, userId }: CongregationListProps) {
+    const user = await this.getUserWithCongregations(userId);
+    const congregationIds = user.congregations?.map(({ id }) => id) ?? [];
+    if (!congregationIds.length) return { result: [], total: 0 };
+
     const { result, total } = await findWithFilters<Congregation, CongregationQuery>({
       repository: this.repository,
       query,
       searchFields: ['id', 'name', 'type'],
       booleanFields: ['enabled'],
+      baseWhere: { id: In(congregationIds), deleted_at: IsNull() },
     });
 
     return {
@@ -40,7 +63,8 @@ export class CongregationService {
     };
   }
 
-  async get({ id }: DefaultGetData) {
+  async get({ id, userId }: CongregationGetProps) {
+    await this.assertUserCongregation(userId, id);
     const result = await this.repository.findOne({
       where: { id },
       withDeleted: true,
@@ -68,17 +92,24 @@ export class CongregationService {
     const created_by = await this.userRepository.findOne({
       where: { id: userId },
       withDeleted: true,
+      relations: { congregations: true },
     });
+
+    if (!created_by) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
 
     const created = this.repository.create({
       ...data,
       timezone: normalizeTimeZone(data.timezone),
       created_by,
     });
-    return this.repository.save(created);
+    const result = await this.repository.save(created);
+    created_by.congregations = [...(created_by.congregations ?? []), result];
+    await this.userRepository.save(created_by);
+    return result;
   }
 
   async update({ id, data, userId }: CongregationUpdateProps) {
+    await this.assertUserCongregation(userId, id);
     if (data.timezone && !isValidTimeZone(data.timezone.trim()))
       throw new BadRequestException(this.i18n.t('errors.congregation.invalidTimezone'));
 
@@ -92,14 +123,16 @@ export class CongregationService {
       ...(data.timezone ? { timezone: normalizeTimeZone(data.timezone) } : {}),
       updated_by,
     });
-    return cleanColumns<Congregation>(
-      this.repository.findOne({
-        where: { id },
-      }),
-    );
+    const result = await this.repository.findOne({
+      where: { id },
+      relations: { locations: true },
+    });
+    if (!result) throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
+    return cleanColumns<Congregation>(result);
   }
 
   async remove({ id, userId }: CongregationDeleteProps) {
+    await this.assertUserCongregation(userId, id);
     const deleted_by = await this.userRepository.findOne({
       where: { id: userId },
       withDeleted: true,

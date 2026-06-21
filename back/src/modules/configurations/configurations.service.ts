@@ -1,7 +1,9 @@
 import { I18nService } from 'nestjs-i18n';
 import { RequestType } from 'src/common/common.types';
+import { getUserCongregationContext } from 'src/utils/congregation-context';
+import { getRequestCongregationId, getRequestUserIdOrThrow } from 'src/utils/request';
 import { Repository } from 'typeorm';
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Congregation } from '../congregation/congregation.entity';
 import { User } from '../user/user.entity';
@@ -23,41 +25,18 @@ export class ConfigurationsService {
     private readonly i18n: I18nService,
   ) {}
 
-  private getUserIdOrThrow(request: RequestType): string {
-    const userId = request.user?.userId;
-    if (userId) return userId;
-
-    throw new UnauthorizedException(this.i18n.t('errors.auth.notIncluded'));
-  }
-
-  private async getFirstCongregationForUser(userId: string): Promise<{
-    congregation: Congregation;
-    user: User;
-  }> {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      withDeleted: true,
-      relations: { congregations: true },
+  private getContext(request: RequestType) {
+    return getUserCongregationContext({
+      userId: getRequestUserIdOrThrow(request),
+      congregationId: getRequestCongregationId(request),
+      userRepository: this.userRepository,
+      congregationRepository: this.congregationRepository,
+      i18n: this.i18n,
     });
-
-    if (!user) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
-
-    const congregationId = user.congregations?.[0]?.id;
-    if (!congregationId) throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
-
-    const congregation = await this.congregationRepository.findOne({
-      where: { id: congregationId },
-      withDeleted: true,
-    });
-
-    if (!congregation) throw new NotFoundException(this.i18n.t('errors.congregation.notFound'));
-
-    return { congregation, user };
   }
 
   async getThemePaletteConfig(request: RequestType): Promise<ThemePaletteConfig> {
-    const userId = this.getUserIdOrThrow(request);
-    const { congregation } = await this.getFirstCongregationForUser(userId);
+    const { congregation } = await this.getContext(request);
 
     return this.getThemePaletteConfigByCongregationId(congregation.id);
   }
@@ -105,8 +84,7 @@ export class ConfigurationsService {
     request: RequestType;
     themePalette: ThemePaletteConfig;
   }): Promise<ThemePaletteConfig> {
-    const userId = this.getUserIdOrThrow(request);
-    const { congregation, user } = await this.getFirstCongregationForUser(userId);
+    const { congregation, user } = await this.getContext(request);
 
     const existing = await this.repository.findOne({
       where: {

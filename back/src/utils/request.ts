@@ -17,3 +17,8 @@ export const getRequestUserIdOrThrow = (request: RequestType): string => {
 
   throw new UnauthorizedException(resolvedMessage);
 };
+
+export const getRequestCongregationId = (request: RequestType): string | undefined => {
+  const congregationId = request.headers['x-congregation-id']?.trim();
+  return congregationId || undefined;
+};

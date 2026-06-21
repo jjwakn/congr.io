@@ -1,6 +1,7 @@
 import i18n from '../../i18n';
 import { API_URL } from './constants';
 import { HttpRequestErrorParams, HttpRequestProps, ModuleType } from './http.types';
+import { getSelectedCongregationId } from './storage';
 
 export type { ModuleType } from './http.types';
 
@@ -109,6 +110,8 @@ export const httpRequest = async <ResponseType>({
   };
   const legacyAuthToken = getLegacyAuthToken();
   if (legacyAuthToken && !requestHeaders.Authorization) requestHeaders.Authorization = `Bearer ${legacyAuthToken}`;
+  const congregationId = getSelectedCongregationId();
+  if (congregationId && !requestHeaders['X-Congregation-Id']) requestHeaders['X-Congregation-Id'] = congregationId;
 
   if (!isFormData && service.method !== 'GET')
     requestHeaders['Content-Type'] = requestHeaders['Content-Type']

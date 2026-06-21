@@ -13,14 +13,14 @@ export class ConfigurationsController {
   constructor(private readonly service: ConfigurationsService) {}
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @PermissionDecorator(Module.configuration, ModuleAction.get)
+  @PermissionDecorator(Module.congregation, ModuleAction.get)
   @Get('theme')
   getTheme(@Req() request: RequestType): Promise<ThemePaletteConfig> {
     return this.service.getThemePaletteConfig(request);
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @PermissionDecorator(Module.configuration, ModuleAction.update)
+  @PermissionDecorator(Module.congregation, ModuleAction.update)
   @Put('theme')
   @ApiBody({ type: ThemePaletteConfigDto })
   updateTheme(@Req() request: RequestType, @Body() payload: ThemePaletteConfigDto): Promise<ThemePaletteConfig> {
