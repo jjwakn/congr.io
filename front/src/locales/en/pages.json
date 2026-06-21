@@ -158,9 +158,48 @@
       "createAction": "Add congregation",
       "created": "Congregation created successfully.",
       "createFailed": "Could not create the congregation.",
+      "editTitle": "Edit {{name}}",
+      "editAction": "Edit",
       "current": "Current congregation",
+      "actions": "Actions",
+      "loading": "Loading congregations...",
+      "empty": "No congregations found.",
       "palette": "Color palette",
-      "paletteLoading": "Loading color palette..."
+      "paletteLoading": "Loading color palette...",
+      "editTabs": {
+        "info": "Info",
+        "palette": "Palette"
+      },
+      "modules": {
+        "title": "Available modules",
+        "description": "Choose the modules enabled for this congregation. Required modules and prerequisites are selected automatically.",
+        "column": "Modules"
+      },
+      "delete": {
+        "action": "Delete",
+        "title": "Delete {{name}}",
+        "dataLossWarning": "Deleting this congregation permanently removes its congregation-owned information. This action cannot be undone.",
+        "previewDescription": "The following records will be deleted or detached:",
+        "finalWarning": "This is the final confirmation. All congregation-owned information listed previously will be lost.",
+        "typeName": "Type {{name}} exactly to confirm.",
+        "confirmationLabel": "Congregation name",
+        "continue": "Continue",
+        "confirm": "Delete congregation",
+        "previewFailed": "Could not calculate the congregation deletion impact.",
+        "success": "Congregation deleted successfully.",
+        "failed": "Could not delete the congregation.",
+        "counts": {
+          "usersDeleted": "{{count}} exclusive users will be deleted",
+          "usersDetached": "{{count}} shared users will be detached",
+          "locationsDeleted": "{{count}} exclusive locations will be deleted",
+          "locationsDetached": "{{count}} shared locations will be detached",
+          "events": "{{count}} events will be deleted",
+          "eventTypes": "{{count}} event types will be deleted",
+          "processes": "{{count}} processes will be deleted",
+          "processSteps": "{{count}} process steps will be deleted",
+          "configurations": "{{count}} configuration records will be deleted"
+        }
+      }
     },
     "themeMode": {
       "label": "Theme Mode",
@@ -185,7 +224,8 @@
     },
     "actions": {
       "save": "Save",
-      "reset": "Reset"
+      "reset": "Reset",
+      "discard": "Discard"
     },
     "frontendVersion": "Frontend version: {{version}}",
     "success": {

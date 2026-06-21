@@ -158,9 +158,48 @@
       "createAction": "Añadir congregación",
       "created": "La congregación se creó correctamente.",
       "createFailed": "No se pudo crear la congregación.",
+      "editTitle": "Editar {{name}}",
+      "editAction": "Editar",
       "current": "Congregación actual",
+      "actions": "Acciones",
+      "loading": "Cargando congregaciones...",
+      "empty": "No se encontraron congregaciones.",
       "palette": "Paleta de colores",
-      "paletteLoading": "Cargando paleta de colores..."
+      "paletteLoading": "Cargando paleta de colores...",
+      "editTabs": {
+        "info": "Información",
+        "palette": "Paleta"
+      },
+      "modules": {
+        "title": "Módulos disponibles",
+        "description": "Elige los módulos habilitados para esta congregación. Los módulos requeridos y sus requisitos se seleccionan automáticamente.",
+        "column": "Módulos"
+      },
+      "delete": {
+        "action": "Eliminar",
+        "title": "Eliminar {{name}}",
+        "dataLossWarning": "Eliminar esta congregación borrará permanentemente la información que le pertenece. Esta acción no se puede deshacer.",
+        "previewDescription": "Los siguientes registros serán eliminados o desvinculados:",
+        "finalWarning": "Esta es la confirmación final. Se perderá toda la información de la congregación listada anteriormente.",
+        "typeName": "Escribe {{name}} exactamente para confirmar.",
+        "confirmationLabel": "Nombre de la congregación",
+        "continue": "Continuar",
+        "confirm": "Eliminar congregación",
+        "previewFailed": "No se pudo calcular el impacto de eliminar la congregación.",
+        "success": "La congregación se eliminó correctamente.",
+        "failed": "No se pudo eliminar la congregación.",
+        "counts": {
+          "usersDeleted": "{{count}} usuarios exclusivos serán eliminados",
+          "usersDetached": "{{count}} usuarios compartidos serán desvinculados",
+          "locationsDeleted": "{{count}} ubicaciones exclusivas serán eliminadas",
+          "locationsDetached": "{{count}} ubicaciones compartidas serán desvinculadas",
+          "events": "{{count}} eventos serán eliminados",
+          "eventTypes": "{{count}} tipos de evento serán eliminados",
+          "processes": "{{count}} procesos serán eliminados",
+          "processSteps": "{{count}} pasos de proceso serán eliminados",
+          "configurations": "{{count}} registros de configuración serán eliminados"
+        }
+      }
     },
     "themeMode": {
       "label": "Modo de tema",
@@ -185,7 +224,8 @@
     },
     "actions": {
       "save": "Guardar",
-      "reset": "Restablecer"
+      "reset": "Restablecer",
+      "discard": "Descartar"
     },
     "frontendVersion": "Versión del frontend: {{version}}",
     "success": {

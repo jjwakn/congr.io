@@ -64,6 +64,12 @@ export class CongregationController {
   }
 
   @PermissionDecorator(Module.congregation, ModuleAction.delete)
+  @Get(':id/deletion-preview')
+  deletionPreview(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() request: RequestType) {
+    return this.service.getDeletionPreview({ id, userId: getRequestUserIdOrThrow(request) });
+  }
+
+  @PermissionDecorator(Module.congregation, ModuleAction.delete)
   @Delete(':id')
   remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() request: RequestType) {
     return this.service.remove({ id, userId: getRequestUserIdOrThrow(request) });

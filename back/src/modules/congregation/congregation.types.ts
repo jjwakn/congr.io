@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { CommonOrder, EntityActionProps, ListParamsQuery } from 'src/common/common.types';
+import { Feature } from 'src/utils/constants';
 import { ApiProperty } from '@nestjs/swagger';
 
 export interface CongregationCreateProps extends EntityActionProps {
@@ -19,6 +20,18 @@ export type CongregationGetProps = CongregationDeleteProps;
 
 export interface CongregationListProps extends EntityActionProps {
   query: CongregationQuery;
+}
+
+export interface CongregationDeletionPreview {
+  usersDeleted: number;
+  usersDetached: number;
+  locationsDeleted: number;
+  locationsDetached: number;
+  events: number;
+  eventTypes: number;
+  processes: number;
+  processSteps: number;
+  configurations: number;
 }
 
 export class CongregationDto {
@@ -45,6 +58,12 @@ export class CongregationDto {
   @IsBoolean()
   @IsOptional()
   enabled?: boolean;
+
+  @ApiProperty({ required: false, enum: Feature, isArray: true })
+  @IsArray()
+  @IsEnum(Feature, { each: true })
+  @IsOptional()
+  features?: Feature[];
 }
 
 enum Order {

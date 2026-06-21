@@ -1,5 +1,6 @@
 import type { SelectChangeEvent } from '@mui/material';
 import type { Congregation } from '@/types/congregation.types';
+import type { Feature } from '@/types/feature.types';
 import type { ThemePaletteConfig } from '@/types/theme.types';
 
 export interface SettingsPageProps {
@@ -12,6 +13,7 @@ export interface CongregationSettingsDraft {
   name: string;
   type: string;
   timezone: string;
+  features?: string[];
 }
 
 export interface CongregationFormDialogProps {
@@ -21,11 +23,46 @@ export interface CongregationFormDialogProps {
   onSubmit: (values: CongregationSettingsDraft) => void;
 }
 
-export interface CongregationSettingsSectionProps {
+export interface CongregationEditDialogProps {
   congregation: Congregation;
+  features: Feature[];
   selected: boolean;
-  canUpdate: boolean;
-  onUpdated: () => Promise<void>;
+  submitting: boolean;
+  onClose: () => void;
+  onSubmit: (values: CongregationEditValues) => void;
+}
+
+export interface CongregationEditValues {
+  congregation: CongregationSettingsDraft;
+  palette: ThemePaletteConfig;
+}
+
+export interface CongregationModulesSelectorProps {
+  features: Feature[];
+  selected: string[];
+  congregationType: string;
+  disabled?: boolean;
+  onChange: (features: string[]) => void;
+}
+
+export interface CongregationDeletionPreview {
+  usersDeleted: number;
+  usersDetached: number;
+  locationsDeleted: number;
+  locationsDetached: number;
+  events: number;
+  eventTypes: number;
+  processes: number;
+  processSteps: number;
+  configurations: number;
+}
+
+export interface CongregationDeleteDialogProps {
+  congregation: Congregation;
+  preview: CongregationDeletionPreview;
+  confirming: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
 }
 
 export interface UISettingsTabProps {
