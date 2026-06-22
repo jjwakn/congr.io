@@ -1,6 +1,7 @@
 {
   "error": {
-    "isRequired": "es requerido"
+    "isRequired": "es requerido",
+    "invalidDate": "Ingresa una fecha válida."
   },
   "field": {
     "name": "Nombre",

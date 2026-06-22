@@ -2,6 +2,7 @@ import {
   Box,
   CircularProgress,
   Paper,
+  Snackbar,
   type SxProps,
   Table,
   TableBody,
@@ -277,7 +278,7 @@ export const ModuleListTable = <RowType,>({
           </TableHead>
 
           <TableBody>
-            {loading ? (
+            {loading && !rows.length ? (
               <TableRow>
                 <TableCell colSpan={columns.length} align="center">
                   <Box
@@ -336,6 +337,15 @@ export const ModuleListTable = <RowType,>({
         labelRowsPerPage={rowsPerPageLabel}
         rowsPerPageOptions={[10, 25, 50, 100]}
         sx={{ flexShrink: 0, borderTop: 1, borderColor: 'divider' }}
+      />
+      <Snackbar
+        open={loading && Boolean(rows.length)}
+        message={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CircularProgress size={18} color="inherit" />
+            <Typography variant="body2">{loadingLabel}</Typography>
+          </Box>
+        }
       />
     </Paper>
   );

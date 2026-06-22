@@ -1,11 +1,15 @@
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
+  Box,
   Button,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   TextField,
+  Tooltip,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -118,7 +122,18 @@ export const PasswordChangeDialog = ({
       onClose={submitting || !onClose ? undefined : onClose}
       TransitionProps={{ onEnter: handleEnter }}
     >
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+        <Box component="span" sx={{ minWidth: 0 }}>
+          {title}
+        </Box>
+        {canClose ? (
+          <Tooltip title={t('form.field.close')}>
+            <IconButton onClick={onClose} disabled={submitting} aria-label={t('form.field.close')} edge="end">
+              <CloseRoundedIcon />
+            </IconButton>
+          </Tooltip>
+        ) : null}
+      </DialogTitle>
 
       <DialogContent>
         <form id={formId} onSubmit={handleSubmit}>

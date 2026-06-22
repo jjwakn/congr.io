@@ -15,6 +15,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Congregation } from '../congregation/congregation.entity';
 import { Location } from '../location/location.entity';
+import { Person } from '../person/person.entity';
 import { Role } from '../role/role.entity';
 import { User } from './user.entity';
 import {
@@ -45,6 +46,9 @@ export class UserService {
 
     @InjectRepository(Location)
     private locationRepository: Repository<Location>,
+
+    @InjectRepository(Person)
+    private personRepository: Repository<Person>,
 
     private readonly i18n: I18nService,
   ) {}
@@ -147,6 +151,45 @@ export class UserService {
     return locations;
   }
 
+  private async updatePersonLink({
+    user,
+    personId,
+    updatedBy,
+  }: {
+    user: User;
+    personId?: string | null;
+    updatedBy?: User | null;
+  }) {
+    if (personId === undefined) return;
+
+    const current = await this.personRepository.findOne({ where: { user_id: user.id } });
+    if (!personId) {
+      if (current) {
+        current.user_id = null;
+        current.user = null;
+        current.updated_by = updatedBy;
+        await this.personRepository.save(current);
+      }
+      return;
+    }
+
+    const next = await this.personRepository.findOne({ where: { id: personId } });
+    if (!next) throw new NotFoundException(this.i18n.t('errors.person.notFound'));
+    if (next.user_id && next.user_id !== user.id)
+      throw new NotAcceptableException(this.i18n.t('errors.person.userInUse'));
+    const linked = await this.personRepository.findOne({ where: { user_id: user.id } });
+    if (linked && linked.id !== next.id) {
+      linked.user_id = null;
+      linked.user = null;
+      linked.updated_by = updatedBy;
+      await this.personRepository.save(linked);
+    }
+    next.user_id = user.id;
+    next.user = user;
+    next.updated_by = updatedBy;
+    await this.personRepository.save(next);
+  }
+
   async list(query: UserQuery) {
     const { result, total } = await findWithFilters<User, UserQuery>({
       repository: this.repository,
@@ -181,9 +224,11 @@ export class UserService {
     if (!result) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
 
     if (!includePassword) delete result.password;
+    const person = await this.personRepository.findOne({ where: { user_id: result.id } });
     return {
       ...cleanColumns<User>(result),
       roles: result.roles.filter((r) => r.enabled),
+      person,
     };
   }
 
@@ -204,14 +249,19 @@ export class UserService {
     if (!result) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
 
     if (result && !includePassword) delete result.password;
+    const person = result ? await this.personRepository.findOne({ where: { user_id: result.id } }) : null;
     return {
       ...cleanColumns<User>(result),
       roles: result?.roles.filter((r) => r.enabled) ?? [],
+      person,
     };
   }
 
   async create({ data, userId }: UserCreateProps) {
     data = data ?? ({} as User);
+    const hasPersonId = 'person_id' in data;
+    const personId = (data as User & { person_id?: string | null }).person_id;
+    delete (data as User & { person_id?: string | null }).person_id;
 
     const created_by = await this.repository.findOne({
       where: { id: userId },
@@ -248,6 +298,7 @@ export class UserService {
 
     const created = this.repository.create({ ...data, created_by });
     const result = await this.repository.save(created);
+    if (hasPersonId) await this.updatePersonLink({ user: result, personId, updatedBy: created_by });
 
     delete result.password;
     return cleanColumns<User>(result);
@@ -255,6 +306,9 @@ export class UserService {
 
   async update({ id, data, userId }: UserUpdateProps) {
     data = data ?? ({} as User);
+    const hasPersonId = 'person_id' in data;
+    const personId = (data as User & { person_id?: string | null }).person_id;
+    delete (data as User & { person_id?: string | null }).person_id;
 
     const updated_by = await this.repository.findOne({
       where: { id: userId },
@@ -275,8 +329,9 @@ export class UserService {
         'congregations_ids',
         'locations',
         'locations_ids',
+        'person_id',
       ];
-      const hasRestrictedField = restrictedFields.some((field) => field in data);
+      const hasRestrictedField = restrictedFields.some((field) => field in data) || hasPersonId;
 
       if (hasRestrictedField) throw new ForbiddenException(this.i18n.t('errors.user.selfUpdateRestricted'));
 
@@ -284,6 +339,7 @@ export class UserService {
       if (data.name) existing.name = data.name.trim();
 
       const result = await this.repository.save(existing);
+      if (hasPersonId) await this.updatePersonLink({ user: result, personId, updatedBy: updated_by });
 
       delete result.password;
       return cleanColumns<User>(result);
@@ -326,6 +382,7 @@ export class UserService {
     if ('enabled' in data) existing.enabled = data.enabled;
 
     const result = await this.repository.save(existing);
+    if (hasPersonId) await this.updatePersonLink({ user: result, personId, updatedBy: updated_by });
 
     delete result.password;
     return cleanColumns<User>(result);

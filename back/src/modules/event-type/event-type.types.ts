@@ -1,5 +1,17 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsHexColor, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsHexColor,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { CommonOrder, CongregationEntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -48,6 +60,16 @@ export class EventTypeDto {
   @IsOptional()
   attendance_enabled?: boolean;
 
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  default_public?: boolean;
+
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  default_self_registration?: boolean;
+
   @ApiProperty({ required: false, type: Array })
   @IsArray()
   @IsOptional()
@@ -57,6 +79,18 @@ export class EventTypeDto {
   @IsHexColor()
   @IsOptional()
   color?: string;
+
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  @IsOptional()
+  default_start_time?: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(1440)
+  @IsOptional()
+  default_duration_minutes?: number;
 }
 
 enum Order {

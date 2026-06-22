@@ -25,7 +25,7 @@ export const useEventTypesList = ({ enabled = true }: UseEventTypesListProps = {
     setLoading(true);
     setError('');
     try {
-      const normalizedSearch = list.search.trim();
+      const normalizedSearch = list.debouncedSearch.trim();
       const response = await httpRequest<EventTypesListResponse>({
         service: EventTypesService.list,
         data: {
@@ -47,7 +47,7 @@ export const useEventTypesList = ({ enabled = true }: UseEventTypesListProps = {
     } finally {
       setLoading(false);
     }
-  }, [enabled, list.direction, list.page, list.pageSize, list.search, list.sort, t]);
+  }, [enabled, list.debouncedSearch, list.direction, list.page, list.pageSize, list.sort, t]);
 
   useEffect(() => {
     void refresh();

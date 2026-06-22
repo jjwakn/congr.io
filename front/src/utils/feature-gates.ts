@@ -9,6 +9,7 @@ export const ATTENDANCE_FEATURE_ID = 'events_attendance';
 const SECTION_FEATURES: Record<string, string> = {
   event: EVENTS_FEATURE_ID,
   event_type: EVENTS_FEATURE_ID,
+  event_field: EVENTS_FEATURE_ID,
   person: PERSONS_FEATURE_ID,
   person_field: PERSONS_FEATURE_ID,
   process: FLOWS_FEATURE_ID,

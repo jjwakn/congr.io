@@ -1,6 +1,7 @@
 import type { CreateEditDialogMode } from '@components/common/forms/CreateEditDialog.types';
 import type { ListDirection } from '@components/common/modules/useModuleList.types';
 import type { EventType } from '@/types/event-type.types';
+import type { EventCustomField } from '@/types/event.types';
 
 export interface EventTypesListResponse {
   result: EventType[];
@@ -16,6 +17,7 @@ export interface UseEventTypesListResult extends EventTypesListResponse {
   error: string;
   refresh: () => Promise<void>;
   search: string;
+  debouncedSearch: string;
   setSearch: (value: string) => void;
   sort: string;
   direction: ListDirection;
@@ -27,11 +29,16 @@ export interface UseEventTypesListResult extends EventTypesListResponse {
 }
 
 export interface EventTypeFormValues {
-  [key: string]: string | boolean;
+  [key: string]: string | boolean | number | EventCustomField[] | undefined;
   name: string;
   description: string;
   enabled: boolean;
   attendance_enabled: boolean;
+  default_public: boolean;
+  default_self_registration: boolean;
+  default_start_time?: string;
+  default_duration_minutes?: number;
+  custom_fields: EventCustomField[];
   color: string;
 }
 

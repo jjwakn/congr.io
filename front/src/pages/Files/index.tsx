@@ -1,3 +1,5 @@
+import Loading from '@components/Loading';
+import { useAuth } from '@hooks/useAuth';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Alert, Box, Chip, Paper, Tab, Tabs, Typography } from '@mui/material';
@@ -9,10 +11,12 @@ import type { ProviderStatus } from './files.types';
 
 export const FilesSetupPage = () => {
   const { t } = useTranslation();
+  const { auth, isSessionLoading } = useAuth();
   const [providers, setProviders] = useState<ProviderStatus[]>([]);
   const [active, setActive] = useState('local');
 
   useEffect(() => {
+    if (!auth?.fullAccess) return;
     void httpRequest<{ selected: string; providers: ProviderStatus[] }>({ service: FilesService.status })
       .then((response) => {
         setProviders(response.providers);
@@ -29,10 +33,16 @@ export const FilesSetupPage = () => {
           })),
         ),
       );
-  }, []);
+  }, [auth?.fullAccess]);
 
   const current = providers.find(({ id }) => id === active);
-  return (
+  return isSessionLoading ? (
+    <Loading />
+  ) : !auth?.fullAccess ? (
+    <Box sx={{ width: '100%', maxWidth: 760, mx: 'auto', p: { xs: 2, md: 4 } }}>
+      <Alert severity="warning">{t('pages.files.accessDenied')}</Alert>
+    </Box>
+  ) : (
     <Box sx={{ width: '100%', maxWidth: 1000, mx: 'auto', p: { xs: 2, md: 4 } }}>
       <Typography variant="h3" sx={{ mb: 1 }}>
         {t('pages.files.title')}

@@ -1,3 +1,4 @@
+import { LocalizedDateField } from '@components/common/forms/LocalizedDateField';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
@@ -14,17 +15,24 @@ import {
   IconButton,
   Stack,
   Switch,
+  Tab,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { EventFieldsService } from '@services/eventFields';
 import { PersonFieldsService } from '@services/persons';
 import { httpRequest } from '@utils/http';
+import { getSettingsPath } from '@utils/routes';
 import { DateTime } from 'luxon';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import type { EventType } from '@/types/event-type.types';
+import type { EventField } from '@/types/event.types';
 import type { PersonField } from '@/types/person.types';
 import { EventCustomFieldsEditor } from './EventCustomFieldsEditor';
 import type { EventEditorDialogProps } from './events.types';
@@ -34,6 +42,13 @@ const toLocalInput = (value: string | undefined, timezone: string) => {
   return parsed.toFormat("yyyy-LL-dd'T'HH:mm");
 };
 
+const splitLocalInput = (value: string) => {
+  const [date = '', time = ''] = value.split('T');
+  return { date, time };
+};
+
+const combineLocalInput = (date: string, time: string) => `${date}T${time || '00:00'}`;
+
 export const EventEditorDialog = ({
   open,
   event,
@@ -42,42 +57,57 @@ export const EventEditorDialog = ({
   timezone,
   eventTypes,
   canCreateEventType,
-  canUpdateEventType,
   canViewPersonFields,
+  canViewEventFields,
+  canCreateEventFields,
   submitting,
   onClose,
   onSubmit,
 }: EventEditorDialogProps) => {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
+  const navigate = useNavigate();
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const initialStart = initialDate
+  const initialType = eventTypes.find(({ id }) => id === (event?.event_type_id ?? initialTypeId));
+  const baseInitialStart = initialDate
     ? DateTime.fromISO(initialDate, { zone: timezone }).set({ hour: 9, minute: 0 }).toFormat("yyyy-LL-dd'T'HH:mm")
     : toLocalInput(event?.start_datetime, timezone);
-  const initialType = eventTypes.find(({ id }) => id === (event?.event_type_id ?? initialTypeId));
-  const [name, setName] = useState(event?.name ?? '');
+  const initialStart =
+    !event && initialType?.default_start_time
+      ? `${splitLocalInput(baseInitialStart).date}T${initialType.default_start_time.slice(0, 5)}`
+      : baseInitialStart;
+  const initialEnd = event?.end_datetime
+    ? toLocalInput(event.end_datetime, timezone)
+    : DateTime.fromFormat(initialStart, "yyyy-LL-dd'T'HH:mm", { zone: timezone })
+        .plus({ minutes: initialType?.default_duration_minutes ?? 60 })
+        .toFormat("yyyy-LL-dd'T'HH:mm");
+  const initialTypeFieldIds = new Set((initialType?.custom_fields ?? []).map(({ id }) => id));
+  const [activeTab, setActiveTab] = useState<'details' | 'fields'>('details');
+  const [name, setName] = useState(event?.name ?? initialType?.name ?? '');
+  const [nameTouched, setNameTouched] = useState(Boolean(event?.name));
   const [description, setDescription] = useState(event?.description ?? '');
-  const [start, setStart] = useState(initialStart);
-  const [end, setEnd] = useState(
-    event?.end_datetime
-      ? toLocalInput(event.end_datetime, timezone)
-      : DateTime.fromFormat(initialStart, "yyyy-LL-dd'T'HH:mm", { zone: timezone })
-          .plus({ hours: 1 })
-          .toFormat("yyyy-LL-dd'T'HH:mm"),
+  const [startDate, setStartDate] = useState(splitLocalInput(initialStart).date);
+  const [startTime, setStartTime] = useState(
+    event?.start_datetime
+      ? splitLocalInput(initialStart).time
+      : (initialType?.default_start_time?.slice(0, 5) ?? splitLocalInput(initialStart).time),
   );
+  const [endDate, setEndDate] = useState(splitLocalInput(initialEnd).date);
+  const [endTime, setEndTime] = useState(splitLocalInput(initialEnd).time);
   const [typeId, setTypeId] = useState(event?.event_type_id ?? initialTypeId ?? '');
-  const [newTypeOpen, setNewTypeOpen] = useState(false);
-  const [newTypeName, setNewTypeName] = useState('');
-  const [newTypeDescription, setNewTypeDescription] = useState('');
   const [allDay, setAllDay] = useState(event?.all_day ?? false);
-  const [isPublic, setIsPublic] = useState(event?.is_public ?? false);
+  const [isPublic, setIsPublic] = useState(event?.is_public ?? initialType?.default_public ?? false);
   const [attendance, setAttendance] = useState(event?.attendance_enabled ?? initialType?.attendance_enabled ?? false);
-  const [selfRegistration, setSelfRegistration] = useState(event?.self_registration_enabled ?? false);
-  const [applyAttendanceToType, setApplyAttendanceToType] = useState(false);
-  const [eventFields, setEventFields] = useState(event?.custom_fields ?? []);
+  const [selfRegistration, setSelfRegistration] = useState(
+    event?.self_registration_enabled ?? initialType?.default_self_registration ?? false,
+  );
+  const [eventFields, setEventFields] = useState(
+    (event?.custom_fields ?? []).filter(({ id }) => !initialTypeFieldIds.has(id)),
+  );
   const [typeFields, setTypeFields] = useState(initialType?.custom_fields ?? []);
   const [personFields, setPersonFields] = useState<PersonField[]>([]);
+  const [reusableEventFields, setReusableEventFields] = useState<EventField[]>([]);
   const [saveAttendanceDate, setSaveAttendanceDate] = useState(
     event?.save_attendance_date ?? initialType?.save_attendance_date ?? false,
   );
@@ -105,6 +135,39 @@ export const EventEditorDialog = ({
     }).then(({ result }) => setPersonFields(result));
   }, [canViewPersonFields]);
 
+  useEffect(() => {
+    if (!canViewEventFields) return;
+    void httpRequest<{ result: EventField[]; total: number }>({
+      service: EventFieldsService.list,
+      data: { page: 0, size: 500, order: 'label', direction: 'ASC' },
+    }).then(({ result }) => setReusableEventFields(result));
+  }, [canViewEventFields]);
+
+  const updateEndFromType = (type: EventType, nextDate: string, nextTime: string) => {
+    const start = DateTime.fromFormat(combineLocalInput(nextDate, nextTime), "yyyy-LL-dd'T'HH:mm", {
+      zone: timezone,
+    });
+    if (!start.isValid) return;
+    const end = start.plus({ minutes: type.default_duration_minutes ?? 60 });
+    setEndDate(end.toFormat('yyyy-LL-dd'));
+    setEndTime(end.toFormat('HH:mm'));
+  };
+
+  const applyEventType = (type: EventType | null) => {
+    setTypeId(type?.id ?? '');
+    if (!type) return;
+    if (!event && !nameTouched) setName(type.name);
+    setAttendance(type.attendance_enabled ?? false);
+    setIsPublic(type.default_public ?? false);
+    setSelfRegistration(type.default_self_registration ?? false);
+    setTypeFields(type.custom_fields ?? []);
+    setSaveAttendanceDate(type.save_attendance_date ?? false);
+    setAttendanceDateFieldId(type.attendance_date_person_field_id ?? '');
+    const nextTime = type.default_start_time?.slice(0, 5) ?? startTime;
+    setStartTime(nextTime);
+    updateEndFromType(type, startDate, nextTime);
+  };
+
   const chooseImage = (file?: File) => {
     if (!file || !file.type.startsWith('image/')) {
       setError(t('pages.events.form.invalidImage'));
@@ -115,31 +178,29 @@ export const EventEditorDialog = ({
   };
 
   const submit = () => {
-    if (!name.trim() || (!typeId && !newTypeName.trim()) || !start || !end) {
+    if (!name.trim() || !typeId || !startDate || !startTime || !endDate || !endTime) {
       setError(t('pages.events.form.required'));
+      setActiveTab('details');
+      return;
+    }
+    if ([...typeFields, ...eventFields].some((field) => !field.label.trim())) {
+      setError(t('pages.events.form.required'));
+      setActiveTab('fields');
       return;
     }
     onSubmit(
       {
         name: name.trim(),
         description: description.trim(),
-        start_datetime: start,
-        end_datetime: end,
-        ...(typeId ? { type_id: typeId } : {}),
-        ...(!typeId && newTypeName.trim()
-          ? { new_type: { name: newTypeName.trim(), description: newTypeDescription.trim() } }
-          : {}),
+        start_datetime: combineLocalInput(startDate, startTime),
+        end_datetime: combineLocalInput(endDate, endTime),
+        type_id: typeId,
         all_day: allDay,
         is_public: isPublic,
         attendance_enabled: attendance,
         self_registration_enabled: attendance && selfRegistration,
         custom_fields: [...typeFields, ...eventFields],
-        ...(canUpdateEventType && typeId
-          ? {
-              apply_attendance_to_type: applyAttendanceToType,
-              type_custom_fields: typeFields,
-            }
-          : {}),
+        event_fields: eventFields,
         ...(imageUrl.trim() ? { image_url: imageUrl.trim() } : {}),
         save_attendance_date: attendance && saveAttendanceDate,
         ...(attendance && saveAttendanceDate && attendanceDateFieldId
@@ -161,219 +222,221 @@ export const EventEditorDialog = ({
         </Tooltip>
       </DialogTitle>
       <DialogContent dividers>
-        <Stack spacing={2}>
-          {error ? <Alert severity="error">{error}</Alert> : null}
-          <TextField
-            autoFocus
-            required
-            label={t('pages.events.form.name')}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <Stack direction="row" spacing={1} alignItems="flex-start">
-            <Autocomplete
-              fullWidth
-              options={eventTypes}
-              getOptionLabel={(option) => option.name}
-              value={eventTypes.find(({ id }) => id === typeId) ?? null}
-              onChange={(_event, value) => {
-                setTypeId(value?.id ?? '');
-                if (value) {
-                  setAttendance(value.attendance_enabled ?? false);
-                  setTypeFields(value.custom_fields ?? []);
-                  setSaveAttendanceDate(value.save_attendance_date ?? false);
-                  setAttendanceDateFieldId(value.attendance_date_person_field_id ?? '');
-                }
-              }}
-              renderInput={(params) => <TextField {...params} required label={t('pages.events.form.type')} />}
-            />
-            {canCreateEventType ? (
-              <Tooltip title={t('pages.events.form.newType')}>
-                <IconButton color="primary" onClick={() => setNewTypeOpen(true)}>
-                  <AddRoundedIcon />
-                </IconButton>
-              </Tooltip>
-            ) : null}
-          </Stack>
-          {newTypeOpen ? (
-            <Box sx={{ p: 2, border: 1, borderColor: 'divider' }}>
-              <Stack spacing={1.5}>
-                <Typography fontWeight={600}>{t('pages.events.form.newType')}</Typography>
-                <TextField
-                  label={t('form.field.name')}
-                  value={newTypeName}
-                  onChange={(e) => {
-                    setNewTypeName(e.target.value);
-                    setTypeId('');
-                  }}
-                />
-                <TextField
-                  multiline
-                  minRows={2}
-                  label={t('pages.events.form.description')}
-                  value={newTypeDescription}
-                  onChange={(e) => setNewTypeDescription(e.target.value)}
-                />
-                <Button
-                  onClick={() => {
-                    setNewTypeOpen(false);
-                    setNewTypeName('');
-                  }}
-                >
-                  {t('form.field.cancel')}
-                </Button>
-              </Stack>
-            </Box>
-          ) : null}
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-            <TextField
-              fullWidth
-              type="datetime-local"
-              label={t('pages.events.form.start')}
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              fullWidth
-              type="datetime-local"
-              label={t('pages.events.form.end')}
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Stack>
-          <Typography variant="caption" color="text.secondary">
-            {t('pages.events.form.timezone', { timezone })}
-          </Typography>
-          <TextField
-            multiline
-            minRows={3}
-            label={t('pages.events.form.description')}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-          <Box
-            onDragOver={(event) => {
-              event.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setDragging(false);
-              chooseImage(event.dataTransfer.files[0]);
-            }}
-            onClick={() => inputRef.current?.click()}
-            sx={{
-              border: 2,
-              borderStyle: 'dashed',
-              borderColor: dragging ? 'primary.main' : 'divider',
-              p: 2,
-              textAlign: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            <input
-              ref={inputRef}
-              hidden
-              type="file"
-              accept="image/*"
-              onChange={(e) => chooseImage(e.target.files?.[0])}
-            />
-            {previewUrl ? (
-              <Box
-                component="img"
-                src={previewUrl}
-                alt=""
-                sx={{ maxWidth: '100%', maxHeight: 220, objectFit: 'contain' }}
+        <Tabs value={activeTab} onChange={(_event, value) => setActiveTab(value)} sx={{ mb: 2 }}>
+          <Tab value="details" label={t('pages.events.form.tabs.details')} />
+          <Tab value="fields" label={t('pages.events.form.tabs.fields')} />
+        </Tabs>
+        {error ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        ) : null}
+
+        {activeTab === 'details' ? (
+          <Stack spacing={2}>
+            <Stack direction="row" spacing={1} alignItems="flex-start">
+              <Autocomplete
+                fullWidth
+                options={eventTypes}
+                getOptionLabel={(option) => option.name}
+                value={eventTypes.find(({ id }) => id === typeId) ?? null}
+                onChange={(_event, value) => applyEventType(value)}
+                renderInput={(params) => (
+                  <TextField {...params} autoFocus required label={t('pages.events.form.type')} />
+                )}
               />
-            ) : (
-              <CloudUploadOutlinedIcon />
-            )}
-            <Typography variant="body2">{t('pages.events.form.dropImage')}</Typography>
-          </Box>
-          <TextField
-            label={t('pages.events.form.publicImageUrl')}
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-          />
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <FormControlLabel
-              control={<Switch checked={allDay} onChange={(e) => setAllDay(e.target.checked)} />}
-              label={t('pages.events.form.allDay')}
-            />
-            <FormControlLabel
-              control={<Switch checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />}
-              label={t('pages.events.form.public')}
-            />
-            <FormControlLabel
-              control={<Switch checked={attendance} onChange={(e) => setAttendance(e.target.checked)} />}
-              label={t('pages.events.form.attendance')}
-            />
-            {attendance ? (
-              <FormControlLabel
-                control={<Switch checked={selfRegistration} onChange={(e) => setSelfRegistration(e.target.checked)} />}
-                label={t('pages.events.form.selfRegistration')}
-              />
-            ) : null}
-          </Stack>
-          {attendance && canUpdateEventType && typeId ? (
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={applyAttendanceToType}
-                  onChange={(_event, checked) => setApplyAttendanceToType(checked)}
-                />
-              }
-              label={t('pages.events.form.applyAttendanceToType')}
-            />
-          ) : null}
-          {attendance ? (
-            <>
-              <FormControlLabel
-                control={
-                  <Switch checked={saveAttendanceDate} onChange={(_event, checked) => setSaveAttendanceDate(checked)} />
-                }
-                label={t('pages.events.form.saveAttendanceDate')}
-              />
-              {saveAttendanceDate ? (
-                <Autocomplete
-                  options={personFields.filter(({ type }) => type === 'date')}
-                  getOptionLabel={(option) => option.label}
-                  value={personFields.find(({ id }) => id === attendanceDateFieldId) ?? null}
-                  onChange={(_event, value) => setAttendanceDateFieldId(value?.id ?? '')}
-                  renderInput={(params) => (
-                    <TextField {...params} required label={t('pages.events.form.attendanceDateField')} />
-                  )}
-                />
+              {canCreateEventType ? (
+                <Tooltip title={t('pages.events.form.newType')}>
+                  <IconButton
+                    color="primary"
+                    onClick={() => {
+                      onClose();
+                      navigate(getSettingsPath(i18n.language), {
+                        state: { settingsTab: 'eventTypes', createEventType: true },
+                      });
+                    }}
+                  >
+                    <AddRoundedIcon />
+                  </IconButton>
+                </Tooltip>
               ) : null}
-              <EventCustomFieldsEditor
-                eventFields={eventFields}
-                typeFields={typeFields}
-                canUpdateEventType={canUpdateEventType}
-                selfRegistration={selfRegistration}
-                personFields={personFields}
-                onChange={({ eventFields: nextEventFields, typeFields: nextTypeFields }) => {
-                  setEventFields(nextEventFields);
-                  setTypeFields(nextTypeFields);
+            </Stack>
+            <TextField
+              required
+              label={t('pages.events.form.name')}
+              value={name}
+              onChange={(eventValue) => {
+                setNameTouched(true);
+                setName(eventValue.target.value);
+              }}
+            />
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="center">
+              <LocalizedDateField
+                fullWidth
+                label={t('pages.events.form.startDate')}
+                value={startDate}
+                onChange={(value) => {
+                  setStartDate(value);
+                  setEndDate(value);
+                  const type = eventTypes.find(({ id }) => id === typeId);
+                  if (type) updateEndFromType(type, value, startTime);
                 }}
               />
-            </>
-          ) : null}
-          {isPublic && attendance && !selfRegistration ? (
-            <Alert
-              severity="warning"
-              action={
-                <Button color="inherit" onClick={() => setSelfRegistration(true)}>
-                  {t('pages.events.form.allowRegistration')}
-                </Button>
-              }
+              <TextField
+                fullWidth
+                type="time"
+                label={t('pages.events.form.startTime')}
+                value={startTime}
+                onChange={(eventValue) => {
+                  const value = eventValue.target.value;
+                  setStartTime(value);
+                  const type = eventTypes.find(({ id }) => id === typeId);
+                  if (type) updateEndFromType(type, startDate, value);
+                }}
+                InputLabelProps={{ shrink: true }}
+              />
+              <FormControlLabel
+                control={<Switch checked={allDay} onChange={(_event, checked) => setAllDay(checked)} />}
+                label={t('pages.events.form.allDay')}
+                sx={{ flexShrink: 0 }}
+              />
+            </Stack>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <LocalizedDateField
+                fullWidth
+                label={t('pages.events.form.endDate')}
+                value={endDate}
+                onChange={setEndDate}
+              />
+              <TextField
+                fullWidth
+                type="time"
+                label={t('pages.events.form.endTime')}
+                value={endTime}
+                onChange={(eventValue) => setEndTime(eventValue.target.value)}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Stack>
+            <TextField
+              multiline
+              minRows={3}
+              label={t('pages.events.form.description')}
+              value={description}
+              onChange={(eventValue) => setDescription(eventValue.target.value)}
+            />
+            <Box
+              onDragOver={(dragEvent) => {
+                dragEvent.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(dropEvent) => {
+                dropEvent.preventDefault();
+                setDragging(false);
+                chooseImage(dropEvent.dataTransfer.files[0]);
+              }}
+              onClick={() => inputRef.current?.click()}
+              sx={{
+                border: 2,
+                borderStyle: 'dashed',
+                borderColor: dragging ? 'primary.main' : 'divider',
+                p: 2,
+                textAlign: 'center',
+                cursor: 'pointer',
+              }}
             >
-              {t('pages.events.form.publicAttendanceNotice')}
-            </Alert>
-          ) : null}
-        </Stack>
+              <input
+                ref={inputRef}
+                hidden
+                type="file"
+                accept="image/*"
+                onChange={(inputEvent) => chooseImage(inputEvent.target.files?.[0])}
+              />
+              {previewUrl ? (
+                <Box
+                  component="img"
+                  src={previewUrl}
+                  alt=""
+                  sx={{ maxWidth: '100%', maxHeight: 220, objectFit: 'contain' }}
+                />
+              ) : (
+                <CloudUploadOutlinedIcon />
+              )}
+              <Typography variant="body2">{t('pages.events.form.dropImage')}</Typography>
+            </Box>
+            <TextField
+              label={t('pages.events.form.publicImageUrl')}
+              value={imageUrl}
+              onChange={(eventValue) => setImageUrl(eventValue.target.value)}
+            />
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <FormControlLabel
+                control={<Switch checked={isPublic} onChange={(_event, checked) => setIsPublic(checked)} />}
+                label={t('pages.events.form.public')}
+              />
+              <FormControlLabel
+                control={<Switch checked={attendance} onChange={(_event, checked) => setAttendance(checked)} />}
+                label={t('pages.events.form.attendance')}
+              />
+              {attendance ? (
+                <FormControlLabel
+                  control={
+                    <Switch checked={selfRegistration} onChange={(_event, checked) => setSelfRegistration(checked)} />
+                  }
+                  label={t('pages.events.form.selfRegistration')}
+                />
+              ) : null}
+            </Stack>
+            {attendance ? (
+              <>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={saveAttendanceDate}
+                      onChange={(_event, checked) => setSaveAttendanceDate(checked)}
+                    />
+                  }
+                  label={t('pages.events.form.saveAttendanceDate')}
+                />
+                {saveAttendanceDate ? (
+                  <Autocomplete
+                    options={personFields.filter(({ type }) => type === 'date')}
+                    getOptionLabel={(option) => option.label}
+                    value={personFields.find(({ id }) => id === attendanceDateFieldId) ?? null}
+                    onChange={(_event, value) => setAttendanceDateFieldId(value?.id ?? '')}
+                    renderInput={(params) => (
+                      <TextField {...params} required label={t('pages.events.form.attendanceDateField')} />
+                    )}
+                  />
+                ) : null}
+              </>
+            ) : null}
+            {isPublic && attendance && !selfRegistration ? (
+              <Alert
+                severity="warning"
+                action={
+                  <Button color="inherit" onClick={() => setSelfRegistration(true)}>
+                    {t('pages.events.form.allowRegistration')}
+                  </Button>
+                }
+              >
+                {t('pages.events.form.publicAttendanceNotice')}
+              </Alert>
+            ) : null}
+          </Stack>
+        ) : (
+          <EventCustomFieldsEditor
+            eventFields={eventFields}
+            typeFields={typeFields}
+            canUpdateEventType={false}
+            selfRegistration={selfRegistration}
+            personFields={personFields}
+            reusableFields={reusableEventFields}
+            readOnlyTypeFields
+            canAddFields={canCreateEventFields}
+            onChange={({ eventFields: nextEventFields }) => setEventFields(nextEventFields)}
+          />
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={submitting}>

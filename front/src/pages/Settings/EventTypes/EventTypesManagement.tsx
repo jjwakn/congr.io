@@ -11,9 +11,11 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { Alert, Typography } from '@mui/material';
 import { EventTypesService } from '@services/eventTypes';
 import { HttpRequestError, httpRequest } from '@utils/http';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { EventType } from '@/types/event-type.types';
+import type { SettingsNavigationState } from '../settings.types';
 import { EventTypeDetailsDialog } from './EventTypeDetailsDialog';
 import { EventTypeFormDialog } from './EventTypeFormDialog';
 import type { EventTypeFormValues } from './eventTypes.types';
@@ -24,6 +26,8 @@ const getErrorMessage = (value: unknown, fallback: string) =>
 
 export const EventTypesManagement = () => {
   const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { hasPermission } = useAuth();
   const { showNotification } = useNotificationContext();
   const canView = hasPermission('event_type', 'get');
@@ -57,11 +61,18 @@ export const EventTypesManagement = () => {
     [showNotification, t],
   );
 
-  const openCreate = () => {
+  const openCreate = useCallback(() => {
     setFormMode('create');
     setSelected(null);
     setFormOpen(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    const state = location.state as SettingsNavigationState | null;
+    if (!state?.createEventType || !canCreate) return;
+    openCreate();
+    navigate(location.pathname, { replace: true, state: null });
+  }, [canCreate, location.pathname, location.state, navigate, openCreate]);
 
   const openEdit = useCallback(
     async (row: EventType) => {

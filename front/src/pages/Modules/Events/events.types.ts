@@ -2,6 +2,7 @@ import type { DateSelectArg } from '@fullcalendar/core';
 import type { EventType } from '@/types/event-type.types';
 import type { CalendarEvent } from '@/types/event.types';
 import type { EventCustomField } from '@/types/event.types';
+import type { EventField } from '@/types/event.types';
 import type { PersonField } from '@/types/person.types';
 
 export interface EventFormValues {
@@ -9,8 +10,7 @@ export interface EventFormValues {
   description: string;
   start_datetime: string;
   end_datetime: string;
-  type_id?: string;
-  new_type?: { name: string; description: string };
+  type_id: string;
   all_day: boolean;
   is_public: boolean;
   attendance_enabled: boolean;
@@ -18,8 +18,7 @@ export interface EventFormValues {
   image_file_id?: string;
   image_url?: string;
   custom_fields: EventCustomField[];
-  type_custom_fields?: EventCustomField[];
-  apply_attendance_to_type?: boolean;
+  event_fields: EventCustomField[];
   save_attendance_date: boolean;
   attendance_date_person_field_id?: string;
 }
@@ -32,8 +31,9 @@ export interface EventEditorDialogProps {
   timezone: string;
   eventTypes: EventType[];
   canCreateEventType: boolean;
-  canUpdateEventType: boolean;
   canViewPersonFields: boolean;
+  canViewEventFields: boolean;
+  canCreateEventFields: boolean;
   submitting: boolean;
   onClose: () => void;
   onSubmit: (values: EventFormValues, image?: File) => void;
@@ -47,5 +47,9 @@ export interface EventCustomFieldsEditorProps {
   canUpdateEventType: boolean;
   selfRegistration: boolean;
   personFields: PersonField[];
+  mode?: 'event' | 'event-type';
+  reusableFields?: EventField[];
+  readOnlyTypeFields?: boolean;
+  canAddFields?: boolean;
   onChange: (value: { eventFields: EventCustomField[]; typeFields: EventCustomField[] }) => void;
 }

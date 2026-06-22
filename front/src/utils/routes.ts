@@ -104,6 +104,10 @@ export const isPublicEventsPath = (pathname: string) => {
   const segments = splitPath(pathname);
   return Boolean(segments.length && matchesLocalizedSegment(segments[0], PUBLIC_EVENTS_SEGMENT));
 };
+export const getPublicEventsPath = (language?: string, publicId?: string) => {
+  const base = `/${PUBLIC_EVENTS_SEGMENT[normalizeLanguage(language)]}`;
+  return publicId ? `${base}/${publicId}` : base;
+};
 
 export const getModulePrefix = (language?: string): string => {
   const lang = normalizeLanguage(language);
@@ -149,6 +153,10 @@ export const getModuleIdFromPath = (pathname: string): string | null => {
 export const getLocalizedPathname = (pathname: string, language?: string): string => {
   if (isBrandingPath(pathname)) return getBrandingPath(language);
   if (isFilesPath(pathname)) return getFilesPath(language);
+  if (isPublicEventsPath(pathname)) {
+    const [, publicId] = splitPath(pathname);
+    return getPublicEventsPath(language, publicId);
+  }
   if (isSettingsPath(pathname)) return getSettingsPath(language);
 
   const moduleId = getModuleIdFromPath(pathname);

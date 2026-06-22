@@ -200,10 +200,14 @@ export const CongregationsSettingsTab = () => {
               {
                 id: 'delete',
                 label: t('pages.settings.congregation.delete.action'),
+                tooltip: (value) =>
+                  congregations.length <= 1
+                    ? t('pages.settings.congregation.delete.lastCongregationTooltip')
+                    : t('pages.settings.congregation.delete.action', { name: value.name }),
                 icon: DeleteOutlineRoundedIcon,
                 color: 'error',
                 hidden: !canDelete,
-                disabled: loadingDeleteId === item.id,
+                disabled: loadingDeleteId === item.id || congregations.length <= 1,
                 onClick: (value) => void openDelete(value),
               },
             ]}
@@ -211,7 +215,7 @@ export const CongregationsSettingsTab = () => {
         ),
       },
     ],
-    [canDelete, canUpdate, congregation?.id, loadingDeleteId, openDelete, t],
+    [canDelete, canUpdate, congregation?.id, congregations.length, loadingDeleteId, openDelete, t],
   );
 
   return (

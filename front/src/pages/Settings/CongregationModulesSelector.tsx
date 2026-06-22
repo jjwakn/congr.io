@@ -1,5 +1,13 @@
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Switch, Typography } from '@mui/material';
+import {
+  PARTIAL_FEATURE_SWITCH_SX,
+  getFeatureChildren,
+  getRootFeatures,
+  isFeaturePartiallySelected,
+  normalizeSelectedFeatures,
+  toggleFeatureSelection,
+} from '@utils/features';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CongregationModulesSelectorProps } from './settings.types';
@@ -12,34 +20,45 @@ export const CongregationModulesSelector = ({
   onChange,
 }: CongregationModulesSelectorProps) => {
   const { t } = useTranslation();
-  const selectedSet = useMemo(() => new Set(selected), [selected]);
+  const normalizedSelected = useMemo(() => normalizeSelectedFeatures(features, selected), [features, selected]);
+  const selectedSet = useMemo(() => new Set(normalizedSelected), [normalizedSelected]);
+  const rootFeatures = useMemo(() => getRootFeatures(features), [features]);
 
   const handleToggle = (featureId: string, checked: boolean) => {
-    const next = new Set(selected);
-    if (checked) {
-      const addWithPrerequisites = (id: string) => {
-        next.add(id);
-        const feature = features.find(({ id: candidateId }) => candidateId === id);
-        feature?.prerequisites?.forEach(addWithPrerequisites);
-      };
-      addWithPrerequisites(featureId);
-    } else {
-      const removeWithDependents = (id: string) => {
-        next.delete(id);
-        features
-          .filter(({ prerequisites }) => prerequisites?.includes(id))
-          .forEach(({ id: dependentId }) => {
-            removeWithDependents(dependentId);
-          });
-      };
-      removeWithDependents(featureId);
-    }
-
-    features.filter(({ required }) => required).forEach(({ id }) => next.add(id));
-    onChange(features.filter(({ id }) => next.has(id)).map(({ id }) => id));
+    onChange(toggleFeatureSelection({ features, selected: normalizedSelected, featureId, checked }));
   };
 
   const allSelected = features.length > 0 && features.every(({ id }) => selectedSet.has(id));
+
+  const renderFeature = (feature: (typeof features)[number], depth = 0) => {
+    const children = getFeatureChildren(features, feature.id);
+    const partial = isFeaturePartiallySelected(features, normalizedSelected, feature.id);
+
+    return (
+      <Box key={feature.id} sx={{ ml: depth ? 4 : 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+          <Switch
+            checked={selectedSet.has(feature.id)}
+            disabled={disabled || feature.required}
+            inputProps={{ 'aria-label': feature.title }}
+            onChange={(event) => handleToggle(feature.id, event.target.checked)}
+            sx={{ mt: 0.5, ...(partial ? PARTIAL_FEATURE_SWITCH_SX : {}) }}
+          />
+          <Accordion disableGutters elevation={0} sx={{ flex: 1, '&::before': { display: 'none' } }}>
+            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ minHeight: 44 }}>
+              <Typography>{feature.title}</Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ pt: 0 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-line' }}>
+                {feature.description.replace('{type}', congregationType)}
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+        </Box>
+        {children.map((child) => renderFeature(child, depth + 1))}
+      </Box>
+    );
+  };
 
   return (
     <Box>
@@ -64,27 +83,7 @@ export const CongregationModulesSelector = ({
         <Typography fontWeight={600}>{t('form.field.selectAll')}</Typography>
       </Box>
 
-      {features.map((feature) => (
-        <Box key={feature.id} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
-          <Switch
-            checked={selectedSet.has(feature.id)}
-            disabled={disabled || feature.required}
-            inputProps={{ 'aria-label': feature.title }}
-            onChange={(event) => handleToggle(feature.id, event.target.checked)}
-            sx={{ mt: 0.5 }}
-          />
-          <Accordion disableGutters elevation={0} sx={{ flex: 1, '&::before': { display: 'none' } }}>
-            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ minHeight: 44 }}>
-              <Typography>{feature.title}</Typography>
-            </AccordionSummary>
-            <AccordionDetails sx={{ pt: 0 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-line' }}>
-                {feature.description.replace('{type}', congregationType)}
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
-        </Box>
-      ))}
+      {rootFeatures.map((feature) => renderFeature(feature))}
     </Box>
   );
 };

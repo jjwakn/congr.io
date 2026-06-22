@@ -1,14 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsUUID,
-  MaxLength,
-  ValidateNested,
-} from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { CommonOrder, CongregationEntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -24,8 +15,6 @@ export interface EventListProps extends CongregationEntityActionProps {
 
 export interface EventCreateProps extends CongregationEntityActionProps {
   data: EventDto;
-  canCreateEventType?: boolean;
-  canUpdateEventType?: boolean;
 }
 
 export interface EventUpdateProps extends EventCreateProps {
@@ -40,18 +29,6 @@ export class EventRegistrationLockDto {
   @Type(() => Boolean)
   @IsBoolean()
   locked: boolean;
-}
-
-export class InlineEventTypeDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(160)
-  name: string;
-
-  @IsString()
-  @IsOptional()
-  @MaxLength(1000)
-  description?: string;
 }
 
 export class EventDto {
@@ -79,8 +56,7 @@ export class EventDto {
 
   @ApiProperty({ example: '9ce26ff8-84d5-47f1-9974-ce4b47de7e2c' })
   @IsUUID()
-  @IsOptional()
-  type_id?: string;
+  type_id: string;
 
   @ApiProperty({ required: false, example: true })
   @Type(() => Boolean)
@@ -124,25 +100,11 @@ export class EventDto {
   @Type(() => Boolean)
   @IsBoolean()
   @IsOptional()
-  apply_attendance_to_type?: boolean;
-
-  @IsArray()
-  @IsOptional()
-  type_custom_fields?: Array<Record<string, unknown>>;
-
-  @Type(() => Boolean)
-  @IsBoolean()
-  @IsOptional()
   save_attendance_date?: boolean;
 
   @IsUUID('4')
   @IsOptional()
   attendance_date_person_field_id?: string;
-
-  @ValidateNested()
-  @Type(() => InlineEventTypeDto)
-  @IsOptional()
-  new_type?: InlineEventTypeDto;
 }
 
 enum Order {

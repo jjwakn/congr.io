@@ -91,6 +91,7 @@ export const useModuleList = ({
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(preferredPageSize);
   const [search, setSearchValue] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   useEffect(() => {
     if (!moduleKey) return;
@@ -105,12 +106,21 @@ export const useModuleList = ({
     });
   }, [direction, moduleKey, sort]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
   return {
     direction,
     sort,
     page,
     pageSize,
     search,
+    debouncedSearch,
     setSearch: (value) => {
       setPage(0);
       setSearchValue(value);

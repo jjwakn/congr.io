@@ -36,7 +36,7 @@ export interface UseUsersListResult {
 export type UserDialogMode = CreateEditDialogMode;
 
 export interface UserFormValues {
-  [key: string]: string | boolean | string[] | undefined;
+  [key: string]: string | boolean | string[] | null | undefined;
   username?: string;
   password?: string;
   name: string;
@@ -44,6 +44,7 @@ export interface UserFormValues {
   roles_ids?: string[];
   congregations_ids?: string[];
   locations_ids?: string[];
+  person_id?: string | null;
 }
 
 export interface UserMetadata {

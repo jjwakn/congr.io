@@ -1,4 +1,5 @@
 import { ConfirmDialog } from '@components/common/forms/ConfirmDialog';
+import { ModuleSection } from '@components/common/modules/ModuleSection';
 import type { DatesSetArg, EventClickArg, EventInput } from '@fullcalendar/core';
 import esLocale from '@fullcalendar/core/locales/es';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -18,12 +19,12 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -45,7 +46,10 @@ import { EventTypesService } from '@services/eventTypes';
 import { EventsService } from '@services/events';
 import { FilesService } from '@services/files';
 import { API_URL } from '@utils/constants';
+import { persistNewEventFields } from '@utils/event-fields';
 import { HttpRequestError, httpRequest } from '@utils/http';
+import { getPreloadedResource } from '@utils/preload';
+import { getPublicEventsPath } from '@utils/routes';
 import { DateTime } from 'luxon';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -67,7 +71,9 @@ export const EventCalendar = () => {
   const { showNotification } = useNotificationContext();
   const location = useLocation();
   const calendarRef = useRef<FullCalendar | null>(null);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>(
+    () => getPreloadedResource<EventsListResponse>('events')?.result ?? [],
+  );
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
   const [visibleTypeIds, setVisibleTypeIds] = useState<string[]>([]);
   const [filterInitialized, setFilterInitialized] = useState(false);
@@ -87,9 +93,10 @@ export const EventCalendar = () => {
   const canUpdate = hasPermission('event', 'update');
   const canDelete = hasPermission('event', 'delete');
   const canCreateType = hasPermission('event_type', 'create');
-  const canUpdateType = hasPermission('event_type', 'update');
   const canViewType = hasPermission('event_type', 'get');
   const canViewPersonFields = hasPermission('person_field', 'get');
+  const canViewEventFields = hasPermission('event_field', 'get');
+  const canCreateEventFields = hasPermission('event_field', 'create');
 
   useEffect(() => {
     const eventId = new URLSearchParams(location.search).get('event');
@@ -199,6 +206,12 @@ export const EventCalendar = () => {
   const saveEvent = async (values: EventFormValues, image?: File) => {
     setSubmitting(true);
     try {
+      const eventFieldIds = new Set(values.event_fields.map(({ id }) => id));
+      const inheritedFields = values.custom_fields.filter(({ id }) => !eventFieldIds.has(id));
+      const persistedEventFields = canCreateEventFields
+        ? await persistNewEventFields(values.event_fields)
+        : values.event_fields;
+      const { event_fields: _eventFields, ...eventValues } = values;
       let imageFileId = editor?.event?.image_file_id ?? undefined;
       if (image) {
         const form = new FormData();
@@ -211,7 +224,8 @@ export const EventCalendar = () => {
         service,
         data: {
           ...(editor?.event ? { id: editor.event.id } : {}),
-          ...values,
+          ...eventValues,
+          custom_fields: [...inheritedFields, ...persistedEventFields],
           ...(imageFileId ? { image_file_id: imageFileId } : {}),
         },
       });
@@ -241,7 +255,8 @@ export const EventCalendar = () => {
   };
 
   const shareEvent = async (event: CalendarEvent) => {
-    const path = event.is_public && event.public_id ? `/events/${event.public_id}` : `/?event=${event.id}`;
+    const path =
+      event.is_public && event.public_id ? getPublicEventsPath(i18n.language, event.public_id) : `/?event=${event.id}`;
     await navigator.clipboard.writeText(`${window.location.origin}${path}`);
     showNotification(t('pages.events.success.linkCopied'), { severity: 'success' });
   };
@@ -272,327 +287,343 @@ export const EventCalendar = () => {
   const api = calendarRef.current?.getApi();
 
   return (
-    <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ flexShrink: 0 }}>
-        <Stack direction="row" alignItems="center" spacing={0.25}>
-          <Tooltip title={t('pages.events.previous')}>
-            <IconButton onClick={() => api?.prev()}>
-              <ChevronLeftRoundedIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('pages.events.next')}>
-            <IconButton onClick={() => api?.next()}>
-              <ChevronRightRoundedIcon />
-            </IconButton>
-          </Tooltip>
-          <Button size="small" onClick={() => api?.today()}>
-            {t('pages.events.today')}
-          </Button>
-          <Tooltip title={t('pages.events.filter')}>
-            <IconButton disabled={!eventTypes.length} onClick={(e) => setFilterAnchor(e.currentTarget)}>
-              <FilterListRoundedIcon />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-        <Button
-          endIcon={<ExpandMoreRoundedIcon />}
-          onClick={(e) => setDateAnchor(e.currentTarget)}
-          sx={{ minWidth: 0 }}
-        >
-          <Typography noWrap fontWeight={600}>
-            {title}
-          </Typography>
-        </Button>
-        <Stack direction="row" alignItems="center" spacing={0.25}>
-          <ToggleButtonGroup
-            exclusive
-            size="small"
-            value={view}
-            onChange={(_event, value: string | null) => {
-              if (value) {
-                setView(value);
-                api?.changeView(value);
-              }
-            }}
-            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-          >
-            <ToggleButton value="timeGridDay">{t('pages.events.views.day')}</ToggleButton>
-            <ToggleButton value="timeGridWeek">{t('pages.events.views.week')}</ToggleButton>
-            <ToggleButton value="dayGridMonth">{t('pages.events.views.month')}</ToggleButton>
-          </ToggleButtonGroup>
-          <Tooltip title={t('pages.events.refresh')}>
-            <IconButton onClick={() => range && void loadEvents(range)}>
-              <RefreshRoundedIcon />
-            </IconButton>
-          </Tooltip>
-          {canCreate ? (
-            <Tooltip title={t('pages.events.create')}>
-              <IconButton color="primary" onClick={() => setEditor({ event: null })}>
-                <AddRoundedIcon />
+    <ModuleSection<CalendarEvent>
+      createAction={
+        canCreate
+          ? {
+              id: 'create-event',
+              label: t('pages.events.create'),
+              onClick: () => setEditor({ event: null }),
+            }
+          : undefined
+      }
+      refreshAction={{
+        id: 'refresh-events',
+        label: t('pages.events.refresh'),
+        disabled: loading,
+        onClick: () => range && void loadEvents(range),
+      }}
+    >
+      <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ flexShrink: 0 }}>
+          <Stack direction="row" alignItems="center" spacing={0.25}>
+            <Tooltip title={t('pages.events.previous')}>
+              <IconButton onClick={() => api?.prev()}>
+                <ChevronLeftRoundedIcon />
               </IconButton>
             </Tooltip>
-          ) : null}
-        </Stack>
-      </Stack>
-
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          '& .fc': { height: '100%' },
-          '& .fc-header-toolbar': { display: 'none' },
-          '& .fc-view-harness': { minHeight: 0 },
-        }}
-      >
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          locale={i18n.language.startsWith('es') ? esLocale : undefined}
-          timeZone={congregation?.timezone ?? 'UTC'}
-          events={calendarEvents}
-          datesSet={handleDatesSet}
-          dateClick={handleDateClick}
-          eventClick={handleEventClick}
-          dayMaxEvents
-          nowIndicator
-          selectable
-          height="100%"
-        />
-      </Box>
-
-      <Menu anchorEl={filterAnchor} open={Boolean(filterAnchor)} onClose={() => setFilterAnchor(null)}>
-        {eventTypes.map((type) => (
-          <MenuItem
-            key={type.id}
-            onClick={() =>
-              setVisibleTypeIds((current) =>
-                current.includes(type.id) ? current.filter((id) => id !== type.id) : [...current, type.id],
-              )
-            }
+            <Tooltip title={t('pages.events.next')}>
+              <IconButton onClick={() => api?.next()}>
+                <ChevronRightRoundedIcon />
+              </IconButton>
+            </Tooltip>
+            <Button size="small" onClick={() => api?.today()}>
+              {t('pages.events.today')}
+            </Button>
+            <Tooltip title={t('pages.events.filter')}>
+              <IconButton disabled={!eventTypes.length} onClick={(e) => setFilterAnchor(e.currentTarget)}>
+                <FilterListRoundedIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+          <Button
+            endIcon={<ExpandMoreRoundedIcon />}
+            onClick={(e) => setDateAnchor(e.currentTarget)}
+            sx={{ minWidth: 0 }}
           >
-            <FormControlLabel control={<Switch checked={visibleTypeIds.includes(type.id)} />} label={type.name} />
-          </MenuItem>
-        ))}
-      </Menu>
-
-      <Popover
-        open={Boolean(dateAnchor)}
-        anchorEl={dateAnchor}
-        onClose={() => setDateAnchor(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ p: 1, maxWidth: 320 }}>
-          {Array.from(
-            { length: 7 },
-            (_value, index) => DateTime.fromJSDate(api?.getDate() ?? new Date()).year - 3 + index,
-          ).map((year) => (
-            <Button
-              key={year}
+            <Typography noWrap fontWeight={600}>
+              {title}
+            </Typography>
+          </Button>
+          <Stack direction="row" alignItems="center" spacing={0.25}>
+            <ToggleButtonGroup
+              exclusive
               size="small"
-              variant={year === DateTime.fromJSDate(api?.getDate() ?? new Date()).year ? 'contained' : 'text'}
+              value={view}
+              onChange={(_event, value: string | null) => {
+                if (value) {
+                  setView(value);
+                  api?.changeView(value);
+                }
+              }}
+              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+            >
+              <ToggleButton value="timeGridDay">{t('pages.events.views.day')}</ToggleButton>
+              <ToggleButton value="timeGridWeek">{t('pages.events.views.week')}</ToggleButton>
+              <ToggleButton value="dayGridMonth">{t('pages.events.views.month')}</ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
+        </Stack>
+
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            '& .fc': { height: '100%' },
+            '& .fc-header-toolbar': { display: 'none' },
+            '& .fc-view-harness': { minHeight: 0 },
+          }}
+        >
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            locale={i18n.language.startsWith('es') ? esLocale : undefined}
+            timeZone={congregation?.timezone ?? 'UTC'}
+            events={calendarEvents}
+            datesSet={handleDatesSet}
+            dateClick={handleDateClick}
+            eventClick={handleEventClick}
+            dayMaxEvents
+            nowIndicator
+            selectable
+            height="100%"
+          />
+        </Box>
+
+        <Menu anchorEl={filterAnchor} open={Boolean(filterAnchor)} onClose={() => setFilterAnchor(null)}>
+          {eventTypes.map((type) => (
+            <MenuItem
+              key={type.id}
               onClick={() =>
-                api?.gotoDate(
-                  DateTime.fromJSDate(api?.getDate() ?? new Date())
-                    .set({ year })
-                    .toISODate() ?? '',
+                setVisibleTypeIds((current) =>
+                  current.includes(type.id) ? current.filter((id) => id !== type.id) : [...current, type.id],
                 )
               }
             >
-              {year}
-            </Button>
+              <FormControlLabel control={<Switch checked={visibleTypeIds.includes(type.id)} />} label={type.name} />
+            </MenuItem>
           ))}
-          {Array.from({ length: 12 }, (_value, month) => (
-            <Button
-              key={month}
-              size="small"
-              onClick={() => {
-                api?.gotoDate(
-                  DateTime.fromJSDate(api?.getDate() ?? new Date())
-                    .set({ month: month + 1 })
-                    .toISODate() ?? '',
-                );
-                setDateAnchor(null);
-              }}
-            >
-              {DateTime.local(2026, month + 1)
-                .setLocale(i18n.language)
-                .toFormat('LLL')}
-            </Button>
-          ))}
-        </Stack>
-      </Popover>
+        </Menu>
 
-      <Popover
-        open={Boolean(dayMenu)}
-        anchorReference="anchorPosition"
-        anchorPosition={dayMenu}
-        onClose={() => setDayMenu(undefined)}
-      >
-        <MenuItem
-          onClick={() => {
-            api?.changeView('timeGridDay', dayMenu?.date);
-            setView('timeGridDay');
-            setDayMenu(undefined);
-          }}
+        <Popover
+          open={Boolean(dateAnchor)}
+          anchorEl={dateAnchor}
+          onClose={() => setDateAnchor(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <VisibilityOutlinedIcon sx={{ mr: 1 }} />
-          {t('pages.events.viewDay')}
-        </MenuItem>
-        {canCreate ? (
+          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ p: 1, maxWidth: 320 }}>
+            {Array.from(
+              { length: 7 },
+              (_value, index) => DateTime.fromJSDate(api?.getDate() ?? new Date()).year - 3 + index,
+            ).map((year) => (
+              <Button
+                key={year}
+                size="small"
+                variant={year === DateTime.fromJSDate(api?.getDate() ?? new Date()).year ? 'contained' : 'text'}
+                onClick={() =>
+                  api?.gotoDate(
+                    DateTime.fromJSDate(api?.getDate() ?? new Date())
+                      .set({ year })
+                      .toISODate() ?? '',
+                  )
+                }
+              >
+                {year}
+              </Button>
+            ))}
+            {Array.from({ length: 12 }, (_value, month) => (
+              <Button
+                key={month}
+                size="small"
+                onClick={() => {
+                  api?.gotoDate(
+                    DateTime.fromJSDate(api?.getDate() ?? new Date())
+                      .set({ month: month + 1 })
+                      .toISODate() ?? '',
+                  );
+                  setDateAnchor(null);
+                }}
+              >
+                {DateTime.local(2026, month + 1)
+                  .setLocale(i18n.language)
+                  .toFormat('LLL')}
+              </Button>
+            ))}
+          </Stack>
+        </Popover>
+
+        <Popover
+          open={Boolean(dayMenu)}
+          anchorReference="anchorPosition"
+          anchorPosition={dayMenu}
+          onClose={() => setDayMenu(undefined)}
+        >
           <MenuItem
             onClick={() => {
-              setEditor({ event: null, date: dayMenu?.date });
+              api?.changeView('timeGridDay', dayMenu?.date);
+              setView('timeGridDay');
               setDayMenu(undefined);
             }}
           >
-            <AddRoundedIcon sx={{ mr: 1 }} />
-            {t('pages.events.create')}
+            <VisibilityOutlinedIcon sx={{ mr: 1 }} />
+            {t('pages.events.viewDay')}
           </MenuItem>
-        ) : null}
-      </Popover>
-
-      <Popover
-        open={Boolean(eventMenu)}
-        anchorReference="anchorPosition"
-        anchorPosition={eventMenu}
-        onClose={() => setEventMenu(undefined)}
-      >
-        <MenuItem
-          onClick={() => {
-            setSelectedEvent(eventMenu?.event ?? null);
-            setEventMenu(undefined);
-          }}
-        >
-          <VisibilityOutlinedIcon sx={{ mr: 1 }} />
-          {t('pages.events.actions.view')}
-        </MenuItem>
-        {canUpdate ? (
-          <MenuItem
-            onClick={() => {
-              if (eventMenu) setEditor({ event: eventMenu.event });
-              setEventMenu(undefined);
-            }}
-          >
-            <EditOutlinedIcon sx={{ mr: 1 }} />
-            {t('pages.events.actions.edit')}
-          </MenuItem>
-        ) : null}
-        {canDelete ? (
-          <MenuItem
-            onClick={() => {
-              setDeleteEvent(eventMenu?.event ?? null);
-              setEventMenu(undefined);
-            }}
-          >
-            <DeleteOutlineRoundedIcon sx={{ mr: 1 }} />
-            {t('pages.events.actions.delete')}
-          </MenuItem>
-        ) : null}
-        <MenuItem
-          onClick={() => {
-            if (eventMenu) addToCalendar(eventMenu.event);
-            setEventMenu(undefined);
-          }}
-        >
-          <CalendarMonthRoundedIcon sx={{ mr: 1 }} />
-          {t('pages.events.actions.addToCalendar')}
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (eventMenu) void shareEvent(eventMenu.event);
-            setEventMenu(undefined);
-          }}
-        >
-          <IosShareRoundedIcon sx={{ mr: 1 }} />
-          {t('pages.events.actions.share')}
-        </MenuItem>
-      </Popover>
-
-      {editor && (!editor.typeId || eventTypes.length) ? (
-        <EventEditorDialog
-          key={editor.event?.id ?? editor.date ?? editor.typeId ?? 'new'}
-          open
-          event={editor.event}
-          initialDate={editor.date}
-          initialTypeId={editor.typeId}
-          timezone={congregation?.timezone ?? 'UTC'}
-          eventTypes={eventTypes}
-          canCreateEventType={canCreateType}
-          canUpdateEventType={canUpdateType}
-          canViewPersonFields={canViewPersonFields}
-          submitting={submitting}
-          onClose={() => setEditor(undefined)}
-          onSubmit={(values, image) => void saveEvent(values, image)}
-        />
-      ) : null}
-
-      <Dialog open={Boolean(selectedEvent)} onClose={() => setSelectedEvent(null)} fullWidth maxWidth="md">
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          {selectedEvent?.name}
-          <IconButton onClick={() => setSelectedEvent(null)}>
-            <CloseRoundedIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            {selectedEvent && toImageUrl(selectedEvent) ? (
-              <Box
-                component="img"
-                src={toImageUrl(selectedEvent)}
-                alt={selectedEvent.name}
-                sx={{ width: { xs: '100%', md: '45%' }, maxHeight: 360, objectFit: 'contain' }}
-              />
-            ) : null}
-            <Stack spacing={1} flex={1}>
-              <Typography>{selectedEvent?.description}</Typography>
-              <Typography variant="body2">
-                {selectedEvent
-                  ? DateTime.fromISO(selectedEvent.start_datetime)
-                      .setZone(congregation?.timezone)
-                      .toLocaleString(DateTime.DATETIME_MED)
-                  : ''}
-              </Typography>
-              {selectedEvent ? (
-                <Stack direction="row" useFlexGap flexWrap="wrap" gap={1}>
-                  {selectedEvent.is_public ? <Chip size="small" label={t('pages.events.form.public')} /> : null}
-                  {selectedEvent.all_day ? <Chip size="small" label={t('pages.events.form.allDay')} /> : null}
-                  {selectedEvent.attendance_enabled ? (
-                    <Chip size="small" label={t('pages.events.form.attendance')} />
-                  ) : null}
-                </Stack>
-              ) : null}
-              {selectedEvent?.custom_fields.map((field) => (
-                <Typography key={field.id} variant="body2">
-                  {field.label}
-                </Typography>
-              ))}
-            </Stack>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          {selectedEvent ? (
-            <>
-              <Button onClick={() => addToCalendar(selectedEvent)}>{t('pages.events.actions.addToCalendar')}</Button>
-              <Button onClick={() => void shareEvent(selectedEvent)}>{t('pages.events.actions.share')}</Button>
-            </>
+          {canCreate ? (
+            <MenuItem
+              onClick={() => {
+                setEditor({ event: null, date: dayMenu?.date });
+                setDayMenu(undefined);
+              }}
+            >
+              <AddRoundedIcon sx={{ mr: 1 }} />
+              {t('pages.events.create')}
+            </MenuItem>
           ) : null}
-        </DialogActions>
-      </Dialog>
+        </Popover>
 
-      <ConfirmDialog
-        open={Boolean(deleteEvent)}
-        title={t('pages.events.delete.title')}
-        message={t('pages.events.delete.message')}
-        confirmLabel={t('pages.events.actions.delete')}
-        cancelLabel={t('form.field.cancel')}
-        confirming={submitting}
-        confirmColor="error"
-        onClose={() => setDeleteEvent(null)}
-        onConfirm={() => void removeEvent()}
-      />
-      <Snackbar open={loading} message={t('pages.events.loading')} />
-    </Box>
+        <Popover
+          open={Boolean(eventMenu)}
+          anchorReference="anchorPosition"
+          anchorPosition={eventMenu}
+          onClose={() => setEventMenu(undefined)}
+        >
+          <MenuItem
+            onClick={() => {
+              setSelectedEvent(eventMenu?.event ?? null);
+              setEventMenu(undefined);
+            }}
+          >
+            <VisibilityOutlinedIcon sx={{ mr: 1 }} />
+            {t('pages.events.actions.view')}
+          </MenuItem>
+          {canUpdate ? (
+            <MenuItem
+              onClick={() => {
+                if (eventMenu) setEditor({ event: eventMenu.event });
+                setEventMenu(undefined);
+              }}
+            >
+              <EditOutlinedIcon sx={{ mr: 1 }} />
+              {t('pages.events.actions.edit')}
+            </MenuItem>
+          ) : null}
+          {canDelete ? (
+            <MenuItem
+              onClick={() => {
+                setDeleteEvent(eventMenu?.event ?? null);
+                setEventMenu(undefined);
+              }}
+            >
+              <DeleteOutlineRoundedIcon sx={{ mr: 1 }} />
+              {t('pages.events.actions.delete')}
+            </MenuItem>
+          ) : null}
+          <MenuItem
+            onClick={() => {
+              if (eventMenu) addToCalendar(eventMenu.event);
+              setEventMenu(undefined);
+            }}
+          >
+            <CalendarMonthRoundedIcon sx={{ mr: 1 }} />
+            {t('pages.events.actions.addToCalendar')}
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              if (eventMenu) void shareEvent(eventMenu.event);
+              setEventMenu(undefined);
+            }}
+          >
+            <IosShareRoundedIcon sx={{ mr: 1 }} />
+            {t('pages.events.actions.share')}
+          </MenuItem>
+        </Popover>
+
+        {editor && (!editor.typeId || eventTypes.length) ? (
+          <EventEditorDialog
+            key={editor.event?.id ?? editor.date ?? editor.typeId ?? 'new'}
+            open
+            event={editor.event}
+            initialDate={editor.date}
+            initialTypeId={editor.typeId}
+            timezone={congregation?.timezone ?? 'UTC'}
+            eventTypes={eventTypes}
+            canCreateEventType={canCreateType}
+            canViewPersonFields={canViewPersonFields}
+            canViewEventFields={canViewEventFields}
+            canCreateEventFields={canCreateEventFields}
+            submitting={submitting}
+            onClose={() => setEditor(undefined)}
+            onSubmit={(values, image) => void saveEvent(values, image)}
+          />
+        ) : null}
+
+        <Dialog open={Boolean(selectedEvent)} onClose={() => setSelectedEvent(null)} fullWidth maxWidth="md">
+          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            {selectedEvent?.name}
+            <IconButton onClick={() => setSelectedEvent(null)}>
+              <CloseRoundedIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              {selectedEvent && toImageUrl(selectedEvent) ? (
+                <Box
+                  component="img"
+                  src={toImageUrl(selectedEvent)}
+                  alt={selectedEvent.name}
+                  sx={{ width: { xs: '100%', md: '45%' }, maxHeight: 360, objectFit: 'contain' }}
+                />
+              ) : null}
+              <Stack spacing={1} flex={1}>
+                <Typography>{selectedEvent?.description}</Typography>
+                <Typography variant="body2">
+                  {selectedEvent
+                    ? DateTime.fromISO(selectedEvent.start_datetime)
+                        .setZone(congregation?.timezone)
+                        .setLocale(i18n.language)
+                        .toLocaleString(DateTime.DATETIME_MED)
+                    : ''}
+                </Typography>
+                {selectedEvent ? (
+                  <Stack direction="row" useFlexGap flexWrap="wrap" gap={1}>
+                    {selectedEvent.is_public ? <Chip size="small" label={t('pages.events.form.public')} /> : null}
+                    {selectedEvent.all_day ? <Chip size="small" label={t('pages.events.form.allDay')} /> : null}
+                    {selectedEvent.attendance_enabled ? (
+                      <Chip size="small" label={t('pages.events.form.attendance')} />
+                    ) : null}
+                  </Stack>
+                ) : null}
+                {selectedEvent?.custom_fields.map((field) => (
+                  <Typography key={field.id} variant="body2">
+                    {field.label}
+                  </Typography>
+                ))}
+              </Stack>
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            {selectedEvent ? (
+              <>
+                <Button onClick={() => addToCalendar(selectedEvent)}>{t('pages.events.actions.addToCalendar')}</Button>
+                <Button onClick={() => void shareEvent(selectedEvent)}>{t('pages.events.actions.share')}</Button>
+              </>
+            ) : null}
+          </DialogActions>
+        </Dialog>
+
+        <ConfirmDialog
+          open={Boolean(deleteEvent)}
+          title={t('pages.events.delete.title')}
+          message={t('pages.events.delete.message')}
+          confirmLabel={t('pages.events.actions.delete')}
+          cancelLabel={t('form.field.cancel')}
+          confirming={submitting}
+          confirmColor="error"
+          onClose={() => setDeleteEvent(null)}
+          onConfirm={() => void removeEvent()}
+        />
+        <Snackbar
+          open={loading}
+          message={
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <CircularProgress size={18} color="inherit" />
+              <Typography variant="body2">{t('pages.events.loading')}</Typography>
+            </Stack>
+          }
+        />
+      </Box>
+    </ModuleSection>
   );
 };
 

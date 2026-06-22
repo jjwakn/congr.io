@@ -8,7 +8,12 @@ export interface SettingsPageProps {
   showHeader?: boolean;
 }
 
-export type SettingsTabId = 'congregations' | 'ui' | 'eventTypes' | 'deployment';
+export interface SettingsNavigationState {
+  settingsTab?: SettingsTabId;
+  createEventType?: boolean;
+}
+
+export type SettingsTabId = 'congregations' | 'ui' | 'eventTypes' | 'eventFields' | 'personFields' | 'deployment';
 
 export interface CongregationSettingsDraft {
   name: string;
@@ -88,6 +93,7 @@ export interface CongregationDeletionPreview {
   locationsDetached: number;
   events: number;
   eventTypes: number;
+  eventFields: number;
   processes: number;
   processSteps: number;
   configurations: number;

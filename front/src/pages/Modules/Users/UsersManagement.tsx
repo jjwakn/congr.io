@@ -8,6 +8,7 @@ import { ModuleSection } from '@components/common/modules/ModuleSection';
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
+import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -367,6 +368,23 @@ export const UsersManagement = () => {
           <ModuleRowActions
             row={user}
             actions={[
+              {
+                id: 'link-person',
+                label: t('pages.modules.users.actions.linkPerson'),
+                icon: AssignmentIndOutlinedIcon,
+                color: 'default',
+                hidden: !canUpdate,
+                disabled: (currentUser) =>
+                  isCurrentUser(currentUser) ||
+                  loadingUserId === currentUser.id ||
+                  submitting ||
+                  deleting ||
+                  passwordSubmitting ||
+                  metadataLoading,
+                onClick: (currentUser) => {
+                  void handleOpenEdit(currentUser.id);
+                },
+              },
               {
                 id: 'view-user',
                 label: t('pages.modules.common.view'),

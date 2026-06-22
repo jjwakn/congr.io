@@ -11,14 +11,11 @@ import type { DashboardModuleView } from '@pages/Modules/modules.types';
 import { canRenderModuleRoute } from '@pages/Modules/routes';
 import { ConfigurationsService } from '@services/configurations';
 import { CongregationsService } from '@services/congregations';
-import { EventsService } from '@services/events';
-import { PersonsService } from '@services/persons';
-import { ProcessesService } from '@services/processes';
-import { RolesService } from '@services/roles';
 import { UsersService } from '@services/users';
 import { API_URL } from '@utils/constants';
 import { createModuleNavigationItem, createSettingsNavigationItem } from '@utils/dashboard';
 import { HttpRequestError, httpRequest } from '@utils/http';
+import { getPreloadedResource, preloadDashboardResources } from '@utils/preload';
 import {
   getHomePath,
   getLocalizedPathname,
@@ -142,25 +139,21 @@ const Dashboard = () => {
   );
   useEffect(() => {
     const typeIds = favorites.filter((id) => id.startsWith('registration-type:')).map((id) => id.split(':')[1]);
-    if (!typeIds.length) return;
-    void httpRequest<EventsListResponse>({
-      service: EventsService.list,
-      data: {
-        start: new Date().toISOString(),
-        end: new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000).toISOString(),
-        page: 0,
-        size: 500,
-        order: 'start_datetime',
-        direction: 'ASC',
-      },
-    }).then(({ result }) => {
-      const latest = typeIds.flatMap((typeId) => {
-        const event = result.find((candidate) => candidate.event_type_id === typeId && candidate.attendance_enabled);
-        return event ? [event] : [];
+    const timer = window.setTimeout(() => {
+      void preloadDashboardResources({
+        favorites,
+        pageSize: user?.preferences?.page_sizes?.default ?? 50,
+      }).then(() => {
+        const result = getPreloadedResource<EventsListResponse>('events')?.result ?? [];
+        const latest = typeIds.flatMap((typeId) => {
+          const event = result.find((candidate) => candidate.event_type_id === typeId && candidate.attendance_enabled);
+          return event ? [event] : [];
+        });
+        setFavoriteRegistrationEvents(latest);
       });
-      setFavoriteRegistrationEvents(latest);
-    });
-  }, [favorites]);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [favorites, user?.preferences?.page_sizes?.default]);
 
   const favoriteItems = useMemo(
     () =>
@@ -208,27 +201,6 @@ const Dashboard = () => {
     },
     [congregation?.max_favorites, favorites, refreshSession, showNotification, t],
   );
-
-  useEffect(() => {
-    const preload = () => {
-      const listData = { page: 0, size: user?.preferences?.page_sizes?.default ?? 50 };
-      favorites.forEach((id) => {
-        const request =
-          id === 'users'
-            ? { service: UsersService.list, data: { ...listData, order: 'name', direction: 'ASC' } }
-            : id === 'roles'
-              ? { service: RolesService.list, data: { ...listData, order: 'name', direction: 'ASC' } }
-              : id === 'members'
-                ? { service: PersonsService.list, data: { ...listData, order: 'last_name', direction: 'ASC' } }
-                : id === 'processes'
-                  ? { service: ProcessesService.list, data: { ...listData, order: 'name', direction: 'ASC' } }
-                  : null;
-        if (request) void httpRequest(request).catch(() => undefined);
-      });
-    };
-    const timer = window.setTimeout(preload, 250);
-    return () => window.clearTimeout(timer);
-  }, [favorites, user?.preferences?.page_sizes?.default]);
 
   const selectedPath = getLocalizedPathname(pathname, i18n.language);
 

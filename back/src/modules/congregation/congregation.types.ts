@@ -42,6 +42,7 @@ export interface CongregationDeletionPreview {
   locationsDetached: number;
   events: number;
   eventTypes: number;
+  eventFields: number;
   processes: number;
   processSteps: number;
   configurations: number;

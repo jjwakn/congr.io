@@ -66,8 +66,6 @@ export class EventController {
       data,
       userId: getRequestUserIdOrThrow(request),
       congregationId: getRequestCongregationId(request),
-      canCreateEventType: can(request, Module.event_type, ModuleAction.create),
-      canUpdateEventType: can(request, Module.event_type, ModuleAction.update),
     });
   }
 
@@ -85,7 +83,6 @@ export class EventController {
       data,
       userId: getRequestUserIdOrThrow(request),
       congregationId: getRequestCongregationId(request),
-      canUpdateEventType: can(request, Module.event_type, ModuleAction.update),
     });
   }
 

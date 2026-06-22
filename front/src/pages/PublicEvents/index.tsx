@@ -11,7 +11,7 @@ import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
 import { PublicEventRegistrationForm } from './PublicEventRegistrationForm';
 
 export const PublicEventsPage = () => {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const location = useLocation();
   const segments = location.pathname.split('/').filter(Boolean);
   const publicId = segments[1];
@@ -63,7 +63,9 @@ export const PublicEventsPage = () => {
               <Stack spacing={1.5} sx={{ p: 3, flex: 1 }}>
                 <Typography variant="h4">{event.name}</Typography>
                 <Typography color="text.secondary">
-                  {DateTime.fromISO(event.start_datetime).toLocaleString(DateTime.DATETIME_MED)}
+                  {DateTime.fromISO(event.start_datetime)
+                    .setLocale(i18n.language)
+                    .toLocaleString(DateTime.DATETIME_MED)}
                 </Typography>
                 <Typography sx={{ whiteSpace: 'pre-line' }}>{event.description}</Typography>
                 <Button

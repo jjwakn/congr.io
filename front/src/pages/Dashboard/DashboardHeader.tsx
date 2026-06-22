@@ -72,21 +72,23 @@ export const DashboardHeader = ({
               </IconButton>
             </Tooltip>
           ) : null}
-        </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mr: 0.5, overflowX: 'auto' }}>
-          {favoriteItems.map((item) => (
-            <Tooltip key={item.id} title={item.label}>
-              <IconButton
-                color="inherit"
-                size="small"
-                onClick={() => onFavoriteNavigate(item.path)}
-                aria-label={item.label}
-              >
-                {item.icon}
-              </IconButton>
-            </Tooltip>
-          ))}
+          {favoriteItems.length ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, ml: 0.75, overflowX: 'auto' }}>
+              {favoriteItems.map((item) => (
+                <Tooltip key={item.id} title={item.label}>
+                  <IconButton
+                    color="inherit"
+                    size="small"
+                    onClick={() => onFavoriteNavigate(item.path)}
+                    aria-label={item.label}
+                  >
+                    {item.icon}
+                  </IconButton>
+                </Tooltip>
+              ))}
+            </Box>
+          ) : null}
         </Box>
 
         <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>

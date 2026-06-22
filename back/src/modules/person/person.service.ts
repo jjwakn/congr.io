@@ -42,6 +42,13 @@ export class PersonService {
     return `${prefix}${max + 1}`;
   }
 
+  private createCodeHistoryEntry(code: string) {
+    return {
+      code,
+      generated_at: DateTime.utc().toISO() ?? new Date().toISOString(),
+    };
+  }
+
   private normalize(data: PersonCreateProps['data']) {
     return {
       first_name: data.first_name.trim(),
@@ -127,11 +134,13 @@ export class PersonService {
     const { user, congregation } = await this.getContext(userId, congregationId);
     if (data.user_id && (await this.repository.findOne({ where: { user_id: data.user_id } })))
       throw new NotAcceptableException(this.i18n.t('errors.person.userInUse'));
+    const code = await this.nextCode(congregation.id, data.last_name, data.second_last_name);
     const created = this.repository.create({
       ...this.normalize(data),
       congregation_id: congregation.id,
       congregation,
-      code: await this.nextCode(congregation.id, data.last_name, data.second_last_name),
+      code,
+      code_history: [this.createCodeHistoryEntry(code)],
       created_by: user,
     });
     return this.get({ id: (await this.repository.save(created)).id, userId, congregationId });
@@ -141,7 +150,20 @@ export class PersonService {
     const { user, congregation } = await this.getContext(userId, congregationId);
     const existing = await this.repository.findOne({ where: { id, congregation_id: congregation.id } });
     if (!existing) throw new NotFoundException(this.i18n.t('errors.person.notFound'));
-    Object.assign(existing, this.normalize(data), { updated_by: user });
+    const linkedPerson = data.user_id ? await this.repository.findOne({ where: { user_id: data.user_id } }) : null;
+    if (linkedPerson && linkedPerson.id !== existing.id)
+      throw new NotAcceptableException(this.i18n.t('errors.person.userInUse'));
+    const normalized = this.normalize(data);
+    const nextCode = data.regenerate_code
+      ? await this.nextCode(congregation.id, normalized.last_name, normalized.second_last_name ?? undefined)
+      : existing.code;
+    Object.assign(existing, normalized, { updated_by: user });
+    if (data.regenerate_code && nextCode !== existing.code) {
+      existing.code = nextCode;
+      existing.code_history = [...(existing.code_history ?? []), this.createCodeHistoryEntry(nextCode)];
+    } else if (!existing.code_history?.length) {
+      existing.code_history = [this.createCodeHistoryEntry(existing.code)];
+    }
     await this.repository.save(existing);
     return this.get({ id, userId, congregationId });
   }

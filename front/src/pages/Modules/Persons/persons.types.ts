@@ -11,15 +11,19 @@ export interface PersonFormValues {
   birthdate?: string;
   age?: number;
   email?: string;
+  user_id?: string;
+  regenerate_code?: boolean;
   custom_values: Record<string, unknown>;
 }
 export interface PersonFormDialogProps {
   open: boolean;
   person: Person | null;
   fields: PersonField[];
+  canCreateFields: boolean;
   submitting: boolean;
   onClose: () => void;
   onSubmit: (values: PersonFormValues) => void;
+  onCreateField: (values: PersonFieldFormValues) => Promise<PersonField | null>;
 }
 export interface PersonFieldFormValues {
   [key: string]: string | boolean | string[];

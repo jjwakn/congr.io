@@ -31,12 +31,22 @@ const App = () => {
     });
   }, [i18n.language, location.hash, location.search, navigate, pathname]);
 
-  return isBranding || isFiles || isPublicEvents ? (
+  return isBranding || isPublicEvents ? (
     <Layout>
-      <Suspense fallback={<Loading />}>
-        {isBranding ? <BrandingPage /> : isFiles ? <FilesSetupPage /> : <PublicEventsPage />}
-      </Suspense>
+      <Suspense fallback={<Loading />}>{isBranding ? <BrandingPage /> : <PublicEventsPage />}</Suspense>
     </Layout>
+  ) : isFiles ? (
+    <AppProvider>
+      <AuthProvider>
+        <SetupProvider>
+          <Layout>
+            <Suspense fallback={<Loading />}>
+              <FilesSetupPage />
+            </Suspense>
+          </Layout>
+        </SetupProvider>
+      </AuthProvider>
+    </AppProvider>
   ) : (
     <AppProvider>
       <AuthProvider>

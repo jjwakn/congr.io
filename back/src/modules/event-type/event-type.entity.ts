@@ -34,6 +34,12 @@ export class EventType extends CommonEntity {
   @Column({ nullable: false, default: false })
   attendance_enabled: boolean;
 
+  @Column({ nullable: false, default: false })
+  default_public: boolean;
+
+  @Column({ nullable: false, default: false })
+  default_self_registration: boolean;
+
   @Column('simple-json', { nullable: false, default: [] })
   custom_fields: Array<Record<string, unknown>>;
 
@@ -42,6 +48,12 @@ export class EventType extends CommonEntity {
 
   @Column({ nullable: false, default: false })
   save_attendance_date: boolean;
+
+  @Column({ type: 'time', nullable: true })
+  default_start_time?: string | null;
+
+  @Column({ type: 'int', nullable: true })
+  default_duration_minutes?: number | null;
 
   @Column({ type: 'uuid', nullable: true })
   attendance_date_person_field_id?: string | null;

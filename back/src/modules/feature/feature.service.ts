@@ -9,6 +9,7 @@ export class FeatureService {
   list() {
     return Object.keys(FeatureTree).map((feature) => ({
       id: feature,
+      parent: FeatureTree[feature].parent,
       required: FeatureTree[feature].required,
       prerequisites: FeatureTree[feature].prerequisites,
       title: this.i18n.t(`features.${feature}.title`),

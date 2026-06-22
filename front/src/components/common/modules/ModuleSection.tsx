@@ -1,4 +1,6 @@
 import { Stack, TextField } from '@mui/material';
+import { DashboardSectionActionsContext } from '@pages/Dashboard/DashboardSectionActionsContext';
+import { useContext, useEffect, useMemo } from 'react';
 import { ModuleListTable } from './ModuleListTable';
 import { ModuleSectionProps } from './ModuleSection.types';
 import { ModuleStandardActions } from './ModuleStandardActions';
@@ -15,15 +17,29 @@ export const ModuleSection = <RowType,>({
   table,
   children,
 }: ModuleSectionProps<RowType>) => {
-  const sectionActions =
-    actions ??
-    (refreshAction ? (
-      <ModuleStandardActions createAction={createAction} refreshAction={refreshAction} extraActions={extraActions} />
-    ) : null);
+  const sectionActions = useMemo(
+    () =>
+      actions ??
+      (refreshAction ? (
+        <ModuleStandardActions createAction={createAction} refreshAction={refreshAction} extraActions={extraActions} />
+      ) : null),
+    [actions, createAction, extraActions, refreshAction],
+  );
+  const frameActionsContext = useContext(DashboardSectionActionsContext);
+  const shouldPublishFrameActions = Boolean(frameActionsContext && !title && sectionActions);
+  const setFrameActions = frameActionsContext?.setActions;
+
+  useEffect(() => {
+    if (!shouldPublishFrameActions || !setFrameActions) return undefined;
+
+    setFrameActions(sectionActions);
+
+    return () => setFrameActions(null);
+  }, [sectionActions, setFrameActions, shouldPublishFrameActions]);
 
   return (
     <Stack spacing={2} sx={{ height: '100%', minHeight: 0 }}>
-      {title || sectionActions ? (
+      {title || (sectionActions && !shouldPublishFrameActions) ? (
         <Stack
           direction="row"
           spacing={1.5}
@@ -36,7 +52,7 @@ export const ModuleSection = <RowType,>({
             </Stack>
           ) : null}
 
-          {sectionActions ? (
+          {sectionActions && !shouldPublishFrameActions ? (
             <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
               {sectionActions}
             </Stack>

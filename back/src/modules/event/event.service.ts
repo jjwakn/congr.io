@@ -1,7 +1,7 @@
 import { I18nService } from 'nestjs-i18n';
 import { randomUUID } from 'node:crypto';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
-import { DataSource, In, IsNull, LessThan, MoreThan, Repository } from 'typeorm';
+import { In, IsNull, LessThan, MoreThan, Repository } from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getUserCongregationContext } from '../../utils/congregation-context';
@@ -37,7 +37,6 @@ export class EventService {
     @InjectRepository(Congregation)
     private readonly congregationRepository: Repository<Congregation>,
 
-    private readonly dataSource: DataSource,
     private readonly filesService: FilesService,
 
     private readonly i18n: I18nService,
@@ -189,13 +188,7 @@ export class EventService {
     return event;
   }
 
-  async create({
-    data,
-    userId,
-    congregationId,
-    canCreateEventType = false,
-    canUpdateEventType = false,
-  }: EventCreateProps) {
+  async create({ data, userId, congregationId }: EventCreateProps) {
     const { user, congregation } = await this.getContext(userId, congregationId);
     const normalized = this.normalizeEvent(data);
     const dateTimes = this.parseEventDateTimes({
@@ -204,70 +197,37 @@ export class EventService {
       timeZone: congregation.timezone,
     });
 
-    if (!normalized.type_id && !data.new_type) throw new BadRequestException(this.i18n.t('errors.eventType.notFound'));
-    if (data.new_type && !canCreateEventType) throw new ForbiddenException(this.i18n.t('errors.auth.unauthorized'));
-
-    const resultId = await this.dataSource.transaction(async (manager) => {
-      const eventRepository = manager.getRepository(Event);
-      const eventTypeRepository = manager.getRepository(EventType);
-      const eventType = data.new_type
-        ? await eventTypeRepository.save(
-            eventTypeRepository.create({
-              congregation_id: congregation.id,
-              congregation,
-              name: data.new_type.name.trim(),
-              description: data.new_type.description?.trim() ?? '',
-              attendance_enabled: normalized.attendance_enabled,
-              custom_fields: data.type_custom_fields ?? [],
-              save_attendance_date: normalized.save_attendance_date,
-              attendance_date_person_field_id: normalized.attendance_date_person_field_id,
-              created_by: user,
-            }),
-          )
-        : await eventTypeRepository.findOne({
-            where: { id: normalized.type_id, congregation_id: congregation.id, deleted_at: IsNull() },
-          });
-      if (!eventType) throw new NotFoundException(this.i18n.t('errors.eventType.notFound'));
-      if ((data.apply_attendance_to_type || data.type_custom_fields) && !data.new_type) {
-        if (!canUpdateEventType) throw new ForbiddenException(this.i18n.t('errors.auth.unauthorized'));
-        if (data.apply_attendance_to_type) {
-          eventType.attendance_enabled = normalized.attendance_enabled;
-          eventType.save_attendance_date = normalized.save_attendance_date;
-          eventType.attendance_date_person_field_id = normalized.attendance_date_person_field_id;
-        }
-        if (data.type_custom_fields) eventType.custom_fields = data.type_custom_fields;
-        eventType.updated_by = user;
-        await eventTypeRepository.save(eventType);
-      }
-
-      const created = eventRepository.create({
-        congregation_id: congregation.id,
-        congregation,
-        name: normalized.name,
-        description: normalized.description,
-        ...dateTimes,
-        event_type_id: eventType.id,
-        type: eventType,
-        enabled: normalized.enabled,
-        all_day: normalized.all_day,
-        is_public: normalized.is_public,
-        public_id: normalized.is_public ? randomUUID() : null,
-        image_file_id: normalized.image_file_id,
-        image_url: normalized.image_url,
-        attendance_enabled: normalized.attendance_enabled,
-        self_registration_enabled: normalized.self_registration_enabled,
-        custom_fields: normalized.custom_fields,
-        save_attendance_date: normalized.save_attendance_date,
-        attendance_date_person_field_id: normalized.attendance_date_person_field_id,
-        created_by: user,
-      });
-      return (await eventRepository.save(created)).id;
+    const eventType = await this.resolveEventTypeOrThrow({
+      id: normalized.type_id,
+      congregationId: congregation.id,
     });
+    const created = this.repository.create({
+      congregation_id: congregation.id,
+      congregation,
+      name: normalized.name,
+      description: normalized.description,
+      ...dateTimes,
+      event_type_id: eventType.id,
+      type: eventType,
+      enabled: normalized.enabled,
+      all_day: normalized.all_day,
+      is_public: normalized.is_public,
+      public_id: normalized.is_public ? randomUUID() : null,
+      image_file_id: normalized.image_file_id,
+      image_url: normalized.image_url,
+      attendance_enabled: normalized.attendance_enabled,
+      self_registration_enabled: normalized.self_registration_enabled,
+      custom_fields: normalized.custom_fields,
+      save_attendance_date: normalized.save_attendance_date,
+      attendance_date_person_field_id: normalized.attendance_date_person_field_id,
+      created_by: user,
+    });
+    const resultId = (await this.repository.save(created)).id;
     if (normalized.image_file_id) await this.filesService.setPublic(normalized.image_file_id, normalized.is_public);
     return this.get({ id: resultId, userId, congregationId, canViewAll: true });
   }
 
-  async update({ id, data, userId, congregationId, canUpdateEventType = false }: EventUpdateProps) {
+  async update({ id, data, userId, congregationId }: EventUpdateProps) {
     const { user, congregation } = await this.getContext(userId, congregationId);
 
     const existing = await this.repository.findOne({
@@ -281,20 +241,9 @@ export class EventService {
 
     const normalized = this.normalizeEvent(data);
     const eventType = await this.resolveEventTypeOrThrow({
-      id: normalized.type_id ?? existing.event_type_id,
+      id: normalized.type_id,
       congregationId: congregation.id,
     });
-    if (data.apply_attendance_to_type || data.type_custom_fields) {
-      if (!canUpdateEventType) throw new ForbiddenException(this.i18n.t('errors.auth.unauthorized'));
-      if (data.apply_attendance_to_type) {
-        eventType.attendance_enabled = normalized.attendance_enabled;
-        eventType.save_attendance_date = normalized.save_attendance_date;
-        eventType.attendance_date_person_field_id = normalized.attendance_date_person_field_id;
-      }
-      if (data.type_custom_fields) eventType.custom_fields = data.type_custom_fields;
-      eventType.updated_by = user;
-      await this.eventTypeRepository.save(eventType);
-    }
 
     const dateTimes = this.parseEventDateTimes({
       startDateTime: data.start_datetime,

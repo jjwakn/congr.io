@@ -260,7 +260,7 @@ export const RegistrationManagement = () => {
           <Paper key={event.id} variant="outlined" sx={{ p: 2, width: { xs: '100%', sm: 280 } }}>
             <Typography variant="h6">{event.name}</Typography>
             <Typography variant="body2" color="text.secondary">
-              {DateTime.fromISO(event.start_datetime).toLocaleString(DateTime.DATETIME_MED)}
+              {DateTime.fromISO(event.start_datetime).setLocale(i18n.language).toLocaleString(DateTime.DATETIME_MED)}
             </Typography>
             <Button onClick={() => navigate(`${getModulePath('event_registration', i18n.language)}/${event.id}`)}>
               {t('pages.registration.open')}

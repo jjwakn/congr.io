@@ -1,9 +1,10 @@
--- PostgreSQL seed for 100 random active roles and 100 random active users.
+-- PostgreSQL seed for 100 random active roles, 100 random active users, and 1000 random active persons.
 -- Safe cleanup if you want to remove only this batch later:
 -- DELETE FROM "user_location" WHERE "user_id" IN (SELECT "id" FROM "user" WHERE "username" LIKE 'seed.user.%');
 -- DELETE FROM "user_congregation" WHERE "user_id" IN (SELECT "id" FROM "user" WHERE "username" LIKE 'seed.user.%');
 -- DELETE FROM "user_role" WHERE "user_id" IN (SELECT "id" FROM "user" WHERE "username" LIKE 'seed.user.%');
 -- DELETE FROM "user" WHERE "username" LIKE 'seed.user.%';
+-- DELETE FROM "person" WHERE "code" LIKE 'SD%';
 -- DELETE FROM "role" WHERE "name" LIKE 'Seed Role %';
 
 BEGIN;
@@ -138,6 +139,20 @@ generated_roles AS (
             ELSE NULL
           END,
           'event_type',
+          CASE
+            WHEN random() > 0.40 THEN to_jsonb(
+              COALESCE(
+                (
+                  SELECT array_agg(action)
+                  FROM unnest(ARRAY['get', 'create', 'update', 'delete']::text[]) AS action
+                  WHERE random() > 0.55
+                ),
+                ARRAY['get']::text[]
+              )
+            )
+            ELSE NULL
+          END,
+          'event_field',
           CASE
             WHEN random() > 0.40 THEN to_jsonb(
               COALESCE(
@@ -305,6 +320,126 @@ JOIN LATERAL (
   ORDER BY random()
   LIMIT (1 + floor(random() * 2)::int)
 ) AS selected_locations ON TRUE
+ON CONFLICT DO NOTHING;
+
+WITH name_parts AS (
+  SELECT
+    ARRAY[
+      'Aaron',
+      'Abigail',
+      'Benjamin',
+      'Clara',
+      'Daniel',
+      'Elena',
+      'Gabriel',
+      'Hannah',
+      'Isaac',
+      'Julia',
+      'Lucas',
+      'Marta',
+      'Nathan',
+      'Olivia',
+      'Samuel',
+      'Sofia',
+      'Thomas',
+      'Valeria',
+      'Victor',
+      'Zoe'
+    ]::text[] AS first_names,
+    ARRAY[
+      'Alvarez',
+      'Bennett',
+      'Castillo',
+      'Diaz',
+      'Evans',
+      'Flores',
+      'Garcia',
+      'Herrera',
+      'Johnson',
+      'Lopez',
+      'Martinez',
+      'Nelson',
+      'Ortega',
+      'Perez',
+      'Rivera',
+      'Santos',
+      'Torres',
+      'Vargas',
+      'Williams',
+      'Young'
+    ]::text[] AS last_names
+),
+active_congregations AS (
+  SELECT
+    "id",
+    row_number() OVER (ORDER BY "name", "id") AS rn,
+    count(*) OVER () AS total
+  FROM "congregation"
+  WHERE "deleted_at" IS NULL
+),
+generated_persons AS (
+  SELECT
+    gs,
+    format('SD%s', lpad(gs::text, 5, '0')) AS code,
+    first_names[1 + floor(random() * array_length(first_names, 1))::int] AS first_name,
+    last_names[1 + floor(random() * array_length(last_names, 1))::int] AS last_name,
+    CASE
+      WHEN random() > 0.35 THEN format(
+        '555-%s',
+        lpad(floor(random() * 10000)::int::text, 4, '0')
+      )
+      ELSE ''
+    END AS phone,
+    CASE
+      WHEN random() > 0.30 THEN (
+        date '1940-01-01' + floor(random() * 28000)::int
+      )::date
+      ELSE NULL
+    END AS birthdate
+  FROM generate_series(1, 1000) AS gs
+  CROSS JOIN name_parts
+)
+INSERT INTO "person" (
+  "congregation_id",
+  "code",
+  "code_history",
+  "first_name",
+  "last_name",
+  "phone",
+  "birthdate",
+  "registered_age",
+  "age_recorded_at",
+  "email",
+  "custom_values",
+  "enabled"
+)
+SELECT
+  active_congregations."id",
+  generated_persons.code,
+  jsonb_build_array(
+    jsonb_build_object('code', generated_persons.code, 'generated_at', now())
+  )::text,
+  generated_persons.first_name,
+  generated_persons.last_name,
+  generated_persons.phone,
+  generated_persons.birthdate,
+  CASE
+    WHEN generated_persons.birthdate IS NULL THEN 18 + floor(random() * 65)::int
+    ELSE NULL
+  END,
+  CASE
+    WHEN generated_persons.birthdate IS NULL THEN current_date
+    ELSE NULL
+  END,
+  lower(format(
+    'seed.person.%s@example.test',
+    lpad(generated_persons.gs::text, 4, '0')
+  )),
+  '{}'::text,
+  TRUE
+FROM generated_persons
+JOIN active_congregations
+  ON active_congregations.rn = ((generated_persons.gs - 1) % active_congregations.total) + 1
 ON CONFLICT DO NOTHING;
 
 COMMIT;

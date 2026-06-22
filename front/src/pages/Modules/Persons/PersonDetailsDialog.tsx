@@ -3,6 +3,7 @@ import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlin
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded';
 import { Box, Chip, Stack, Tab, Tabs, Typography } from '@mui/material';
 import { PersonsService } from '@services/persons';
+import { calculateAgeFromBirthdate, calculateDisplayedRegisteredAge, formatDateForInput } from '@utils/datetime';
 import { httpRequest } from '@utils/http';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
@@ -11,9 +12,12 @@ import type { PersonFlowProgress } from '@/types/person.types';
 import type { PersonDetailsDialogProps } from './persons.types';
 
 export const PersonDetailsDialog = ({ person, fields, onClose }: PersonDetailsDialogProps) => {
-  const { t } = useTranslation();
-  const [tab, setTab] = useState<'details' | 'flows'>('details');
+  const { i18n, t } = useTranslation();
+  const [tab, setTab] = useState<'details' | 'flows' | 'codes'>('details');
   const [flows, setFlows] = useState<PersonFlowProgress[]>([]);
+  const displayedAge = person.birthdate
+    ? calculateAgeFromBirthdate(person.birthdate)
+    : calculateDisplayedRegisteredAge(person.registered_age, person.age_recorded_at);
 
   useEffect(() => {
     void httpRequest<PersonFlowProgress[]>({ service: PersonsService.flows, data: { id: person.id } }).then(setFlows);
@@ -30,6 +34,7 @@ export const PersonDetailsDialog = ({ person, fields, onClose }: PersonDetailsDi
       <Tabs value={tab} onChange={(_event, value) => setTab(value)}>
         <Tab value="details" label={t('pages.persons.tabs.details')} />
         <Tab value="flows" label={t('pages.persons.tabs.flows')} />
+        <Tab value="codes" label={t('pages.persons.tabs.codes')} />
       </Tabs>
       {tab === 'details' ? (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5, pt: 2 }}>
@@ -43,7 +48,11 @@ export const PersonDetailsDialog = ({ person, fields, onClose }: PersonDetailsDi
             <strong>{t('pages.persons.fields.email')}:</strong> {person.email || '-'}
           </Typography>
           <Typography>
-            <strong>{t('pages.persons.fields.birthdate')}:</strong> {person.birthdate || '-'}
+            <strong>{t('pages.persons.fields.birthdate')}:</strong>{' '}
+            {formatDateForInput(person.birthdate, i18n.language) || '-'}
+          </Typography>
+          <Typography>
+            <strong>{t('pages.persons.fields.age')}:</strong> {displayedAge ?? '-'}
           </Typography>
           {fields.map((field) => (
             <Typography key={field.id}>
@@ -54,7 +63,7 @@ export const PersonDetailsDialog = ({ person, fields, onClose }: PersonDetailsDi
             </Typography>
           ))}
         </Box>
-      ) : (
+      ) : tab === 'flows' ? (
         <Stack spacing={2} sx={{ pt: 2 }}>
           {flows.map((flow) => (
             <Box key={flow.id}>
@@ -84,8 +93,12 @@ export const PersonDetailsDialog = ({ person, fields, onClose }: PersonDetailsDi
                     {step.completed_at ? (
                       <Chip
                         size="small"
-                        label={DateTime.fromISO(step.completed_at).toLocaleString(DateTime.DATE_MED)}
-                        title={DateTime.fromISO(step.completed_at).toLocaleString(DateTime.DATETIME_MED)}
+                        label={DateTime.fromISO(step.completed_at)
+                          .setLocale(i18n.language)
+                          .toLocaleString(DateTime.DATE_MED)}
+                        title={DateTime.fromISO(step.completed_at)
+                          .setLocale(i18n.language)
+                          .toLocaleString(DateTime.DATETIME_MED)}
                       />
                     ) : null}
                   </Stack>
@@ -94,6 +107,28 @@ export const PersonDetailsDialog = ({ person, fields, onClose }: PersonDetailsDi
             </Box>
           ))}
           {!flows.length ? <Typography color="text.secondary">{t('pages.persons.flowsEmpty')}</Typography> : null}
+        </Stack>
+      ) : (
+        <Stack spacing={1} sx={{ pt: 2 }}>
+          {(person.code_history?.length ? person.code_history : [{ code: person.code, generated_at: '' }]).map(
+            (entry) => (
+              <Stack
+                key={`${entry.code}-${entry.generated_at}`}
+                direction="row"
+                justifyContent="space-between"
+                sx={{ borderBottom: 1, borderColor: 'divider', py: 1 }}
+              >
+                <Typography>{entry.code}</Typography>
+                <Typography color="text.secondary">
+                  {entry.generated_at
+                    ? DateTime.fromISO(entry.generated_at)
+                        .setLocale(i18n.language)
+                        .toLocaleString(DateTime.DATETIME_MED)
+                    : '-'}
+                </Typography>
+              </Stack>
+            ),
+          )}
         </Stack>
       )}
     </ViewDialog>

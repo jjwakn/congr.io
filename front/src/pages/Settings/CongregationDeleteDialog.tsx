@@ -35,6 +35,7 @@ export const CongregationDeleteDialog = ({
     ['locationsDetached', preview.locationsDetached],
     ['events', preview.events],
     ['eventTypes', preview.eventTypes],
+    ['eventFields', preview.eventFields],
     ['processes', preview.processes],
     ['processSteps', preview.processSteps],
     ['configurations', preview.configurations],

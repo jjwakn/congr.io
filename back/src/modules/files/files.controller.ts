@@ -1,4 +1,5 @@
 import type { Response } from 'express';
+import { I18nService } from 'nestjs-i18n';
 import type { RequestType } from 'src/common/common.types';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { PermissionDecorator, PermissionGuard } from 'src/modules/permission/permission.guard';
@@ -6,6 +7,7 @@ import { Module, ModuleAction } from 'src/utils/constants';
 import { getRequestCongregationId, getRequestUserIdOrThrow } from 'src/utils/request';
 import {
   Controller,
+  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -21,11 +23,15 @@ import { FilesService } from './files.service';
 
 @Controller('files')
 export class FilesController {
-  constructor(private readonly service: FilesService) {}
+  constructor(
+    private readonly service: FilesService,
+    private readonly i18n: I18nService,
+  ) {}
 
   @UseGuards(AuthGuard)
   @Get('status')
-  status() {
+  status(@Req() request: RequestType) {
+    if (!request.user?.auth.fullAccess) throw new ForbiddenException(this.i18n.t('errors.auth.unauthorized'));
     return this.service.getStatus();
   }
 

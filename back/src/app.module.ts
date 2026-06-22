@@ -7,6 +7,7 @@ import { AppLoggerMiddleware } from './middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigurationsModule } from './modules/configurations/configurations.module';
 import { CongregationModule } from './modules/congregation/congregation.module';
+import { EventFieldModule } from './modules/event-field/event-field.module';
 import { EventParticipantModule } from './modules/event-participant/event-participant.module';
 import { EventTypeModule } from './modules/event-type/event-type.module';
 import { EventModule } from './modules/event/event.module';
@@ -59,6 +60,7 @@ import { UserModule } from './modules/user/user.module';
     FeatureModule,
     FilesModule,
     ConfigurationsModule,
+    EventFieldModule,
     EventTypeModule,
     EventModule,
     EventParticipantModule,

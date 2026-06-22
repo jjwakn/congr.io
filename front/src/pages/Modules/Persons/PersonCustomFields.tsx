@@ -1,3 +1,4 @@
+import { LocalizedDateField } from '@components/common/forms/LocalizedDateField';
 import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, TextField } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import type { PersonCustomFieldsProps } from './persons.types';
@@ -39,15 +40,24 @@ export const PersonCustomFields = ({ fields, values, onChange }: PersonCustomFie
             </FormControl>
           );
         }
-        return (
+        return field.type === 'date' ? (
+          <LocalizedDateField
+            key={field.id}
+            required={field.required}
+            fullWidth
+            label={field.label}
+            value={typeof value === 'string' ? value : ''}
+            helperText={field.required ? t('pages.persons.fieldsCrud.required') : undefined}
+            onChange={(nextValue) => update(field.id, nextValue)}
+          />
+        ) : (
           <TextField
             key={field.id}
             required={field.required}
             fullWidth
             multiline={field.type === 'paragraph'}
             minRows={field.type === 'paragraph' ? 3 : undefined}
-            type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
-            InputLabelProps={field.type === 'date' ? { shrink: true } : undefined}
+            type={field.type === 'number' ? 'number' : 'text'}
             label={field.label}
             value={typeof value === 'string' || typeof value === 'number' ? value : ''}
             helperText={field.required ? t('pages.persons.fieldsCrud.required') : undefined}

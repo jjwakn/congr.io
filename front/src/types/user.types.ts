@@ -1,5 +1,6 @@
 import { CommonEntity } from './common.types.js';
 import { Congregation, Location } from './congregation.types.js';
+import type { Person } from './person.types.js';
 import { Role } from './role.types.js';
 
 export interface User extends CommonEntity {
@@ -7,6 +8,8 @@ export interface User extends CommonEntity {
   password?: string;
   name: string;
   password_change_required: boolean;
+  person_id?: string | null;
+  person?: Person | null;
   roles: Role[];
   congregations: Congregation[];
   locations: Location[];

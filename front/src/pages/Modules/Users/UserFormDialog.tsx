@@ -1,3 +1,4 @@
+import { PersonAutocomplete } from '@components/common/PersonAutocomplete';
 import { CreateEditDialog } from '@components/common/forms/CreateEditDialog';
 import { Box, FormControlLabel, Switch, TextField, Typography } from '@mui/material';
 import { useCallback, useMemo, useState } from 'react';
@@ -31,6 +32,7 @@ export const UserFormDialog = ({
   const [roleIds, setRoleIds] = useState<string[]>([]);
   const [congregationIds, setCongregationIds] = useState<string[]>([]);
   const [locationIds, setLocationIds] = useState<string[]>([]);
+  const [selectedPerson, setSelectedPerson] = useState(user?.person ?? null);
   const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [nameError, setNameError] = useState('');
@@ -49,6 +51,7 @@ export const UserFormDialog = ({
     setRoleIds(getRelationIds(user?.roles));
     setCongregationIds(user ? getRelationIds(user.congregations) : metadata.congregations.map((value) => value.id));
     setLocationIds(user ? getRelationIds(user.locations) : metadata.locations.map((value) => value.id));
+    setSelectedPerson(user?.person ?? null);
     setUsernameError('');
     setPasswordError('');
     setNameError('');
@@ -97,6 +100,7 @@ export const UserFormDialog = ({
       roles_ids: roleIds,
       congregations_ids: congregationIds,
       locations_ids: locationIds,
+      person_id: selectedPerson?.id ?? null,
     });
   };
 
@@ -222,6 +226,12 @@ export const UserFormDialog = ({
             emptyText={t('pages.modules.users.form.noLocations')}
             helperText={t('pages.modules.users.form.locationsHint')}
             onChange={setLocationIds}
+          />
+          <PersonAutocomplete
+            label={t('pages.modules.users.form.person')}
+            value={selectedPerson}
+            disabled={submitting}
+            onChange={setSelectedPerson}
           />
         </>
       ) : null}

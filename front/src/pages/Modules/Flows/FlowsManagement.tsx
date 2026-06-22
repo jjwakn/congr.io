@@ -8,6 +8,7 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { ProcessesService } from '@services/processes';
 import { httpRequest } from '@utils/http';
+import { getPreloadedResource } from '@utils/preload';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Process, ProcessInput } from '@/types/process.types';
@@ -18,8 +19,9 @@ export const FlowsManagement = () => {
   const { hasPermission } = useAuth();
   const { showNotification } = useNotificationContext();
   const list = useModuleList({ moduleKey: 'processes-list', defaultSort: 'name' });
-  const [rows, setRows] = useState<Process[]>([]);
-  const [total, setTotal] = useState(0);
+  const cached = getPreloadedResource<{ result: Process[]; total: number }>('processes');
+  const [rows, setRows] = useState<Process[]>(cached?.result ?? []);
+  const [total, setTotal] = useState(cached?.total ?? 0);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editor, setEditor] = useState<Process | null | undefined>();
@@ -35,7 +37,7 @@ export const FlowsManagement = () => {
           size: list.pageSize,
           order: list.sort,
           direction: list.direction,
-          ...(list.search ? { search: list.search } : {}),
+          ...(list.debouncedSearch ? { search: list.debouncedSearch } : {}),
         },
       });
       setRows(response.result);
@@ -47,7 +49,7 @@ export const FlowsManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [list.direction, list.page, list.pageSize, list.search, list.sort, showNotification, t]);
+  }, [list.debouncedSearch, list.direction, list.page, list.pageSize, list.sort, showNotification, t]);
 
   useEffect(() => {
     void refresh();
@@ -111,7 +113,6 @@ export const FlowsManagement = () => {
   return (
     <>
       <ModuleSection<Process>
-        title={t('pages.flows.title')}
         createAction={
           hasPermission('process', 'create')
             ? { id: 'create-flow', label: t('pages.flows.create'), onClick: () => setEditor(null) }

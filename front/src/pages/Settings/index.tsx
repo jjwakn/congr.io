@@ -1,23 +1,31 @@
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import { Box, Paper, Tab, Tabs, Typography } from '@mui/material';
-import { EVENTS_FEATURE_ID, hasCongregationFeature } from '@utils/feature-gates';
+import { EVENTS_FEATURE_ID, PERSONS_FEATURE_ID, hasCongregationFeature } from '@utils/feature-gates';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { changeLanguageWithResources } from '../../../i18n';
 import { CongregationsSettingsTab } from './CongregationsSettingsTab';
 import { DeploymentSettingsTab } from './DeploymentSettingsTab';
+import { EventFieldsManagement } from './EventFields/EventFieldsManagement';
 import { EventTypesManagement } from './EventTypes/EventTypesManagement';
+import { PersonFieldsManagement } from './PersonFields/PersonFieldsManagement';
 import { UISettingsTab } from './UISettingsTab';
-import type { SettingsPageProps, SettingsTabId } from './settings.types';
+import type { SettingsNavigationState, SettingsPageProps, SettingsTabId } from './settings.types';
 
 const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
   const { i18n, t } = useTranslation();
+  const location = useLocation();
   const { hasPermission, auth } = useAuth();
   const { congregation } = useAppContext();
   const canViewCongregations = hasPermission('congregation', 'get');
   const canViewEventTypes =
     hasCongregationFeature(congregation?.features, EVENTS_FEATURE_ID) && hasPermission('event_type', 'get');
+  const canViewEventFields =
+    hasCongregationFeature(congregation?.features, EVENTS_FEATURE_ID) && hasPermission('event_field', 'get');
+  const canViewPersonFields =
+    hasCongregationFeature(congregation?.features, PERSONS_FEATURE_ID) && hasPermission('person_field', 'get');
   const tabs = useMemo(
     () => [
       ...(canViewCongregations
@@ -25,11 +33,16 @@ const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
         : []),
       { id: 'ui' as const, label: t('pages.settings.tabs.ui') },
       ...(canViewEventTypes ? [{ id: 'eventTypes' as const, label: t('pages.settings.tabs.eventTypes') }] : []),
+      ...(canViewEventFields ? [{ id: 'eventFields' as const, label: t('pages.settings.tabs.eventFields') }] : []),
+      ...(canViewPersonFields ? [{ id: 'personFields' as const, label: t('pages.settings.tabs.personFields') }] : []),
       ...(auth?.fullAccess ? [{ id: 'deployment' as const, label: t('pages.settings.tabs.deployment') }] : []),
     ],
-    [auth?.fullAccess, canViewCongregations, canViewEventTypes, t],
+    [auth?.fullAccess, canViewCongregations, canViewEventFields, canViewEventTypes, canViewPersonFields, t],
   );
-  const [activeTab, setActiveTab] = useState<SettingsTabId>(() => (canViewCongregations ? 'congregations' : 'ui'));
+  const navigationState = location.state as SettingsNavigationState | null;
+  const [activeTab, setActiveTab] = useState<SettingsTabId>(
+    () => navigationState?.settingsTab ?? (canViewCongregations ? 'congregations' : 'ui'),
+  );
 
   const resolvedActiveTab = tabs.some(({ id }) => id === activeTab) ? activeTab : (tabs[0]?.id ?? 'ui');
 
@@ -80,6 +93,8 @@ const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
           />
         ) : null}
         {resolvedActiveTab === 'eventTypes' && canViewEventTypes ? <EventTypesManagement /> : null}
+        {resolvedActiveTab === 'eventFields' && canViewEventFields ? <EventFieldsManagement /> : null}
+        {resolvedActiveTab === 'personFields' && canViewPersonFields ? <PersonFieldsManagement /> : null}
         {resolvedActiveTab === 'deployment' && auth?.fullAccess ? <DeploymentSettingsTab /> : null}
       </Box>
     </Paper>

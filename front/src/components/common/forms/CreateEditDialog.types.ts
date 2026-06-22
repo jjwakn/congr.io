@@ -22,6 +22,7 @@ export interface CreateEditDialogProps {
   fullWidth?: boolean;
   mobileFullScreen?: boolean;
   contentSx?: SxProps<Theme>;
+  extraActions?: ReactNode;
   children?: ReactNode;
   labels: CreateEditDialogLabels;
 }

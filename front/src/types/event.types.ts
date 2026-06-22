@@ -10,7 +10,12 @@ export interface EventCustomField {
   required: boolean;
   options: string[];
   user_fillable: boolean;
+  event_field_id?: string;
   person_field_id?: string;
+}
+
+export interface EventField extends CommonEntity, EventCustomField {
+  congregation_id: string;
 }
 
 export interface CalendarEvent extends CommonEntity {

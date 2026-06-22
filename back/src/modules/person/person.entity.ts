@@ -16,6 +16,9 @@ export class Person extends CommonEntity {
   @Column({ nullable: false, length: 24 })
   code: string;
 
+  @Column('simple-json', { nullable: false, default: [] })
+  code_history: Array<{ code: string; generated_at: string }>;
+
   @Column({ nullable: false, length: 100 })
   first_name: string;
 

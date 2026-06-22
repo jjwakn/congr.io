@@ -20,6 +20,7 @@ export enum Module {
   process = 'process',
   event = 'event',
   event_type = 'event_type',
+  event_field = 'event_field',
   person = 'person',
   person_field = 'person_field',
   event_attendance = 'event_attendance',
@@ -61,6 +62,9 @@ export const permission: PermissionType = {
     permissions: CRUD,
   },
   event_type: {
+    permissions: CRUD,
+  },
+  event_field: {
     permissions: CRUD,
   },
   person: {
@@ -127,9 +131,11 @@ export const FeatureTree: FeatureTreeType = {
     prerequisites: [],
   },
   [Feature.EventsAttendance]: {
+    parent: Feature.EventsCalendar,
     prerequisites: [Feature.EventsCalendar, Feature.Members],
   },
   [Feature.PublicEvents]: {
+    parent: Feature.EventsCalendar,
     prerequisites: [Feature.EventsCalendar],
   },
   [Feature.Ministries]: {

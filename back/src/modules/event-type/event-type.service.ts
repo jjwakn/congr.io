@@ -56,8 +56,12 @@ export class EventTypeService {
       description: data.description?.trim() ?? '',
       enabled: data.enabled ?? true,
       attendance_enabled: data.attendance_enabled ?? false,
+      default_public: data.default_public ?? false,
+      default_self_registration: data.default_self_registration ?? false,
       custom_fields: data.custom_fields ?? [],
       color: data.color ?? '#1976d2',
+      default_start_time: data.default_start_time ?? null,
+      default_duration_minutes: data.default_duration_minutes ?? null,
     };
   }
 
@@ -134,8 +138,12 @@ export class EventTypeService {
     existing.description = normalized.description;
     existing.enabled = normalized.enabled;
     existing.attendance_enabled = normalized.attendance_enabled;
+    existing.default_public = normalized.default_public;
+    existing.default_self_registration = normalized.default_self_registration;
     existing.custom_fields = normalized.custom_fields;
     existing.color = normalized.color;
+    existing.default_start_time = normalized.default_start_time;
+    existing.default_duration_minutes = normalized.default_duration_minutes;
     existing.updated_by = user;
     await this.repository.save(existing);
 

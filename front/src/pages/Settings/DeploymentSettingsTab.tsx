@@ -9,10 +9,22 @@ export const DeploymentSettingsTab = () => {
   return (
     <Stack spacing={2}>
       <Typography>{t('pages.settings.deployment.description')}</Typography>
-      <Button href={getBrandingPath(i18n.language)} startIcon={<BrandingWatermarkOutlinedIcon />} variant="outlined">
+      <Button
+        href={getBrandingPath(i18n.language)}
+        startIcon={<BrandingWatermarkOutlinedIcon />}
+        variant="outlined"
+        size="small"
+        sx={{ alignSelf: 'flex-start' }}
+      >
         {t('pages.settings.deployment.branding')}
       </Button>
-      <Button href={getFilesPath(i18n.language)} startIcon={<FolderOutlinedIcon />} variant="outlined">
+      <Button
+        href={getFilesPath(i18n.language)}
+        startIcon={<FolderOutlinedIcon />}
+        variant="outlined"
+        size="small"
+        sx={{ alignSelf: 'flex-start' }}
+      >
         {t('pages.settings.deployment.files')}
       </Button>
     </Stack>

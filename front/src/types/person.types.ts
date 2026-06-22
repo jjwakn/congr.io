@@ -4,6 +4,7 @@ import type { User } from './user.types';
 export interface Person extends CommonEntity {
   id: string;
   code: string;
+  code_history?: Array<{ code: string; generated_at: string }>;
   first_name: string;
   middle_name?: string;
   last_name: string;

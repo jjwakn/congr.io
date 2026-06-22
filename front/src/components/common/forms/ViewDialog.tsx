@@ -1,4 +1,17 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Tooltip,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { ViewDialogProps } from './ViewDialog.types';
 
 export const ViewDialog = ({
@@ -11,6 +24,7 @@ export const ViewDialog = ({
   titleAction,
   children,
 }: ViewDialogProps) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -22,14 +36,21 @@ export const ViewDialog = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 2,
-          pr: titleAction ? 1 : undefined,
+          pr: 1,
         }}
       >
         <Box component="span" sx={{ minWidth: 0 }}>
           {title}
         </Box>
 
-        {titleAction ? <Box sx={{ display: 'inline-flex', flexShrink: 0 }}>{titleAction}</Box> : null}
+        <Box sx={{ display: 'inline-flex', flexShrink: 0, alignItems: 'center', gap: 0.5 }}>
+          {titleAction}
+          <Tooltip title={t('form.field.close')}>
+            <IconButton onClick={onClose} aria-label={t('form.field.close')} edge="end">
+              <CloseRoundedIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </DialogTitle>
 
       <DialogContent>{children}</DialogContent>

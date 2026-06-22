@@ -33,7 +33,8 @@
         "save": "Guardar cambios",
         "changeOwnPassword": "Cambiar contraseña",
         "setTemporaryPassword": "Asignar contraseña temporal",
-        "savePassword": "Guardar contraseña"
+        "savePassword": "Guardar contraseña",
+        "linkPerson": "Vincular persona"
       },
       "columns": {
         "name": "Nombre",
@@ -51,7 +52,8 @@
         "locationsHint": "Las ubicaciones están limitadas al contexto de la congregación seleccionada.",
         "noRoles": "No hay roles disponibles.",
         "noCongregations": "No hay congregaciones disponibles.",
-        "noLocations": "No hay ubicaciones disponibles."
+        "noLocations": "No hay ubicaciones disponibles.",
+        "person": "Persona"
       },
       "dialogs": {
         "createTitle": "Crear usuario",
@@ -127,6 +129,7 @@
           "process": "Flujos",
           "event": "Eventos",
           "event_type": "Tipos de evento",
+          "event_field": "Campos de evento",
           "person": "Personas",
           "person_field": "Campos de personas",
           "event_attendance": "Asistencia a eventos",
@@ -155,6 +158,8 @@
       "congregations": "Preferencias de congregación",
       "ui": "Interfaz",
       "eventTypes": "Tipos de evento",
+      "eventFields": "Campos de evento",
+      "personFields": "Campos de personas",
       "deployment": "Despliegue"
     },
     "congregation": {
@@ -219,6 +224,7 @@
       },
       "delete": {
         "action": "Eliminar",
+        "lastCongregationTooltip": "No se puede eliminar la última congregación.",
         "title": "Eliminar {{name}}",
         "dataLossWarning": "Eliminar esta congregación borrará permanentemente la información que le pertenece. Esta acción no se puede deshacer.",
         "previewDescription": "Los siguientes registros serán eliminados o desvinculados:",
@@ -237,6 +243,7 @@
           "locationsDetached": "{{count}} ubicaciones compartidas serán desvinculadas",
           "events": "{{count}} eventos serán eliminados",
           "eventTypes": "{{count}} tipos de evento serán eliminados",
+          "eventFields": "{{count}} campos de evento serán eliminados",
           "processes": "{{count}} procesos serán eliminados",
           "processSteps": "{{count}} pasos de proceso serán eliminados",
           "configurations": "{{count}} registros de configuración serán eliminados",
@@ -261,11 +268,15 @@
       "spanish": "Español"
     },
     "interface": {
+      "browser": "Navegador",
       "paginationTitle": "Elementos por página",
       "paginationDescription": "Configura un valor predeterminado y valores opcionales por sección para tu cuenta.",
       "defaultPageSize": "Elementos predeterminados por página",
+      "section": "Sección",
+      "itemsPerPage": "Elementos por página",
       "sidebarTitle": "Orden de la barra lateral",
-      "sidebarDescription": "Reordena las secciones visibles. Preferencias siempre permanece al final."
+      "sidebarDescription": "Reordena las secciones visibles. Preferencias siempre permanece al final.",
+      "sortAlphabetically": "Ordenar alfabéticamente"
     },
     "deployment": {
       "description": "Revisa la configuración de marca y almacenamiento de archivos del despliegue.",
@@ -309,7 +320,11 @@
         "description": "Descripción",
         "enabled": "Activo",
         "enabledHint": "Los tipos de evento desactivados no pueden seleccionarse para eventos nuevos.",
-        "attendance": "Capturar asistencia de forma predeterminada",
+        "attendance": "Capturar asistencia",
+        "defaultPublic": "Público de forma predeterminada",
+        "defaultSelfRegistration": "Permitir autorregistro de forma predeterminada",
+        "defaultStartTime": "Hora de inicio predeterminada",
+        "defaultDuration": "Duración predeterminada en minutos",
         "color": "Color del calendario",
         "actions": "Acciones"
       },
@@ -331,6 +346,18 @@
         "saveFailed": "No se pudo guardar el tipo de evento.",
         "deleteFailed": "No se pudo eliminar el tipo de evento."
       }
+    },
+    "eventFields": {
+      "title": "Campos de evento",
+      "create": "Crear campo de evento",
+      "edit": "Editar campo de evento",
+      "loading": "Cargando campos de evento...",
+      "empty": "No se encontraron campos de evento.",
+      "loadFailed": "No se pudieron cargar los campos de evento.",
+      "saved": "Campo de evento guardado.",
+      "saveFailed": "No se pudo guardar el campo de evento.",
+      "deleted": "Campo de evento eliminado.",
+      "deleteMessage": "¿Eliminar {{name}}? Los valores existentes permanecerán en los datos históricos."
     }
   },
   "files": {
@@ -342,6 +369,7 @@
     "adapterUnavailable": "Este proveedor se documenta para planificar el despliegue, pero su adaptador de carga no está habilitado en esta versión.",
     "missing": "Variables faltantes: {{variables}}",
     "loadFailed": "No se pudo cargar el estado del proveedor.",
+    "accessDenied": "Se requiere acceso total para configurar el almacenamiento de archivos.",
     "providers": {
       "local": {
         "title": "Almacenamiento local",
@@ -408,6 +436,11 @@
       "description": "Descripción",
       "start": "Inicia",
       "end": "Finaliza",
+      "startDate": "Fecha de inicio",
+      "startTime": "Hora de inicio",
+      "endDate": "Fecha de finalización",
+      "endTime": "Hora de finalización",
+      "tabs": { "details": "Detalles", "fields": "Campos" },
       "timezone": "Las horas usan {{timezone}}",
       "dropImage": "Arrastra una imagen aquí o selecciónala",
       "publicImageUrl": "URL pública de imagen",
@@ -435,6 +468,8 @@
       "allEvents": "Usar en todos los eventos de este tipo",
       "personField": "Guardar valor en campo de persona",
       "doNotSave": "No guardar en persona",
+      "reusableField": "Campo de evento reutilizable",
+      "selectReusable": "Seleccionar campo reutilizable",
       "add": "Añadir campo",
       "types": {
         "text": "Texto",
@@ -467,8 +502,26 @@
     "loading": "Cargando personas...",
     "empty": "No se encontraron personas.",
     "loadFailed": "No se pudieron cargar las personas.",
+    "saved": "Persona guardada.",
+    "createdWithCode": "Persona creada con el código {{code}}.",
     "deleteMessage": "¿Eliminar este elemento? Los valores existentes se conservan al eliminar un campo personalizado.",
-    "tabs": { "persons": "Personas", "fields": "Campos personalizados", "details": "Detalles", "flows": "Flujos" },
+    "deleteFieldMessage": "¿Eliminar {{name}}? Los valores existentes se conservarán.",
+    "tabs": {
+      "persons": "Personas",
+      "fields": "Campos personalizados",
+      "details": "Detalles",
+      "flows": "Flujos",
+      "codes": "Historial de códigos"
+    },
+    "actions": { "linkUser": "Vincular usuario del sistema" },
+    "code": {
+      "regenerate": "Generar un nuevo código",
+      "pendingRegeneration": "Se generará un nuevo código al guardar",
+      "regenerateTitle": "¿Generar un nuevo código de persona?",
+      "regenerateMessage": "El apellido cambió. ¿Deseas generar un nuevo código y conservar el anterior en el historial?",
+      "regenerateConfirm": "Generar nuevo código",
+      "keepCurrent": "Conservar código actual"
+    },
     "flowsEmpty": "No hay flujos disponibles para esta persona.",
     "fields": {
       "code": "Código",
@@ -480,7 +533,9 @@
       "phone": "Teléfono",
       "birthdate": "Fecha de nacimiento",
       "age": "Edad",
-      "email": "Correo"
+      "email": "Correo",
+      "user": "Usuario del sistema",
+      "ageCalculated": "La edad se calcula con la fecha de nacimiento."
     },
     "fieldsCrud": {
       "create": "Crear campo personalizado",
@@ -488,7 +543,12 @@
       "label": "Etiqueta",
       "type": "Tipo",
       "required": "Requerido",
-      "options": "Opciones"
+      "options": "Opciones",
+      "created": "Campo personalizado creado.",
+      "saved": "Campo personalizado guardado.",
+      "deleted": "Campo personalizado eliminado.",
+      "loadFailed": "No se pudieron cargar los campos personalizados.",
+      "saveFailed": "No se pudo guardar el campo personalizado."
     },
     "fieldTypes": {
       "text": "Texto",
