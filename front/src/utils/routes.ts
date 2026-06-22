@@ -7,6 +7,9 @@ const BRANDING_SEGMENT: LocalizedValue = {
   es: 'marca',
 };
 
+const FILES_SEGMENT: LocalizedValue = { en: 'files', es: 'archivos' };
+const PUBLIC_EVENTS_SEGMENT: LocalizedValue = { en: 'events', es: 'eventos-publicos' };
+
 const MODULES_SEGMENT: LocalizedValue = {
   en: 'modules',
   es: 'modulos',
@@ -28,6 +31,10 @@ const MODULE_SLUGS: Record<string, LocalizedValue> = {
   events_attendance: {
     en: 'events-attendance',
     es: 'asistencia-eventos',
+  },
+  event_registration: {
+    en: 'event-registration',
+    es: 'registro-eventos',
   },
   ministries: { en: 'ministries', es: 'ministerios' },
   ministries_calendar: {
@@ -88,6 +95,16 @@ export const isBrandingPath = (pathname: string): boolean => {
   return segments.length === 1 && matchesLocalizedSegment(segments[0], BRANDING_SEGMENT);
 };
 
+export const getFilesPath = (language?: string) => `/${FILES_SEGMENT[normalizeLanguage(language)]}`;
+export const isFilesPath = (pathname: string) => {
+  const segments = splitPath(pathname);
+  return segments.length === 1 && matchesLocalizedSegment(segments[0], FILES_SEGMENT);
+};
+export const isPublicEventsPath = (pathname: string) => {
+  const segments = splitPath(pathname);
+  return Boolean(segments.length && matchesLocalizedSegment(segments[0], PUBLIC_EVENTS_SEGMENT));
+};
+
 export const getModulePrefix = (language?: string): string => {
   const lang = normalizeLanguage(language);
   return `/${MODULES_SEGMENT[lang]}`;
@@ -122,7 +139,7 @@ export const getModuleIdFromPath = (pathname: string): string | null => {
     return segments[1] ? getModuleIdFromSlug(segments[1]) : null;
   }
 
-  if (segments.length === 1 && !matchesLocalizedSegment(segments[0], BRANDING_SEGMENT)) {
+  if (!matchesLocalizedSegment(segments[0], BRANDING_SEGMENT)) {
     return getModuleIdFromSlug(segments[0]);
   }
 
@@ -131,10 +148,14 @@ export const getModuleIdFromPath = (pathname: string): string | null => {
 
 export const getLocalizedPathname = (pathname: string, language?: string): string => {
   if (isBrandingPath(pathname)) return getBrandingPath(language);
+  if (isFilesPath(pathname)) return getFilesPath(language);
   if (isSettingsPath(pathname)) return getSettingsPath(language);
 
   const moduleId = getModuleIdFromPath(pathname);
-  if (moduleId) return getModulePath(moduleId, language);
+  if (moduleId) {
+    const segments = splitPath(pathname);
+    return [getModulePath(moduleId, language), ...segments.slice(1)].join('/');
+  }
 
   return pathname;
 };

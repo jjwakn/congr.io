@@ -25,6 +25,7 @@ import { DEFAULT_THEME_PALETTE_CONFIG, isHexColor, normalizeThemePaletteConfig }
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ThemePaletteConfig } from '@/types/theme.types';
+import { CongregationBrandingEditor } from './CongregationBrandingEditor';
 import { CongregationModulesSelector } from './CongregationModulesSelector';
 import { PaletteModeEditor } from './PaletteModeEditor';
 import type { CongregationEditDialogProps, CongregationSettingsDraft } from './settings.types';
@@ -48,6 +49,9 @@ export const CongregationEditDialog = ({
     type: congregation.type,
     timezone: congregation.timezone,
     features: Array.from(new Set([...(congregation.features ?? []), ...requiredFeatures])),
+    max_favorites: congregation.max_favorites ?? 10,
+    logo_small_file_id: congregation.logo_small_file_id,
+    logo_big_file_id: congregation.logo_big_file_id,
   });
   const [palette, setPalette] = useState<ThemePaletteConfig>(DEFAULT_THEME_PALETTE_CONFIG);
   const [savedPalette, setSavedPalette] = useState<ThemePaletteConfig | null>(null);
@@ -128,6 +132,9 @@ export const CongregationEditDialog = ({
       type: draft.type.trim(),
       timezone: draft.timezone.trim(),
       features: draft.features ?? [],
+      max_favorites: draft.max_favorites ?? 10,
+      logo_small_file_id: draft.logo_small_file_id,
+      logo_big_file_id: draft.logo_big_file_id,
     };
     if (!normalized.name || !normalized.type || !normalized.timezone || hasPaletteErrors) return;
     onSubmit({ congregation: normalized, palette: normalizeThemePaletteConfig(palette) });
@@ -210,9 +217,35 @@ export const CongregationEditDialog = ({
               congregationType={draft.type}
               onChange={(nextFeatures) => setDraft((current) => ({ ...current, features: nextFeatures }))}
             />
+            <TextField
+              type="number"
+              label={t('pages.settings.congregation.maxFavorites')}
+              value={draft.max_favorites ?? 10}
+              inputProps={{ min: 1, max: 50 }}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  max_favorites: Math.min(50, Math.max(1, Number(event.target.value) || 1)),
+                }))
+              }
+              helperText={t('pages.settings.congregation.maxFavoritesHelp')}
+            />
           </Box>
         ) : (
           <Box sx={{ display: 'grid', gap: 2 }}>
+            <CongregationBrandingEditor
+              congregationId={congregation.id}
+              smallLogoId={draft.logo_small_file_id}
+              bigLogoId={draft.logo_big_file_id}
+              disabled={submitting}
+              onChange={({ smallLogoId, bigLogoId }) =>
+                setDraft((current) => ({
+                  ...current,
+                  logo_small_file_id: smallLogoId,
+                  logo_big_file_id: bigLogoId,
+                }))
+              }
+            />
             <PaletteModeEditor
               title={t('pages.settings.lightMode')}
               values={palette.light}

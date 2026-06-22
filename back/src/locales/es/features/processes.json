@@ -1,4 +1,4 @@
 {
-  "title": "Procesos",
-  "description": "Cada proceso puede definir sus propios pasos ordenados, y cada paso se convierte automáticamente en un tipo de evento."
+  "title": "Flujos",
+  "description": "Crea recorridos ramificados con pasos de tipos de evento y sigue el progreso de cada persona."
 }

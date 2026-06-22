@@ -2,11 +2,11 @@ import { Box } from '@mui/material';
 import { LogoFrame } from './LogoFrame';
 import { LogoProps } from './types';
 
-export const LogoBig = ({ alt, size = 160, containerSx, imageSx }: LogoProps) => (
+export const LogoBig = ({ alt, size = 160, containerSx, imageSx, src = '/branding/logo-big.png' }: LogoProps) => (
   <LogoFrame alt={alt} containerSx={containerSx}>
     <Box
       component="img"
-      src="/branding/logo-big.png"
+      src={src}
       alt={alt}
       sx={{
         display: 'block',

@@ -3,13 +3,15 @@ import Loading from '@components/Loading';
 import { AppProvider } from '@contexts/AppProvider';
 import { AuthProvider } from '@contexts/AuthProvider';
 import { SetupProvider } from '@contexts/SetupProvider';
-import { getLocalizedPathname, isBrandingPath } from '@utils/routes';
+import { getLocalizedPathname, isBrandingPath, isFilesPath, isPublicEventsPath } from '@utils/routes';
 import { Suspense, lazy, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const AppShell = lazy(() => import('@/AppShell'));
 const BrandingPage = lazy(() => import('@pages/Branding'));
+const FilesSetupPage = lazy(() => import('@pages/Files'));
+const PublicEventsPage = lazy(() => import('@pages/PublicEvents'));
 
 const App = () => {
   const location = useLocation();
@@ -17,6 +19,8 @@ const App = () => {
   const { i18n } = useTranslation();
   const pathname = useMemo(() => location.pathname, [location.pathname]);
   const isBranding = useMemo(() => isBrandingPath(pathname), [pathname]);
+  const isFiles = useMemo(() => isFilesPath(pathname), [pathname]);
+  const isPublicEvents = useMemo(() => isPublicEventsPath(pathname), [pathname]);
 
   useEffect(() => {
     const localizedPathname = getLocalizedPathname(pathname, i18n.language);
@@ -27,10 +31,10 @@ const App = () => {
     });
   }, [i18n.language, location.hash, location.search, navigate, pathname]);
 
-  return isBranding ? (
+  return isBranding || isFiles || isPublicEvents ? (
     <Layout>
       <Suspense fallback={<Loading />}>
-        <BrandingPage />
+        {isBranding ? <BrandingPage /> : isFiles ? <FilesSetupPage /> : <PublicEventsPage />}
       </Suspense>
     </Layout>
   ) : (

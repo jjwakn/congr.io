@@ -9,6 +9,7 @@ export enum ModuleAction {
   update = 'update',
   delete = 'delete',
   change_password = 'change_password',
+  lock = 'lock',
 }
 
 export enum Module {
@@ -19,6 +20,10 @@ export enum Module {
   process = 'process',
   event = 'event',
   event_type = 'event_type',
+  person = 'person',
+  person_field = 'person_field',
+  event_attendance = 'event_attendance',
+  event_registration = 'event_registration',
 }
 
 export enum Feature {
@@ -27,6 +32,7 @@ export enum Feature {
   Processes = 'processes',
   EventsCalendar = 'events_calendar',
   EventsAttendance = 'events_attendance',
+  PublicEvents = 'public_events',
   Ministries = 'ministries',
   MinistriesCalendar = 'ministries_calendar',
 }
@@ -56,6 +62,18 @@ export const permission: PermissionType = {
   },
   event_type: {
     permissions: CRUD,
+  },
+  person: {
+    permissions: CRUD,
+  },
+  person_field: {
+    permissions: CRUD,
+  },
+  event_attendance: {
+    permissions: CRUD,
+  },
+  event_registration: {
+    permissions: [...CRUD, ModuleAction.lock],
   },
 };
 
@@ -110,6 +128,9 @@ export const FeatureTree: FeatureTreeType = {
   },
   [Feature.EventsAttendance]: {
     prerequisites: [Feature.EventsCalendar, Feature.Members],
+  },
+  [Feature.PublicEvents]: {
+    prerequisites: [Feature.EventsCalendar],
   },
   [Feature.Ministries]: {
     prerequisites: [Feature.Users, Feature.Members],

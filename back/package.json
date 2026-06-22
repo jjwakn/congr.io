@@ -1,6 +1,6 @@
 {
   "name": "back",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "API",
   "author": "JJ",
   "license": "Apache-2.0",
@@ -46,6 +46,7 @@
     "@nestjs/schematics": "^11.0.9",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
+    "@types/multer": "^2.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "source-map-support": "^0.5.21",

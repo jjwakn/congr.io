@@ -14,6 +14,7 @@ const Features = {
   Processes: 'processes',
   EventsCalendar: 'events_calendar',
   EventsAttendance: 'events_attendance',
+  PublicEvents: 'public_events',
   Ministries: 'ministries',
   MinistriesCalendar: 'ministries_calendar',
 };

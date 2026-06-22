@@ -22,18 +22,22 @@ export const ModuleSection = <RowType,>({
     ) : null);
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2} sx={{ height: '100%', minHeight: 0 }}>
       {title || sectionActions ? (
         <Stack
-          direction={{ xs: 'column', sm: 'row' }}
+          direction="row"
           spacing={1.5}
-          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          alignItems="flex-start"
           justifyContent={title ? 'space-between' : 'flex-end'}
         >
-          {title ? <SectionTitle title={title} /> : null}
+          {title ? (
+            <Stack sx={{ minWidth: 0, flex: 1 }}>
+              <SectionTitle title={title} />
+            </Stack>
+          ) : null}
 
           {sectionActions ? (
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
               {sectionActions}
             </Stack>
           ) : null}

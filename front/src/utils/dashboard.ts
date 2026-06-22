@@ -43,6 +43,8 @@ export const getModuleIcon = (moduleId: string): DashboardNavigationItem['icon']
       return createElement(EventOutlinedIcon, { fontSize: 'small' });
     case 'events_attendance':
       return createElement(HowToRegOutlinedIcon, { fontSize: 'small' });
+    case 'event_registration':
+      return createElement(HowToRegOutlinedIcon, { fontSize: 'small' });
     case 'ministries':
       return createElement(AccountTreeOutlinedIcon, { fontSize: 'small' });
     case 'ministries_calendar':

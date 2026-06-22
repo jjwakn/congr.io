@@ -26,6 +26,10 @@ These rules apply to all agent chats in this repository.
 
 ## Frontend Structure
 
+- Use switches for every binary selection. Do not introduce checkbox controls.
+- Gate every section, route, settings tab, permission row, and related action behind its
+  congregation feature before rendering it.
+
 - Keep TypeScript `type`/`interface` declarations in dedicated `*.types.ts` files.
 - Keep only shared domain-level types in `front/src/types`.
 - Move feature-specific/component-specific types to `*.types.ts` files colocated with the feature/component.

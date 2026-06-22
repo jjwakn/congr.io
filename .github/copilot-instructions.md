@@ -21,3 +21,5 @@
 15. Avoid deep relative imports when an alias is available.
 16. Every UI section or tab that manages a persisted model must use the shared CRUD components and file structure, even when embedded inside Settings or another parent page.
 17. Permission-gate persisted-model sections/tabs and their create, view, update, and delete actions independently using the model's backend permission module.
+18. Use switches for all binary selections; do not add checkbox controls.
+19. Gate every section, route, settings tab, permission row, and related action by its congregation feature.

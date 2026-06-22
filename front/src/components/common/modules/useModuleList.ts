@@ -1,3 +1,4 @@
+import { useAuth } from '@hooks/useAuth';
 import { useEffect, useState } from 'react';
 import {
   ListDirection,
@@ -68,6 +69,9 @@ export const useModuleList = ({
   defaultDirection = 'ASC',
   defaultPageSize = 50,
 }: UseModuleListProps): UseModuleListState => {
+  const { user } = useAuth();
+  const preferredPageSize =
+    user?.preferences?.page_sizes?.[moduleKey] ?? user?.preferences?.page_sizes?.default ?? defaultPageSize;
   const [direction, setDirection] = useState<ListDirection>(
     () =>
       getInitialSortingState({
@@ -85,7 +89,7 @@ export const useModuleList = ({
       }).sort,
   );
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(defaultPageSize);
+  const [pageSize, setPageSize] = useState(preferredPageSize);
   const [search, setSearchValue] = useState('');
 
   useEffect(() => {

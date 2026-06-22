@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
 import { CommonOrder, EntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from './user.entity';
@@ -38,6 +38,28 @@ export interface UserCompleteTemporaryPasswordProps extends EntityActionProps {
 export interface UserSetTemporaryPasswordProps extends EntityActionProps {
   id: string;
   data: UserSetTemporaryPasswordDto;
+}
+
+export interface UserPreferencesProps extends EntityActionProps {
+  data: UserPreferencesDto;
+}
+
+export class UserPreferencesDto {
+  @IsObject()
+  @IsOptional()
+  page_sizes?: Record<string, number>;
+
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(80, { each: true })
+  @IsOptional()
+  sidebar_order?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(120, { each: true })
+  @IsOptional()
+  favorites?: string[];
 }
 
 enum Order {

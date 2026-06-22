@@ -1,18 +1,23 @@
+import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import { Box, Paper, Tab, Tabs, Typography } from '@mui/material';
+import { EVENTS_FEATURE_ID, hasCongregationFeature } from '@utils/feature-gates';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { changeLanguageWithResources } from '../../../i18n';
 import { CongregationsSettingsTab } from './CongregationsSettingsTab';
+import { DeploymentSettingsTab } from './DeploymentSettingsTab';
 import { EventTypesManagement } from './EventTypes/EventTypesManagement';
 import { UISettingsTab } from './UISettingsTab';
 import type { SettingsPageProps, SettingsTabId } from './settings.types';
 
 const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
   const { i18n, t } = useTranslation();
-  const { hasPermission } = useAuth();
+  const { hasPermission, auth } = useAuth();
+  const { congregation } = useAppContext();
   const canViewCongregations = hasPermission('congregation', 'get');
-  const canViewEventTypes = hasPermission('event_type', 'get');
+  const canViewEventTypes =
+    hasCongregationFeature(congregation?.features, EVENTS_FEATURE_ID) && hasPermission('event_type', 'get');
   const tabs = useMemo(
     () => [
       ...(canViewCongregations
@@ -20,8 +25,9 @@ const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
         : []),
       { id: 'ui' as const, label: t('pages.settings.tabs.ui') },
       ...(canViewEventTypes ? [{ id: 'eventTypes' as const, label: t('pages.settings.tabs.eventTypes') }] : []),
+      ...(auth?.fullAccess ? [{ id: 'deployment' as const, label: t('pages.settings.tabs.deployment') }] : []),
     ],
-    [canViewCongregations, canViewEventTypes, t],
+    [auth?.fullAccess, canViewCongregations, canViewEventTypes, t],
   );
   const [activeTab, setActiveTab] = useState<SettingsTabId>(() => (canViewCongregations ? 'congregations' : 'ui'));
 
@@ -74,6 +80,7 @@ const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
           />
         ) : null}
         {resolvedActiveTab === 'eventTypes' && canViewEventTypes ? <EventTypesManagement /> : null}
+        {resolvedActiveTab === 'deployment' && auth?.fullAccess ? <DeploymentSettingsTab /> : null}
       </Box>
     </Paper>
   );

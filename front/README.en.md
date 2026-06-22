@@ -29,3 +29,8 @@ Before running the setup flow, open the branding route and follow the on-page in
 1. Go to `/branding`
 2. Generate and download the branding package
 3. Copy the generated files into `front/public/` as instructed on that page
+
+## File storage status
+
+Full-access users can open `/files` from Settings > Deployment to review the selected backend
+provider, missing variables, and provider-specific setup instructions.

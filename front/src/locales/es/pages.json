@@ -10,13 +10,14 @@
     "logout": "Cerrar sesión",
     "settings": "Preferencias",
     "switchCongregation": "Cambiar congregación",
-    "congregationSwitchFailed": "No se pudo cambiar de congregación."
+    "congregationSwitchFailed": "No se pudo cambiar de congregación.",
+    "toggleFavorite": "Añadir o quitar esta sección del acceso rápido"
   },
   "modules": {
     "common": {
       "refresh": "Actualizar",
       "search": "Buscar",
-      "rowsPerPage": "Filas por página",
+      "rowsPerPage": "Elementos por página",
       "view": "Ver",
       "emptyValue": "Sin especificar"
     },
@@ -100,7 +101,8 @@
         "create": "Crear",
         "update": "Actualizar",
         "delete": "Eliminar",
-        "change_password": "Cambiar contraseña"
+        "change_password": "Cambiar contraseña",
+        "lock": "Bloquear"
       },
       "form": {
         "fullAccess": "Acceso total",
@@ -122,9 +124,13 @@
           "role": "Roles",
           "congregation": "Congregación",
           "configuration": "Preferencias",
-          "process": "Procesos",
+          "process": "Flujos",
           "event": "Eventos",
-          "event_type": "Tipos de evento"
+          "event_type": "Tipos de evento",
+          "person": "Personas",
+          "person_field": "Campos de personas",
+          "event_attendance": "Asistencia a eventos",
+          "event_registration": "Registro a eventos"
         }
       },
       "success": {
@@ -148,7 +154,8 @@
     "tabs": {
       "congregations": "Preferencias de congregación",
       "ui": "Interfaz",
-      "eventTypes": "Tipos de evento"
+      "eventTypes": "Tipos de evento",
+      "deployment": "Despliegue"
     },
     "congregation": {
       "title": "Preferencias de congregación",
@@ -194,7 +201,16 @@
       "paletteLoading": "Cargando paleta de colores...",
       "editTabs": {
         "info": "Información",
-        "palette": "Paleta"
+        "palette": "Tema"
+      },
+      "maxFavorites": "Máximo de accesos rápidos",
+      "maxFavoritesHelp": "Elige cuántos accesos a secciones puede mantener cada usuario en el encabezado.",
+      "branding": {
+        "title": "Marca de la congregación",
+        "publicNotice": "Los logos de la congregación son públicos para mostrarlos en páginas públicas de eventos.",
+        "small": "Subir logo pequeño",
+        "big": "Subir logo grande",
+        "uploading": "Subiendo..."
       },
       "modules": {
         "title": "Módulos disponibles",
@@ -223,7 +239,11 @@
           "eventTypes": "{{count}} tipos de evento serán eliminados",
           "processes": "{{count}} procesos serán eliminados",
           "processSteps": "{{count}} pasos de proceso serán eliminados",
-          "configurations": "{{count}} registros de configuración serán eliminados"
+          "configurations": "{{count}} registros de configuración serán eliminados",
+          "persons": "{{count}} personas serán eliminadas",
+          "personFields": "{{count}} campos de personas serán eliminados",
+          "eventParticipants": "{{count}} registros de eventos serán eliminados",
+          "files": "{{count}} archivos almacenados serán eliminados"
         }
       }
     },
@@ -239,6 +259,18 @@
       "label": "Idioma",
       "english": "Inglés",
       "spanish": "Español"
+    },
+    "interface": {
+      "paginationTitle": "Elementos por página",
+      "paginationDescription": "Configura un valor predeterminado y valores opcionales por sección para tu cuenta.",
+      "defaultPageSize": "Elementos predeterminados por página",
+      "sidebarTitle": "Orden de la barra lateral",
+      "sidebarDescription": "Reordena las secciones visibles. Preferencias siempre permanece al final."
+    },
+    "deployment": {
+      "description": "Revisa la configuración de marca y almacenamiento de archivos del despliegue.",
+      "branding": "Configuración de marca",
+      "files": "Configuración de archivos"
     },
     "lightMode": "Paleta Modo Claro",
     "darkMode": "Paleta Modo Oscuro",
@@ -277,6 +309,8 @@
         "description": "Descripción",
         "enabled": "Activo",
         "enabledHint": "Los tipos de evento desactivados no pueden seleccionarse para eventos nuevos.",
+        "attendance": "Capturar asistencia de forma predeterminada",
+        "color": "Color del calendario",
         "actions": "Acciones"
       },
       "dialogs": {
@@ -297,6 +331,219 @@
         "saveFailed": "No se pudo guardar el tipo de evento.",
         "deleteFailed": "No se pudo eliminar el tipo de evento."
       }
+    }
+  },
+  "files": {
+    "title": "Almacenamiento de archivos",
+    "description": "Elige un proveedor mediante variables de entorno. Aquí solo se muestra su estado.",
+    "selected": "Proveedor seleccionado",
+    "configured": "Configurado correctamente",
+    "notConfigured": "Configuración incompleta",
+    "adapterUnavailable": "Este proveedor se documenta para planificar el despliegue, pero su adaptador de carga no está habilitado en esta versión.",
+    "missing": "Variables faltantes: {{variables}}",
+    "loadFailed": "No se pudo cargar el estado del proveedor.",
+    "providers": {
+      "local": {
+        "title": "Almacenamiento local",
+        "instructions": "Usa FILE_STORAGE_PROVIDER=local y opcionalmente FILE_STORAGE_PATH. Monta esa ruta como volumen persistente de Docker en producción."
+      },
+      "url": {
+        "title": "URL pública",
+        "instructions": "Usa FILE_STORAGE_PROVIDER=url y FILE_PUBLIC_BASE_URL cuando las imágenes estén alojadas externamente."
+      },
+      "aws": {
+        "title": "Amazon S3",
+        "instructions": "Configura las variables compartidas de bucket, región, llave y secreto para un bucket compatible con S3."
+      },
+      "gcp": {
+        "title": "Google Cloud",
+        "instructions": "Configura las variables compartidas de bucket, proyecto y credenciales para Cloud Storage."
+      },
+      "onedrive": {
+        "title": "OneDrive",
+        "instructions": "Configura las variables de carpeta, cliente, secreto y tenant para Microsoft Graph."
+      },
+      "google_drive": {
+        "title": "Google Drive",
+        "instructions": "Configura las variables de carpeta y credenciales para Google Drive."
+      }
+    }
+  },
+  "publicEvents": {
+    "title": "Eventos",
+    "congregationRequired": "Se requiere una congregación para listar eventos públicos.",
+    "loadFailed": "No se pudieron cargar los eventos públicos.",
+    "registration": {
+      "title": "Regístrate a este evento",
+      "submit": "Registrarme",
+      "success": "Recibimos tu registro."
+    }
+  },
+  "events": {
+    "calendar": "Calendario",
+    "viewDay": "Ver día",
+    "today": "Hoy",
+    "filter": "Filtrar tipos de evento",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "refresh": "Actualizar calendario",
+    "create": "Crear evento",
+    "loading": "Cargando eventos...",
+    "views": { "day": "Día", "week": "Semana", "month": "Mes" },
+    "actions": {
+      "viewDay": "Ver día",
+      "create": "Crear evento",
+      "view": "Ver",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "addToCalendar": "Añadir al calendario",
+      "share": "Compartir"
+    },
+    "form": {
+      "createTitle": "Crear evento",
+      "editTitle": "Editar evento",
+      "name": "Nombre del evento",
+      "type": "Tipo de evento",
+      "newType": "Crear tipo de evento",
+      "description": "Descripción",
+      "start": "Inicia",
+      "end": "Finaliza",
+      "timezone": "Las horas usan {{timezone}}",
+      "dropImage": "Arrastra una imagen aquí o selecciónala",
+      "publicImageUrl": "URL pública de imagen",
+      "allDay": "Todo el día",
+      "public": "Evento público",
+      "attendance": "Capturar asistencia",
+      "selfRegistration": "Permitir autorregistro",
+      "applyAttendanceToType": "Usar esta configuración de asistencia en futuros eventos de este tipo",
+      "allowRegistration": "Permitir autorregistro",
+      "saveAttendanceDate": "Guardar la fecha de asistencia en la persona",
+      "attendanceDateField": "Campo de fecha de la persona",
+      "publicAttendanceNotice": "Un evento público con asistencia debe permitir autorregistro o modificarse antes de guardar. Solo se muestran los campos marcados para usuarios.",
+      "required": "Completa los campos requeridos del evento.",
+      "invalidImage": "Selecciona una imagen compatible con el navegador.",
+      "save": "Guardar evento"
+    },
+    "fields": {
+      "typeTitle": "Campos del tipo de evento",
+      "eventTitle": "Campos del evento",
+      "label": "Etiqueta",
+      "type": "Tipo de campo",
+      "options": "Opciones separadas por comas",
+      "required": "Requerido",
+      "userFillable": "Visible en autorregistro",
+      "allEvents": "Usar en todos los eventos de este tipo",
+      "personField": "Guardar valor en campo de persona",
+      "doNotSave": "No guardar en persona",
+      "add": "Añadir campo",
+      "types": {
+        "text": "Texto",
+        "paragraph": "Párrafo",
+        "number": "Número",
+        "switch": "Interruptor",
+        "single_option": "Una opción",
+        "multiple_options": "Varias opciones"
+      }
+    },
+    "delete": { "title": "Eliminar evento", "message": "¿Eliminar este evento y sus datos de la congregación?" },
+    "success": {
+      "saved": "Evento guardado.",
+      "deleted": "Evento eliminado.",
+      "linkCopied": "Enlace del evento copiado."
+    },
+    "errors": {
+      "load": "No se pudieron cargar los eventos.",
+      "types": "No se pudieron cargar los tipos de evento.",
+      "save": "No se pudo guardar el evento.",
+      "delete": "No se pudo eliminar el evento."
+    }
+  },
+  "persons": {
+    "title": "Personas",
+    "fieldsTitle": "Campos personalizados de personas",
+    "create": "Crear persona",
+    "edit": "Editar",
+    "save": "Guardar persona",
+    "loading": "Cargando personas...",
+    "empty": "No se encontraron personas.",
+    "loadFailed": "No se pudieron cargar las personas.",
+    "deleteMessage": "¿Eliminar este elemento? Los valores existentes se conservan al eliminar un campo personalizado.",
+    "tabs": { "persons": "Personas", "fields": "Campos personalizados", "details": "Detalles", "flows": "Flujos" },
+    "flowsEmpty": "No hay flujos disponibles para esta persona.",
+    "fields": {
+      "code": "Código",
+      "firstName": "Primer nombre",
+      "middleName": "Segundo nombre",
+      "lastName": "Apellido",
+      "secondLastName": "Segundo apellido",
+      "marriedName": "Apellido de casada",
+      "phone": "Teléfono",
+      "birthdate": "Fecha de nacimiento",
+      "age": "Edad",
+      "email": "Correo"
+    },
+    "fieldsCrud": {
+      "create": "Crear campo personalizado",
+      "edit": "Editar campo personalizado",
+      "label": "Etiqueta",
+      "type": "Tipo",
+      "required": "Requerido",
+      "options": "Opciones"
+    },
+    "fieldTypes": {
+      "text": "Texto",
+      "paragraph": "Párrafo",
+      "number": "Número",
+      "switch": "Interruptor",
+      "single_option": "Una opción",
+      "multiple_options": "Varias opciones",
+      "date": "Fecha"
+    }
+  },
+  "attendance": {
+    "title": "Asistencia a eventos",
+    "event": "Evento",
+    "person": "Persona",
+    "add": "Añadir asistente",
+    "publicSubmission": "Registro público",
+    "error": "No se pudo actualizar la asistencia."
+  },
+  "registration": {
+    "title": "Registro a eventos",
+    "register": "Registrar persona",
+    "open": "Abrir registro",
+    "lock": "Bloquear registro",
+    "unlock": "Desbloquear registro",
+    "favoriteType": "Acceso rápido al evento más reciente de este tipo",
+    "noUpcoming": "No existe un próximo evento para este tipo.",
+    "createEvent": "Crear evento",
+    "people": "Personas registradas",
+    "possiblePerson": "Posible coincidencia: {{name}}",
+    "confirmMatch": "Confirmar coincidencia",
+    "createPerson": "Crear una persona desde este registro"
+  },
+  "flows": {
+    "title": "Flujos",
+    "create": "Crear flujo",
+    "edit": "Editar",
+    "description": "Descripción",
+    "steps": "Pasos",
+    "loading": "Cargando flujos...",
+    "empty": "No se encontraron flujos.",
+    "loadFailed": "No se pudieron cargar los flujos.",
+    "saved": "Flujo guardado.",
+    "saveFailed": "No se pudo guardar el flujo.",
+    "deleteTitle": "Eliminar flujo",
+    "deleteMessage": "¿Eliminar este flujo y desactivar sus tipos de evento generados?",
+    "editor": {
+      "createTitle": "Crear flujo",
+      "editTitle": "Editar flujo",
+      "unnamedStep": "Paso sin nombre",
+      "required": "Asigna nombre al flujo y a cada paso.",
+      "addStep": "Añadir paso",
+      "stepName": "Nombre del paso",
+      "stepDescription": "Descripción del paso",
+      "deleteStep": "Eliminar paso"
     }
   }
 }

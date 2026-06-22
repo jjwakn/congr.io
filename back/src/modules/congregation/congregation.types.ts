@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
   Min,
   ValidateNested,
@@ -44,6 +45,10 @@ export interface CongregationDeletionPreview {
   processes: number;
   processSteps: number;
   configurations: number;
+  persons: number;
+  personFields: number;
+  eventParticipants: number;
+  files: number;
 }
 
 export class CongregationLocationDto {
@@ -106,6 +111,24 @@ export class CongregationDto {
   @IsUUID('4', { each: true })
   @IsOptional()
   user_ids?: string[];
+
+  @ApiProperty({ required: false, example: 10, minimum: 1, maximum: 50 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  @IsOptional()
+  max_favorites?: number;
+
+  @ApiProperty({ required: false, format: 'uuid', nullable: true })
+  @IsUUID('4')
+  @IsOptional()
+  logo_small_file_id?: string | null;
+
+  @ApiProperty({ required: false, format: 'uuid', nullable: true })
+  @IsUUID('4')
+  @IsOptional()
+  logo_big_file_id?: string | null;
 }
 
 enum Order {

@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsBoolean, IsHexColor, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { CommonOrder, CongregationEntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -41,6 +41,22 @@ export class EventTypeDto {
   @IsBoolean()
   @IsOptional()
   enabled?: boolean;
+
+  @ApiProperty({ required: false, example: false })
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  attendance_enabled?: boolean;
+
+  @ApiProperty({ required: false, type: Array })
+  @IsArray()
+  @IsOptional()
+  custom_fields?: Array<Record<string, unknown>>;
+
+  @ApiProperty({ required: false, example: '#1976d2' })
+  @IsHexColor()
+  @IsOptional()
+  color?: string;
 }
 
 enum Order {

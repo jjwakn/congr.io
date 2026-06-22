@@ -1,4 +1,5 @@
 import { I18nService } from 'nestjs-i18n';
+import { randomUUID } from 'node:crypto';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
 import { DataSource, In, IsNull, Repository } from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -66,6 +67,8 @@ export class ProcessService {
       .sort((left, right) => left.order - right.order)
       .map((step, index) => ({
         id: step.id,
+        flow_key: step.flow_key ?? randomUUID(),
+        next_step_keys: Array.from(new Set(step.next_step_keys ?? [])),
         order: index + 1,
         name: step.name.trim(),
         description: step.description?.trim() ?? '',
@@ -131,6 +134,8 @@ export class ProcessService {
           existingStep.order = stepData.order;
           existingStep.name = stepData.name;
           existingStep.description = stepData.description;
+          existingStep.flow_key = stepData.flow_key;
+          existingStep.next_step_keys = stepData.next_step_keys;
           existingStep.enabled = stepData.enabled;
           existingStep.updated_by = user;
           await stepRepository.save(existingStep);
@@ -168,6 +173,8 @@ export class ProcessService {
         order: stepData.order,
         name: stepData.name,
         description: stepData.description,
+        flow_key: stepData.flow_key,
+        next_step_keys: stepData.next_step_keys,
         enabled: stepData.enabled,
         created_by: user,
       });

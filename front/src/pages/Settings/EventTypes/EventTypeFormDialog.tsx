@@ -16,12 +16,16 @@ export const EventTypeFormDialog = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [enabled, setEnabled] = useState(true);
+  const [attendanceEnabled, setAttendanceEnabled] = useState(false);
+  const [color, setColor] = useState('#1976d2');
   const [nameError, setNameError] = useState('');
 
   const resetState = useCallback(() => {
     setName(eventType?.name ?? '');
     setDescription(eventType?.description ?? '');
     setEnabled(eventType?.enabled ?? true);
+    setAttendanceEnabled(eventType?.attendance_enabled ?? false);
+    setColor(eventType?.color ?? '#1976d2');
     setNameError('');
   }, [eventType]);
 
@@ -42,7 +46,13 @@ export const EventTypeFormDialog = ({
       setNameError(`${t('form.field.name')} ${t('form.error.isRequired')}`);
       return;
     }
-    onSubmit({ name: normalizedName, description: description.trim(), enabled });
+    onSubmit({
+      name: normalizedName,
+      description: description.trim(),
+      enabled,
+      attendance_enabled: attendanceEnabled,
+      color,
+    });
   };
 
   return (
@@ -78,6 +88,17 @@ export const EventTypeFormDialog = ({
       <FormControlLabel
         control={<Switch checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />}
         label={t('pages.settings.eventTypes.fields.enabled')}
+      />
+      <FormControlLabel
+        control={<Switch checked={attendanceEnabled} onChange={(_event, checked) => setAttendanceEnabled(checked)} />}
+        label={t('pages.settings.eventTypes.fields.attendance')}
+      />
+      <TextField
+        type="color"
+        label={t('pages.settings.eventTypes.fields.color')}
+        value={color}
+        onChange={(event) => setColor(event.target.value)}
+        InputLabelProps={{ shrink: true }}
       />
       <Typography variant="body2" color="text.secondary">
         {t('pages.settings.eventTypes.fields.enabledHint')}

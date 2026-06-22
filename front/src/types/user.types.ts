@@ -10,4 +10,9 @@ export interface User extends CommonEntity {
   roles: Role[];
   congregations: Congregation[];
   locations: Location[];
+  preferences?: {
+    page_sizes?: Record<string, number>;
+    sidebar_order?: string[];
+    favorites?: string[];
+  };
 }

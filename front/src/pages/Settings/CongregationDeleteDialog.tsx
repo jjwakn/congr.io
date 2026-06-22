@@ -38,6 +38,10 @@ export const CongregationDeleteDialog = ({
     ['processes', preview.processes],
     ['processSteps', preview.processSteps],
     ['configurations', preview.configurations],
+    ['persons', preview.persons],
+    ['personFields', preview.personFields],
+    ['eventParticipants', preview.eventParticipants],
+    ['files', preview.files],
   ] as const;
   const matchesName = confirmationName.trim() === congregation.name;
 

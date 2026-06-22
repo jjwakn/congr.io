@@ -234,10 +234,10 @@ export const ModuleListTable = <RowType,>({
   );
 
   return (
-    <Paper variant="outlined">
-      <TableContainer ref={tableContainerRef}>
+    <Paper variant="outlined" sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+      <TableContainer ref={tableContainerRef} sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
         <Table size="small">
-          <TableHead>
+          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5, bgcolor: 'background.paper' }}>
             {headerRows.map((headerRow, rowIndex) => (
               <TableRow key={`header-row-${rowIndex}`}>
                 {headerRow.map((cell) => (
@@ -335,6 +335,7 @@ export const ModuleListTable = <RowType,>({
         onRowsPerPageChange={(event) => onPageSizeChange(Number(event.target.value))}
         labelRowsPerPage={rowsPerPageLabel}
         rowsPerPageOptions={[10, 25, 50, 100]}
+        sx={{ flexShrink: 0, borderTop: 1, borderColor: 'divider' }}
       />
     </Paper>
   );

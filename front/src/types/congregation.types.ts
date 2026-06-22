@@ -15,4 +15,7 @@ export interface Congregation extends CommonEntity {
   features?: string[];
   locations: Location[];
   theme_palette?: ThemePaletteConfig;
+  max_favorites?: number;
+  logo_small_file_id?: string | null;
+  logo_big_file_id?: string | null;
 }

@@ -1,7 +1,7 @@
 import { FormContainer } from '@components/common/FormContainer';
 import { useSetup } from '@hooks/useSetup';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Checkbox, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Switch, Typography } from '@mui/material';
 import { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -110,7 +110,7 @@ export const FeaturesStep = ({
           }}
           onClick={handleSelectAll}
         >
-          <Checkbox checked={selectedFeatures.length === features.length} />
+          <Switch checked={selectedFeatures.length === features.length} />
 
           <Typography fontWeight="bold">{t('form.field.selectAll')}</Typography>
         </Box>
@@ -133,7 +133,7 @@ export const FeaturesStep = ({
                       alignItems: 'flex-start',
                     }}
                   >
-                    <Checkbox
+                    <Switch
                       checked={checked}
                       onChange={(e) => {
                         const next = new Set(field.value ?? []);

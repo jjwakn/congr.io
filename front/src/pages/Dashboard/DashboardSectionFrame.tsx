@@ -1,8 +1,16 @@
 import { SectionTitle } from '@components/common/modules/SectionTitle';
-import { Box, Paper } from '@mui/material';
+import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import { Box, IconButton, Paper, Tooltip } from '@mui/material';
 import { DashboardSectionFrameProps } from './DashboardSectionFrame.types';
 
-export const DashboardSectionFrame = ({ title, children }: DashboardSectionFrameProps) => (
+export const DashboardSectionFrame = ({
+  title,
+  children,
+  favorite,
+  favoriteLabel,
+  onToggleFavorite,
+}: DashboardSectionFrameProps) => (
   <Paper
     variant="outlined"
     sx={{
@@ -25,7 +33,23 @@ export const DashboardSectionFrame = ({ title, children }: DashboardSectionFrame
         zIndex: 2,
       }}
     >
-      <SectionTitle title={title} />
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <SectionTitle title={title} />
+        </Box>
+        {onToggleFavorite ? (
+          <Tooltip title={favoriteLabel}>
+            <IconButton
+              size="small"
+              onClick={onToggleFavorite}
+              aria-label={favoriteLabel}
+              color={favorite ? 'warning' : 'default'}
+            >
+              {favorite ? <StarRoundedIcon /> : <StarBorderRoundedIcon />}
+            </IconButton>
+          </Tooltip>
+        ) : null}
+      </Box>
     </Box>
 
     <Box

@@ -17,8 +17,13 @@ export const DashboardContentRoutes = ({
   loadingLabel,
   moduleNotFoundLabel,
   settingsPath,
+  favorites,
+  favoriteLabel,
+  onToggleFavorite,
 }: DashboardContentRoutesProps) => {
   const fallback = <Typography variant="body1">{loadingLabel}</Typography>;
+  const homeModule = availableModules.find(({ id }) => id === 'events_calendar');
+  const HomeComponent = homeModule ? getModuleRoute(homeModule.id)?.Component : null;
 
   return (
     <Box
@@ -36,11 +41,24 @@ export const DashboardContentRoutes = ({
           <Route
             path={getHomePath()}
             element={
-              <DashboardSectionFrame title={homeTitle}>
-                <Typography variant="body1" color="text.secondary">
-                  {homeSubtitle}
-                </Typography>
-              </DashboardSectionFrame>
+              HomeComponent ? (
+                <DashboardSectionFrame
+                  title={homeModule?.title ?? homeTitle}
+                  favorite={favorites.includes('events_calendar')}
+                  favoriteLabel={favoriteLabel}
+                  onToggleFavorite={() => onToggleFavorite('events_calendar')}
+                >
+                  <Suspense fallback={fallback}>
+                    <HomeComponent />
+                  </Suspense>
+                </DashboardSectionFrame>
+              ) : (
+                <DashboardSectionFrame title={homeTitle}>
+                  <Typography variant="body1" color="text.secondary">
+                    {homeSubtitle}
+                  </Typography>
+                </DashboardSectionFrame>
+              )
             }
           />
 
@@ -59,6 +77,7 @@ export const DashboardContentRoutes = ({
           ))}
 
           {availableModules.map((module: DashboardModuleView) => {
+            if (module.id === 'events_calendar') return null;
             const route = getModuleRoute(module.id);
             if (!route) return null;
 
@@ -69,7 +88,12 @@ export const DashboardContentRoutes = ({
                 key={module.id}
                 path={module.path}
                 element={
-                  <DashboardSectionFrame title={module.title}>
+                  <DashboardSectionFrame
+                    title={module.title}
+                    favorite={favorites.includes(module.id)}
+                    favoriteLabel={favoriteLabel}
+                    onToggleFavorite={() => onToggleFavorite(module.id)}
+                  >
                     <ModuleComponent />
                   </DashboardSectionFrame>
                 }

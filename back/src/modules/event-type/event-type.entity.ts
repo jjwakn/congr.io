@@ -31,6 +31,21 @@ export class EventType extends CommonEntity {
   @Column({ type: 'text', nullable: false, default: '' })
   description: string;
 
+  @Column({ nullable: false, default: false })
+  attendance_enabled: boolean;
+
+  @Column('simple-json', { nullable: false, default: [] })
+  custom_fields: Array<Record<string, unknown>>;
+
+  @Column({ nullable: false, default: '#1976d2', length: 16 })
+  color: string;
+
+  @Column({ nullable: false, default: false })
+  save_attendance_date: boolean;
+
+  @Column({ type: 'uuid', nullable: true })
+  attendance_date_person_field_id?: string | null;
+
   @OneToMany(() => Event, (event) => event.type)
   events?: Event[];
 }

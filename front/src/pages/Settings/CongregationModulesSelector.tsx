@@ -1,5 +1,5 @@
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Checkbox, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Switch, Typography } from '@mui/material';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CongregationModulesSelectorProps } from './settings.types';
@@ -51,7 +51,7 @@ export const CongregationModulesSelector = ({
       </Typography>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <Checkbox
+        <Switch
           checked={allSelected}
           disabled={disabled}
           inputProps={{ 'aria-label': t('form.field.selectAll') }}
@@ -66,7 +66,7 @@ export const CongregationModulesSelector = ({
 
       {features.map((feature) => (
         <Box key={feature.id} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
-          <Checkbox
+          <Switch
             checked={selectedSet.has(feature.id)}
             disabled={disabled || feature.required}
             inputProps={{ 'aria-label': feature.title }}

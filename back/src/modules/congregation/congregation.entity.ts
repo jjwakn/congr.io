@@ -35,4 +35,16 @@ export class Congregation extends CommonEntity {
   })
   @Column('simple-json', { nullable: false, default: [] })
   features: Feature[];
+
+  @ApiProperty({ example: 10 })
+  @Column({ type: 'int', nullable: false, default: 10 })
+  max_favorites: number;
+
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'uuid', nullable: true })
+  logo_small_file_id?: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  @Column({ type: 'uuid', nullable: true })
+  logo_big_file_id?: string | null;
 }

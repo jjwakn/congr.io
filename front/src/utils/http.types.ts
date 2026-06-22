@@ -4,7 +4,7 @@ export type HttpScalar = string | boolean | number | null | undefined;
 export type HttpJsonData = {
   [key: string]: HttpScalar | HttpJsonData | HttpScalar[] | HttpJsonData[];
 };
-export type HttpData = FormData | HttpJsonData;
+export type HttpData = FormData | object;
 
 export interface ServiceType {
   url: string;

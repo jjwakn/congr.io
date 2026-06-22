@@ -4,6 +4,7 @@ export interface DashboardNavigationDrawerProps {
   items: DashboardNavigationItem[];
   selectedPath: string;
   congregationName: string;
+  logoSrc?: string;
   homeLabel: string;
   open: boolean;
   onNavigate: (path: string) => void;

@@ -11,6 +11,12 @@ import type { DashboardModuleView } from '@pages/Modules/modules.types';
 import { canRenderModuleRoute } from '@pages/Modules/routes';
 import { ConfigurationsService } from '@services/configurations';
 import { CongregationsService } from '@services/congregations';
+import { EventsService } from '@services/events';
+import { PersonsService } from '@services/persons';
+import { ProcessesService } from '@services/processes';
+import { RolesService } from '@services/roles';
+import { UsersService } from '@services/users';
+import { API_URL } from '@utils/constants';
 import { createModuleNavigationItem, createSettingsNavigationItem } from '@utils/dashboard';
 import { HttpRequestError, httpRequest } from '@utils/http';
 import {
@@ -27,12 +33,13 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PWABadge from '@/PWABadge';
 import type { Congregation } from '@/types/congregation.types';
+import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
 import type { ThemePaletteConfig } from '@/types/theme.types';
 
 const Dashboard = () => {
   const { i18n, t } = useTranslation();
   const { congregation, selectCongregation } = useAppContext();
-  const { user, logout, hasPermission } = useAuth();
+  const { user, logout, hasPermission, refreshSession } = useAuth();
   const { showNotification } = useNotificationContext();
   const { setPaletteConfig } = useTheme();
   const { features } = useSetup();
@@ -55,8 +62,8 @@ const Dashboard = () => {
 
       return {
         id: moduleId,
-        title: feature?.title ?? moduleId,
-        path: getModulePath(moduleId, i18n.language),
+        title: moduleId === 'events_calendar' ? t('pages.events.calendar') : (feature?.title ?? moduleId),
+        path: moduleId === 'events_calendar' ? getHomePath() : getModulePath(moduleId, i18n.language),
       };
     });
 
@@ -68,23 +75,58 @@ const Dashboard = () => {
       });
     }
 
-    return modules.sort((left, right) =>
-      left.title.localeCompare(right.title, i18n.language, {
-        sensitivity: 'base',
-      }),
-    );
+    if (
+      moduleIds.includes('events_attendance') &&
+      hasPermission('event_registration', 'get') &&
+      hasPermission('event', 'get') &&
+      hasPermission('person', 'get')
+    ) {
+      modules.push({
+        id: 'event_registration',
+        title: t('pages.registration.title'),
+        path: getModulePath('event_registration', i18n.language),
+      });
+    }
+
+    return modules
+      .filter(
+        (module) =>
+          module.id !== 'events_attendance' ||
+          (hasPermission('event_attendance', 'get') && hasPermission('event', 'get') && hasPermission('person', 'get')),
+      )
+      .sort((left, right) =>
+        left.title.localeCompare(right.title, i18n.language, {
+          sensitivity: 'base',
+        }),
+      );
   }, [congregation?.features, featureById, hasPermission, i18n.language, t]);
   const renderableModules = useMemo(
     () => availableModules.filter((module) => canRenderModuleRoute(module.id)),
     [availableModules],
   );
+  const sidebarOrder = useMemo(() => user?.preferences?.sidebar_order ?? [], [user?.preferences?.sidebar_order]);
+  const orderedModules = useMemo(() => {
+    const order = new Map(sidebarOrder.map((id, index) => [id, index]));
+    return [...renderableModules].sort((left, right) => {
+      const leftIndex = order.get(left.id);
+      const rightIndex = order.get(right.id);
+      if (leftIndex !== undefined || rightIndex !== undefined)
+        return (leftIndex ?? Number.MAX_SAFE_INTEGER) - (rightIndex ?? Number.MAX_SAFE_INTEGER);
+      return left.title.localeCompare(right.title, i18n.language, { sensitivity: 'base' });
+    });
+  }, [i18n.language, renderableModules, sidebarOrder]);
+  const favorites = useMemo(() => user?.preferences?.favorites ?? [], [user?.preferences?.favorites]);
+  const [favoriteRegistrationEvents, setFavoriteRegistrationEvents] = useState<CalendarEvent[]>([]);
   const settingsPath = useMemo(() => getSettingsPath(i18n.language), [i18n.language]);
 
   const pathname = location.pathname;
+  const congregationLogoSrc = congregation?.logo_small_file_id
+    ? `${API_URL.replace(/\/$/, '')}/files/public/${congregation.logo_small_file_id}`
+    : undefined;
 
   const navigationItems = useMemo(
     () => [
-      ...renderableModules.map((module) =>
+      ...orderedModules.map((module) =>
         createModuleNavigationItem({
           moduleId: module.id,
           label: module.title,
@@ -96,8 +138,97 @@ const Dashboard = () => {
         language: i18n.language,
       }),
     ],
-    [i18n.language, renderableModules, t],
+    [i18n.language, orderedModules, t],
   );
+  useEffect(() => {
+    const typeIds = favorites.filter((id) => id.startsWith('registration-type:')).map((id) => id.split(':')[1]);
+    if (!typeIds.length) return;
+    void httpRequest<EventsListResponse>({
+      service: EventsService.list,
+      data: {
+        start: new Date().toISOString(),
+        end: new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000).toISOString(),
+        page: 0,
+        size: 500,
+        order: 'start_datetime',
+        direction: 'ASC',
+      },
+    }).then(({ result }) => {
+      const latest = typeIds.flatMap((typeId) => {
+        const event = result.find((candidate) => candidate.event_type_id === typeId && candidate.attendance_enabled);
+        return event ? [event] : [];
+      });
+      setFavoriteRegistrationEvents(latest);
+    });
+  }, [favorites]);
+
+  const favoriteItems = useMemo(
+    () =>
+      favorites
+        .map((id) => {
+          if (!id.startsWith('registration-type:')) return navigationItems.find((item) => item.id === id);
+          const event = favoriteRegistrationEvents.find((candidate) => candidate.event_type_id === id.split(':')[1]);
+          return event
+            ? {
+                ...createModuleNavigationItem({
+                  moduleId: 'event_registration',
+                  label: event.type?.name ?? event.name,
+                  path: `${getModulePath('event_registration', i18n.language)}/${event.id}`,
+                }),
+                id,
+              }
+            : {
+                ...createModuleNavigationItem({
+                  moduleId: 'event_registration',
+                  label: t('pages.registration.noUpcoming'),
+                  path: `${getModulePath('event_registration', i18n.language)}?type=${id.split(':')[1]}`,
+                }),
+                id,
+              };
+        })
+        .filter(Boolean)
+        .slice(0, congregation?.max_favorites ?? 10) as typeof navigationItems,
+    [congregation?.max_favorites, favoriteRegistrationEvents, favorites, i18n.language, navigationItems, t],
+  );
+
+  const toggleFavorite = useCallback(
+    async (moduleId: string) => {
+      const limit = congregation?.max_favorites ?? 10;
+      const next = favorites.includes(moduleId)
+        ? favorites.filter((id) => id !== moduleId)
+        : [...favorites, moduleId].slice(0, limit);
+      try {
+        await httpRequest({ service: UsersService.updatePreferences, data: { favorites: next } });
+        await refreshSession();
+      } catch (value) {
+        showNotification(value instanceof Error ? value.message : t('pages.settings.error.saveFailed'), {
+          severity: 'error',
+        });
+      }
+    },
+    [congregation?.max_favorites, favorites, refreshSession, showNotification, t],
+  );
+
+  useEffect(() => {
+    const preload = () => {
+      const listData = { page: 0, size: user?.preferences?.page_sizes?.default ?? 50 };
+      favorites.forEach((id) => {
+        const request =
+          id === 'users'
+            ? { service: UsersService.list, data: { ...listData, order: 'name', direction: 'ASC' } }
+            : id === 'roles'
+              ? { service: RolesService.list, data: { ...listData, order: 'name', direction: 'ASC' } }
+              : id === 'members'
+                ? { service: PersonsService.list, data: { ...listData, order: 'last_name', direction: 'ASC' } }
+                : id === 'processes'
+                  ? { service: ProcessesService.list, data: { ...listData, order: 'name', direction: 'ASC' } }
+                  : null;
+        if (request) void httpRequest(request).catch(() => undefined);
+      });
+    };
+    const timer = window.setTimeout(preload, 250);
+    return () => window.clearTimeout(timer);
+  }, [favorites, user?.preferences?.page_sizes?.default]);
 
   const selectedPath = getLocalizedPathname(pathname, i18n.language);
 
@@ -175,7 +306,7 @@ const Dashboard = () => {
 
     if (matchedModule) {
       const localizedPath = matchedModule.path;
-      if (pathname === localizedPath) return;
+      if (pathname === localizedPath || pathname.startsWith(`${localizedPath}/`)) return;
 
       navigate(localizedPath, { replace: true });
       return;
@@ -200,15 +331,18 @@ const Dashboard = () => {
       <DashboardHeader
         congregationName={congregation?.name || 'Congr.io'}
         congregationId={congregation?.id}
+        logoSrc={congregationLogoSrc}
         congregations={userCongregations}
         username={user?.username}
         homeLabel={t('pages.dashboard.home')}
         logoutLabel={t('pages.dashboard.logout')}
         switchCongregationLabel={t('pages.dashboard.switchCongregation')}
+        favoriteItems={favoriteItems}
         onLogout={logout}
         onMenuClick={() => setIsDrawerOpen(true)}
         onLogoClick={navigateHome}
         onCongregationChange={(congregationId) => void handleCongregationChange(congregationId)}
+        onFavoriteNavigate={navigateToPath}
       />
 
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
@@ -216,6 +350,7 @@ const Dashboard = () => {
           items={navigationItems}
           selectedPath={selectedPath}
           congregationName={congregation?.name || 'Congr.io'}
+          logoSrc={congregationLogoSrc}
           homeLabel={t('pages.dashboard.home')}
           open={isDrawerOpen}
           onNavigate={navigateToPath}
@@ -224,13 +359,16 @@ const Dashboard = () => {
         />
 
         <DashboardContentRoutes
-          availableModules={renderableModules}
+          availableModules={orderedModules}
           homeTitle={t('pages.dashboard.welcomeTitle')}
           homeSubtitle={t('pages.dashboard.successMessage')}
           settingsTitle={t('pages.settings.title')}
           loadingLabel={t('pages.dashboard.loading')}
           moduleNotFoundLabel={t('pages.dashboard.moduleNotFound')}
           settingsPath={settingsPath}
+          favorites={favorites}
+          favoriteLabel={t('pages.dashboard.toggleFavorite')}
+          onToggleFavorite={(moduleId) => void toggleFavorite(moduleId)}
         />
       </Box>
 

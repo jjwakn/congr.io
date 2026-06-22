@@ -1,12 +1,15 @@
 import { I18nService } from 'nestjs-i18n';
+import { randomUUID } from 'node:crypto';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
-import { In, IsNull, Repository } from 'typeorm';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { DataSource, In, IsNull, LessThan, MoreThan, Repository } from 'typeorm';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getUserCongregationContext } from '../../utils/congregation-context';
+import { Feature } from '../../utils/constants';
 import { parseDateTimeInTimeZone } from '../../utils/datetime';
 import { Congregation } from '../congregation/congregation.entity';
 import { EventType } from '../event-type/event-type.entity';
+import { FilesService } from '../files/files.service';
 import { User } from '../user/user.entity';
 import { Event } from './event.entity';
 import {
@@ -34,6 +37,9 @@ export class EventService {
     @InjectRepository(Congregation)
     private readonly congregationRepository: Repository<Congregation>,
 
+    private readonly dataSource: DataSource,
+    private readonly filesService: FilesService,
+
     private readonly i18n: I18nService,
   ) {}
 
@@ -53,6 +59,15 @@ export class EventService {
       description: data.description?.trim() ?? '',
       type_id: data.type_id,
       enabled: data.enabled ?? true,
+      all_day: data.all_day ?? false,
+      is_public: data.is_public ?? false,
+      image_file_id: data.image_file_id ?? null,
+      image_url: data.image_url?.trim() || null,
+      attendance_enabled: data.attendance_enabled ?? false,
+      self_registration_enabled: data.self_registration_enabled ?? false,
+      custom_fields: data.custom_fields ?? [],
+      save_attendance_date: data.save_attendance_date ?? false,
+      attendance_date_person_field_id: data.attendance_date_person_field_id ?? null,
     };
   }
 
@@ -129,7 +144,7 @@ export class EventService {
     return cleanColumns<Event>(result);
   }
 
-  async list({ query, userId, congregationId }: EventListProps) {
+  async list({ query, userId, congregationId, canViewAll = false }: EventListProps) {
     const { congregation } = await this.getContext(userId, congregationId);
 
     const { result, total } = await findWithFilters<Event, EventQuery>({
@@ -141,6 +156,9 @@ export class EventService {
         congregation_id: congregation.id,
         deleted_at: IsNull(),
         deleted_by: IsNull(),
+        ...(!canViewAll ? { is_public: true } : {}),
+        ...(query.start ? { end_datetime: MoreThan(new Date(query.start)) } : {}),
+        ...(query.end ? { start_datetime: LessThan(new Date(query.end)) } : {}),
       },
     });
 
@@ -164,42 +182,92 @@ export class EventService {
     };
   }
 
-  async get({ id, userId, congregationId }: EventGetProps) {
+  async get({ id, userId, congregationId, canViewAll = false }: EventGetProps) {
     const { congregation } = await this.getContext(userId, congregationId);
-    return this.loadEventOrThrow({ id, congregationId: congregation.id });
+    const event = await this.loadEventOrThrow({ id, congregationId: congregation.id });
+    if (!canViewAll && !event.is_public) throw new ForbiddenException(this.i18n.t('errors.auth.unauthorized'));
+    return event;
   }
 
-  async create({ data, userId, congregationId }: EventCreateProps) {
+  async create({
+    data,
+    userId,
+    congregationId,
+    canCreateEventType = false,
+    canUpdateEventType = false,
+  }: EventCreateProps) {
     const { user, congregation } = await this.getContext(userId, congregationId);
     const normalized = this.normalizeEvent(data);
-    const eventType = await this.resolveEventTypeOrThrow({
-      id: normalized.type_id,
-      congregationId: congregation.id,
-    });
-
     const dateTimes = this.parseEventDateTimes({
       startDateTime: data.start_datetime,
       endDateTime: data.end_datetime,
       timeZone: congregation.timezone,
     });
 
-    const created = this.repository.create({
-      congregation_id: congregation.id,
-      congregation,
-      name: normalized.name,
-      description: normalized.description,
-      ...dateTimes,
-      event_type_id: eventType.id,
-      type: eventType,
-      enabled: normalized.enabled,
-      created_by: user,
-    });
+    if (!normalized.type_id && !data.new_type) throw new BadRequestException(this.i18n.t('errors.eventType.notFound'));
+    if (data.new_type && !canCreateEventType) throw new ForbiddenException(this.i18n.t('errors.auth.unauthorized'));
 
-    const result = await this.repository.save(created);
-    return this.get({ id: result.id, userId, congregationId });
+    const resultId = await this.dataSource.transaction(async (manager) => {
+      const eventRepository = manager.getRepository(Event);
+      const eventTypeRepository = manager.getRepository(EventType);
+      const eventType = data.new_type
+        ? await eventTypeRepository.save(
+            eventTypeRepository.create({
+              congregation_id: congregation.id,
+              congregation,
+              name: data.new_type.name.trim(),
+              description: data.new_type.description?.trim() ?? '',
+              attendance_enabled: normalized.attendance_enabled,
+              custom_fields: data.type_custom_fields ?? [],
+              save_attendance_date: normalized.save_attendance_date,
+              attendance_date_person_field_id: normalized.attendance_date_person_field_id,
+              created_by: user,
+            }),
+          )
+        : await eventTypeRepository.findOne({
+            where: { id: normalized.type_id, congregation_id: congregation.id, deleted_at: IsNull() },
+          });
+      if (!eventType) throw new NotFoundException(this.i18n.t('errors.eventType.notFound'));
+      if ((data.apply_attendance_to_type || data.type_custom_fields) && !data.new_type) {
+        if (!canUpdateEventType) throw new ForbiddenException(this.i18n.t('errors.auth.unauthorized'));
+        if (data.apply_attendance_to_type) {
+          eventType.attendance_enabled = normalized.attendance_enabled;
+          eventType.save_attendance_date = normalized.save_attendance_date;
+          eventType.attendance_date_person_field_id = normalized.attendance_date_person_field_id;
+        }
+        if (data.type_custom_fields) eventType.custom_fields = data.type_custom_fields;
+        eventType.updated_by = user;
+        await eventTypeRepository.save(eventType);
+      }
+
+      const created = eventRepository.create({
+        congregation_id: congregation.id,
+        congregation,
+        name: normalized.name,
+        description: normalized.description,
+        ...dateTimes,
+        event_type_id: eventType.id,
+        type: eventType,
+        enabled: normalized.enabled,
+        all_day: normalized.all_day,
+        is_public: normalized.is_public,
+        public_id: normalized.is_public ? randomUUID() : null,
+        image_file_id: normalized.image_file_id,
+        image_url: normalized.image_url,
+        attendance_enabled: normalized.attendance_enabled,
+        self_registration_enabled: normalized.self_registration_enabled,
+        custom_fields: normalized.custom_fields,
+        save_attendance_date: normalized.save_attendance_date,
+        attendance_date_person_field_id: normalized.attendance_date_person_field_id,
+        created_by: user,
+      });
+      return (await eventRepository.save(created)).id;
+    });
+    if (normalized.image_file_id) await this.filesService.setPublic(normalized.image_file_id, normalized.is_public);
+    return this.get({ id: resultId, userId, congregationId, canViewAll: true });
   }
 
-  async update({ id, data, userId, congregationId }: EventUpdateProps) {
+  async update({ id, data, userId, congregationId, canUpdateEventType = false }: EventUpdateProps) {
     const { user, congregation } = await this.getContext(userId, congregationId);
 
     const existing = await this.repository.findOne({
@@ -213,9 +281,20 @@ export class EventService {
 
     const normalized = this.normalizeEvent(data);
     const eventType = await this.resolveEventTypeOrThrow({
-      id: normalized.type_id,
+      id: normalized.type_id ?? existing.event_type_id,
       congregationId: congregation.id,
     });
+    if (data.apply_attendance_to_type || data.type_custom_fields) {
+      if (!canUpdateEventType) throw new ForbiddenException(this.i18n.t('errors.auth.unauthorized'));
+      if (data.apply_attendance_to_type) {
+        eventType.attendance_enabled = normalized.attendance_enabled;
+        eventType.save_attendance_date = normalized.save_attendance_date;
+        eventType.attendance_date_person_field_id = normalized.attendance_date_person_field_id;
+      }
+      if (data.type_custom_fields) eventType.custom_fields = data.type_custom_fields;
+      eventType.updated_by = user;
+      await this.eventTypeRepository.save(eventType);
+    }
 
     const dateTimes = this.parseEventDateTimes({
       startDateTime: data.start_datetime,
@@ -230,10 +309,21 @@ export class EventService {
     existing.event_type_id = eventType.id;
     existing.type = eventType;
     existing.enabled = normalized.enabled;
+    existing.all_day = normalized.all_day;
+    existing.is_public = normalized.is_public;
+    existing.public_id = normalized.is_public ? (existing.public_id ?? randomUUID()) : null;
+    existing.image_file_id = normalized.image_file_id;
+    existing.image_url = normalized.image_url;
+    existing.attendance_enabled = normalized.attendance_enabled;
+    existing.self_registration_enabled = normalized.self_registration_enabled;
+    existing.custom_fields = normalized.custom_fields;
+    existing.save_attendance_date = normalized.save_attendance_date;
+    existing.attendance_date_person_field_id = normalized.attendance_date_person_field_id;
     existing.updated_by = user;
 
     await this.repository.save(existing);
-    return this.get({ id, userId, congregationId });
+    if (normalized.image_file_id) await this.filesService.setPublic(normalized.image_file_id, normalized.is_public);
+    return this.get({ id, userId, congregationId, canViewAll: true });
   }
 
   async remove({ id, userId, congregationId }: EventDeleteProps) {
@@ -252,5 +342,48 @@ export class EventService {
     await this.repository.save(existing);
     await this.repository.softDelete(id);
     return { deleted: true };
+  }
+
+  async setRegistrationLock({ id, locked, userId, congregationId }: EventDeleteProps & { locked: boolean }) {
+    const { user, congregation } = await this.getContext(userId, congregationId);
+    const event = await this.repository.findOne({
+      where: { id, congregation_id: congregation.id, deleted_at: IsNull() },
+    });
+    if (!event) throw new NotFoundException(this.i18n.t('errors.event.notFound'));
+    event.registration_locked = locked;
+    event.updated_by = user;
+    await this.repository.save(event);
+    return this.get({ id, userId, congregationId, canViewAll: true });
+  }
+
+  async listPublic({ congregationId, query }: { congregationId: string; query: EventQuery }) {
+    const congregation = await this.congregationRepository.findOne({
+      where: { id: congregationId, deleted_at: IsNull() },
+    });
+    if (!congregation?.features?.includes(Feature.PublicEvents))
+      throw new NotFoundException(this.i18n.t('errors.event.notFound'));
+    const { result, total } = await findWithFilters<Event, EventQuery>({
+      repository: this.repository,
+      query,
+      searchFields: ['name', 'description'],
+      baseWhere: {
+        congregation_id: congregationId,
+        is_public: true,
+        deleted_at: IsNull(),
+        ...(query.start ? { end_datetime: MoreThan(new Date(query.start)) } : {}),
+        ...(query.end ? { start_datetime: LessThan(new Date(query.end)) } : {}),
+      },
+    });
+    return { result, total };
+  }
+
+  async getPublic(publicId: string) {
+    const result = await this.repository.findOne({
+      where: { public_id: publicId, is_public: true, deleted_at: IsNull() },
+      relations: { type: true, congregation: true },
+    });
+    if (!result || !result.congregation.features?.includes(Feature.PublicEvents))
+      throw new NotFoundException(this.i18n.t('errors.event.notFound'));
+    return result;
   }
 }

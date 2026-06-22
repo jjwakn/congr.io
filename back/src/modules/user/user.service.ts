@@ -24,6 +24,7 @@ import {
   UserDeleteProps,
   UserGetByIdProps,
   UserGetByUsernameProps,
+  UserPreferencesProps,
   UserQuery,
   UserSetTemporaryPasswordProps,
   UserUpdateProps,
@@ -61,6 +62,29 @@ export class UserService {
     if (!existing) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
 
     return existing;
+  }
+
+  async getPreferences(userId: string) {
+    const user = await this.getExistingUser(userId);
+    return user.preferences ?? {};
+  }
+
+  async updatePreferences({ data, userId }: UserPreferencesProps) {
+    const user = await this.getExistingUser(userId);
+    const pageSizes = Object.fromEntries(
+      Object.entries(data.page_sizes ?? user.preferences?.page_sizes ?? {})
+        .filter(([, value]) => Number.isInteger(value) && value >= 5 && value <= 500)
+        .map(([key, value]) => [key, Number(value)]),
+    );
+    user.preferences = {
+      ...(user.preferences ?? {}),
+      ...(data.page_sizes ? { page_sizes: pageSizes } : {}),
+      ...(data.sidebar_order ? { sidebar_order: Array.from(new Set(data.sidebar_order)) } : {}),
+      ...(data.favorites ? { favorites: Array.from(new Set(data.favorites)).slice(0, 50) } : {}),
+    };
+    user.updated_by = user;
+    await this.repository.save(user);
+    return user.preferences;
   }
 
   private async mapRoles(roleIds: string[] = []) {

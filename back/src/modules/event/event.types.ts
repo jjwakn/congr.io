@@ -1,18 +1,31 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 import { CommonOrder, CongregationEntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 
 export interface EventGetProps extends CongregationEntityActionProps {
   id: string;
+  canViewAll?: boolean;
 }
 
 export interface EventListProps extends CongregationEntityActionProps {
   query: EventQuery;
+  canViewAll?: boolean;
 }
 
 export interface EventCreateProps extends CongregationEntityActionProps {
   data: EventDto;
+  canCreateEventType?: boolean;
+  canUpdateEventType?: boolean;
 }
 
 export interface EventUpdateProps extends EventCreateProps {
@@ -21,6 +34,24 @@ export interface EventUpdateProps extends EventCreateProps {
 
 export interface EventDeleteProps extends CongregationEntityActionProps {
   id: string;
+}
+
+export class EventRegistrationLockDto {
+  @Type(() => Boolean)
+  @IsBoolean()
+  locked: boolean;
+}
+
+export class InlineEventTypeDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(160)
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(1000)
+  description?: string;
 }
 
 export class EventDto {
@@ -48,13 +79,70 @@ export class EventDto {
 
   @ApiProperty({ example: '9ce26ff8-84d5-47f1-9974-ce4b47de7e2c' })
   @IsUUID()
-  type_id: string;
+  @IsOptional()
+  type_id?: string;
 
   @ApiProperty({ required: false, example: true })
   @Type(() => Boolean)
   @IsBoolean()
   @IsOptional()
   enabled?: boolean;
+
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  all_day?: boolean;
+
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  is_public?: boolean;
+
+  @IsUUID('4')
+  @IsOptional()
+  image_file_id?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(2000)
+  image_url?: string;
+
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  attendance_enabled?: boolean;
+
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  self_registration_enabled?: boolean;
+
+  @IsArray()
+  @IsOptional()
+  custom_fields?: Array<Record<string, unknown>>;
+
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  apply_attendance_to_type?: boolean;
+
+  @IsArray()
+  @IsOptional()
+  type_custom_fields?: Array<Record<string, unknown>>;
+
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  save_attendance_date?: boolean;
+
+  @IsUUID('4')
+  @IsOptional()
+  attendance_date_person_field_id?: string;
+
+  @ValidateNested()
+  @Type(() => InlineEventTypeDto)
+  @IsOptional()
+  new_type?: InlineEventTypeDto;
 }
 
 enum Order {
@@ -71,4 +159,12 @@ export class EventQuery extends ListParamsQuery {
   })
   @IsOptional()
   order: Order | CommonOrder = Order.start_datetime;
+
+  @IsString()
+  @IsOptional()
+  start?: string;
+
+  @IsString()
+  @IsOptional()
+  end?: string;
 }

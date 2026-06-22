@@ -55,6 +55,9 @@ export class EventTypeService {
       name: data.name.trim(),
       description: data.description?.trim() ?? '',
       enabled: data.enabled ?? true,
+      attendance_enabled: data.attendance_enabled ?? false,
+      custom_fields: data.custom_fields ?? [],
+      color: data.color ?? '#1976d2',
     };
   }
 
@@ -130,6 +133,9 @@ export class EventTypeService {
     existing.name = normalized.name;
     existing.description = normalized.description;
     existing.enabled = normalized.enabled;
+    existing.attendance_enabled = normalized.attendance_enabled;
+    existing.custom_fields = normalized.custom_fields;
+    existing.color = normalized.color;
     existing.updated_by = user;
     await this.repository.save(existing);
 

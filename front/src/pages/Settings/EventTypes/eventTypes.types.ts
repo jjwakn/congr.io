@@ -31,6 +31,8 @@ export interface EventTypeFormValues {
   name: string;
   description: string;
   enabled: boolean;
+  attendance_enabled: boolean;
+  color: string;
 }
 
 export interface EventTypeFormDialogProps {

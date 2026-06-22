@@ -3,6 +3,7 @@ import { CrudPermissionStatus } from '@components/common/modules/CrudPermissionS
 import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
@@ -11,6 +12,7 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { Alert } from '@mui/material';
 import { PermissionsService } from '@services/permissions';
 import { RolesService } from '@services/roles';
+import { filterFeaturePermissionSections } from '@utils/feature-gates';
 import { HttpRequestError, httpRequest } from '@utils/http';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -123,6 +125,7 @@ const createRoleTableSchema = (
 export const RolesManagement = () => {
   const { t } = useTranslation();
   const { showNotification } = useNotificationContext();
+  const { congregation } = useAppContext();
   const { hasPermission } = useAuth();
   const canView = hasPermission('role', 'get');
   const canCreate = hasPermission('role', 'create');
@@ -182,14 +185,14 @@ export const RolesManagement = () => {
         }),
       ]);
 
-      setPermissionSections(sections ?? []);
+      setPermissionSections(filterFeaturePermissionSections(sections ?? [], congregation?.features));
       setPermissionActions(actions ?? []);
     } catch (value) {
       setMetadataError(getErrorMessage(value, t('pages.modules.roles.error.permissionsLoadFailed')));
     } finally {
       setMetadataLoading(false);
     }
-  }, [canView, t]);
+  }, [canView, congregation?.features, t]);
 
   useEffect(() => {
     if (!canView) {

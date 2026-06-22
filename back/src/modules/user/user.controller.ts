@@ -3,7 +3,7 @@ import type { RequestType } from 'src/common/common.types';
 import { PermissionDecorator, PermissionGuard } from 'src/modules/permission/permission.guard';
 import { Module, ModuleAction } from 'src/utils/constants';
 import { getRequestUserIdOrThrow } from 'src/utils/request';
-import { Body, Controller, Param, ParseUUIDPipe, Post, Put, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
 import { User } from './user.entity';
@@ -12,6 +12,7 @@ import {
   UserChangeOwnPasswordDto,
   UserCompleteTemporaryPasswordDto,
   UserGetByIdProps,
+  UserPreferencesDto,
   UserQuery,
   UserSetTemporaryPasswordDto,
   UserValidateProps,
@@ -24,6 +25,21 @@ export class UserController extends CommonController<User, UserQuery, UserGetByI
 
   constructor(protected readonly service: UserService) {
     super();
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/me/preferences')
+  preferences(@Req() request: RequestType) {
+    return this.service.getPreferences(getRequestUserIdOrThrow(request));
+  }
+
+  @UseGuards(AuthGuard)
+  @Put('/me/preferences')
+  updatePreferences(
+    @Body(new ValidationPipe({ transform: true, whitelist: true })) data: UserPreferencesDto,
+    @Req() request: RequestType,
+  ) {
+    return this.service.updatePreferences({ data, userId: getRequestUserIdOrThrow(request) });
   }
 
   @UseGuards(AuthGuard)

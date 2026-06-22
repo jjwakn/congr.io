@@ -10,13 +10,14 @@
     "logout": "Logout",
     "settings": "Settings",
     "switchCongregation": "Switch congregation",
-    "congregationSwitchFailed": "Could not switch congregations."
+    "congregationSwitchFailed": "Could not switch congregations.",
+    "toggleFavorite": "Add or remove this section from quick access"
   },
   "modules": {
     "common": {
       "refresh": "Refresh",
       "search": "Search",
-      "rowsPerPage": "Rows per page",
+      "rowsPerPage": "Items per page",
       "view": "View",
       "emptyValue": "Not provided"
     },
@@ -100,7 +101,8 @@
         "create": "Create",
         "update": "Update",
         "delete": "Delete",
-        "change_password": "Change password"
+        "change_password": "Change password",
+        "lock": "Lock"
       },
       "form": {
         "fullAccess": "Full access",
@@ -122,9 +124,13 @@
           "role": "Roles",
           "congregation": "Congregation",
           "configuration": "Settings",
-          "process": "Processes",
+          "process": "Flows",
           "event": "Events",
-          "event_type": "Event Types"
+          "event_type": "Event Types",
+          "person": "Persons",
+          "person_field": "Person Fields",
+          "event_attendance": "Event Attendance",
+          "event_registration": "Event Registration"
         }
       },
       "success": {
@@ -148,7 +154,8 @@
     "tabs": {
       "congregations": "Congregation Settings",
       "ui": "UI",
-      "eventTypes": "Event Types"
+      "eventTypes": "Event Types",
+      "deployment": "Deployment"
     },
     "congregation": {
       "title": "Congregation Settings",
@@ -194,7 +201,16 @@
       "paletteLoading": "Loading color palette...",
       "editTabs": {
         "info": "Info",
-        "palette": "Palette"
+        "palette": "Theme"
+      },
+      "maxFavorites": "Maximum quick access items",
+      "maxFavoritesHelp": "Choose how many section shortcuts users can keep in the header.",
+      "branding": {
+        "title": "Congregation branding",
+        "publicNotice": "Congregation logos are public so they can appear on public event pages.",
+        "small": "Upload small logo",
+        "big": "Upload large logo",
+        "uploading": "Uploading..."
       },
       "modules": {
         "title": "Available modules",
@@ -223,7 +239,11 @@
           "eventTypes": "{{count}} event types will be deleted",
           "processes": "{{count}} processes will be deleted",
           "processSteps": "{{count}} process steps will be deleted",
-          "configurations": "{{count}} configuration records will be deleted"
+          "configurations": "{{count}} configuration records will be deleted",
+          "persons": "{{count}} persons will be deleted",
+          "personFields": "{{count}} person fields will be deleted",
+          "eventParticipants": "{{count}} event registrations will be deleted",
+          "files": "{{count}} stored files will be deleted"
         }
       }
     },
@@ -239,6 +259,18 @@
       "label": "Language",
       "english": "English",
       "spanish": "Spanish"
+    },
+    "interface": {
+      "paginationTitle": "Items per page",
+      "paginationDescription": "Set a default and optional section-specific page sizes for your account.",
+      "defaultPageSize": "Default items per page",
+      "sidebarTitle": "Sidebar order",
+      "sidebarDescription": "Reorder visible sections. Settings always remains at the bottom."
+    },
+    "deployment": {
+      "description": "Review deployment-time branding and file storage configuration.",
+      "branding": "Branding setup",
+      "files": "File storage setup"
     },
     "lightMode": "Light Mode Palette",
     "darkMode": "Dark Mode Palette",
@@ -277,6 +309,8 @@
         "description": "Description",
         "enabled": "Enabled",
         "enabledHint": "Disabled event types cannot be selected for new events.",
+        "attendance": "Capture attendance by default",
+        "color": "Calendar color",
         "actions": "Actions"
       },
       "dialogs": {
@@ -297,6 +331,215 @@
         "saveFailed": "Could not save the event type.",
         "deleteFailed": "Could not delete the event type."
       }
+    }
+  },
+  "files": {
+    "title": "File storage",
+    "description": "Choose one storage provider with environment variables. Only status is shown here.",
+    "selected": "Selected provider",
+    "configured": "Configured correctly",
+    "notConfigured": "Configuration incomplete",
+    "adapterUnavailable": "This provider is documented for deployment planning, but its upload adapter is not enabled in this build.",
+    "missing": "Missing variables: {{variables}}",
+    "loadFailed": "Could not load file provider status.",
+    "providers": {
+      "local": {
+        "title": "Local storage",
+        "instructions": "Set FILE_STORAGE_PROVIDER=local and optionally FILE_STORAGE_PATH. Mount that path as a persistent Docker volume in production."
+      },
+      "url": {
+        "title": "Public URL",
+        "instructions": "Set FILE_STORAGE_PROVIDER=url and FILE_PUBLIC_BASE_URL when images are hosted externally."
+      },
+      "aws": {
+        "title": "Amazon S3",
+        "instructions": "Set the shared bucket, region, access key, and secret variables for an S3-compatible bucket."
+      },
+      "gcp": {
+        "title": "Google Cloud",
+        "instructions": "Set the shared bucket, project, and credentials variables for Cloud Storage."
+      },
+      "onedrive": {
+        "title": "OneDrive",
+        "instructions": "Set the drive folder, client, secret, and tenant variables for Microsoft Graph."
+      },
+      "google_drive": {
+        "title": "Google Drive",
+        "instructions": "Set the drive folder and credentials variables for Google Drive."
+      }
+    }
+  },
+  "publicEvents": {
+    "title": "Events",
+    "congregationRequired": "A congregation is required to list public events.",
+    "loadFailed": "Could not load public events.",
+    "registration": {
+      "title": "Register for this event",
+      "submit": "Register",
+      "success": "Your registration was received."
+    }
+  },
+  "events": {
+    "calendar": "Calendar",
+    "viewDay": "View day",
+    "today": "Today",
+    "filter": "Filter event types",
+    "previous": "Previous",
+    "next": "Next",
+    "refresh": "Refresh calendar",
+    "create": "Create event",
+    "loading": "Loading events...",
+    "views": { "day": "Day", "week": "Week", "month": "Month" },
+    "actions": {
+      "viewDay": "View day",
+      "create": "Create event",
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "addToCalendar": "Add to calendar",
+      "share": "Share"
+    },
+    "form": {
+      "createTitle": "Create event",
+      "editTitle": "Edit event",
+      "name": "Event name",
+      "type": "Event type",
+      "newType": "Create event type",
+      "description": "Description",
+      "start": "Starts",
+      "end": "Ends",
+      "timezone": "Times use {{timezone}}",
+      "dropImage": "Drop an image here or select one",
+      "publicImageUrl": "Public image URL",
+      "allDay": "All day",
+      "public": "Public event",
+      "attendance": "Capture attendance",
+      "selfRegistration": "Allow self-registration",
+      "applyAttendanceToType": "Use this attendance setting for future events of this type",
+      "allowRegistration": "Allow self-registration",
+      "saveAttendanceDate": "Save the attendance date on the person",
+      "attendanceDateField": "Person date field",
+      "publicAttendanceNotice": "A public attendance event must allow self-registration or be changed before saving. Only fields marked for users are shown.",
+      "required": "Complete the required event fields.",
+      "invalidImage": "Select a browser-compatible image.",
+      "save": "Save event"
+    },
+    "fields": {
+      "typeTitle": "Event type fields",
+      "eventTitle": "Event fields",
+      "label": "Field label",
+      "type": "Field type",
+      "options": "Options separated by commas",
+      "required": "Required",
+      "userFillable": "Visible on self-registration",
+      "allEvents": "Use for every event of this type",
+      "personField": "Save value to person field",
+      "doNotSave": "Do not save to person",
+      "add": "Add field",
+      "types": {
+        "text": "Text",
+        "paragraph": "Paragraph",
+        "number": "Number",
+        "switch": "Switch",
+        "single_option": "One option",
+        "multiple_options": "Multiple options"
+      }
+    },
+    "delete": { "title": "Delete event", "message": "Delete this event and its congregation-owned data?" },
+    "success": { "saved": "Event saved.", "deleted": "Event deleted.", "linkCopied": "Event link copied." },
+    "errors": {
+      "load": "Could not load events.",
+      "types": "Could not load event types.",
+      "save": "Could not save the event.",
+      "delete": "Could not delete the event."
+    }
+  },
+  "persons": {
+    "title": "Persons",
+    "fieldsTitle": "Custom person fields",
+    "create": "Create person",
+    "edit": "Edit",
+    "save": "Save person",
+    "loading": "Loading persons...",
+    "empty": "No persons found.",
+    "loadFailed": "Could not load persons.",
+    "deleteMessage": "Delete this item? Existing values are retained when deleting a custom field.",
+    "tabs": { "persons": "Persons", "fields": "Custom fields", "details": "Details", "flows": "Flows" },
+    "flowsEmpty": "No flows are available for this person.",
+    "fields": {
+      "code": "Code",
+      "firstName": "First name",
+      "middleName": "Middle name",
+      "lastName": "Last name",
+      "secondLastName": "Second last name",
+      "marriedName": "Married name",
+      "phone": "Phone",
+      "birthdate": "Birthdate",
+      "age": "Age",
+      "email": "Email"
+    },
+    "fieldsCrud": {
+      "create": "Create custom field",
+      "edit": "Edit custom field",
+      "label": "Label",
+      "type": "Type",
+      "required": "Required",
+      "options": "Options"
+    },
+    "fieldTypes": {
+      "text": "Text",
+      "paragraph": "Paragraph",
+      "number": "Number",
+      "switch": "Switch",
+      "single_option": "One option",
+      "multiple_options": "Multiple options",
+      "date": "Date"
+    }
+  },
+  "attendance": {
+    "title": "Event Attendance",
+    "event": "Event",
+    "person": "Person",
+    "add": "Add attendee",
+    "publicSubmission": "Public submission",
+    "error": "Could not update attendance."
+  },
+  "registration": {
+    "title": "Event Registration",
+    "register": "Register person",
+    "open": "Open registration",
+    "lock": "Lock registration",
+    "unlock": "Unlock registration",
+    "favoriteType": "Quick access to the latest event of this type",
+    "noUpcoming": "No upcoming event exists for this event type.",
+    "createEvent": "Create event",
+    "people": "Registered people",
+    "possiblePerson": "Possible match: {{name}}",
+    "confirmMatch": "Confirm person match",
+    "createPerson": "Create a new person from this submission"
+  },
+  "flows": {
+    "title": "Flows",
+    "create": "Create flow",
+    "edit": "Edit",
+    "description": "Description",
+    "steps": "Steps",
+    "loading": "Loading flows...",
+    "empty": "No flows found.",
+    "loadFailed": "Could not load flows.",
+    "saved": "Flow saved.",
+    "saveFailed": "Could not save the flow.",
+    "deleteTitle": "Delete flow",
+    "deleteMessage": "Delete this flow and disable its generated event types?",
+    "editor": {
+      "createTitle": "Create flow",
+      "editTitle": "Edit flow",
+      "unnamedStep": "Unnamed step",
+      "required": "Name the flow and every step.",
+      "addStep": "Add step",
+      "stepName": "Step name",
+      "stepDescription": "Step description",
+      "deleteStep": "Delete step"
     }
   }
 }

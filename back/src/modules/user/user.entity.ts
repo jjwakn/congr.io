@@ -29,6 +29,13 @@ export class User extends CommonEntity {
   @Column({ nullable: false, default: false })
   password_change_required: boolean;
 
+  @Column('simple-json', { nullable: false, default: {} })
+  preferences: {
+    page_sizes?: Record<string, number>;
+    sidebar_order?: string[];
+    favorites?: string[];
+  };
+
   @ManyToMany(() => Role, { onDelete: 'NO ACTION', onUpdate: 'NO ACTION' })
   @JoinTable({
     name: 'user_role',
