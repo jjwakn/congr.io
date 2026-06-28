@@ -86,7 +86,7 @@ export const DashboardContentRoutes = ({
             return (
               <Route
                 key={module.id}
-                path={module.path}
+                path={`${module.path}/*`}
                 element={
                   <DashboardSectionFrame
                     title={module.title}

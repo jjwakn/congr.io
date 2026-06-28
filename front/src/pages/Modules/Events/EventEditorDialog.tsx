@@ -50,6 +50,9 @@ const splitLocalInput = (value: string) => {
 
 const combineLocalInput = (date: string, time: string) => `${date}T${time || '00:00'}`;
 
+const toAllDayEndInput = (date: string, timezone: string) =>
+  DateTime.fromISO(date, { zone: timezone }).plus({ days: 1 }).toFormat("yyyy-LL-dd'T'HH:mm");
+
 export const EventEditorDialog = ({
   open,
   event,
@@ -188,7 +191,7 @@ export const EventEditorDialog = ({
   };
 
   const submit = () => {
-    if (!name.trim() || !typeId || !startDate || !startTime || !endDate || !endTime) {
+    if (!name.trim() || !typeId || !startDate || (!allDay && (!startTime || !endDate || !endTime))) {
       setError(t('pages.events.form.required'));
       setActiveTab('details');
       return;
@@ -202,8 +205,8 @@ export const EventEditorDialog = ({
       {
         name: name.trim(),
         description: description.trim(),
-        start_datetime: combineLocalInput(startDate, startTime),
-        end_datetime: combineLocalInput(endDate, endTime),
+        start_datetime: allDay ? combineLocalInput(startDate, '00:00') : combineLocalInput(startDate, startTime),
+        end_datetime: allDay ? toAllDayEndInput(startDate, timezone) : combineLocalInput(endDate, endTime),
         type_id: typeId,
         all_day: allDay,
         is_public: isPublic,
@@ -283,7 +286,15 @@ export const EventEditorDialog = ({
                 }}
               />
               <FormControlLabel
-                control={<Switch checked={allDay} onChange={(_event, checked) => setAllDay(checked)} />}
+                control={
+                  <Switch
+                    checked={allDay}
+                    onChange={(_event, checked) => {
+                      setAllDay(checked);
+                      if (checked) setEndDate(startDate);
+                    }}
+                  />
+                }
                 label={t('pages.events.form.allDay')}
                 sx={{ flexShrink: 0 }}
               />
@@ -297,39 +308,43 @@ export const EventEditorDialog = ({
                   setStartDate(value);
                   setEndDate(value);
                   const type = eventTypes.find(({ id }) => id === typeId);
-                  if (type) updateEndFromType(type, value, startTime);
+                  if (type && !allDay) updateEndFromType(type, value, startTime);
                 }}
               />
-              <TextField
-                fullWidth
-                type="time"
-                label={t('pages.events.form.startTime')}
-                value={startTime}
-                onChange={(eventValue) => {
-                  const value = eventValue.target.value;
-                  setStartTime(value);
-                  const type = eventTypes.find(({ id }) => id === typeId);
-                  if (type) updateEndFromType(type, startDate, value);
-                }}
-                InputLabelProps={{ shrink: true }}
-              />
+              {allDay ? null : (
+                <TextField
+                  fullWidth
+                  type="time"
+                  label={t('pages.events.form.startTime')}
+                  value={startTime}
+                  onChange={(eventValue) => {
+                    const value = eventValue.target.value;
+                    setStartTime(value);
+                    const type = eventTypes.find(({ id }) => id === typeId);
+                    if (type) updateEndFromType(type, startDate, value);
+                  }}
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
             </Stack>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-              <LocalizedDateField
-                fullWidth
-                label={t('pages.events.form.endDate')}
-                value={endDate}
-                onChange={setEndDate}
-              />
-              <TextField
-                fullWidth
-                type="time"
-                label={t('pages.events.form.endTime')}
-                value={endTime}
-                onChange={(eventValue) => setEndTime(eventValue.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Stack>
+            {allDay ? null : (
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+                <LocalizedDateField
+                  fullWidth
+                  label={t('pages.events.form.endDate')}
+                  value={endDate}
+                  onChange={setEndDate}
+                />
+                <TextField
+                  fullWidth
+                  type="time"
+                  label={t('pages.events.form.endTime')}
+                  value={endTime}
+                  onChange={(eventValue) => setEndTime(eventValue.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Stack>
+            )}
             <TextField
               multiline
               minRows={3}

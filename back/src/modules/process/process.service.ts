@@ -73,6 +73,7 @@ export class ProcessService {
         name: step.name.trim(),
         description: step.description?.trim() ?? '',
         enabled: step.enabled ?? true,
+        complete_previous_steps: step.complete_previous_steps ?? false,
       }));
   }
 
@@ -136,6 +137,7 @@ export class ProcessService {
           existingStep.description = stepData.description;
           existingStep.flow_key = stepData.flow_key;
           existingStep.next_step_keys = stepData.next_step_keys;
+          existingStep.complete_previous_steps = stepData.complete_previous_steps;
           existingStep.enabled = stepData.enabled;
           existingStep.updated_by = user;
           await stepRepository.save(existingStep);
@@ -175,6 +177,7 @@ export class ProcessService {
         description: stepData.description,
         flow_key: stepData.flow_key,
         next_step_keys: stepData.next_step_keys,
+        complete_previous_steps: stepData.complete_previous_steps,
         enabled: stepData.enabled,
         created_by: user,
       });

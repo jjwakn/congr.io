@@ -60,6 +60,8 @@ enum Order {
   code = 'code',
   first_name = 'first_name',
   last_name = 'last_name',
+  phone = 'phone',
+  registered_age = 'registered_age',
 }
 export class PersonQuery extends ListParamsQuery {
   @ApiProperty({ required: false, enum: Order })

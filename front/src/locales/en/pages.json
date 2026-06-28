@@ -19,7 +19,7 @@
       "search": "Search",
       "rowsPerPage": "Items per page",
       "view": "View",
-      "emptyValue": "Not provided"
+      "emptyValue": " - "
     },
     "users": {
       "title": "Users",
@@ -274,7 +274,7 @@
       "time12": "AM/PM",
       "paginationTitle": "Items per page",
       "paginationDescription": "Set a default and optional section-specific page sizes for your account.",
-      "defaultPageSize": "Default items per page",
+      "defaultPageSize": "Default",
       "resetToDefault": "Reset to 50",
       "section": "Section",
       "itemsPerPage": "Items per page",
@@ -478,7 +478,7 @@
       "eventTitle": "Event fields",
       "label": "Field label",
       "type": "Field type",
-      "options": "Options separated by commas",
+      "options": "Options",
       "required": "Required",
       "userFillable": "Visible on self-registration",
       "allEvents": "Use for every event of this type",
@@ -486,6 +486,7 @@
       "doNotSave": "Do not save to person",
       "linkPersonField": "Link person field",
       "linkPersonFieldHelp": "When enabled, this event field uses the selected person field type and options.",
+      "createPersonFieldFromThis": "Create person field from this field",
       "reusableField": "Reusable event field",
       "selectReusable": "Select a reusable field",
       "add": "Add field",
@@ -563,7 +564,7 @@
       "type": "Type",
       "required": "Required",
       "options": "Options",
-      "allowMultiple": "Allow multiple",
+      "allowMultiple": "Allow multiple selection",
       "addOption": "Add option",
       "conditionField": "Field",
       "conditionOperator": "Condition",
@@ -603,6 +604,7 @@
     "event": "Event",
     "person": "Person",
     "add": "Add attendee",
+    "createPerson": "Create person",
     "noCurrentEvent": "No attendance event is active right now.",
     "publicSubmission": "Public submission",
     "error": "Could not update attendance."
@@ -640,6 +642,9 @@
       "unnamedStep": "Unnamed step",
       "required": "Name the flow and every step.",
       "addStep": "Add step",
+      "addFollowingStep": "Add following step",
+      "attachEventType": "Attach event type",
+      "completePreviousSteps": "Mark previous steps as completed",
       "stepName": "Step name",
       "stepDescription": "Step description",
       "deleteStep": "Delete step"

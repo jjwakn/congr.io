@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { EventParticipantsService } from '@services/eventParticipants';
 import { EventsService } from '@services/events';
+import { PersonFieldsService, PersonsService } from '@services/persons';
 import { httpRequest } from '@utils/http';
 import { MuiIcon } from '@utils/muiIcons';
 import { DateTime } from 'luxon';
@@ -23,7 +24,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EventParticipant } from '@/types/event-participant.types';
 import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
-import type { Person } from '@/types/person.types';
+import type { Person, PersonField } from '@/types/person.types';
+import { PersonFormDialog } from '../Persons/PersonFormDialog';
+import type { PersonFieldFormValues, PersonFormValues } from '../Persons/persons.types';
 
 export const AttendanceManagement = () => {
   const { i18n, t } = useTranslation();
@@ -33,8 +36,14 @@ export const AttendanceManagement = () => {
   const [eventId, setEventId] = useState('');
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
   const [person, setPerson] = useState<Person | null>(null);
+  const [personFields, setPersonFields] = useState<PersonField[]>([]);
   const [addOpen, setAddOpen] = useState(false);
+  const [personOpen, setPersonOpen] = useState(false);
+  const [personSubmitting, setPersonSubmitting] = useState(false);
   const selectedEvent = events.find((event) => event.id === eventId) ?? null;
+  const canCreatePerson = hasPermission('person', 'create');
+  const canCreatePersonFields = hasPermission('person_field', 'create');
+  const canViewPersonFields = hasPermission('person_field', 'get');
   const loadParticipants = useCallback(async (id: string) => {
     if (!id) return;
     const response = await httpRequest<{ result: EventParticipant[]; total: number }>({
@@ -61,15 +70,60 @@ export const AttendanceManagement = () => {
       }
     });
   }, [loadParticipants]);
-  const add = async () => {
-    if (!person || !eventId) return;
+  useEffect(() => {
+    if (!canViewPersonFields) return;
+    void httpRequest<{ result: PersonField[]; total: number }>({
+      service: PersonFieldsService.list,
+      data: { page: 0, size: 500, order: 'label', direction: 'ASC' },
+    }).then(({ result }) => setPersonFields(result));
+  }, [canViewPersonFields]);
+
+  const addPersonToAttendance = async (personId: string) => {
+    if (!eventId) return;
     await httpRequest({
       service: EventParticipantsService.attendanceCreate,
-      data: { event_id: eventId, person_id: person.id, attended: true },
+      data: { event_id: eventId, person_id: personId, attended: true },
     });
+    await loadParticipants(eventId);
+  };
+
+  const add = async () => {
+    if (!person || !eventId) return;
+    await addPersonToAttendance(person.id);
     setPerson(null);
     setAddOpen(false);
-    await loadParticipants(eventId);
+  };
+
+  const savePersonField = async (values: PersonFieldFormValues) => {
+    try {
+      const created = await httpRequest<PersonField>({ service: PersonFieldsService.create, data: values });
+      setPersonFields((current) => [...current, created]);
+      return created;
+    } catch (value) {
+      showNotification(value instanceof Error ? value.message : t('pages.persons.fieldsCrud.saveFailed'), {
+        severity: 'error',
+      });
+      return null;
+    }
+  };
+
+  const createPersonAndAdd = async (values: PersonFormValues) => {
+    if (!eventId) return;
+    setPersonSubmitting(true);
+    try {
+      const created = await httpRequest<Person>({ service: PersonsService.create, data: values });
+      await addPersonToAttendance(created.id);
+      setPerson(created);
+      setPersonOpen(false);
+      setAddOpen(false);
+      showNotification(t('pages.persons.createdWithCode', { code: created.code }), { severity: 'success' });
+    } catch (value) {
+      showNotification(value instanceof Error ? value.message : t('pages.persons.loadFailed'), {
+        severity: 'error',
+      });
+    } finally {
+      setPersonSubmitting(false);
+    }
   };
   return (
     <Stack spacing={2}>
@@ -133,7 +187,14 @@ export const AttendanceManagement = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <PersonAutocomplete value={person} onChange={setPerson} label={t('pages.attendance.person')} />
+          <Stack spacing={1.5}>
+            <PersonAutocomplete value={person} onChange={setPerson} label={t('pages.attendance.person')} />
+            {canCreatePerson ? (
+              <Button startIcon={<PersonAddAltOutlinedIcon />} onClick={() => setPersonOpen(true)}>
+                {t('pages.attendance.createPerson')}
+              </Button>
+            ) : null}
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAddOpen(false)}>{t('form.field.cancel')}</Button>
@@ -142,6 +203,16 @@ export const AttendanceManagement = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <PersonFormDialog
+        open={personOpen}
+        person={null}
+        fields={personFields}
+        canCreateFields={canCreatePersonFields}
+        submitting={personSubmitting}
+        onClose={() => setPersonOpen(false)}
+        onSubmit={(values) => void createPersonAndAdd(values)}
+        onCreateField={savePersonField}
+      />
     </Stack>
   );
 };

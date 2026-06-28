@@ -27,6 +27,7 @@ const MODULE_SLUGS: Record<string, LocalizedValue> = {
   users: { en: 'users', es: 'usuarios' },
   members: { en: 'members', es: 'miembros' },
   processes: { en: 'processes', es: 'procesos' },
+  events: { en: 'events', es: 'eventos-lista' },
   events_calendar: { en: 'events-calendar', es: 'eventos' },
   events_attendance: {
     en: 'events-attendance',

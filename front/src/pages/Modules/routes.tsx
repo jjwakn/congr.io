@@ -23,6 +23,10 @@ export const EventsRoute: ModuleRouteDefinition = {
   id: 'events_calendar',
   Component: EventCalendar,
 };
+export const EventsListRoute: ModuleRouteDefinition = {
+  id: 'events',
+  Component: EventCalendar,
+};
 export const PersonsRoute: ModuleRouteDefinition = { id: 'members', Component: PersonsModule };
 export const AttendanceRoute: ModuleRouteDefinition = { id: 'events_attendance', Component: AttendanceManagement };
 export const RegistrationRoute: ModuleRouteDefinition = { id: 'event_registration', Component: RegistrationManagement };
@@ -32,6 +36,7 @@ export const moduleRoutes: ModuleRouteDefinition[] = [
   UsersRoute,
   RolesRoute,
   EventsRoute,
+  EventsListRoute,
   PersonsRoute,
   AttendanceRoute,
   RegistrationRoute,

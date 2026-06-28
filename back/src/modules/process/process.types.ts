@@ -75,6 +75,12 @@ export class ProcessStepDto {
   @IsBoolean()
   @IsOptional()
   enabled?: boolean;
+
+  @ApiProperty({ required: false, example: false })
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  complete_previous_steps?: boolean;
 }
 
 export class ProcessDto {

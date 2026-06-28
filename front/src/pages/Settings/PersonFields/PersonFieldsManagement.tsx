@@ -186,6 +186,7 @@ export const PersonFieldsManagement = () => {
         open={formOpen}
         mode={selected ? 'edit' : 'create'}
         field={selected}
+        fields={list.result}
         submitting={submitting}
         onClose={() => setFormOpen(false)}
         onSubmit={(values) => void save(values)}

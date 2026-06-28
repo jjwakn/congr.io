@@ -12,6 +12,8 @@ export interface StandardFieldDefinition {
   persistent: true;
 }
 
+export const CREATE_PERSON_FIELD_FROM_EVENT_FIELD = '__create_person_field_from_event_field__';
+
 export const STANDARD_PERSON_FIELDS: StandardFieldDefinition[] = [
   { id: 'first_name', labelKey: 'pages.persons.fields.firstName', type: 'text', options: [], persistent: true },
   { id: 'middle_name', labelKey: 'pages.persons.fields.middleName', type: 'text', options: [], persistent: true },

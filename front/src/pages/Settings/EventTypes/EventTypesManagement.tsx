@@ -10,7 +10,9 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { Alert, Typography } from '@mui/material';
 import { EventTypesService } from '@services/eventTypes';
+import { resolveEventFieldPersonLinks } from '@utils/eventFieldLinks';
 import { HttpRequestError, httpRequest } from '@utils/http';
+import { MuiIcon } from '@utils/muiIcons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -100,9 +102,12 @@ export const EventTypesManagement = () => {
     setSubmitting(true);
     try {
       const isCreate = formMode === 'create';
+      const customFields = await resolveEventFieldPersonLinks(values.custom_fields);
       await httpRequest<EventType>({
         service: isCreate ? EventTypesService.create : EventTypesService.update,
-        data: isCreate ? values : { id: selected?.id ?? '', ...values },
+        data: isCreate
+          ? { ...values, custom_fields: customFields }
+          : { id: selected?.id ?? '', ...values, custom_fields: customFields },
       });
       setFormOpen(false);
       setSelected(null);
@@ -145,7 +150,41 @@ export const EventTypesManagement = () => {
 
   const columns = useMemo<ModuleListColumn<EventType>[]>(
     () => [
+      {
+        id: 'icon',
+        width: 56,
+        align: 'center',
+        render: (row) => <MuiIcon name={row.icon} sx={{ color: row.color }} />,
+      },
       { id: 'name', minWidth: 180, render: (row) => row.name },
+      {
+        id: 'default_public',
+        align: 'center',
+        width: 110,
+        render: (row) => <CrudPermissionStatus enabled={Boolean(row.default_public)} />,
+      },
+      {
+        id: 'default_self_registration',
+        align: 'center',
+        width: 140,
+        render: (row) => <CrudPermissionStatus enabled={Boolean(row.default_self_registration)} />,
+      },
+      {
+        id: 'attendance_enabled',
+        align: 'center',
+        width: 130,
+        render: (row) => <CrudPermissionStatus enabled={Boolean(row.attendance_enabled)} />,
+      },
+      {
+        id: 'default_start_time',
+        width: 120,
+        render: (row) => row.default_start_time?.slice(0, 5) || t('pages.modules.common.emptyValue'),
+      },
+      {
+        id: 'default_duration_minutes',
+        width: 120,
+        render: (row) => row.default_duration_minutes ?? t('pages.modules.common.emptyValue'),
+      },
       {
         id: 'description',
         minWidth: 240,
@@ -221,7 +260,36 @@ export const EventTypesManagement = () => {
         table={{
           headerRows: [
             [
+              { id: 'icon', label: t('pages.settings.eventTypes.fields.icon'), align: 'center' },
               { id: 'name', label: t('form.field.name'), sortKey: 'name' },
+              {
+                id: 'default_public',
+                label: t('pages.settings.eventTypes.fields.defaultPublic'),
+                align: 'center',
+                sortKey: 'default_public',
+              },
+              {
+                id: 'default_self_registration',
+                label: t('pages.settings.eventTypes.fields.defaultSelfRegistration'),
+                align: 'center',
+                sortKey: 'default_self_registration',
+              },
+              {
+                id: 'attendance_enabled',
+                label: t('pages.settings.eventTypes.fields.attendance'),
+                align: 'center',
+                sortKey: 'attendance_enabled',
+              },
+              {
+                id: 'default_start_time',
+                label: t('pages.settings.eventTypes.fields.defaultStartTime'),
+                sortKey: 'default_start_time',
+              },
+              {
+                id: 'default_duration_minutes',
+                label: t('pages.settings.eventTypes.fields.defaultDuration'),
+                sortKey: 'default_duration_minutes',
+              },
               { id: 'description', label: t('pages.settings.eventTypes.fields.description') },
               {
                 id: 'enabled',

@@ -29,6 +29,8 @@ export const FieldConditionsEditor = ({
   valueLabel,
   addLabel,
   removeLabel,
+  trueLabel,
+  falseLabel,
   operatorLabels,
   disabled = false,
   onChange,
@@ -46,7 +48,7 @@ export const FieldConditionsEditor = ({
         const optionValues = selectedField?.options ?? [];
 
         return (
-          <Stack key={`${index}-${condition.field_id}`} direction={{ xs: 'column', md: 'row' }} spacing={1}>
+          <Stack key={index} direction={{ xs: 'column', md: 'row' }} spacing={1}>
             <TextField
               select
               fullWidth
@@ -54,7 +56,7 @@ export const FieldConditionsEditor = ({
               label={fieldLabel}
               value={condition.field_id}
               disabled={disabled}
-              onChange={(event) => update(index, { field_id: event.target.value })}
+              onChange={(event) => update(index, { field_id: event.target.value, value: '' })}
             >
               {fields.map((field) => (
                 <MenuItem key={field.id} value={field.id}>
@@ -77,15 +79,45 @@ export const FieldConditionsEditor = ({
                 </MenuItem>
               ))}
             </TextField>
-            {expectsValue ? (
+            {expectsValue && selectedField?.type === 'yes_no' ? (
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label={valueLabel}
+                value={condition.value === true ? 'true' : condition.value === false ? 'false' : ''}
+                disabled={disabled}
+                onChange={(event) => update(index, { value: event.target.value === 'true' })}
+              >
+                <MenuItem value="true">{trueLabel}</MenuItem>
+                <MenuItem value="false">{falseLabel}</MenuItem>
+              </TextField>
+            ) : expectsValue ? (
               <TextField
                 select={optionValues.length > 0}
                 fullWidth
                 size="small"
+                type={
+                  condition.operator.startsWith('age_') || selectedField?.type === 'number'
+                    ? 'number'
+                    : selectedField?.type === 'date'
+                      ? 'date'
+                      : 'text'
+                }
                 label={valueLabel}
                 value={condition.value ?? ''}
                 disabled={disabled}
-                onChange={(event) => update(index, { value: event.target.value })}
+                InputLabelProps={selectedField?.type === 'date' ? { shrink: true } : undefined}
+                onChange={(event) =>
+                  update(index, {
+                    value:
+                      condition.operator.startsWith('age_') || selectedField?.type === 'number'
+                        ? event.target.value === ''
+                          ? ''
+                          : Number(event.target.value)
+                        : event.target.value,
+                  })
+                }
               >
                 {optionValues.map((option) => (
                   <MenuItem key={option} value={option}>

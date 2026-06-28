@@ -26,6 +26,8 @@
     "add": "Add"
   },
   "common": {
+    "yes": "Yes",
+    "no": "No",
     "replace": "Replace",
     "delete": "Delete",
     "moveUp": "Move up",

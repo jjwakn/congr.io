@@ -36,6 +36,7 @@ import type { FlowEditorDialogProps, FlowStepDraft } from './flows.types';
 const createStep = (order: number): FlowStepDraft => ({
   flow_key: crypto.randomUUID(),
   next_step_keys: [],
+  complete_previous_steps: false,
   order,
   name: '',
   description: '',
@@ -56,6 +57,7 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
           id: step.id,
           flow_key: step.flow_key ?? crypto.randomUUID(),
           next_step_keys: step.next_step_keys ?? [],
+          complete_previous_steps: step.complete_previous_steps ?? false,
           order: index + 1,
           name: step.name,
           description: step.description,
@@ -75,8 +77,21 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
         position: step.position,
         data: { label: step.name || t('pages.flows.editor.unnamedStep') },
         selected: step.flow_key === selectedKey,
+        style: {
+          borderColor: step.flow_key === selectedKey ? theme.palette.primary.main : theme.palette.divider,
+          background: theme.palette.background.paper,
+          color: theme.palette.text.primary,
+        },
       })),
-    [selectedKey, steps, t],
+    [
+      selectedKey,
+      steps,
+      t,
+      theme.palette.background.paper,
+      theme.palette.divider,
+      theme.palette.primary.main,
+      theme.palette.text.primary,
+    ],
   );
   const edges = useMemo<Edge[]>(
     () =>
@@ -100,6 +115,26 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
         next_step_keys: nextEdges.filter(({ source }) => source === step.flow_key).map(({ target }) => target),
       })),
     );
+  };
+
+  const addFollowingStep = () => {
+    if (!selected) return;
+    const step = {
+      ...createStep(steps.length + 1),
+      position: {
+        x: selected.position.x + 260,
+        y: selected.position.y + selected.next_step_keys.length * 120,
+      },
+    };
+    setSteps((current) => [
+      ...current.map((currentStep) =>
+        currentStep.flow_key === selected.flow_key
+          ? { ...currentStep, next_step_keys: [...currentStep.next_step_keys, step.flow_key] }
+          : currentStep,
+      ),
+      step,
+    ]);
+    setSelectedKey(step.flow_key);
   };
 
   const submit = () => {
@@ -224,6 +259,39 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
                     ),
                   )
                 }
+              />
+              <Button startIcon={<AddRoundedIcon />} onClick={addFollowingStep} sx={{ alignSelf: 'flex-start' }}>
+                {t('pages.flows.editor.addFollowingStep')}
+              </Button>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={selected.enabled}
+                    onChange={(_event, checked) =>
+                      setSteps((current) =>
+                        current.map((step) =>
+                          step.flow_key === selected.flow_key ? { ...step, enabled: checked } : step,
+                        ),
+                      )
+                    }
+                  />
+                }
+                label={t('pages.flows.editor.attachEventType')}
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={selected.complete_previous_steps}
+                    onChange={(_event, checked) =>
+                      setSteps((current) =>
+                        current.map((step) =>
+                          step.flow_key === selected.flow_key ? { ...step, complete_previous_steps: checked } : step,
+                        ),
+                      )
+                    }
+                  />
+                }
+                label={t('pages.flows.editor.completePreviousSteps')}
               />
               <Button
                 color="error"

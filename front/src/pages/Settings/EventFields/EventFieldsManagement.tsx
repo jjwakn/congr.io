@@ -10,7 +10,12 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { Alert } from '@mui/material';
 import { EventFieldsService } from '@services/eventFields';
 import { PersonFieldsService } from '@services/persons';
-import { STANDARD_EVENT_FIELDS } from '@utils/customFields';
+import {
+  CREATE_PERSON_FIELD_FROM_EVENT_FIELD,
+  STANDARD_EVENT_FIELDS,
+  STANDARD_PERSON_FIELDS,
+} from '@utils/customFields';
+import { toPersonFieldType } from '@utils/eventFieldLinks';
 import { httpRequest } from '@utils/http';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -96,6 +101,14 @@ export const EventFieldsManagement = () => {
     ],
     [rows, t],
   );
+  const personFieldLabels = useMemo(
+    () =>
+      new Map([
+        ...STANDARD_PERSON_FIELDS.map((field) => [field.id, t(field.labelKey)] as const),
+        ...personFields.map((field) => [field.id, field.label] as const),
+      ]),
+    [personFields, t],
+  );
 
   const columns = useMemo<ModuleListColumn<EventFieldRow>[]>(
     () => [
@@ -105,6 +118,14 @@ export const EventFieldsManagement = () => {
         id: 'options',
         minWidth: 180,
         render: (row) => (row.options?.length ? row.options.join(', ') : t('pages.modules.common.emptyValue')),
+      },
+      {
+        id: 'person_field_id',
+        minWidth: 180,
+        render: (row) =>
+          row.link_person_field && row.person_field_id
+            ? (personFieldLabels.get(row.person_field_id) ?? row.person_field_id)
+            : t('pages.modules.common.emptyValue'),
       },
       {
         id: 'actions',
@@ -137,15 +158,31 @@ export const EventFieldsManagement = () => {
         ),
       },
     ],
-    [canDelete, canUpdate, t],
+    [canDelete, canUpdate, personFieldLabels, t],
   );
 
   const save = async (values: EventFieldFormValues) => {
     setSubmitting(true);
     try {
+      let nextValues = values;
+      if (values.link_person_field && values.person_field_id === CREATE_PERSON_FIELD_FROM_EVENT_FIELD) {
+        const createdPersonField = await httpRequest<PersonField>({
+          service: PersonFieldsService.create,
+          data: {
+            label: values.label,
+            type: toPersonFieldType(values.type),
+            required: false,
+            allow_multiple: values.type === 'options' ? values.allow_multiple : false,
+            options: values.type === 'options' ? values.options : [],
+            calculated_conditions: values.type === 'yes_no' ? values.calculated_conditions : [],
+          },
+        });
+        setPersonFields((current) => [...current, createdPersonField]);
+        nextValues = { ...values, person_field_id: createdPersonField.id };
+      }
       await httpRequest<EventField>({
         service: selected ? EventFieldsService.update : EventFieldsService.create,
-        data: { ...(selected ? { id: selected.id } : {}), ...values },
+        data: { ...(selected ? { id: selected.id } : {}), ...nextValues },
       });
       setFormOpen(false);
       setSelected(null);
@@ -202,6 +239,7 @@ export const EventFieldsManagement = () => {
               { id: 'label', label: t('pages.events.fields.label'), sortKey: 'label' },
               { id: 'type', label: t('pages.events.fields.type') },
               { id: 'options', label: t('pages.events.fields.options') },
+              { id: 'person_field_id', label: t('pages.events.fields.personField') },
               { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
             ],
           ],

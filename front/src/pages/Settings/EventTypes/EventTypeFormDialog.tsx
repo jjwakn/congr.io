@@ -1,3 +1,4 @@
+import { IconPicker } from '@components/common/IconPicker';
 import { CreateEditDialog } from '@components/common/forms/CreateEditDialog';
 import { useAuth } from '@hooks/useAuth';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
@@ -19,7 +20,7 @@ import { EventCustomFieldsEditor } from '@pages/Modules/Events/EventCustomFields
 import { EventFieldsService } from '@services/eventFields';
 import { PersonFieldsService } from '@services/persons';
 import { httpRequest } from '@utils/http';
-import { DEFAULT_MUI_ICON, MUI_ICON_OPTIONS, MuiIcon } from '@utils/muiIcons';
+import { DEFAULT_MUI_ICON } from '@utils/muiIcons';
 import { useCallback, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -60,6 +61,8 @@ export const EventTypeFormDialog = ({
   const [attendanceEnabled, setAttendanceEnabled] = useState(false);
   const [defaultPublic, setDefaultPublic] = useState(false);
   const [defaultSelfRegistration, setDefaultSelfRegistration] = useState(false);
+  const [saveAttendanceDate, setSaveAttendanceDate] = useState(false);
+  const [attendanceDateFieldId, setAttendanceDateFieldId] = useState('');
   const [defaultStartTime, setDefaultStartTime] = useState('');
   const [defaultDuration, setDefaultDuration] = useState('');
   const [customFields, setCustomFields] = useState<EventCustomField[]>([]);
@@ -77,6 +80,8 @@ export const EventTypeFormDialog = ({
     setAttendanceEnabled(eventType?.attendance_enabled ?? false);
     setDefaultPublic(eventType?.default_public ?? false);
     setDefaultSelfRegistration(eventType?.default_self_registration ?? false);
+    setSaveAttendanceDate(eventType?.save_attendance_date ?? false);
+    setAttendanceDateFieldId(eventType?.attendance_date_person_field_id ?? '');
     setDefaultStartTime(eventType?.default_start_time?.slice(0, 5) ?? '');
     setDefaultDuration(eventType?.default_duration_minutes ? String(eventType.default_duration_minutes) : '');
     setCustomFields(eventType?.custom_fields ?? []);
@@ -149,6 +154,9 @@ export const EventTypeFormDialog = ({
       attendance_enabled: attendanceEnabled,
       default_public: defaultPublic,
       default_self_registration: defaultSelfRegistration,
+      save_attendance_date: attendanceEnabled && saveAttendanceDate,
+      attendance_date_person_field_id:
+        attendanceEnabled && saveAttendanceDate && attendanceDateFieldId ? attendanceDateFieldId : undefined,
       default_start_time: defaultStartTime || undefined,
       default_duration_minutes: defaultDuration ? Number(defaultDuration) : undefined,
       custom_fields: customFields,
@@ -196,27 +204,7 @@ export const EventTypeFormDialog = ({
             onChange={(event) => setDescription(event.target.value)}
           />
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-            <Autocomplete
-              fullWidth
-              options={MUI_ICON_OPTIONS}
-              value={icon}
-              onChange={(_event, value) => setIcon(value || DEFAULT_MUI_ICON)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label={t('pages.settings.eventTypes.fields.icon')}
-                  InputProps={{
-                    ...params.InputProps,
-                    startAdornment: (
-                      <>
-                        <MuiIcon name={icon} fontSize="small" />
-                        {params.InputProps.startAdornment}
-                      </>
-                    ),
-                  }}
-                />
-              )}
-            />
+            <IconPicker label={t('pages.settings.eventTypes.fields.icon')} value={icon} onChange={setIcon} />
             <TextField
               type="color"
               label={t('pages.settings.eventTypes.fields.color')}
@@ -254,21 +242,81 @@ export const EventTypeFormDialog = ({
               'pages.settings.eventTypes.help.selfRegistration',
             )}
           />
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-            <Autocomplete
-              freeSolo
-              options={HOUR_OPTIONS}
-              value={startHour}
-              onInputChange={(_event, value) => setTimePart('hour', value)}
-              renderInput={(params) => <TextField {...params} label={t('form.field.hour')} />}
-            />
-            <Autocomplete
-              freeSolo
-              options={MINUTE_OPTIONS}
-              value={startMinute}
-              onInputChange={(_event, value) => setTimePart('minute', value)}
-              renderInput={(params) => <TextField {...params} label={t('form.field.minute')} />}
-            />
+          {attendanceEnabled ? (
+            <>
+              <FormControlLabel
+                control={
+                  <Switch checked={saveAttendanceDate} onChange={(_event, checked) => setSaveAttendanceDate(checked)} />
+                }
+                label={t('pages.events.form.saveAttendanceDate')}
+              />
+              {saveAttendanceDate ? (
+                <Autocomplete
+                  options={personFields.filter(({ type }) => type === 'date')}
+                  getOptionLabel={(option) => option.label}
+                  value={personFields.find(({ id }) => id === attendanceDateFieldId) ?? null}
+                  onChange={(_event, value) => setAttendanceDateFieldId(value?.id ?? '')}
+                  renderInput={(params) => (
+                    <TextField {...params} required label={t('pages.events.form.attendanceDateField')} />
+                  )}
+                />
+              ) : null}
+            </>
+          ) : null}
+
+          <Stack direction="column" spacing={1.5} width={{ xs: '100%', sm: 'auto' }} sx={{ maxWidth: { sm: 600 } }}>
+            <Box
+              component="fieldset"
+              sx={(theme) => ({
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1,
+                px: 2,
+                pb: 2,
+                pt: 1,
+                m: 0,
+                display: 'flex',
+                flexDirection: 'row',
+                gap: 1,
+                alignItems: 'center',
+
+                '&:focus-within': {
+                  borderColor: 'primary.main',
+                },
+
+                '& legend': {
+                  px: 0.75,
+                  color: 'text.secondary',
+                  fontSize: theme.typography.caption.fontSize,
+                  lineHeight: 1,
+                },
+
+                '&:focus-within legend': {
+                  color: 'primary.main',
+                },
+              })}
+            >
+              <Box component="legend">Hora predeterminada</Box>
+
+              <Autocomplete
+                freeSolo
+                options={HOUR_OPTIONS}
+                value={startHour}
+                onInputChange={(_event, value) => setTimePart('hour', value)}
+                renderInput={(params) => <TextField {...params} label={t('form.field.hour')} />}
+                sx={{ width: 180 }}
+              />
+
+              <Autocomplete
+                freeSolo
+                options={MINUTE_OPTIONS}
+                value={startMinute}
+                onInputChange={(_event, value) => setTimePart('minute', value)}
+                renderInput={(params) => <TextField {...params} label={t('form.field.minute')} />}
+                sx={{ width: 180 }}
+              />
+            </Box>
+
             <Autocomplete
               freeSolo
               options={DURATION_OPTIONS}

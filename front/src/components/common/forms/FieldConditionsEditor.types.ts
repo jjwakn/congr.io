@@ -15,6 +15,8 @@ export interface FieldConditionsEditorProps {
   valueLabel: string;
   addLabel: string;
   removeLabel: string;
+  trueLabel: string;
+  falseLabel: string;
   operatorLabels: Record<FieldConditionOperator, string>;
   disabled?: boolean;
   onChange: (value: FieldCondition[]) => void;

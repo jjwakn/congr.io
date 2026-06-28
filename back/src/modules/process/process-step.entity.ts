@@ -35,6 +35,9 @@ export class ProcessStep extends CommonEntity {
   @Column('simple-json', { nullable: false, default: [] })
   next_step_keys: string[];
 
+  @Column({ nullable: false, default: false })
+  complete_previous_steps: boolean;
+
   @OneToOne(() => EventType, (eventType) => eventType.process_step)
   event_type?: EventType | null;
 }

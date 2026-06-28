@@ -104,6 +104,14 @@ export const PersonsManagement = () => {
     [loadPerson],
   );
 
+  const getLinkedUserTooltip = useCallback(
+    (row: Person) =>
+      row.user?.username
+        ? `${t('pages.persons.actions.linkUser')}: ${row.user.username}`
+        : t('pages.persons.actions.linkUser'),
+    [t],
+  );
+
   const personColumns = useMemo(
     () => [
       { id: 'code', minWidth: 90, render: (row: Person) => row.code },
@@ -133,6 +141,7 @@ export const PersonsManagement = () => {
               {
                 id: 'link-user',
                 label: t('pages.persons.actions.linkUser'),
+                tooltip: getLinkedUserTooltip,
                 icon: AccountCircleOutlinedIcon,
                 color: 'default',
                 hidden: !hasPermission('person', 'update'),
@@ -167,7 +176,7 @@ export const PersonsManagement = () => {
         ),
       },
     ],
-    [hasPermission, loadingPersonId, openDetails, openEdit, t],
+    [getLinkedUserTooltip, hasPermission, loadingPersonId, openDetails, openEdit, t],
   );
   const savePerson = async (values: PersonFormValues) => {
     setSubmitting(true);
@@ -221,10 +230,10 @@ export const PersonsManagement = () => {
         table={{
           headerRows: [
             [
-              { id: 'code', label: t('pages.persons.fields.code') },
-              { id: 'name', label: t('form.field.name') },
-              { id: 'phone', label: t('pages.persons.fields.phone') },
-              { id: 'age', label: t('pages.persons.fields.age') },
+              { id: 'code', label: t('pages.persons.fields.code'), sortKey: 'code' },
+              { id: 'name', label: t('form.field.name'), sortKey: 'last_name' },
+              { id: 'phone', label: t('pages.persons.fields.phone'), sortKey: 'phone' },
+              { id: 'age', label: t('pages.persons.fields.age'), sortKey: 'registered_age' },
               { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
             ],
           ],

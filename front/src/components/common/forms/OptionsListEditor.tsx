@@ -21,7 +21,7 @@ export const OptionsListEditor = ({
     <Stack spacing={1}>
       <Typography variant="subtitle2">{label}</Typography>
       {values.map((value, index) => (
-        <Stack key={`${index}-${value}`} direction="row" spacing={1}>
+        <Stack key={index} direction="row" spacing={1}>
           <TextField
             fullWidth
             size="small"

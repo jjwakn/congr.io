@@ -14,6 +14,7 @@ export const PersonFieldSettingsFormDialog = ({
   open,
   mode,
   field,
+  fields,
   submitting,
   onClose,
   onSubmit,
@@ -44,6 +45,25 @@ export const PersonFieldSettingsFormDialog = ({
       cancel: t('form.field.cancel'),
     }),
     [t],
+  );
+  const conditionFields = useMemo(
+    () => [
+      ...STANDARD_PERSON_FIELDS.map((fieldDefinition) => ({
+        id: fieldDefinition.id,
+        label: t(fieldDefinition.labelKey),
+        type: fieldDefinition.type,
+        options: fieldDefinition.options,
+      })),
+      ...fields
+        .filter((personField) => personField.id !== field?.id)
+        .map((personField) => ({
+          id: personField.id,
+          label: personField.label,
+          type: personField.type,
+          options: personField.options,
+        })),
+    ],
+    [field?.id, fields, t],
   );
 
   return (
@@ -100,18 +120,15 @@ export const PersonFieldSettingsFormDialog = ({
       ) : null}
       {type === 'yes_no' ? (
         <FieldConditionsEditor
-          fields={STANDARD_PERSON_FIELDS.map((fieldDefinition) => ({
-            id: fieldDefinition.id,
-            label: t(fieldDefinition.labelKey),
-            type: fieldDefinition.type,
-            options: fieldDefinition.options,
-          }))}
+          fields={conditionFields}
           value={calculatedConditions}
           fieldLabel={t('pages.persons.fieldsCrud.conditionField')}
           operatorLabel={t('pages.persons.fieldsCrud.conditionOperator')}
           valueLabel={t('pages.persons.fieldsCrud.conditionValue')}
           addLabel={t('pages.persons.fieldsCrud.addCondition')}
           removeLabel={t('form.common.delete')}
+          trueLabel={t('form.common.yes')}
+          falseLabel={t('form.common.no')}
           operatorLabels={{
             not_empty: t('pages.persons.fieldsCrud.operators.notEmpty'),
             empty: t('pages.persons.fieldsCrud.operators.empty'),

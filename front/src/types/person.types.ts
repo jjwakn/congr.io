@@ -50,6 +50,7 @@ export interface PersonFlowStep {
   step_name: string;
   step_description: string;
   next_step_keys: string[];
+  complete_previous_steps?: boolean;
   completed_at?: string | null;
 }
 export interface PersonFlowProgress {

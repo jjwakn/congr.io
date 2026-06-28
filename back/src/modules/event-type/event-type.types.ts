@@ -135,6 +135,15 @@ export class EventTypeDto {
   @IsOptional()
   default_self_registration?: boolean;
 
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  save_attendance_date?: boolean;
+
+  @IsString()
+  @IsOptional()
+  attendance_date_person_field_id?: string;
+
   @ApiProperty({ required: false, type: Array })
   @IsArray()
   @ValidateNested({ each: true })

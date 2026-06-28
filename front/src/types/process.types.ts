@@ -1,4 +1,5 @@
 import type { CommonEntity } from './common.types';
+import type { EventType } from './event-type.types';
 
 export interface ProcessStep extends CommonEntity {
   process_id: string;
@@ -7,6 +8,8 @@ export interface ProcessStep extends CommonEntity {
   description: string;
   flow_key?: string | null;
   next_step_keys: string[];
+  complete_previous_steps: boolean;
+  event_type?: EventType | null;
 }
 
 export interface Process extends CommonEntity {
@@ -20,6 +23,7 @@ export interface ProcessStepInput {
   id?: string;
   flow_key: string;
   next_step_keys: string[];
+  complete_previous_steps: boolean;
   order: number;
   name: string;
   description: string;

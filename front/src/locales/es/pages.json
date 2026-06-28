@@ -19,7 +19,7 @@
       "search": "Buscar",
       "rowsPerPage": "Elementos por página",
       "view": "Ver",
-      "emptyValue": "Sin especificar"
+      "emptyValue": " - "
     },
     "users": {
       "title": "Usuarios",
@@ -274,7 +274,7 @@
       "time12": "AM/PM",
       "paginationTitle": "Elementos por página",
       "paginationDescription": "Configura un valor predeterminado y valores opcionales por sección para tu cuenta.",
-      "defaultPageSize": "Elementos predeterminados por página",
+      "defaultPageSize": "Todos",
       "resetToDefault": "Restablecer a 50",
       "section": "Sección",
       "itemsPerPage": "Elementos por página",
@@ -478,7 +478,7 @@
       "eventTitle": "Campos del evento",
       "label": "Etiqueta",
       "type": "Tipo de campo",
-      "options": "Opciones separadas por comas",
+      "options": "Opciones",
       "required": "Requerido",
       "userFillable": "Visible en autorregistro",
       "allEvents": "Usar en todos los eventos de este tipo",
@@ -486,6 +486,7 @@
       "doNotSave": "No guardar en persona",
       "linkPersonField": "Vincular campo de persona",
       "linkPersonFieldHelp": "Cuando está activo, este campo de evento usa el tipo y opciones del campo de persona seleccionado.",
+      "createPersonFieldFromThis": "Crear campo de persona desde este campo",
       "reusableField": "Campo de evento reutilizable",
       "selectReusable": "Seleccionar campo reutilizable",
       "add": "Añadir campo",
@@ -567,7 +568,7 @@
       "type": "Tipo",
       "required": "Requerido",
       "options": "Opciones",
-      "allowMultiple": "Permitir múltiples",
+      "allowMultiple": "Permitir seleccionar múltiples",
       "addOption": "Añadir opción",
       "conditionField": "Campo",
       "conditionOperator": "Condición",
@@ -607,6 +608,7 @@
     "event": "Evento",
     "person": "Persona",
     "add": "Añadir asistente",
+    "createPerson": "Crear persona",
     "noCurrentEvent": "No hay un evento de asistencia activo ahora.",
     "publicSubmission": "Registro público",
     "error": "No se pudo actualizar la asistencia."
@@ -644,6 +646,9 @@
       "unnamedStep": "Paso sin nombre",
       "required": "Asigna nombre al flujo y a cada paso.",
       "addStep": "Añadir paso",
+      "addFollowingStep": "Añadir paso siguiente",
+      "attachEventType": "Vincular tipo de evento",
+      "completePreviousSteps": "Marcar pasos anteriores como completados",
       "stepName": "Nombre del paso",
       "stepDescription": "Descripción del paso",
       "deleteStep": "Eliminar paso"

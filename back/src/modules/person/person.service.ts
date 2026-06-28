@@ -102,6 +102,7 @@ export class PersonService {
         step_name: string;
         step_description: string;
         next_step_keys: string[] | null;
+        complete_previous_steps: boolean;
         completed_at: Date | null;
       }>
     >(
@@ -109,16 +110,26 @@ export class PersonService {
         "ps"."id" AS "step_id", "ps"."flow_key" AS "flow_key",
         "ps"."name" AS "step_name", "ps"."description" AS "step_description",
         "ps"."next_step_keys" AS "next_step_keys",
-        MIN(CASE WHEN "ep"."id" IS NOT NULL THEN "e"."start_datetime" END) AS "completed_at"
+        "ps"."complete_previous_steps" AS "complete_previous_steps",
+        MIN(CASE
+          WHEN "ep"."id" IS NOT NULL THEN "e"."start_datetime"
+          WHEN "cps"."complete_previous_steps" = TRUE AND "cps"."order" > "ps"."order"
+            AND "cep"."id" IS NOT NULL THEN "ce"."start_datetime"
+        END) AS "completed_at"
        FROM "process" "p"
        INNER JOIN "process_step" "ps" ON "ps"."process_id" = "p"."id" AND "ps"."deleted_at" IS NULL
        LEFT JOIN "event_type" "et" ON "et"."process_step_id" = "ps"."id" AND "et"."deleted_at" IS NULL
        LEFT JOIN "event" "e" ON "e"."event_type_id" = "et"."id" AND "e"."deleted_at" IS NULL
        LEFT JOIN "event_participant" "ep" ON "ep"."event_id" = "e"."id"
          AND "ep"."person_id" = $1 AND "ep"."attended" = TRUE AND "ep"."deleted_at" IS NULL
+       LEFT JOIN "process_step" "cps" ON "cps"."process_id" = "p"."id" AND "cps"."deleted_at" IS NULL
+       LEFT JOIN "event_type" "cet" ON "cet"."process_step_id" = "cps"."id" AND "cet"."deleted_at" IS NULL
+       LEFT JOIN "event" "ce" ON "ce"."event_type_id" = "cet"."id" AND "ce"."deleted_at" IS NULL
+       LEFT JOIN "event_participant" "cep" ON "cep"."event_id" = "ce"."id"
+         AND "cep"."person_id" = $1 AND "cep"."attended" = TRUE AND "cep"."deleted_at" IS NULL
        WHERE "p"."congregation_id" = $2 AND "p"."deleted_at" IS NULL
        GROUP BY "p"."id", "p"."name", "ps"."id", "ps"."flow_key", "ps"."name",
-         "ps"."description", "ps"."next_step_keys", "ps"."order"
+         "ps"."description", "ps"."next_step_keys", "ps"."complete_previous_steps", "ps"."order"
        ORDER BY "p"."name", "ps"."order"`,
       [id, congregation.id],
     );

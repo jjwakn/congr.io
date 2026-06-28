@@ -16,6 +16,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { CREATE_PERSON_FIELD_FROM_EVENT_FIELD, STANDARD_PERSON_FIELDS } from '@utils/customFields';
 import { useTranslation } from 'react-i18next';
 import type { EventCustomField, EventFieldType } from '@/types/event.types';
 import type { EventCustomFieldsEditorProps } from './events.types';
@@ -44,6 +45,25 @@ export const EventCustomFieldsEditor = ({
   onChange,
 }: EventCustomFieldsEditorProps) => {
   const { t } = useTranslation();
+  const personFieldOptions = [
+    ...STANDARD_PERSON_FIELDS.map((field) => ({
+      id: field.id,
+      label: t(field.labelKey),
+      type: field.type,
+      options: field.options,
+      allow_multiple: field.allow_multiple ?? false,
+    })),
+    ...personFields,
+  ];
+
+  const getCompatiblePersonFields = (field: EventCustomField) =>
+    personFieldOptions.filter(
+      (personField) =>
+        personField.type === field.type ||
+        ((field.type === 'text' || field.type === 'paragraph') &&
+          (personField.type === 'text' || personField.type === 'paragraph')),
+    );
+
   const update = (scope: 'event' | 'type', id: string, patch: Partial<EventCustomField>) => {
     const source = scope === 'event' ? eventFields : typeFields;
     const next = source.map((field) => (field.id === id ? { ...field, ...patch } : field));
@@ -133,32 +153,58 @@ export const EventCustomFieldsEditor = ({
                       />
                     </>
                   ) : null}
-                  {personFields.length ? (
-                    <FormControl fullWidth>
-                      <InputLabel>{t('pages.events.fields.personField')}</InputLabel>
-                      <Select
-                        label={t('pages.events.fields.personField')}
-                        value={field.person_field_id ?? ''}
-                        disabled={readOnly || Boolean(field.event_field_id)}
-                        onChange={(event) =>
-                          update(scope, field.id, { person_field_id: event.target.value || undefined })
+                  {personFieldOptions.length ? (
+                    <>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={Boolean(field.link_person_field)}
+                            disabled={readOnly || Boolean(field.event_field_id)}
+                            onChange={(_event, checked) =>
+                              update(scope, field.id, {
+                                link_person_field: checked,
+                                person_field_id: checked ? field.person_field_id : undefined,
+                              })
+                            }
+                          />
                         }
-                      >
-                        <MenuItem value="">{t('pages.events.fields.doNotSave')}</MenuItem>
-                        {personFields
-                          .filter(
-                            (personField) =>
-                              personField.type === field.type ||
-                              ((field.type === 'text' || field.type === 'paragraph') &&
-                                (personField.type === 'text' || personField.type === 'paragraph')),
-                          )
-                          .map((personField) => (
-                            <MenuItem key={personField.id} value={personField.id}>
-                              {personField.label}
+                        label={t('pages.events.fields.linkPersonField')}
+                      />
+                      {field.link_person_field ? (
+                        <FormControl fullWidth>
+                          <InputLabel>{t('pages.events.fields.personField')}</InputLabel>
+                          <Select
+                            label={t('pages.events.fields.personField')}
+                            value={field.person_field_id ?? ''}
+                            disabled={readOnly || Boolean(field.event_field_id)}
+                            onChange={(event) => {
+                              const personFieldId = event.target.value || undefined;
+                              const personField = personFieldOptions.find(({ id }) => id === personFieldId);
+                              update(scope, field.id, {
+                                person_field_id: personFieldId,
+                                ...(personField
+                                  ? {
+                                      type: personField.type,
+                                      options: personField.options,
+                                      allow_multiple: personField.allow_multiple,
+                                    }
+                                  : {}),
+                              });
+                            }}
+                          >
+                            <MenuItem value="">{t('pages.events.fields.doNotSave')}</MenuItem>
+                            {getCompatiblePersonFields(field).map((personField) => (
+                              <MenuItem key={personField.id} value={personField.id}>
+                                {personField.label}
+                              </MenuItem>
+                            ))}
+                            <MenuItem value={CREATE_PERSON_FIELD_FROM_EVENT_FIELD}>
+                              {t('pages.events.fields.createPersonFieldFromThis')}
                             </MenuItem>
-                          ))}
-                      </Select>
-                    </FormControl>
+                          </Select>
+                        </FormControl>
+                      ) : null}
+                    </>
                   ) : null}
                   <Stack direction={{ xs: 'column', sm: 'row' }}>
                     <FormControlLabel

@@ -32,6 +32,8 @@ interface NormalizedEventType {
   attendance_enabled: boolean;
   default_public: boolean;
   default_self_registration: boolean;
+  save_attendance_date: boolean;
+  attendance_date_person_field_id: string | null;
   custom_fields: EventTypeCustomField[];
   color: string;
   icon: string;
@@ -174,6 +176,8 @@ export class EventTypeService {
       attendance_enabled: data.attendance_enabled ?? false,
       default_public: data.default_public ?? false,
       default_self_registration: data.default_self_registration ?? false,
+      save_attendance_date: data.save_attendance_date ?? false,
+      attendance_date_person_field_id: data.attendance_date_person_field_id ?? null,
       custom_fields: await this.normalizeCustomFields(data, userId, congregationId),
       color: data.color ?? '#1976d2',
       icon: data.icon?.trim() || 'CalendarMonth',
@@ -257,6 +261,8 @@ export class EventTypeService {
     existing.attendance_enabled = normalized.attendance_enabled;
     existing.default_public = normalized.default_public;
     existing.default_self_registration = normalized.default_self_registration;
+    existing.save_attendance_date = normalized.save_attendance_date;
+    existing.attendance_date_person_field_id = normalized.attendance_date_person_field_id;
     existing.custom_fields = normalized.custom_fields;
     existing.color = normalized.color;
     existing.icon = normalized.icon;

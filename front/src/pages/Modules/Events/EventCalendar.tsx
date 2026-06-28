@@ -47,6 +47,7 @@ import { EventsService } from '@services/events';
 import { FilesService } from '@services/files';
 import { API_URL } from '@utils/constants';
 import { persistNewEventFields } from '@utils/event-fields';
+import { resolveEventFieldPersonLinks } from '@utils/eventFieldLinks';
 import { HttpRequestError, httpRequest } from '@utils/http';
 import { MuiIcon } from '@utils/muiIcons';
 import { getPreloadedResource } from '@utils/preload';
@@ -64,6 +65,11 @@ const toImageUrl = (event: CalendarEvent) =>
   event.image_file_id
     ? `${API_URL.replace(/\/$/, '')}/files/${event.is_public ? 'public/' : ''}${event.image_file_id}`
     : (event.image_url ?? '');
+
+const toCalendarDisplayDate = (value: string, timezone: string, allDay: boolean) => {
+  const local = DateTime.fromISO(value).setZone(timezone);
+  return allDay ? (local.toISODate() ?? value) : local.toFormat("yyyy-LL-dd'T'HH:mm:ss");
+};
 
 export const EventCalendar = () => {
   const { t, i18n } = useTranslation();
@@ -186,14 +192,14 @@ export const EventCalendar = () => {
         .map((event) => ({
           id: event.id,
           title: event.name,
-          start: event.start_datetime,
-          end: event.end_datetime,
+          start: toCalendarDisplayDate(event.start_datetime, congregation?.timezone ?? 'UTC', event.all_day),
+          end: toCalendarDisplayDate(event.end_datetime, congregation?.timezone ?? 'UTC', event.all_day),
           allDay: event.all_day,
           backgroundColor: event.type?.color,
           borderColor: event.type?.color,
           extendedProps: { source: event },
         })),
-    [events, filterInitialized, visibleTypeIds],
+    [congregation?.timezone, events, filterInitialized, visibleTypeIds],
   );
 
   const handleDateClick = (arg: DateClickArg) => {
@@ -209,10 +215,12 @@ export const EventCalendar = () => {
     setSubmitting(true);
     try {
       const eventFieldIds = new Set(values.event_fields.map(({ id }) => id));
-      const inheritedFields = values.custom_fields.filter(({ id }) => !eventFieldIds.has(id));
+      const resolvedCustomFields = await resolveEventFieldPersonLinks(values.custom_fields);
+      const resolvedEventFields = resolvedCustomFields.filter(({ id }) => eventFieldIds.has(id));
+      const inheritedFields = resolvedCustomFields.filter(({ id }) => !eventFieldIds.has(id));
       const persistedEventFields = canCreateEventFields
-        ? await persistNewEventFields(values.event_fields)
-        : values.event_fields;
+        ? await persistNewEventFields(resolvedEventFields)
+        : resolvedEventFields;
       const { event_fields: _eventFields, ...eventValues } = values;
       let imageFileId = editor?.event?.image_file_id ?? undefined;
       if (image) {
@@ -371,7 +379,7 @@ export const EventCalendar = () => {
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             locale={i18n.language.startsWith('es') ? esLocale : undefined}
-            timeZone={congregation?.timezone ?? 'UTC'}
+            timeZone="UTC"
             events={calendarEvents}
             datesSet={handleDatesSet}
             dateClick={handleDateClick}
@@ -397,7 +405,7 @@ export const EventCalendar = () => {
                       sx={{ fontSize: 14, color: source.type?.color ?? 'inherit', flexShrink: 0 }}
                     />
                     <Typography component="span" variant="caption" noWrap>
-                      {arg.timeText ? `${arg.timeText} ` : ''}
+                      {source.all_day ? '' : `${start} `}
                       {arg.event.title}
                     </Typography>
                   </Stack>

@@ -35,6 +35,8 @@ export interface EventTypeFormValues {
   attendance_enabled: boolean;
   default_public: boolean;
   default_self_registration: boolean;
+  save_attendance_date: boolean;
+  attendance_date_person_field_id?: string;
   default_start_time?: string;
   default_duration_minutes?: number;
   custom_fields: EventCustomField[];

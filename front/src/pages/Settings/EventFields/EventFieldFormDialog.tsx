@@ -14,7 +14,11 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import { STANDARD_EVENT_FIELDS, STANDARD_PERSON_FIELDS } from '@utils/customFields';
+import {
+  CREATE_PERSON_FIELD_FROM_EVENT_FIELD,
+  STANDARD_EVENT_FIELDS,
+  STANDARD_PERSON_FIELDS,
+} from '@utils/customFields';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EventFieldType } from '@/types/event.types';
@@ -152,30 +156,34 @@ export const EventFieldFormDialog = ({
           </IconButton>
         </Tooltip>
       </Stack>
-      <FormControl fullWidth>
-        <InputLabel>{t('pages.events.fields.personField')}</InputLabel>
-        <Select
-          label={t('pages.events.fields.personField')}
-          value={personFieldId}
-          disabled={!linkPersonField}
-          onChange={(event) => {
-            const value = event.target.value;
-            const selected = personFieldOptions.find(({ id }) => id === value);
-            setPersonFieldId(value);
-            if (!selected) return;
-            setType(selected.type as EventFieldType);
-            setAllowMultiple(selected.allow_multiple ?? false);
-            setOptions(selected.options ?? []);
-          }}
-        >
-          <MenuItem value="">{t('pages.events.fields.doNotSave')}</MenuItem>
-          {personFieldOptions.map((personField) => (
-            <MenuItem key={personField.id} value={personField.id}>
-              {personField.label}
+      {linkPersonField ? (
+        <FormControl fullWidth>
+          <InputLabel>{t('pages.events.fields.personField')}</InputLabel>
+          <Select
+            label={t('pages.events.fields.personField')}
+            value={personFieldId}
+            onChange={(event) => {
+              const value = event.target.value;
+              const selected = personFieldOptions.find(({ id }) => id === value);
+              setPersonFieldId(value);
+              if (!selected) return;
+              setType(selected.type as EventFieldType);
+              setAllowMultiple(selected.allow_multiple ?? false);
+              setOptions(selected.options ?? []);
+            }}
+          >
+            <MenuItem value="">{t('pages.events.fields.doNotSave')}</MenuItem>
+            {personFieldOptions.map((personField) => (
+              <MenuItem key={personField.id} value={personField.id}>
+                {personField.label}
+              </MenuItem>
+            ))}
+            <MenuItem value={CREATE_PERSON_FIELD_FROM_EVENT_FIELD}>
+              {t('pages.events.fields.createPersonFieldFromThis')}
             </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+          </Select>
+        </FormControl>
+      ) : null}
       {effectiveType === 'options' ? (
         <>
           <FormControlLabel
@@ -206,6 +214,8 @@ export const EventFieldFormDialog = ({
           valueLabel={t('pages.persons.fieldsCrud.conditionValue')}
           addLabel={t('pages.persons.fieldsCrud.addCondition')}
           removeLabel={t('form.common.delete')}
+          trueLabel={t('form.common.yes')}
+          falseLabel={t('form.common.no')}
           operatorLabels={{
             not_empty: t('pages.persons.fieldsCrud.operators.notEmpty'),
             empty: t('pages.persons.fieldsCrud.operators.empty'),

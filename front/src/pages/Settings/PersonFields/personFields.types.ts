@@ -37,6 +37,7 @@ export interface PersonFieldFormDialogProps {
   open: boolean;
   mode: CreateEditDialogMode;
   field: PersonField | null;
+  fields: PersonField[];
   submitting: boolean;
   onClose: () => void;
   onSubmit: (values: PersonFieldFormValues) => void;

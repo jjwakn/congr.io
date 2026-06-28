@@ -229,7 +229,11 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
         )}
         <AccordionDetails>
           <Stack spacing={1.5}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
+            >
               <TextField
                 type="number"
                 label={t('pages.settings.interface.defaultPageSize')}
@@ -263,7 +267,7 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
                     return (
                       <TableRow key={key}>
                         <TableCell>{section.label}</TableCell>
-                        <TableCell>
+                        <TableCell sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                           <TextField
                             type="number"
                             size="small"
