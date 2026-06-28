@@ -213,7 +213,7 @@ export class SetupService {
           congregation_id: congregationCreated.id,
           congregation: congregationCreated,
           config_key: THEME_PALETTE_CONFIG_KEY,
-          config_value: DEFAULT_THEME_PALETTE_CONFIG as unknown as Record<string, unknown>,
+          config_value: DEFAULT_THEME_PALETTE_CONFIG,
           created_by: userCreated,
         });
         await configurationsRepository.save(themePaletteConfig);

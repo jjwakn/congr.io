@@ -1,7 +1,7 @@
-import type { Person, PersonField, PersonFieldType } from '@/types/person.types';
+import type { JsonObject } from '@/types/json.types';
+import type { FieldCondition, Person, PersonField, PersonFieldType } from '@/types/person.types';
 
 export interface PersonFormValues {
-  [key: string]: unknown;
   first_name: string;
   middle_name?: string;
   last_name: string;
@@ -13,7 +13,7 @@ export interface PersonFormValues {
   email?: string;
   user_id?: string;
   regenerate_code?: boolean;
-  custom_values: Record<string, unknown>;
+  custom_values: JsonObject;
 }
 export interface PersonFormDialogProps {
   open: boolean;
@@ -26,11 +26,13 @@ export interface PersonFormDialogProps {
   onCreateField: (values: PersonFieldFormValues) => Promise<PersonField | null>;
 }
 export interface PersonFieldFormValues {
-  [key: string]: string | boolean | string[];
+  [key: string]: string | boolean | string[] | FieldCondition[];
   label: string;
   type: PersonFieldType;
   required: boolean;
+  allow_multiple: boolean;
   options: string[];
+  calculated_conditions: FieldCondition[];
 }
 export interface PersonFieldFormDialogProps {
   open: boolean;
@@ -41,8 +43,9 @@ export interface PersonFieldFormDialogProps {
 }
 export interface PersonCustomFieldsProps {
   fields: PersonField[];
-  values: Record<string, unknown>;
-  onChange: (values: Record<string, unknown>) => void;
+  standardValues?: JsonObject;
+  values: JsonObject;
+  onChange: (values: JsonObject) => void;
 }
 export interface PersonDetailsDialogProps {
   person: Person;

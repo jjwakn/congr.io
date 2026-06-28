@@ -7,10 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { changeLanguageWithResources } from '../../../i18n';
 import { CongregationsSettingsTab } from './CongregationsSettingsTab';
+import { CustomFieldsSettingsTab } from './CustomFieldsSettingsTab';
 import { DeploymentSettingsTab } from './DeploymentSettingsTab';
-import { EventFieldsManagement } from './EventFields/EventFieldsManagement';
-import { EventTypesManagement } from './EventTypes/EventTypesManagement';
-import { PersonFieldsManagement } from './PersonFields/PersonFieldsManagement';
 import { UISettingsTab } from './UISettingsTab';
 import type { SettingsNavigationState, SettingsPageProps, SettingsTabId } from './settings.types';
 
@@ -32,9 +30,9 @@ const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
         ? [{ id: 'congregations' as const, label: t('pages.settings.tabs.congregations') }]
         : []),
       { id: 'ui' as const, label: t('pages.settings.tabs.ui') },
-      ...(canViewEventTypes ? [{ id: 'eventTypes' as const, label: t('pages.settings.tabs.eventTypes') }] : []),
-      ...(canViewEventFields ? [{ id: 'eventFields' as const, label: t('pages.settings.tabs.eventFields') }] : []),
-      ...(canViewPersonFields ? [{ id: 'personFields' as const, label: t('pages.settings.tabs.personFields') }] : []),
+      ...(canViewEventTypes || canViewEventFields || canViewPersonFields
+        ? [{ id: 'customFields' as const, label: t('pages.settings.tabs.customFields') }]
+        : []),
       ...(auth?.fullAccess ? [{ id: 'deployment' as const, label: t('pages.settings.tabs.deployment') }] : []),
     ],
     [auth?.fullAccess, canViewCongregations, canViewEventFields, canViewEventTypes, canViewPersonFields, t],
@@ -92,9 +90,14 @@ const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
             }}
           />
         ) : null}
-        {resolvedActiveTab === 'eventTypes' && canViewEventTypes ? <EventTypesManagement /> : null}
-        {resolvedActiveTab === 'eventFields' && canViewEventFields ? <EventFieldsManagement /> : null}
-        {resolvedActiveTab === 'personFields' && canViewPersonFields ? <PersonFieldsManagement /> : null}
+        {resolvedActiveTab === 'customFields' ? (
+          <CustomFieldsSettingsTab
+            canViewEventTypes={canViewEventTypes}
+            canViewEventFields={canViewEventFields}
+            canViewPersonFields={canViewPersonFields}
+            initialTab={navigationState?.customFieldsTab}
+          />
+        ) : null}
         {resolvedActiveTab === 'deployment' && auth?.fullAccess ? <DeploymentSettingsTab /> : null}
       </Box>
     </Paper>

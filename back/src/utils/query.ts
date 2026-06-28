@@ -21,7 +21,7 @@ const isTextColumnType = (type?: ColumnType) => Boolean(type && TEXT_COLUMN_TYPE
 
 const escapeLikePattern = (value: string) => value.replace(/[\\%_]/g, '\\$&');
 
-const getSearchParamName = (field: string) => `search_${field.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+const getSearchParamName = (field: string, index = 0) => `search_${field.replace(/[^a-zA-Z0-9_]/g, '_')}_${index}`;
 
 const normalizeColumnAlias = (alias: string) => {
   const unquotedAliasMatch = alias.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)$/);
@@ -44,7 +44,7 @@ export const findWithFilters = async <Entity extends ObjectLiteral, Query extend
   booleanFields = [],
   baseWhere = {},
 }: FindWithFiltersProps<Entity, Query>) => {
-  const search = query.search?.trim() ?? '';
+  const searchTerms = (query.search?.trim() ?? '').split(/\s+/).filter(Boolean);
   const pageSize = Number(query.size);
   const page = Number(query.page);
   const paginate = Number.isFinite(pageSize) && pageSize > 0 && Number.isFinite(page) && page >= 0;
@@ -55,18 +55,44 @@ export const findWithFilters = async <Entity extends ObjectLiteral, Query extend
   const andConditions: Record<string, boolean> = {};
 
   if (find) {
-    if (search)
-      searchFields.forEach((field) => {
+    if (searchTerms.length) {
+      const buildSearchValue = (field: keyof Entity, term: string, index: number) => {
         const fieldName = String(field);
         const columnType = repository.metadata.findColumnWithPropertyName(fieldName)?.type;
-        const searchParamName = getSearchParamName(fieldName);
+        const searchParamName = getSearchParamName(fieldName, index);
 
-        orConditions.push({
-          [field]: Raw((alias) => `${getSearchExpression(alias, columnType)} LIKE :${searchParamName} ESCAPE '\\'`, {
-            [searchParamName]: `%${escapeLikePattern(search.toLowerCase())}%`,
-          }),
-        } as FindOptionsWhere<Entity>);
-      });
+        return Raw((alias) => `${getSearchExpression(alias, columnType)} LIKE :${searchParamName} ESCAPE '\\'`, {
+          [searchParamName]: `%${escapeLikePattern(term.toLowerCase())}%`,
+        });
+      };
+
+      const appendCombinations = (
+        termIndex: number,
+        usedFields: Set<keyof Entity>,
+        condition: FindOptionsWhere<Entity>,
+      ) => {
+        const term = searchTerms[termIndex];
+        const isLastTerm = termIndex === searchTerms.length - 1;
+
+        searchFields.forEach((field) => {
+          if (usedFields.has(field)) return;
+
+          const nextCondition = {
+            ...condition,
+            [field]: buildSearchValue(field, term, termIndex),
+          } as FindOptionsWhere<Entity>;
+
+          if (isLastTerm) {
+            orConditions.push(nextCondition);
+            return;
+          }
+
+          appendCombinations(termIndex + 1, new Set([...usedFields, field]), nextCondition);
+        });
+      };
+
+      if (searchFields.length >= searchTerms.length) appendCombinations(0, new Set(), {});
+    }
 
     booleanFields.forEach((field) => {
       if (field in query) {
@@ -75,8 +101,14 @@ export const findWithFilters = async <Entity extends ObjectLiteral, Query extend
     });
   }
 
-  const where =
-    orConditions.length > 0
+  const noSearchMatch = searchTerms.length > 0 && orConditions.length === 0;
+  const where = noSearchMatch
+    ? ({
+        ...baseWhere,
+        id: Raw(() => 'FALSE'),
+        ...andConditions,
+      } as FindOptionsWhere<Entity>)
+    : orConditions.length > 0
       ? (orConditions.map((cond) => ({
           ...baseWhere,
           ...cond,

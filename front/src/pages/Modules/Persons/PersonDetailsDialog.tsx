@@ -8,8 +8,14 @@ import { httpRequest } from '@utils/http';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { JsonValue } from '@/types/json.types';
 import type { PersonFlowProgress } from '@/types/person.types';
 import type { PersonDetailsDialogProps } from './persons.types';
+
+const formatCustomValue = (value: JsonValue | undefined) => {
+  if (Array.isArray(value)) return value.join(', ');
+  return String(value ?? '-');
+};
 
 export const PersonDetailsDialog = ({ person, fields, onClose }: PersonDetailsDialogProps) => {
   const { i18n, t } = useTranslation();
@@ -56,10 +62,7 @@ export const PersonDetailsDialog = ({ person, fields, onClose }: PersonDetailsDi
           </Typography>
           {fields.map((field) => (
             <Typography key={field.id}>
-              <strong>{field.label}:</strong>{' '}
-              {Array.isArray(person.custom_values[field.id])
-                ? (person.custom_values[field.id] as unknown[]).join(', ')
-                : String(person.custom_values[field.id] ?? '-')}
+              <strong>{field.label}:</strong> {formatCustomValue(person.custom_values[field.id])}
             </Typography>
           ))}
         </Box>

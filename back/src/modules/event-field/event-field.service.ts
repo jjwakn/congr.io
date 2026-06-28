@@ -14,6 +14,20 @@ import type {
   EventFieldListProps,
   EventFieldUpdateProps,
 } from './event-field.types';
+import type { EventFieldType } from './event-field.types';
+
+const STANDARD_PERSON_FIELDS: Record<string, { label: string; type: EventFieldType; options: string[] }> = {
+  first_name: { label: 'First name', type: 'text', options: [] },
+  middle_name: { label: 'Middle name', type: 'text', options: [] },
+  last_name: { label: 'Last name', type: 'text', options: [] },
+  second_last_name: { label: 'Second last name', type: 'text', options: [] },
+  married_name: { label: 'Married name', type: 'text', options: [] },
+  phone: { label: 'Phone', type: 'text', options: [] },
+  birthdate: { label: 'Birthdate', type: 'date', options: [] },
+  email: { label: 'Email', type: 'text', options: [] },
+};
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class EventFieldService {
@@ -35,8 +49,36 @@ export class EventFieldService {
     });
   }
 
-  private async normalize(data: EventFieldCreateProps['data'], congregationId: string) {
-    if (data.person_field_id) {
+  private async normalize(data: EventFieldCreateProps['data'], congregationId: string, defaultEnabled = true) {
+    const linkPersonField = data.link_person_field ?? Boolean(data.person_field_id);
+    let type = data.type;
+    let options = data.type === 'options' ? (data.options?.map((value) => value.trim()).filter(Boolean) ?? []) : [];
+    let allowMultiple = data.type === 'options' ? (data.allow_multiple ?? false) : false;
+
+    if (linkPersonField && data.person_field_id) {
+      if (STANDARD_PERSON_FIELDS[data.person_field_id]) {
+        const standard = STANDARD_PERSON_FIELDS[data.person_field_id];
+        type = standard.type;
+        options = standard.options;
+        allowMultiple = false;
+      } else if (UUID_PATTERN.test(data.person_field_id)) {
+        const personField = await this.personFieldRepository.findOne({
+          where: { id: data.person_field_id, congregation_id: congregationId, deleted_at: IsNull() },
+        });
+        if (!personField) throw new NotFoundException(this.i18n.t('errors.personField.notFound'));
+        type = personField.type;
+        options =
+          type === 'options' ? (data.options?.map((value) => value.trim()).filter(Boolean) ?? personField.options) : [];
+        allowMultiple = type === 'options' ? (data.allow_multiple ?? personField.allow_multiple) : false;
+        if (type === 'options') {
+          personField.options = options;
+          personField.allow_multiple = allowMultiple;
+          await this.personFieldRepository.save(personField);
+        }
+      } else {
+        throw new NotFoundException(this.i18n.t('errors.personField.notFound'));
+      }
+    } else if (data.person_field_id) {
       const personField = await this.personFieldRepository.findOne({
         where: { id: data.person_field_id, congregation_id: congregationId, deleted_at: IsNull() },
       });
@@ -45,11 +87,15 @@ export class EventFieldService {
 
     return {
       label: data.label.trim(),
-      type: data.type,
+      type,
       required: data.required ?? false,
       user_fillable: data.user_fillable ?? false,
+      link_person_field: linkPersonField,
       person_field_id: data.person_field_id ?? null,
-      options: data.options?.map((value) => value.trim()).filter(Boolean) ?? [],
+      allow_multiple: allowMultiple,
+      options,
+      calculated_conditions: type === 'yes_no' ? (data.calculated_conditions ?? []) : [],
+      enabled: data.enabled ?? defaultEnabled,
     };
   }
 
@@ -73,20 +119,19 @@ export class EventFieldService {
 
   async create({ data, userId, congregationId }: EventFieldCreateProps) {
     const { user, congregation } = await this.getContext(userId, congregationId);
-    return this.repository.save(
-      this.repository.create({
-        congregation_id: congregation.id,
-        congregation,
-        ...(await this.normalize(data, congregation.id)),
-        created_by: user,
-      }),
-    );
+    const created = this.repository.create({
+      congregation_id: congregation.id,
+      congregation,
+      ...(await this.normalize(data, congregation.id)),
+      created_by: user,
+    });
+    return this.repository.save(created);
   }
 
   async update({ id, data, userId, congregationId }: EventFieldUpdateProps) {
     const { user, congregation } = await this.getContext(userId, congregationId);
     const existing = await this.get({ id, userId, congregationId });
-    Object.assign(existing, await this.normalize(data, congregation.id), { updated_by: user });
+    Object.assign(existing, await this.normalize(data, congregation.id, existing.enabled), { updated_by: user });
     return this.repository.save(existing);
   }
 

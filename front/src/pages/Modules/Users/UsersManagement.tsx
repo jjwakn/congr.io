@@ -27,7 +27,7 @@ import { UserFormDialog } from './UserFormDialog';
 import { useUsersList } from './useUsersList';
 import type { UserDialogMode, UserFormValues, UserMetadata } from './users.types';
 
-const getErrorMessage = (value: unknown, fallback: string) =>
+const getErrorMessage = (value: Error | null, fallback: string) =>
   value instanceof HttpRequestError || value instanceof Error ? value.message : fallback;
 
 const mergeById = <Entity extends { id: string }>(primary: Entity[], secondary: Entity[] = []) => {
@@ -132,7 +132,9 @@ export const UsersManagement = () => {
 
       setRoles(response.result ?? []);
     } catch (value) {
-      setMetadataError(getErrorMessage(value, t('pages.modules.users.error.rolesLoadFailed')));
+      setMetadataError(
+        getErrorMessage(value instanceof Error ? value : null, t('pages.modules.users.error.rolesLoadFailed')),
+      );
     } finally {
       setMetadataLoading(false);
     }
@@ -176,7 +178,7 @@ export const UsersManagement = () => {
           data: { id: userId },
         });
       } catch (value) {
-        showNotification(getErrorMessage(value, fallback), {
+        showNotification(getErrorMessage(value instanceof Error ? value : null, fallback), {
           severity: 'error',
         });
         return null;
@@ -255,9 +257,12 @@ export const UsersManagement = () => {
         setSelectedUser(null);
         await refresh();
       } catch (value) {
-        showNotification(getErrorMessage(value, t('pages.modules.users.error.saveFailed')), {
-          severity: 'error',
-        });
+        showNotification(
+          getErrorMessage(value instanceof Error ? value : null, t('pages.modules.users.error.saveFailed')),
+          {
+            severity: 'error',
+          },
+        );
       } finally {
         setSubmitting(false);
       }
@@ -305,9 +310,12 @@ export const UsersManagement = () => {
         if (isOwnPassword) await refreshSession();
         await refresh();
       } catch (value) {
-        showNotification(getErrorMessage(value, t('pages.modules.users.error.changePasswordFailed')), {
-          severity: 'error',
-        });
+        showNotification(
+          getErrorMessage(value instanceof Error ? value : null, t('pages.modules.users.error.changePasswordFailed')),
+          {
+            severity: 'error',
+          },
+        );
       } finally {
         setPasswordSubmitting(false);
       }
@@ -334,9 +342,12 @@ export const UsersManagement = () => {
       setUserPendingDelete(null);
       await refresh();
     } catch (value) {
-      showNotification(getErrorMessage(value, t('pages.modules.users.error.deleteFailed')), {
-        severity: 'error',
-      });
+      showNotification(
+        getErrorMessage(value instanceof Error ? value : null, t('pages.modules.users.error.deleteFailed')),
+        {
+          severity: 'error',
+        },
+      );
     } finally {
       setDeleting(false);
     }

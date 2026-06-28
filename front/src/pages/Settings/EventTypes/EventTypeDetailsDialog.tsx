@@ -1,6 +1,6 @@
 import { ViewDialog } from '@components/common/forms/ViewDialog';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import { FormControlLabel, IconButton, Switch, TextField, Tooltip } from '@mui/material';
+import { IconButton, TextField, Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import type { EventTypeDetailsDialogProps } from './eventTypes.types';
 
@@ -43,10 +43,6 @@ export const EventTypeDetailsDialog = ({
         label={t('pages.settings.eventTypes.fields.description')}
         value={eventType?.description ?? ''}
         slotProps={{ input: { readOnly: true } }}
-      />
-      <FormControlLabel
-        control={<Switch checked={Boolean(eventType?.enabled)} disabled />}
-        label={t('pages.settings.eventTypes.fields.enabled')}
       />
     </ViewDialog>
   );

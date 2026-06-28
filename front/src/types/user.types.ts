@@ -17,5 +17,7 @@ export interface User extends CommonEntity {
     page_sizes?: Record<string, number>;
     sidebar_order?: string[];
     favorites?: string[];
+    time_format?: '24h' | '12h';
+    column_visibility?: Record<string, string[]>;
   };
 }

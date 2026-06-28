@@ -10,6 +10,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { Alert } from '@mui/material';
 import { EventFieldsService } from '@services/eventFields';
 import { PersonFieldsService } from '@services/persons';
+import { STANDARD_EVENT_FIELDS } from '@utils/customFields';
 import { httpRequest } from '@utils/http';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +18,8 @@ import type { EventField } from '@/types/event.types';
 import type { PersonField } from '@/types/person.types';
 import { EventFieldFormDialog } from './EventFieldFormDialog';
 import type { EventFieldFormValues, EventFieldsListResponse } from './eventFields.types';
+
+type EventFieldRow = EventField & { persistent?: boolean };
 
 export const EventFieldsManagement = () => {
   const { t } = useTranslation();
@@ -27,7 +30,7 @@ export const EventFieldsManagement = () => {
   const canUpdate = hasPermission('event_field', 'update');
   const canDelete = hasPermission('event_field', 'delete');
   const list = useModuleList({ moduleKey: 'settings-event-fields-list', defaultSort: 'label' });
-  const [rows, setRows] = useState<EventField[]>([]);
+  const [rows, setRows] = useState<EventFieldRow[]>([]);
   const [personFields, setPersonFields] = useState<PersonField[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -73,10 +76,36 @@ export const EventFieldsManagement = () => {
     }).then(({ result }) => setPersonFields(result));
   }, [hasPermission]);
 
-  const columns = useMemo<ModuleListColumn<EventField>[]>(
+  const visibleRows = useMemo<EventFieldRow[]>(
+    () => [
+      ...STANDARD_EVENT_FIELDS.map(
+        (field) =>
+          ({
+            id: field.id,
+            label: t(field.labelKey),
+            type: field.type,
+            options: field.options,
+            required: false,
+            user_fillable: false,
+            enabled: true,
+            congregation_id: '',
+            persistent: true,
+          }) as EventFieldRow,
+      ),
+      ...rows,
+    ],
+    [rows, t],
+  );
+
+  const columns = useMemo<ModuleListColumn<EventFieldRow>[]>(
     () => [
       { id: 'label', minWidth: 180, render: (row) => row.label },
       { id: 'type', minWidth: 130, render: (row) => t(`pages.events.fields.types.${row.type}`) },
+      {
+        id: 'options',
+        minWidth: 180,
+        render: (row) => (row.options?.length ? row.options.join(', ') : t('pages.modules.common.emptyValue')),
+      },
       {
         id: 'actions',
         align: 'right',
@@ -89,7 +118,7 @@ export const EventFieldsManagement = () => {
                 id: 'edit',
                 label: t('pages.settings.eventFields.edit'),
                 icon: EditOutlinedIcon,
-                hidden: !canUpdate,
+                hidden: !canUpdate || row.persistent,
                 onClick: (value) => {
                   setSelected(value);
                   setFormOpen(true);
@@ -100,7 +129,7 @@ export const EventFieldsManagement = () => {
                 label: t('form.common.delete'),
                 icon: DeleteOutlineRoundedIcon,
                 color: 'error',
-                hidden: !canDelete,
+                hidden: !canDelete || row.persistent,
                 onClick: setPendingDelete,
               },
             ]}
@@ -146,7 +175,7 @@ export const EventFieldsManagement = () => {
 
   return (
     <>
-      <ModuleSection<EventField>
+      <ModuleSection<EventFieldRow>
         title={t('pages.settings.eventFields.title')}
         createAction={
           canCreate
@@ -172,11 +201,12 @@ export const EventFieldsManagement = () => {
             [
               { id: 'label', label: t('pages.events.fields.label'), sortKey: 'label' },
               { id: 'type', label: t('pages.events.fields.type') },
+              { id: 'options', label: t('pages.events.fields.options') },
               { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
             ],
           ],
           columns,
-          rows,
+          rows: visibleRows,
           getRowId: (row) => row.id,
           loading,
           loadingLabel: t('pages.settings.eventFields.loading'),
@@ -198,6 +228,7 @@ export const EventFieldsManagement = () => {
         open={formOpen}
         mode={selected ? 'edit' : 'create'}
         field={selected}
+        eventFields={rows}
         personFields={personFields}
         submitting={submitting}
         onClose={() => setFormOpen(false)}

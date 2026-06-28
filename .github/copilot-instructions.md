@@ -23,3 +23,9 @@
 17. Permission-gate persisted-model sections/tabs and their create, view, update, and delete actions independently using the model's backend permission module.
 18. Use switches for all binary selections; do not add checkbox controls.
 19. Gate every section, route, settings tab, permission row, and related action by its congregation feature.
+20. Every visible data column must be sortable and show inactive, ascending, and descending sort states.
+21. List search must cover all default visible data columns except actions and enabled/active columns.
+22. Multi-word search terms are AND conditions across distinct searchable fields.
+23. Active/enabled state belongs in list rows, not create/edit forms, with confirmation before changes.
+24. Boolean columns need All/Yes/No filters; numeric columns need condition filters.
+25. Persisted-model lists must support per-user visible column preferences, including custom field columns.

@@ -8,6 +8,7 @@ import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
 import { PersonFieldsService, PersonsService } from '@services/persons';
 import { calculateAgeFromBirthdate, calculateDisplayedRegisteredAge } from '@utils/datetime';
 import { httpRequest } from '@utils/http';
@@ -34,6 +35,7 @@ export const PersonsManagement = () => {
   const [submitting, setSubmitting] = useState(false);
   const [loadingPersonId, setLoadingPersonId] = useState<string | null>(null);
   const [detailPerson, setDetailPerson] = useState<Person>();
+  const [createdCode, setCreatedCode] = useState('');
   const list = useModuleList({
     moduleKey: 'members-list',
     defaultSort: 'last_name',
@@ -177,14 +179,8 @@ export const PersonsManagement = () => {
       setPersonOpen(false);
       setEditPerson(null);
       await refresh();
-      showNotification(
-        editPerson
-          ? t('pages.persons.saved')
-          : t('pages.persons.createdWithCode', {
-              code: result.code,
-            }),
-        { severity: 'success', autohide: Boolean(editPerson) },
-      );
+      if (editPerson) showNotification(t('pages.persons.saved'), { severity: 'success' });
+      else setCreatedCode(result.code);
     } finally {
       setSubmitting(false);
     }
@@ -210,7 +206,7 @@ export const PersonsManagement = () => {
   };
   return (
     <>
-      <ModuleSection
+      <ModuleSection<Person>
         createAction={
           hasPermission('person', 'create')
             ? {
@@ -232,8 +228,8 @@ export const PersonsManagement = () => {
               { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
             ],
           ],
-          columns: personColumns as never,
-          rows: rows as never,
+          columns: personColumns,
+          rows,
           getRowId: (row: { id: string }) => row.id,
           loading,
           loadingLabel: t('pages.persons.loading'),
@@ -293,6 +289,19 @@ export const PersonsManagement = () => {
           })()
         }
       />
+      <Dialog open={Boolean(createdCode)} onClose={() => setCreatedCode('')} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ textAlign: 'center', typography: 'h3' }}>{createdCode}</DialogTitle>
+        <DialogContent>
+          <Typography align="center" color="text.secondary">
+            {t('pages.persons.code.createdTitle')}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center' }}>
+          <Button variant="contained" onClick={() => setCreatedCode('')}>
+            {t('form.field.close')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

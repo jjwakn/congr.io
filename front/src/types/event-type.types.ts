@@ -12,6 +12,7 @@ export interface EventType extends CommonEntity {
   default_self_registration?: boolean;
   custom_fields?: EventCustomField[];
   color?: string;
+  icon?: string;
   save_attendance_date?: boolean;
   attendance_date_person_field_id?: string | null;
   default_start_time?: string | null;

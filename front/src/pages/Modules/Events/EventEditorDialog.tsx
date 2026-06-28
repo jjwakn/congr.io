@@ -24,6 +24,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { EventFieldsService } from '@services/eventFields';
+import { FilesService } from '@services/files';
 import { PersonFieldsService } from '@services/persons';
 import { httpRequest } from '@utils/http';
 import { getSettingsPath } from '@utils/routes';
@@ -116,6 +117,7 @@ export const EventEditorDialog = ({
   );
   const [imageUrl, setImageUrl] = useState(event?.image_url ?? '');
   const [image, setImage] = useState<File>();
+  const [imageOptions, setImageOptions] = useState({ allow_upload: true, allow_public_url: false });
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState('');
   const previewUrl = useMemo(() => (image ? URL.createObjectURL(image) : imageUrl), [image, imageUrl]);
@@ -142,6 +144,14 @@ export const EventEditorDialog = ({
       data: { page: 0, size: 500, order: 'label', direction: 'ASC' },
     }).then(({ result }) => setReusableEventFields(result));
   }, [canViewEventFields]);
+
+  useEffect(() => {
+    void httpRequest<{ allow_upload: boolean; allow_public_url: boolean }>({
+      service: FilesService.eventImageOptions,
+    })
+      .then(setImageOptions)
+      .catch(() => setImageOptions({ allow_upload: true, allow_public_url: false }));
+  }, []);
 
   const updateEndFromType = (type: EventType, nextDate: string, nextTime: string) => {
     const start = DateTime.fromFormat(combineLocalInput(nextDate, nextTime), "yyyy-LL-dd'T'HH:mm", {
@@ -201,7 +211,7 @@ export const EventEditorDialog = ({
         self_registration_enabled: attendance && selfRegistration,
         custom_fields: [...typeFields, ...eventFields],
         event_fields: eventFields,
-        ...(imageUrl.trim() ? { image_url: imageUrl.trim() } : {}),
+        ...(imageOptions.allow_public_url && imageUrl.trim() ? { image_url: imageUrl.trim() } : {}),
         save_attendance_date: attendance && saveAttendanceDate,
         ...(attendance && saveAttendanceDate && attendanceDateFieldId
           ? { attendance_date_person_field_id: attendanceDateFieldId }
@@ -252,7 +262,7 @@ export const EventEditorDialog = ({
                     onClick={() => {
                       onClose();
                       navigate(getSettingsPath(i18n.language), {
-                        state: { settingsTab: 'eventTypes', createEventType: true },
+                        state: { settingsTab: 'customFields', customFieldsTab: 'eventTypes', createEventType: true },
                       });
                     }}
                   >
@@ -261,15 +271,23 @@ export const EventEditorDialog = ({
                 </Tooltip>
               ) : null}
             </Stack>
-            <TextField
-              required
-              label={t('pages.events.form.name')}
-              value={name}
-              onChange={(eventValue) => {
-                setNameTouched(true);
-                setName(eventValue.target.value);
-              }}
-            />
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center">
+              <TextField
+                required
+                fullWidth
+                label={t('pages.events.form.name')}
+                value={name}
+                onChange={(eventValue) => {
+                  setNameTouched(true);
+                  setName(eventValue.target.value);
+                }}
+              />
+              <FormControlLabel
+                control={<Switch checked={allDay} onChange={(_event, checked) => setAllDay(checked)} />}
+                label={t('pages.events.form.allDay')}
+                sx={{ flexShrink: 0 }}
+              />
+            </Stack>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="center">
               <LocalizedDateField
                 fullWidth
@@ -295,11 +313,6 @@ export const EventEditorDialog = ({
                 }}
                 InputLabelProps={{ shrink: true }}
               />
-              <FormControlLabel
-                control={<Switch checked={allDay} onChange={(_event, checked) => setAllDay(checked)} />}
-                label={t('pages.events.form.allDay')}
-                sx={{ flexShrink: 0 }}
-              />
             </Stack>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <LocalizedDateField
@@ -324,51 +337,55 @@ export const EventEditorDialog = ({
               value={description}
               onChange={(eventValue) => setDescription(eventValue.target.value)}
             />
-            <Box
-              onDragOver={(dragEvent) => {
-                dragEvent.preventDefault();
-                setDragging(true);
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(dropEvent) => {
-                dropEvent.preventDefault();
-                setDragging(false);
-                chooseImage(dropEvent.dataTransfer.files[0]);
-              }}
-              onClick={() => inputRef.current?.click()}
-              sx={{
-                border: 2,
-                borderStyle: 'dashed',
-                borderColor: dragging ? 'primary.main' : 'divider',
-                p: 2,
-                textAlign: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <input
-                ref={inputRef}
-                hidden
-                type="file"
-                accept="image/*"
-                onChange={(inputEvent) => chooseImage(inputEvent.target.files?.[0])}
-              />
-              {previewUrl ? (
-                <Box
-                  component="img"
-                  src={previewUrl}
-                  alt=""
-                  sx={{ maxWidth: '100%', maxHeight: 220, objectFit: 'contain' }}
+            {imageOptions.allow_upload ? (
+              <Box
+                onDragOver={(dragEvent) => {
+                  dragEvent.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(dropEvent) => {
+                  dropEvent.preventDefault();
+                  setDragging(false);
+                  chooseImage(dropEvent.dataTransfer.files[0]);
+                }}
+                onClick={() => inputRef.current?.click()}
+                sx={{
+                  border: 2,
+                  borderStyle: 'dashed',
+                  borderColor: dragging ? 'primary.main' : 'divider',
+                  p: 2,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <input
+                  ref={inputRef}
+                  hidden
+                  type="file"
+                  accept="image/*"
+                  onChange={(inputEvent) => chooseImage(inputEvent.target.files?.[0])}
                 />
-              ) : (
-                <CloudUploadOutlinedIcon />
-              )}
-              <Typography variant="body2">{t('pages.events.form.dropImage')}</Typography>
-            </Box>
-            <TextField
-              label={t('pages.events.form.publicImageUrl')}
-              value={imageUrl}
-              onChange={(eventValue) => setImageUrl(eventValue.target.value)}
-            />
+                {previewUrl ? (
+                  <Box
+                    component="img"
+                    src={previewUrl}
+                    alt=""
+                    sx={{ maxWidth: '100%', maxHeight: 220, objectFit: 'contain' }}
+                  />
+                ) : (
+                  <CloudUploadOutlinedIcon />
+                )}
+                <Typography variant="body2">{t('pages.events.form.dropImage')}</Typography>
+              </Box>
+            ) : null}
+            {imageOptions.allow_public_url ? (
+              <TextField
+                label={t('pages.events.form.publicImageUrl')}
+                value={imageUrl}
+                onChange={(eventValue) => setImageUrl(eventValue.target.value)}
+              />
+            ) : null}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
               <FormControlLabel
                 control={<Switch checked={isPublic} onChange={(_event, checked) => setIsPublic(checked)} />}

@@ -81,7 +81,7 @@ export const DEFAULT_THEME_PALETTE_CONFIG: ThemePaletteConfig = {
   },
 };
 
-export const isHexColor = (value: unknown): value is string =>
+export const isHexColor = (value?: string | null): value is string =>
   typeof value === 'string' && HEX_COLOR_REGEX.test(value.trim());
 
 const normalizeModeConfig = (

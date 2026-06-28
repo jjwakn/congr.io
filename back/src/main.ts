@@ -3,12 +3,14 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import packageJson from '../package.json';
 import { AppModule } from './app.module';
+import type { JsonValue } from './common/common.types';
 import { PORT } from './utils/constants';
 
 type SwaggerSchema = {
-  example?: unknown;
+  example?: JsonValue;
   properties?: Record<string, SwaggerSchema>;
 };
+type TranslateExample = (key: string, options: { lang: string }) => string;
 
 const swaggerLanguages = ['en', 'es'];
 
@@ -22,6 +24,7 @@ const bootstrap = async () => {
     .build();
 
   const i18n = app.get(I18nService);
+  const translateExample = i18n.t.bind(i18n) as TranslateExample;
 
   swaggerLanguages.forEach((lang) => {
     const document = SwaggerModule.createDocument(app, config);
@@ -33,7 +36,7 @@ const bootstrap = async () => {
         for (const propName in schema.properties) {
           const prop = schema.properties[propName];
           if (typeof prop.example === 'string') {
-            prop.example = i18n.t(prop.example as never, { lang });
+            prop.example = translateExample(prop.example, { lang });
           }
         }
       }

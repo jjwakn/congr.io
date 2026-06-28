@@ -1,3 +1,4 @@
+import type { JsonObject, JsonValue } from '@/types/json.types';
 import i18n from '../../i18n';
 import { API_URL } from './constants';
 import { HttpRequestErrorParams, HttpRequestProps, ModuleType } from './http.types';
@@ -7,7 +8,7 @@ export type { ModuleType } from './http.types';
 
 export const HttpService: ModuleType = {};
 
-export class HttpRequestError<TPayload = unknown> extends Error {
+export class HttpRequestError<TPayload = JsonValue> extends Error {
   statusCode: number;
   payload: TPayload | null;
 
@@ -28,21 +29,24 @@ const getLegacyAuthToken = () => {
   }
 };
 
-const parseResponseBody = async (response: Response): Promise<unknown | null> => {
+const parseResponseBody = async (response: Response): Promise<JsonValue | null> => {
   if (response.status === 204) return null;
 
   const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
   try {
-    if (contentType.includes('application/json')) return await response.json();
+    if (contentType.includes('application/json')) return (await response.json()) as JsonValue;
     return await response.text();
   } catch {
     return null;
   }
 };
 
-const parseErrorMessage = (payload: unknown, fallback: string): string => {
-  if (payload && typeof payload === 'object' && 'message' in payload) {
-    const message = (payload as { message?: string | string[] }).message;
+const isJsonObject = (payload: JsonValue | null): payload is JsonObject =>
+  Boolean(payload) && typeof payload === 'object' && !Array.isArray(payload);
+
+const parseErrorMessage = (payload: JsonValue | null, fallback: string): string => {
+  if (isJsonObject(payload) && 'message' in payload) {
+    const message = payload.message;
     if (Array.isArray(message)) return message.join(', ');
     if (typeof message === 'string' && message.trim()) return message;
   }
@@ -67,7 +71,7 @@ export const httpRequest = async <ResponseType>({
   let url = isAbsoluteUrl ? service.url : cleanServiceURL ? `${cleanBaseURL}/${cleanServiceURL}` : cleanBaseURL;
 
   const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
-  const jsonData = data && !isFormData ? ({ ...data } as Record<string, unknown>) : undefined;
+  const jsonData = data && !isFormData ? ({ ...data } as JsonObject) : undefined;
 
   // Replacing path params
   if (url.match(/{[A-z]+}/gi)) {

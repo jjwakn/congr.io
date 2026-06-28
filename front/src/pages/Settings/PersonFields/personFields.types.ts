@@ -1,6 +1,6 @@
 import type { CreateEditDialogMode } from '@components/common/forms/CreateEditDialog.types';
 import type { ListDirection } from '@components/common/modules/useModuleList.types';
-import type { PersonField, PersonFieldType } from '@/types/person.types';
+import type { FieldCondition, PersonField, PersonFieldType } from '@/types/person.types';
 
 export interface PersonFieldsListResponse {
   result: PersonField[];
@@ -8,11 +8,13 @@ export interface PersonFieldsListResponse {
 }
 
 export interface PersonFieldFormValues {
-  [key: string]: string | boolean | string[];
+  [key: string]: string | boolean | string[] | FieldCondition[];
   label: string;
   type: PersonFieldType;
   required: boolean;
+  allow_multiple: boolean;
   options: string[];
+  calculated_conditions: FieldCondition[];
 }
 
 export interface UsePersonFieldsListResult extends PersonFieldsListResponse {

@@ -22,7 +22,7 @@ import { CongregationDeleteDialog } from './CongregationDeleteDialog';
 import { CongregationEditDialog } from './CongregationEditDialog';
 import type { CongregationCreateValues, CongregationDeletionPreview, CongregationEditValues } from './settings.types';
 
-const getErrorMessage = (value: unknown, fallback: string) =>
+const getErrorMessage = (value: Error | null, fallback: string) =>
   value instanceof HttpRequestError || value instanceof Error ? value.message : fallback;
 
 export const CongregationsSettingsTab = () => {
@@ -63,7 +63,10 @@ export const CongregationsSettingsTab = () => {
       setCreateOpen(false);
       showNotification(t('pages.settings.congregation.created'), { severity: 'success' });
     } catch (value) {
-      const message = getErrorMessage(value, t('pages.settings.congregation.createFailed'));
+      const message = getErrorMessage(
+        value instanceof Error ? value : null,
+        t('pages.settings.congregation.createFailed'),
+      );
       setError(message);
       showNotification(message, { severity: 'error' });
     } finally {
@@ -93,7 +96,9 @@ export const CongregationsSettingsTab = () => {
       setEditCongregation(null);
       showNotification(t('pages.settings.success.saved'), { severity: 'success' });
     } catch (value) {
-      showNotification(getErrorMessage(value, t('pages.settings.error.saveFailed')), { severity: 'error' });
+      showNotification(getErrorMessage(value instanceof Error ? value : null, t('pages.settings.error.saveFailed')), {
+        severity: 'error',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -112,7 +117,10 @@ export const CongregationsSettingsTab = () => {
         setDeleteCongregation(item);
         setDeletePreview(preview);
       } catch (value) {
-        const message = getErrorMessage(value, t('pages.settings.congregation.delete.previewFailed'));
+        const message = getErrorMessage(
+          value instanceof Error ? value : null,
+          t('pages.settings.congregation.delete.previewFailed'),
+        );
         setError(message);
         showNotification(message, { severity: 'error' });
       } finally {
@@ -158,7 +166,10 @@ export const CongregationsSettingsTab = () => {
 
       showNotification(t('pages.settings.congregation.delete.success'), { severity: 'success' });
     } catch (value) {
-      showNotification(getErrorMessage(value, t('pages.settings.congregation.delete.failed')), { severity: 'error' });
+      showNotification(
+        getErrorMessage(value instanceof Error ? value : null, t('pages.settings.congregation.delete.failed')),
+        { severity: 'error' },
+      );
     } finally {
       setDeleting(false);
     }

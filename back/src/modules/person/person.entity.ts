@@ -1,4 +1,5 @@
 import { CommonEntity } from 'src/common/common.entity';
+import type { JsonObject } from 'src/common/common.types';
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 import { Congregation } from '../congregation/congregation.entity';
 import { User } from '../user/user.entity';
@@ -57,5 +58,5 @@ export class Person extends CommonEntity {
   user?: User | null;
 
   @Column('simple-json', { nullable: false, default: {} })
-  custom_values: Record<string, unknown>;
+  custom_values: JsonObject;
 }

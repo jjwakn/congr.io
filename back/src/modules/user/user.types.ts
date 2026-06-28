@@ -1,4 +1,4 @@
-import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsIn, IsNotEmpty, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
 import { CommonOrder, EntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from './user.entity';
@@ -60,6 +60,14 @@ export class UserPreferencesDto {
   @MaxLength(120, { each: true })
   @IsOptional()
   favorites?: string[];
+
+  @IsIn(['24h', '12h'])
+  @IsOptional()
+  time_format?: '24h' | '12h';
+
+  @IsObject()
+  @IsOptional()
+  column_visibility?: Record<string, string[]>;
 }
 
 enum Order {

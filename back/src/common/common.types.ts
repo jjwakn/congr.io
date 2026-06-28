@@ -51,11 +51,17 @@ export interface RequestType {
   };
 }
 
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+export interface JsonObject {
+  [key: string]: JsonValue | undefined;
+}
+export type JsonArray = JsonValue[];
+
 export interface CommonEntity {
   created_by?: User | null;
   updated_by?: User | null;
   deleted_by?: User | null;
-  [key: string]: any;
 }
 
 export interface FindWithFiltersProps<Entity extends ObjectLiteral, Query extends ListParamsQuery> {

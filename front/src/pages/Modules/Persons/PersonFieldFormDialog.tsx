@@ -1,4 +1,5 @@
 import { CreateEditDialog } from '@components/common/forms/CreateEditDialog';
+import { OptionsListEditor } from '@components/common/forms/OptionsListEditor';
 import { FormControlLabel, MenuItem, Switch, TextField } from '@mui/material';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +11,8 @@ export const PersonFieldFormDialog = ({ open, field, submitting, onClose, onSubm
   const [label, setLabel] = useState(field?.label ?? '');
   const [type, setType] = useState<PersonFieldType>(field?.type ?? 'text');
   const [required, setRequired] = useState(field?.required ?? false);
-  const [options, setOptions] = useState(field?.options.join('\n') ?? '');
+  const [allowMultiple, setAllowMultiple] = useState(field?.allow_multiple ?? false);
+  const [options, setOptions] = useState(field?.options ?? []);
   return (
     <CreateEditDialog
       open={open}
@@ -22,10 +24,9 @@ export const PersonFieldFormDialog = ({ open, field, submitting, onClose, onSubm
           label: label.trim(),
           type,
           required,
-          options: options
-            .split('\n')
-            .map((value) => value.trim())
-            .filter(Boolean),
+          allow_multiple: type === 'options' ? allowMultiple : false,
+          options: type === 'options' ? options.map((value) => value.trim()).filter(Boolean) : [],
+          calculated_conditions: [],
         })
       }
       labels={{
@@ -48,20 +49,26 @@ export const PersonFieldFormDialog = ({ open, field, submitting, onClose, onSubm
         value={type}
         onChange={(e) => setType(e.target.value as PersonFieldType)}
       >
-        {['text', 'paragraph', 'number', 'switch', 'single_option', 'multiple_options', 'date'].map((value) => (
+        {['text', 'paragraph', 'number', 'yes_no', 'options', 'date'].map((value) => (
           <MenuItem key={value} value={value}>
             {t(`pages.persons.fieldTypes.${value}`)}
           </MenuItem>
         ))}
       </TextField>
-      {type === 'single_option' || type === 'multiple_options' ? (
-        <TextField
-          multiline
-          minRows={3}
-          label={t('pages.persons.fieldsCrud.options')}
-          value={options}
-          onChange={(e) => setOptions(e.target.value)}
-        />
+      {type === 'options' ? (
+        <>
+          <FormControlLabel
+            control={<Switch checked={allowMultiple} onChange={(_event, checked) => setAllowMultiple(checked)} />}
+            label={t('pages.persons.fieldsCrud.allowMultiple')}
+          />
+          <OptionsListEditor
+            label={t('pages.persons.fieldsCrud.options')}
+            addLabel={t('pages.persons.fieldsCrud.addOption')}
+            removeLabel={t('form.common.delete')}
+            values={options}
+            onChange={setOptions}
+          />
+        </>
       ) : null}
       <FormControlLabel
         control={<Switch checked={required} onChange={(e) => setRequired(e.target.checked)} />}

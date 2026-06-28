@@ -48,6 +48,7 @@ import { FilesService } from '@services/files';
 import { API_URL } from '@utils/constants';
 import { persistNewEventFields } from '@utils/event-fields';
 import { HttpRequestError, httpRequest } from '@utils/http';
+import { MuiIcon } from '@utils/muiIcons';
 import { getPreloadedResource } from '@utils/preload';
 import { getPublicEventsPath } from '@utils/routes';
 import { DateTime } from 'luxon';
@@ -67,7 +68,7 @@ const toImageUrl = (event: CalendarEvent) =>
 export const EventCalendar = () => {
   const { t, i18n } = useTranslation();
   const { congregation } = useAppContext();
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
   const { showNotification } = useNotificationContext();
   const location = useLocation();
   const calendarRef = useRef<FullCalendar | null>(null);
@@ -97,6 +98,7 @@ export const EventCalendar = () => {
   const canViewPersonFields = hasPermission('person_field', 'get');
   const canViewEventFields = hasPermission('event_field', 'get');
   const canCreateEventFields = hasPermission('event_field', 'create');
+  const use12HourTime = user?.preferences?.time_format === '12h';
 
   useEffect(() => {
     const eventId = new URLSearchParams(location.search).get('event');
@@ -255,8 +257,8 @@ export const EventCalendar = () => {
   };
 
   const shareEvent = async (event: CalendarEvent) => {
-    const path =
-      event.is_public && event.public_id ? getPublicEventsPath(i18n.language, event.public_id) : `/?event=${event.id}`;
+    if (!event.is_public || !event.public_id) return;
+    const path = getPublicEventsPath(i18n.language, event.public_id);
     await navigator.clipboard.writeText(`${window.location.origin}${path}`);
     showNotification(t('pages.events.success.linkCopied'), { severity: 'success' });
   };
@@ -374,6 +376,34 @@ export const EventCalendar = () => {
             datesSet={handleDatesSet}
             dateClick={handleDateClick}
             eventClick={handleEventClick}
+            eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: use12HourTime }}
+            slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: use12HourTime }}
+            eventContent={(arg) => {
+              const source = arg.event.extendedProps.source as CalendarEvent;
+              const start = DateTime.fromISO(source.start_datetime)
+                .setZone(congregation?.timezone)
+                .setLocale(i18n.language)
+                .toLocaleString(use12HourTime ? DateTime.TIME_SIMPLE : DateTime.TIME_24_SIMPLE);
+              const end = DateTime.fromISO(source.end_datetime)
+                .setZone(congregation?.timezone)
+                .setLocale(i18n.language)
+                .toLocaleString(use12HourTime ? DateTime.TIME_SIMPLE : DateTime.TIME_24_SIMPLE);
+              const details = [source.name, `${start} - ${end}`, source.description].filter(Boolean).join('\n');
+              return (
+                <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{details}</span>}>
+                  <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
+                    <MuiIcon
+                      name={source.type?.icon}
+                      sx={{ fontSize: 14, color: source.type?.color ?? 'inherit', flexShrink: 0 }}
+                    />
+                    <Typography component="span" variant="caption" noWrap>
+                      {arg.timeText ? `${arg.timeText} ` : ''}
+                      {arg.event.title}
+                    </Typography>
+                  </Stack>
+                </Tooltip>
+              );
+            }}
             dayMaxEvents
             nowIndicator
             selectable
@@ -518,15 +548,17 @@ export const EventCalendar = () => {
             <CalendarMonthRoundedIcon sx={{ mr: 1 }} />
             {t('pages.events.actions.addToCalendar')}
           </MenuItem>
-          <MenuItem
-            onClick={() => {
-              if (eventMenu) void shareEvent(eventMenu.event);
-              setEventMenu(undefined);
-            }}
-          >
-            <IosShareRoundedIcon sx={{ mr: 1 }} />
-            {t('pages.events.actions.share')}
-          </MenuItem>
+          {eventMenu?.event.is_public && eventMenu.event.public_id ? (
+            <MenuItem
+              onClick={() => {
+                if (eventMenu) void shareEvent(eventMenu.event);
+                setEventMenu(undefined);
+              }}
+            >
+              <IosShareRoundedIcon sx={{ mr: 1 }} />
+              {t('pages.events.actions.share')}
+            </MenuItem>
+          ) : null}
         </Popover>
 
         {editor && (!editor.typeId || eventTypes.length) ? (
@@ -596,7 +628,9 @@ export const EventCalendar = () => {
             {selectedEvent ? (
               <>
                 <Button onClick={() => addToCalendar(selectedEvent)}>{t('pages.events.actions.addToCalendar')}</Button>
-                <Button onClick={() => void shareEvent(selectedEvent)}>{t('pages.events.actions.share')}</Button>
+                {selectedEvent.is_public && selectedEvent.public_id ? (
+                  <Button onClick={() => void shareEvent(selectedEvent)}>{t('pages.events.actions.share')}</Button>
+                ) : null}
               </>
             ) : null}
           </DialogActions>

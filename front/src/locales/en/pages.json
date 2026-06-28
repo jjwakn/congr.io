@@ -157,6 +157,7 @@
     "tabs": {
       "congregations": "Congregation Settings",
       "ui": "UI",
+      "customFields": "Custom Fields",
       "eventTypes": "Event Types",
       "eventFields": "Event Fields",
       "personFields": "Person Fields",
@@ -269,9 +270,12 @@
     },
     "interface": {
       "browser": "Browser",
+      "time24": "24 hours",
+      "time12": "AM/PM",
       "paginationTitle": "Items per page",
       "paginationDescription": "Set a default and optional section-specific page sizes for your account.",
       "defaultPageSize": "Default items per page",
+      "resetToDefault": "Reset to 50",
       "section": "Section",
       "itemsPerPage": "Items per page",
       "sidebarTitle": "Sidebar order",
@@ -321,12 +325,23 @@
         "enabled": "Enabled",
         "enabledHint": "Disabled event types cannot be selected for new events.",
         "attendance": "Capture attendance",
-        "defaultPublic": "Public by default",
-        "defaultSelfRegistration": "Allow self-registration by default",
+        "defaultPublic": "Public",
+        "defaultSelfRegistration": "Self-registration",
         "defaultStartTime": "Default start time",
         "defaultDuration": "Default duration in minutes",
+        "icon": "Icon",
         "color": "Calendar color",
+        "customFieldsHelp": "These fields are added when an event uses this event type.",
         "actions": "Actions"
+      },
+      "tabs": {
+        "info": "Info",
+        "customFields": "Custom fields"
+      },
+      "help": {
+        "attendance": "Enables attendance capture for events created with this type.",
+        "public": "Makes events public when this type is selected.",
+        "selfRegistration": "Allows people to register themselves when public registration is open."
       },
       "dialogs": {
         "createTitle": "Create event type",
@@ -408,6 +423,7 @@
     }
   },
   "events": {
+    "title": "Events",
     "calendar": "Calendar",
     "viewDay": "View day",
     "today": "Today",
@@ -425,7 +441,7 @@
       "edit": "Edit",
       "delete": "Delete",
       "addToCalendar": "Add to calendar",
-      "share": "Share"
+      "share": "Copy link"
     },
     "form": {
       "createTitle": "Create event",
@@ -468,14 +484,20 @@
       "allEvents": "Use for every event of this type",
       "personField": "Save value to person field",
       "doNotSave": "Do not save to person",
+      "linkPersonField": "Link person field",
+      "linkPersonFieldHelp": "When enabled, this event field uses the selected person field type and options.",
       "reusableField": "Reusable event field",
       "selectReusable": "Select a reusable field",
       "add": "Add field",
+      "addNew": "Add new field",
       "types": {
         "text": "Text",
         "paragraph": "Paragraph",
         "number": "Number",
-        "switch": "Switch",
+        "yes_no": "Yes/No",
+        "options": "Options",
+        "date": "Date",
+        "switch": "Yes/No",
         "single_option": "One option",
         "multiple_options": "Multiple options"
       }
@@ -516,7 +538,8 @@
       "regenerateTitle": "Generate a new person code?",
       "regenerateMessage": "The last name changed. Do you want to generate a new code and keep the old code in history?",
       "regenerateConfirm": "Generate new code",
-      "keepCurrent": "Keep current code"
+      "keepCurrent": "Keep current code",
+      "createdTitle": "New person code"
     },
     "flowsEmpty": "No flows are available for this person.",
     "fields": {
@@ -540,6 +563,23 @@
       "type": "Type",
       "required": "Required",
       "options": "Options",
+      "allowMultiple": "Allow multiple",
+      "addOption": "Add option",
+      "conditionField": "Field",
+      "conditionOperator": "Condition",
+      "conditionValue": "Value",
+      "addCondition": "Add condition",
+      "calculatedTooltip": "This value is conditionally calculated and cannot be edited manually.",
+      "operators": {
+        "notEmpty": "Is not empty",
+        "empty": "Is empty",
+        "equals": "Equals",
+        "notEquals": "Does not equal",
+        "greaterThan": "Greater than",
+        "lessThan": "Less than",
+        "ageGreaterThan": "Age greater than",
+        "ageLessThan": "Age less than"
+      },
       "created": "Custom field created.",
       "saved": "Custom field saved.",
       "deleted": "Custom field deleted.",
@@ -550,7 +590,9 @@
       "text": "Text",
       "paragraph": "Paragraph",
       "number": "Number",
-      "switch": "Switch",
+      "yes_no": "Yes/No",
+      "options": "Options",
+      "switch": "Yes/No",
       "single_option": "One option",
       "multiple_options": "Multiple options",
       "date": "Date"
@@ -561,6 +603,7 @@
     "event": "Event",
     "person": "Person",
     "add": "Add attendee",
+    "noCurrentEvent": "No attendance event is active right now.",
     "publicSubmission": "Public submission",
     "error": "Could not update attendance."
   },

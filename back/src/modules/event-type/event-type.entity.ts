@@ -4,6 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Congregation } from '../congregation/congregation.entity';
 import { Event } from '../event/event.entity';
 import { ProcessStep } from '../process/process-step.entity';
+import type { EventTypeCustomField } from './event-type.types';
 
 @Entity()
 export class EventType extends CommonEntity {
@@ -41,10 +42,13 @@ export class EventType extends CommonEntity {
   default_self_registration: boolean;
 
   @Column('simple-json', { nullable: false, default: [] })
-  custom_fields: Array<Record<string, unknown>>;
+  custom_fields: EventTypeCustomField[];
 
   @Column({ nullable: false, default: '#1976d2', length: 16 })
   color: string;
+
+  @Column({ nullable: false, default: 'CalendarMonth', length: 120 })
+  icon: string;
 
   @Column({ nullable: false, default: false })
   save_attendance_date: boolean;

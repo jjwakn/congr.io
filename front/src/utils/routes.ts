@@ -8,7 +8,7 @@ const BRANDING_SEGMENT: LocalizedValue = {
 };
 
 const FILES_SEGMENT: LocalizedValue = { en: 'files', es: 'archivos' };
-const PUBLIC_EVENTS_SEGMENT: LocalizedValue = { en: 'events', es: 'eventos-publicos' };
+const PUBLIC_EVENTS_SEGMENT = 'e';
 
 const MODULES_SEGMENT: LocalizedValue = {
   en: 'modules',
@@ -102,10 +102,10 @@ export const isFilesPath = (pathname: string) => {
 };
 export const isPublicEventsPath = (pathname: string) => {
   const segments = splitPath(pathname);
-  return Boolean(segments.length && matchesLocalizedSegment(segments[0], PUBLIC_EVENTS_SEGMENT));
+  return segments[0] === PUBLIC_EVENTS_SEGMENT;
 };
-export const getPublicEventsPath = (language?: string, publicId?: string) => {
-  const base = `/${PUBLIC_EVENTS_SEGMENT[normalizeLanguage(language)]}`;
+export const getPublicEventsPath = (_language?: string, publicId?: string) => {
+  const base = `/${PUBLIC_EVENTS_SEGMENT}`;
   return publicId ? `${base}/${publicId}` : base;
 };
 

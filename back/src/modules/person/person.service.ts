@@ -49,7 +49,7 @@ export class PersonService {
     };
   }
 
-  private normalize(data: PersonCreateProps['data']) {
+  private normalize(data: PersonCreateProps['data'], defaultEnabled = true) {
     return {
       first_name: data.first_name.trim(),
       middle_name: data.middle_name?.trim() || null,
@@ -62,6 +62,7 @@ export class PersonService {
       age_recorded_at: !data.birthdate && data.age !== undefined ? DateTime.now().toISODate() : null,
       email: data.email?.trim() || null,
       user_id: data.user_id ?? null,
+      enabled: data.enabled ?? defaultEnabled,
       custom_values: data.custom_values ?? {},
     };
   }
@@ -153,7 +154,7 @@ export class PersonService {
     const linkedPerson = data.user_id ? await this.repository.findOne({ where: { user_id: data.user_id } }) : null;
     if (linkedPerson && linkedPerson.id !== existing.id)
       throw new NotAcceptableException(this.i18n.t('errors.person.userInUse'));
-    const normalized = this.normalize(data);
+    const normalized = this.normalize(data, existing.enabled);
     const nextCode = data.regenerate_code
       ? await this.nextCode(congregation.id, normalized.last_name, normalized.second_last_name ?? undefined)
       : existing.code;

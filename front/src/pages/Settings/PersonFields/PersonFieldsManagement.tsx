@@ -8,6 +8,7 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { Alert } from '@mui/material';
 import { PersonFieldsService } from '@services/persons';
+import { STANDARD_PERSON_FIELDS } from '@utils/customFields';
 import { httpRequest } from '@utils/http';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +16,8 @@ import type { PersonField } from '@/types/person.types';
 import { PersonFieldSettingsFormDialog } from './PersonFieldSettingsFormDialog';
 import type { PersonFieldFormValues } from './personFields.types';
 import { usePersonFieldsList } from './usePersonFieldsList';
+
+type PersonFieldRow = PersonField & { persistent?: boolean };
 
 export const PersonFieldsManagement = () => {
   const { t } = useTranslation();
@@ -30,10 +33,37 @@ export const PersonFieldsManagement = () => {
   const [pendingDelete, setPendingDelete] = useState<PersonField | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const columns = useMemo<ModuleListColumn<PersonField>[]>(
+  const rows = useMemo<PersonFieldRow[]>(
+    () => [
+      ...STANDARD_PERSON_FIELDS.map(
+        (field) =>
+          ({
+            id: field.id,
+            label: t(field.labelKey),
+            type: field.type,
+            options: field.options,
+            required: false,
+            allow_multiple: field.allow_multiple ?? false,
+            calculated_conditions: [],
+            enabled: true,
+            congregation_id: '',
+            persistent: true,
+          }) as PersonFieldRow,
+      ),
+      ...list.result,
+    ],
+    [list.result, t],
+  );
+
+  const columns = useMemo<ModuleListColumn<PersonFieldRow>[]>(
     () => [
       { id: 'label', minWidth: 180, render: (row) => row.label },
       { id: 'type', minWidth: 120, render: (row) => t(`pages.persons.fieldTypes.${row.type}`) },
+      {
+        id: 'options',
+        minWidth: 180,
+        render: (row) => (row.options?.length ? row.options.join(', ') : t('pages.modules.common.emptyValue')),
+      },
       {
         id: 'actions',
         width: 100,
@@ -46,7 +76,7 @@ export const PersonFieldsManagement = () => {
                 id: 'edit',
                 label: t('pages.persons.edit'),
                 icon: EditOutlinedIcon,
-                hidden: !canUpdate,
+                hidden: !canUpdate || row.persistent,
                 onClick: (value) => {
                   setSelected(value);
                   setFormOpen(true);
@@ -57,7 +87,7 @@ export const PersonFieldsManagement = () => {
                 label: t('form.common.delete'),
                 icon: DeleteOutlineRoundedIcon,
                 color: 'error',
-                hidden: !canDelete,
+                hidden: !canDelete || row.persistent,
                 onClick: setPendingDelete,
               },
             ]}
@@ -103,7 +133,7 @@ export const PersonFieldsManagement = () => {
 
   return (
     <>
-      <ModuleSection<PersonField>
+      <ModuleSection<PersonFieldRow>
         title={t('pages.persons.fieldsTitle')}
         createAction={
           canCreate
@@ -129,11 +159,12 @@ export const PersonFieldsManagement = () => {
             [
               { id: 'label', label: t('pages.persons.fieldsCrud.label'), sortKey: 'label' },
               { id: 'type', label: t('pages.persons.fieldsCrud.type') },
+              { id: 'options', label: t('pages.persons.fieldsCrud.options') },
               { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
             ],
           ],
           columns,
-          rows: list.result,
+          rows,
           getRowId: (row) => row.id,
           loading: list.loading,
           loadingLabel: t('pages.persons.loading'),

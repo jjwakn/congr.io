@@ -19,6 +19,9 @@
     "cancel": "Cancelar",
     "close": "Cerrar",
     "back": "Regresar",
+    "discard": "Descartar",
+    "hour": "Hora",
+    "minute": "Minuto",
     "selectAll": "Seleccionar Todos",
     "add": "Añadir"
   },

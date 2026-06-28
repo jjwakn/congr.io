@@ -21,7 +21,7 @@ import { EventTypeFormDialog } from './EventTypeFormDialog';
 import type { EventTypeFormValues } from './eventTypes.types';
 import { useEventTypesList } from './useEventTypesList';
 
-const getErrorMessage = (value: unknown, fallback: string) =>
+const getErrorMessage = (value: Error | null, fallback: string) =>
   value instanceof HttpRequestError || value instanceof Error ? value.message : fallback;
 
 export const EventTypesManagement = () => {
@@ -50,9 +50,12 @@ export const EventTypesManagement = () => {
       try {
         return await httpRequest<EventType>({ service: EventTypesService.get, data: { id } });
       } catch (value) {
-        showNotification(getErrorMessage(value, t('pages.settings.eventTypes.error.loadOneFailed')), {
-          severity: 'error',
-        });
+        showNotification(
+          getErrorMessage(value instanceof Error ? value : null, t('pages.settings.eventTypes.error.loadOneFailed')),
+          {
+            severity: 'error',
+          },
+        );
         return null;
       } finally {
         setLoadingId(null);
@@ -109,7 +112,12 @@ export const EventTypesManagement = () => {
         { severity: 'success' },
       );
     } catch (value) {
-      showNotification(getErrorMessage(value, t('pages.settings.eventTypes.error.saveFailed')), { severity: 'error' });
+      showNotification(
+        getErrorMessage(value instanceof Error ? value : null, t('pages.settings.eventTypes.error.saveFailed')),
+        {
+          severity: 'error',
+        },
+      );
     } finally {
       setSubmitting(false);
     }
@@ -124,9 +132,12 @@ export const EventTypesManagement = () => {
       await list.refresh();
       showNotification(t('pages.settings.eventTypes.success.deleted'), { severity: 'success' });
     } catch (value) {
-      showNotification(getErrorMessage(value, t('pages.settings.eventTypes.error.deleteFailed')), {
-        severity: 'error',
-      });
+      showNotification(
+        getErrorMessage(value instanceof Error ? value : null, t('pages.settings.eventTypes.error.deleteFailed')),
+        {
+          severity: 'error',
+        },
+      );
     } finally {
       setDeleting(false);
     }

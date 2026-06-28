@@ -1,4 +1,6 @@
+import { LocalizedDateField } from '@components/common/forms/LocalizedDateField';
 import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, TextField } from '@mui/material';
+import type { JsonValue } from '@/types/json.types';
 import type { EventRegistrationFieldsProps } from './registration.types';
 
 export const EventRegistrationFields = ({
@@ -7,14 +9,14 @@ export const EventRegistrationFields = ({
   publicOnly = false,
   onChange,
 }: EventRegistrationFieldsProps) => {
-  const update = (id: string, value: unknown) => onChange({ ...values, [id]: value });
+  const update = (id: string, value: JsonValue | undefined) => onChange({ ...values, [id]: value });
   return (
     <Stack spacing={1.5}>
       {fields
         .filter((field) => !publicOnly || field.user_fillable)
         .map((field) => {
           const value = values[field.id];
-          if (field.type === 'switch') {
+          if (field.type === 'yes_no') {
             return (
               <FormControlLabel
                 key={field.id}
@@ -23,8 +25,8 @@ export const EventRegistrationFields = ({
               />
             );
           }
-          if (field.type === 'single_option' || field.type === 'multiple_options') {
-            const multiple = field.type === 'multiple_options';
+          if (field.type === 'options') {
+            const multiple = field.allow_multiple;
             return (
               <FormControl key={field.id} fullWidth required={field.required}>
                 <InputLabel>{field.label}</InputLabel>
@@ -43,7 +45,15 @@ export const EventRegistrationFields = ({
               </FormControl>
             );
           }
-          return (
+          return field.type === 'date' ? (
+            <LocalizedDateField
+              key={field.id}
+              required={field.required}
+              label={field.label}
+              value={typeof value === 'string' ? value : ''}
+              onChange={(nextValue) => update(field.id, nextValue)}
+            />
+          ) : (
             <TextField
               key={field.id}
               required={field.required}

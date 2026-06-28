@@ -50,13 +50,17 @@ export class PersonFieldService {
   }
   async create({ data, userId, congregationId }: PersonFieldCreateProps) {
     const { user, congregation } = await this.getContext(userId, congregationId);
+    const options = data.type === 'options' ? (data.options?.map((value) => value.trim()).filter(Boolean) ?? []) : [];
     return this.repository.save(
       this.repository.create({
         congregation_id: congregation.id,
         label: data.label.trim(),
         type: data.type,
-        required: data.required ?? false,
-        options: data.options?.map((value) => value.trim()).filter(Boolean) ?? [],
+        required: data.type === 'yes_no' && data.calculated_conditions?.length ? false : (data.required ?? false),
+        allow_multiple: data.type === 'options' ? (data.allow_multiple ?? false) : false,
+        options,
+        calculated_conditions: data.type === 'yes_no' ? (data.calculated_conditions ?? []) : [],
+        enabled: data.enabled ?? true,
         created_by: user,
       }),
     );
@@ -64,11 +68,15 @@ export class PersonFieldService {
   async update({ id, data, userId, congregationId }: PersonFieldUpdateProps) {
     const { user } = await this.getContext(userId, congregationId);
     const existing = await this.get({ id, userId, congregationId });
+    const options = data.type === 'options' ? (data.options?.map((value) => value.trim()).filter(Boolean) ?? []) : [];
     Object.assign(existing, {
       label: data.label.trim(),
       type: data.type,
-      required: data.required ?? false,
-      options: data.options ?? [],
+      required: data.type === 'yes_no' && data.calculated_conditions?.length ? false : (data.required ?? false),
+      allow_multiple: data.type === 'options' ? (data.allow_multiple ?? false) : false,
+      options,
+      calculated_conditions: data.type === 'yes_no' ? (data.calculated_conditions ?? []) : [],
+      enabled: data.enabled ?? existing.enabled,
       updated_by: user,
     });
     return this.repository.save(existing);

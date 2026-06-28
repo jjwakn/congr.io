@@ -44,6 +44,7 @@ export const CreateEditDialog = ({
   open,
   mode,
   submitting,
+  submitDisabled = false,
   onClose,
   onSubmit,
   onEnter,
@@ -97,7 +98,7 @@ export const CreateEditDialog = ({
         <Button onClick={onClose} disabled={submitting}>
           {labels.cancel}
         </Button>
-        <Button onClick={onSubmit} variant="contained" disabled={submitting}>
+        <Button onClick={onSubmit} variant="contained" disabled={submitting || submitDisabled}>
           {submitLabel}
         </Button>
       </DialogActions>

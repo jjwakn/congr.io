@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { CommonOrder, CongregationEntityActionProps, ListParamsQuery } from 'src/common/common.types';
+import type { EventTypeCustomField } from 'src/modules/event-type/event-type.types';
 import { ApiProperty } from '@nestjs/swagger';
 
 export interface EventGetProps extends CongregationEntityActionProps {
@@ -95,7 +96,7 @@ export class EventDto {
 
   @IsArray()
   @IsOptional()
-  custom_fields?: Array<Record<string, unknown>>;
+  custom_fields?: EventTypeCustomField[];
 
   @Type(() => Boolean)
   @IsBoolean()

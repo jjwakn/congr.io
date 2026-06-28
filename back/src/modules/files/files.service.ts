@@ -31,7 +31,7 @@ export class FilesService {
   }
 
   private get storagePath() {
-    return resolve(process.env.FILE_STORAGE_PATH ?? join(process.cwd(), 'storage'));
+    return resolve(process.env.FILE_STORAGE_PATH ?? '/tmp/congrio-storage');
   }
 
   getStatus(): { selected: FileProvider; providers: FileProviderStatus[] } {
@@ -57,6 +57,13 @@ export class FilesService {
           missing,
         };
       }),
+    };
+  }
+
+  getEventImageOptions() {
+    return {
+      allow_upload: this.provider === 'local',
+      allow_public_url: this.provider === 'url',
     };
   }
 

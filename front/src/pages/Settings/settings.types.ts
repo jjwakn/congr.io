@@ -10,10 +10,12 @@ export interface SettingsPageProps {
 
 export interface SettingsNavigationState {
   settingsTab?: SettingsTabId;
+  customFieldsTab?: CustomFieldsSettingsSubTabId;
   createEventType?: boolean;
 }
 
-export type SettingsTabId = 'congregations' | 'ui' | 'eventTypes' | 'eventFields' | 'personFields' | 'deployment';
+export type SettingsTabId = 'congregations' | 'ui' | 'customFields' | 'deployment';
+export type CustomFieldsSettingsSubTabId = 'eventTypes' | 'eventFields' | 'personFields';
 
 export interface CongregationSettingsDraft {
   name: string;

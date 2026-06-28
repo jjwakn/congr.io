@@ -4,13 +4,14 @@ import { EventParticipantsService } from '@services/eventParticipants';
 import { httpRequest } from '@utils/http';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { JsonObject } from '@/types/json.types';
 import type { PublicEventRegistrationFormProps } from './public-events.types';
 
 export const PublicEventRegistrationForm = ({ event }: PublicEventRegistrationFormProps) => {
   const { t } = useTranslation();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [values, setValues] = useState<JsonObject>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const requiredMissing = event.custom_fields

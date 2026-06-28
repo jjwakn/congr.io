@@ -1,10 +1,23 @@
 import { PersonAutocomplete } from '@components/common/PersonAutocomplete';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
-import { Button, FormControl, InputLabel, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Stack,
+  Switch,
+  Typography,
+} from '@mui/material';
 import { EventParticipantsService } from '@services/eventParticipants';
 import { EventsService } from '@services/events';
 import { httpRequest } from '@utils/http';
+import { MuiIcon } from '@utils/muiIcons';
 import { DateTime } from 'luxon';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,13 +26,15 @@ import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
 import type { Person } from '@/types/person.types';
 
 export const AttendanceManagement = () => {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { hasPermission } = useAuth();
   const { showNotification } = useNotificationContext();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [eventId, setEventId] = useState('');
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
   const [person, setPerson] = useState<Person | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const selectedEvent = events.find((event) => event.id === eventId) ?? null;
   const loadParticipants = useCallback(async (id: string) => {
     if (!id) return;
     const response = await httpRequest<{ result: EventParticipant[]; total: number }>({
@@ -53,36 +68,24 @@ export const AttendanceManagement = () => {
       data: { event_id: eventId, person_id: person.id, attended: true },
     });
     setPerson(null);
+    setAddOpen(false);
     await loadParticipants(eventId);
   };
   return (
     <Stack spacing={2}>
-      <Typography variant="h5">{t('pages.attendance.title')}</Typography>
-      <FormControl>
-        <InputLabel>{t('pages.attendance.event')}</InputLabel>
-        <Select
-          value={eventId}
-          label={t('pages.attendance.event')}
-          onChange={(e) => {
-            setEventId(e.target.value);
-            void loadParticipants(e.target.value);
-          }}
-        >
-          {events.map((event) => (
-            <MenuItem key={event.id} value={event.id}>
-              {event.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      {hasPermission('event_attendance', 'create') ? (
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-          <PersonAutocomplete value={person} onChange={setPerson} label={t('pages.attendance.person')} />
-          <Button variant="contained" onClick={() => void add()}>
-            {t('pages.attendance.add')}
-          </Button>
-        </Stack>
-      ) : null}
+      <Stack direction="row" alignItems="center" spacing={1}>
+        {selectedEvent ? (
+          <MuiIcon name={selectedEvent.type?.icon} sx={{ color: selectedEvent.type?.color ?? 'primary.main' }} />
+        ) : null}
+        <Typography variant="h5">{selectedEvent?.name ?? t('pages.attendance.title')}</Typography>
+      </Stack>
+      <Typography variant="body2" color="text.secondary">
+        {selectedEvent
+          ? DateTime.fromISO(selectedEvent.start_datetime)
+              .setLocale(i18n.language)
+              .toLocaleString(DateTime.DATETIME_MED)
+          : t('pages.attendance.noCurrentEvent')}
+      </Typography>
       <Stack>
         {participants.map((participant) => (
           <Stack
@@ -117,6 +120,28 @@ export const AttendanceManagement = () => {
           </Stack>
         ))}
       </Stack>
+      {hasPermission('event_attendance', 'create') && selectedEvent && !selectedEvent.registration_locked ? (
+        <Button startIcon={<PersonAddAltOutlinedIcon />} variant="contained" onClick={() => setAddOpen(true)}>
+          {t('pages.attendance.add')}
+        </Button>
+      ) : null}
+      <Dialog open={addOpen} fullWidth maxWidth="sm" onClose={() => setAddOpen(false)}>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {t('pages.attendance.add')}
+          <IconButton onClick={() => setAddOpen(false)} aria-label={t('form.field.close')}>
+            <CloseRoundedIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <PersonAutocomplete value={person} onChange={setPerson} label={t('pages.attendance.person')} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddOpen(false)}>{t('form.field.cancel')}</Button>
+          <Button variant="contained" disabled={!person} onClick={() => void add()}>
+            {t('pages.attendance.add')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 };

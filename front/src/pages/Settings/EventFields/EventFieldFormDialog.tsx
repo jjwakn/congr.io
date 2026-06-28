@@ -1,16 +1,33 @@
 import { CreateEditDialog } from '@components/common/forms/CreateEditDialog';
-import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material';
+import { FieldConditionsEditor } from '@components/common/forms/FieldConditionsEditor';
+import { OptionsListEditor } from '@components/common/forms/OptionsListEditor';
+import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import {
+  FormControl,
+  FormControlLabel,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  Switch,
+  TextField,
+  Tooltip,
+} from '@mui/material';
+import { STANDARD_EVENT_FIELDS, STANDARD_PERSON_FIELDS } from '@utils/customFields';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EventFieldType } from '@/types/event.types';
+import type { FieldCondition } from '@/types/person.types';
 import type { EventFieldFormDialogProps } from './eventFields.types';
 
-const TYPES: EventFieldType[] = ['text', 'paragraph', 'number', 'switch', 'single_option', 'multiple_options'];
+const TYPES: EventFieldType[] = ['text', 'paragraph', 'number', 'yes_no', 'options', 'date'];
 
 export const EventFieldFormDialog = ({
   open,
   mode,
   field,
+  eventFields,
   personFields,
   submitting,
   onClose,
@@ -20,17 +37,58 @@ export const EventFieldFormDialog = ({
   const [label, setLabel] = useState('');
   const [type, setType] = useState<EventFieldType>('text');
   const [required, setRequired] = useState(false);
-  const [userFillable, setUserFillable] = useState(false);
+  const [linkPersonField, setLinkPersonField] = useState(false);
   const [personFieldId, setPersonFieldId] = useState('');
-  const [options, setOptions] = useState('');
+  const [allowMultiple, setAllowMultiple] = useState(false);
+  const [options, setOptions] = useState<string[]>([]);
+  const [calculatedConditions, setCalculatedConditions] = useState<FieldCondition[]>([]);
   const resetState = useCallback(() => {
     setLabel(field?.label ?? '');
     setType(field?.type ?? 'text');
     setRequired(field?.required ?? false);
-    setUserFillable(field?.user_fillable ?? false);
+    setLinkPersonField(field?.link_person_field ?? Boolean(field?.person_field_id));
     setPersonFieldId(field?.person_field_id ?? '');
-    setOptions(field?.options.join('\n') ?? '');
+    setAllowMultiple(field?.allow_multiple ?? false);
+    setOptions(field?.options ?? []);
+    setCalculatedConditions(field?.calculated_conditions ?? []);
   }, [field]);
+  const personFieldOptions = useMemo(
+    () => [
+      ...STANDARD_PERSON_FIELDS.map((standardField) => ({
+        id: standardField.id,
+        label: t(standardField.labelKey),
+        type: standardField.type,
+        options: standardField.options,
+        allow_multiple: standardField.allow_multiple ?? false,
+      })),
+      ...personFields,
+    ],
+    [personFields, t],
+  );
+  const linkedPersonField = personFieldOptions.find(({ id }) => id === personFieldId);
+  const conditionFields = useMemo(
+    () => [
+      ...STANDARD_EVENT_FIELDS.map((standardField) => ({
+        id: standardField.id,
+        label: t(standardField.labelKey),
+        type: standardField.type,
+        options: standardField.options,
+      })),
+      ...eventFields
+        .filter((eventField) => eventField.id !== field?.id)
+        .map((eventField) => ({
+          id: eventField.id,
+          label: eventField.label,
+          type: eventField.type,
+          options: eventField.options,
+        })),
+    ],
+    [eventFields, field?.id, t],
+  );
+  const effectiveType = linkPersonField && linkedPersonField ? (linkedPersonField.type as EventFieldType) : type;
+  const effectiveOptions = linkPersonField && linkedPersonField ? linkedPersonField.options : options;
+  const effectiveAllowMultiple =
+    linkPersonField && linkedPersonField ? linkedPersonField.allow_multiple : allowMultiple;
   const labels = useMemo(
     () => ({
       createTitle: t('pages.settings.eventFields.create'),
@@ -51,14 +109,14 @@ export const EventFieldFormDialog = ({
       onSubmit={() =>
         onSubmit({
           label: label.trim(),
-          type,
-          required,
-          user_fillable: userFillable,
-          person_field_id: personFieldId || undefined,
-          options: options
-            .split('\n')
-            .map((value) => value.trim())
-            .filter(Boolean),
+          type: effectiveType,
+          required: effectiveType === 'yes_no' && calculatedConditions.length > 0 ? false : required,
+          user_fillable: false,
+          link_person_field: linkPersonField,
+          person_field_id: linkPersonField ? personFieldId || undefined : undefined,
+          allow_multiple: effectiveType === 'options' ? effectiveAllowMultiple : false,
+          options: effectiveType === 'options' ? effectiveOptions.map((value) => value.trim()).filter(Boolean) : [],
+          calculated_conditions: effectiveType === 'yes_no' ? calculatedConditions : [],
         })
       }
       onEnter={resetState}
@@ -73,7 +131,8 @@ export const EventFieldFormDialog = ({
       <TextField
         select
         label={t('pages.events.fields.type')}
-        value={type}
+        value={linkPersonField && linkedPersonField ? linkedPersonField.type : type}
+        disabled={linkPersonField && Boolean(linkedPersonField)}
         onChange={(event) => setType(event.target.value as EventFieldType)}
       >
         {TYPES.map((value) => (
@@ -82,37 +141,93 @@ export const EventFieldFormDialog = ({
           </MenuItem>
         ))}
       </TextField>
-      {type === 'single_option' || type === 'multiple_options' ? (
-        <TextField
-          multiline
-          minRows={3}
-          label={t('pages.events.fields.options')}
-          value={options}
-          onChange={(event) => setOptions(event.target.value)}
+      <Stack direction="row" alignItems="center" spacing={0.5}>
+        <FormControlLabel
+          control={<Switch checked={linkPersonField} onChange={(_event, checked) => setLinkPersonField(checked)} />}
+          label={t('pages.events.fields.linkPersonField')}
         />
-      ) : null}
+        <Tooltip title={t('pages.events.fields.linkPersonFieldHelp')}>
+          <IconButton size="small" aria-label={t('pages.events.fields.linkPersonFieldHelp')}>
+            <HelpOutlineRoundedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Stack>
       <FormControl fullWidth>
         <InputLabel>{t('pages.events.fields.personField')}</InputLabel>
         <Select
           label={t('pages.events.fields.personField')}
           value={personFieldId}
-          onChange={(event) => setPersonFieldId(event.target.value)}
+          disabled={!linkPersonField}
+          onChange={(event) => {
+            const value = event.target.value;
+            const selected = personFieldOptions.find(({ id }) => id === value);
+            setPersonFieldId(value);
+            if (!selected) return;
+            setType(selected.type as EventFieldType);
+            setAllowMultiple(selected.allow_multiple ?? false);
+            setOptions(selected.options ?? []);
+          }}
         >
           <MenuItem value="">{t('pages.events.fields.doNotSave')}</MenuItem>
-          {personFields.map((personField) => (
+          {personFieldOptions.map((personField) => (
             <MenuItem key={personField.id} value={personField.id}>
               {personField.label}
             </MenuItem>
           ))}
         </Select>
       </FormControl>
+      {effectiveType === 'options' ? (
+        <>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={effectiveAllowMultiple}
+                disabled={linkPersonField && Boolean(linkedPersonField)}
+                onChange={(_event, checked) => setAllowMultiple(checked)}
+              />
+            }
+            label={t('pages.persons.fieldsCrud.allowMultiple')}
+          />
+          <OptionsListEditor
+            label={t('pages.events.fields.options')}
+            addLabel={t('pages.persons.fieldsCrud.addOption')}
+            removeLabel={t('form.common.delete')}
+            values={effectiveOptions}
+            onChange={setOptions}
+          />
+        </>
+      ) : null}
+      {effectiveType === 'yes_no' ? (
+        <FieldConditionsEditor
+          fields={conditionFields}
+          value={calculatedConditions}
+          fieldLabel={t('pages.persons.fieldsCrud.conditionField')}
+          operatorLabel={t('pages.persons.fieldsCrud.conditionOperator')}
+          valueLabel={t('pages.persons.fieldsCrud.conditionValue')}
+          addLabel={t('pages.persons.fieldsCrud.addCondition')}
+          removeLabel={t('form.common.delete')}
+          operatorLabels={{
+            not_empty: t('pages.persons.fieldsCrud.operators.notEmpty'),
+            empty: t('pages.persons.fieldsCrud.operators.empty'),
+            equals: t('pages.persons.fieldsCrud.operators.equals'),
+            not_equals: t('pages.persons.fieldsCrud.operators.notEquals'),
+            greater_than: t('pages.persons.fieldsCrud.operators.greaterThan'),
+            less_than: t('pages.persons.fieldsCrud.operators.lessThan'),
+            age_greater_than: t('pages.persons.fieldsCrud.operators.ageGreaterThan'),
+            age_less_than: t('pages.persons.fieldsCrud.operators.ageLessThan'),
+          }}
+          onChange={setCalculatedConditions}
+        />
+      ) : null}
       <FormControlLabel
-        control={<Switch checked={required} onChange={(_event, checked) => setRequired(checked)} />}
+        control={
+          <Switch
+            checked={required}
+            disabled={effectiveType === 'yes_no' && calculatedConditions.length > 0}
+            onChange={(_event, checked) => setRequired(checked)}
+          />
+        }
         label={t('pages.events.fields.required')}
-      />
-      <FormControlLabel
-        control={<Switch checked={userFillable} onChange={(_event, checked) => setUserFillable(checked)} />}
-        label={t('pages.events.fields.userFillable')}
       />
     </CreateEditDialog>
   );

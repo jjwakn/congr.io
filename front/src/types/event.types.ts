@@ -1,7 +1,8 @@
 import type { CommonEntity } from './common.types';
 import type { EventType } from './event-type.types';
+import type { FieldCondition } from './person.types';
 
-export type EventFieldType = 'text' | 'paragraph' | 'number' | 'switch' | 'single_option' | 'multiple_options';
+export type EventFieldType = 'text' | 'paragraph' | 'number' | 'yes_no' | 'options' | 'date';
 
 export interface EventCustomField {
   id: string;
@@ -9,9 +10,12 @@ export interface EventCustomField {
   type: EventFieldType;
   required: boolean;
   options: string[];
+  allow_multiple?: boolean;
   user_fillable: boolean;
+  link_person_field?: boolean;
   event_field_id?: string;
   person_field_id?: string;
+  calculated_conditions?: FieldCondition[];
 }
 
 export interface EventField extends CommonEntity, EventCustomField {

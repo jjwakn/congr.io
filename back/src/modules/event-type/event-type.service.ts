@@ -5,12 +5,18 @@ import { Injectable, NotAcceptableException, NotFoundException } from '@nestjs/c
 import { InjectRepository } from '@nestjs/typeorm';
 import { getUserCongregationContext } from '../../utils/congregation-context';
 import { Congregation } from '../congregation/congregation.entity';
+import { EventField } from '../event-field/event-field.entity';
+import { EventFieldService } from '../event-field/event-field.service';
+import type { EventFieldDto } from '../event-field/event-field.types';
 import { Event } from '../event/event.entity';
+import type { FieldCondition } from '../person-field/person-field.entity';
 import { ProcessStep } from '../process/process-step.entity';
 import { User } from '../user/user.entity';
 import { EventType } from './event-type.entity';
 import {
   EventTypeCreateProps,
+  EventTypeCustomField,
+  EventTypeCustomFieldDto,
   EventTypeDeleteProps,
   EventTypeDto,
   EventTypeGetProps,
@@ -19,11 +25,28 @@ import {
   EventTypeUpdateProps,
 } from './event-type.types';
 
+interface NormalizedEventType {
+  name: string;
+  description: string;
+  enabled: boolean;
+  attendance_enabled: boolean;
+  default_public: boolean;
+  default_self_registration: boolean;
+  custom_fields: EventTypeCustomField[];
+  color: string;
+  icon: string;
+  default_start_time: string | null;
+  default_duration_minutes: number | null;
+}
+
 @Injectable()
 export class EventTypeService {
   constructor(
     @InjectRepository(EventType)
     private readonly repository: Repository<EventType>,
+
+    @InjectRepository(EventField)
+    private readonly eventFieldRepository: Repository<EventField>,
 
     @InjectRepository(ProcessStep)
     private readonly stepRepository: Repository<ProcessStep>,
@@ -36,6 +59,8 @@ export class EventTypeService {
 
     @InjectRepository(Congregation)
     private readonly congregationRepository: Repository<Congregation>,
+
+    private readonly eventFieldService: EventFieldService,
 
     private readonly i18n: I18nService,
   ) {}
@@ -50,16 +75,108 @@ export class EventTypeService {
     });
   }
 
-  private normalizeEventType(data: EventTypeDto) {
+  private normalizeConditions(conditions: FieldCondition[] = []): FieldCondition[] {
+    return conditions.map((condition) => ({
+      field_id: condition.field_id,
+      operator: condition.operator,
+      value: condition.value ?? null,
+    }));
+  }
+
+  private normalizeOptions(options: string[] = []): string[] {
+    return options.map((value) => value.trim()).filter(Boolean);
+  }
+
+  private toEventFieldDto(field: EventTypeCustomFieldDto): EventFieldDto {
+    return {
+      label: field.label.trim(),
+      type: field.type,
+      required: field.required ?? false,
+      user_fillable: field.user_fillable ?? false,
+      link_person_field: field.link_person_field ?? Boolean(field.person_field_id),
+      person_field_id: field.person_field_id,
+      allow_multiple: field.type === 'options' ? (field.allow_multiple ?? false) : false,
+      options: field.type === 'options' ? this.normalizeOptions(field.options) : [],
+      calculated_conditions: field.type === 'yes_no' ? this.normalizeConditions(field.calculated_conditions) : [],
+    };
+  }
+
+  private toStoredCustomField(
+    eventField: EventField,
+    assignment: Pick<EventTypeCustomFieldDto, 'required' | 'user_fillable'>,
+  ): EventTypeCustomField {
+    return {
+      id: eventField.id,
+      event_field_id: eventField.id,
+      label: eventField.label,
+      type: eventField.type,
+      required: assignment.required ?? eventField.required,
+      user_fillable: assignment.user_fillable ?? eventField.user_fillable,
+      options: eventField.options,
+      allow_multiple: eventField.allow_multiple,
+      link_person_field: eventField.link_person_field,
+      person_field_id: eventField.person_field_id ?? null,
+      calculated_conditions: this.normalizeConditions(eventField.calculated_conditions),
+    };
+  }
+
+  private async normalizeCustomField(
+    field: EventTypeCustomFieldDto,
+    userId: string,
+    congregationId: string,
+  ): Promise<EventTypeCustomField> {
+    if (field.event_field_id) {
+      const existing = await this.eventFieldRepository.findOne({
+        where: { id: field.event_field_id, congregation_id: congregationId, deleted_at: IsNull() },
+      });
+      if (!existing) throw new NotFoundException(this.i18n.t('errors.eventField.notFound'));
+
+      return this.toStoredCustomField(existing, field);
+    }
+
+    const created = await this.eventFieldService.create({
+      userId,
+      congregationId,
+      data: this.toEventFieldDto(field),
+    });
+
+    return this.toStoredCustomField(created, field);
+  }
+
+  private async normalizeCustomFields(
+    data: EventTypeDto,
+    userId: string,
+    congregationId: string,
+  ): Promise<EventTypeCustomField[]> {
+    const normalized = await Promise.all(
+      (data.custom_fields ?? []).map((field) => this.normalizeCustomField(field, userId, congregationId)),
+    );
+    return Array.from(
+      normalized
+        .reduce(
+          (fieldsById, field) => fieldsById.set(field.event_field_id, field),
+          new Map<string, EventTypeCustomField>(),
+        )
+        .values(),
+    );
+  }
+
+  private async normalizeEventType(
+    data: EventTypeDto,
+    userId: string,
+    congregationId: string,
+    defaultEnabled = true,
+  ): Promise<NormalizedEventType> {
     return {
       name: data.name.trim(),
       description: data.description?.trim() ?? '',
-      enabled: data.enabled ?? true,
+      enabled: defaultEnabled,
       attendance_enabled: data.attendance_enabled ?? false,
       default_public: data.default_public ?? false,
       default_self_registration: data.default_self_registration ?? false,
-      custom_fields: data.custom_fields ?? [],
+      custom_fields: await this.normalizeCustomFields(data, userId, congregationId),
       color: data.color ?? '#1976d2',
+      icon: data.icon?.trim() || 'CalendarMonth',
       default_start_time: data.default_start_time ?? null,
       default_duration_minutes: data.default_duration_minutes ?? null,
     };
@@ -105,7 +222,7 @@ export class EventTypeService {
 
   async create({ data, userId, congregationId }: EventTypeCreateProps) {
     const { user, congregation } = await this.getContext(userId, congregationId);
-    const normalized = this.normalizeEventType(data);
+    const normalized = await this.normalizeEventType(data, userId, congregation.id);
 
     const created = this.repository.create({
       congregation_id: congregation.id,
@@ -133,7 +250,7 @@ export class EventTypeService {
 
     if (!existing) throw new NotFoundException(this.i18n.t('errors.eventType.notFound'));
 
-    const normalized = this.normalizeEventType(data);
+    const normalized = await this.normalizeEventType(data, userId, congregation.id, existing.enabled);
     existing.name = normalized.name;
     existing.description = normalized.description;
     existing.enabled = normalized.enabled;
@@ -142,6 +259,7 @@ export class EventTypeService {
     existing.default_self_registration = normalized.default_self_registration;
     existing.custom_fields = normalized.custom_fields;
     existing.color = normalized.color;
+    existing.icon = normalized.icon;
     existing.default_start_time = normalized.default_start_time;
     existing.default_duration_minutes = normalized.default_duration_minutes;
     existing.updated_by = user;

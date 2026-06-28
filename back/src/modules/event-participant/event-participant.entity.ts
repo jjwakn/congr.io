@@ -1,4 +1,5 @@
 import { CommonEntity } from 'src/common/common.entity';
+import type { JsonObject } from 'src/common/common.types';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { Event } from '../event/event.entity';
 import { Person } from '../person/person.entity';
@@ -15,6 +16,6 @@ export class EventParticipant extends CommonEntity {
   @Column({ nullable: false, default: false }) attended: boolean;
   @Column({ nullable: false, default: false }) public_submission: boolean;
   @Column({ type: 'uuid', nullable: true }) public_submission_id?: string | null;
-  @Column('simple-json', { nullable: false, default: {} }) field_values: Record<string, unknown>;
-  @Column('simple-json', { nullable: false, default: {} }) submitted_person: Record<string, unknown>;
+  @Column('simple-json', { nullable: false, default: {} }) field_values: JsonObject;
+  @Column('simple-json', { nullable: false, default: {} }) submitted_person: JsonObject;
 }

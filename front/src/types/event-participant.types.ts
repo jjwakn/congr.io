@@ -1,4 +1,5 @@
 import type { CommonEntity } from './common.types';
+import type { JsonObject } from './json.types';
 import type { Person } from './person.types';
 
 export interface EventParticipant extends CommonEntity {
@@ -10,6 +11,6 @@ export interface EventParticipant extends CommonEntity {
   attended: boolean;
   public_submission: boolean;
   public_submission_id?: string;
-  field_values: Record<string, unknown>;
-  submitted_person: Record<string, unknown>;
+  field_values: JsonObject;
+  submitted_person: JsonObject;
 }

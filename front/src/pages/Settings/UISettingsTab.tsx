@@ -5,19 +5,15 @@ import { useSetup } from '@hooks/useSetup';
 import { useTheme } from '@hooks/useTheme';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import LightModeIcon from '@mui/icons-material/LightMode';
 import SortByAlphaRoundedIcon from '@mui/icons-material/SortByAlphaRounded';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Autocomplete,
+  Box,
   Button,
   FormControl,
-  FormControlLabel,
-  IconButton,
   InputLabel,
   List,
   ListItem,
@@ -25,29 +21,40 @@ import {
   MenuItem,
   Select,
   Stack,
-  Switch,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 import { UsersService } from '@services/users';
 import { FRONTEND_VERSION } from '@utils/constants';
 import { HttpRequestError, httpRequest } from '@utils/http';
 import { useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { JsonObject } from '@/types/json.types';
 import type { UISettingsTabProps } from './settings.types';
+
+type UiSection = 'browser' | 'pagination' | 'sidebar';
+type TimeFormat = '24h' | '12h';
+
+const normalizePageSize = (value: number) => Math.max(5, Math.min(500, Math.trunc(value || 50)));
 
 export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps) => {
   const { i18n, t } = useTranslation();
-  const { mode, toggleMode } = useTheme();
+  const { mode, setMode } = useTheme();
   const { congregation } = useAppContext();
   const { user, hasPermission, refreshSession } = useAuth();
   const { showNotification } = useNotificationContext();
   const { features } = useSetup();
+  const [expanded, setExpanded] = useState<UiSection | false>('browser');
+  const savedTimeFormat = user?.preferences?.time_format ?? '24h';
+  const [timeFormat, setTimeFormat] = useState<TimeFormat>(savedTimeFormat);
   const visibleSections = useMemo(() => {
     const byId = new Map(features.map((feature) => [feature.id, feature.title]));
     const permissions: Record<string, [string, 'get']> = {
@@ -55,11 +62,13 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
       members: ['person', 'get'],
       processes: ['process', 'get'],
       events_calendar: ['event', 'get'],
+      events: ['event', 'get'],
       events_attendance: ['event_attendance', 'get'],
     };
     const ids = (congregation?.features ?? []).filter((id) =>
       permissions[id] ? hasPermission(...permissions[id]) : false,
     );
+    if (ids.includes('events_calendar') && hasPermission('event', 'get')) ids.push('events');
     if (ids.includes('users') && hasPermission('role', 'get')) ids.push('roles');
     if (ids.includes('events_attendance') && hasPermission('event_registration', 'get')) ids.push('event_registration');
     return Array.from(new Set(ids)).map((id) => ({
@@ -67,9 +76,13 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
       label:
         id === 'roles'
           ? t('pages.modules.roles.title')
-          : id === 'event_registration'
-            ? t('pages.registration.title')
-            : (byId.get(id) ?? id),
+          : id === 'events'
+            ? t('pages.events.title')
+            : id === 'event_registration'
+              ? t('pages.registration.title')
+              : id === 'events_calendar'
+                ? t('pages.events.calendar')
+                : (byId.get(id) ?? id),
     }));
   }, [congregation?.features, features, hasPermission, t]);
   const defaultOrder = useMemo(
@@ -77,32 +90,29 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
       visibleSections
         .map(({ id }) => id)
         .sort((left, right) => {
-          const leftLabel = visibleSections.find(({ id }) => id === left)?.label ?? left;
-          const rightLabel = visibleSections.find(({ id }) => id === right)?.label ?? right;
+          const leftLabel = visibleSections.find((section) => section.id === left)?.label ?? left;
+          const rightLabel = visibleSections.find((section) => section.id === right)?.label ?? right;
           return leftLabel.localeCompare(rightLabel, i18n.language, { sensitivity: 'base' });
         }),
     [i18n.language, visibleSections],
   );
-  const [pageSizes, setPageSizes] = useState<Record<string, number>>(() => ({
-    default: 50,
-    ...(user?.preferences?.page_sizes ?? {}),
-  }));
+  const savedPageSizes = useMemo(() => ({ default: 50, ...(user?.preferences?.page_sizes ?? {}) }), [user]);
+  const [pageSizes, setPageSizes] = useState<Record<string, number>>(savedPageSizes);
+  const [masterPageSize, setMasterPageSize] = useState(savedPageSizes.default ?? 50);
   const [sidebarOrder, setSidebarOrder] = useState<string[]>(() => {
     const stored = user?.preferences?.sidebar_order ?? [];
     return [...stored.filter((id) => defaultOrder.includes(id)), ...defaultOrder.filter((id) => !stored.includes(id))];
   });
   const [sidebarReset, setSidebarReset] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const pageSizeOptions = [10, 25, 50, 100, 250];
+  const [saving, setSaving] = useState<UiSection | null>(null);
+  const pageSizesChanged = JSON.stringify(pageSizes) !== JSON.stringify(savedPageSizes);
   const sidebarOrderChanged = sidebarReset || sidebarOrder.some((id, index) => id !== defaultOrder[index]);
+  const browserChanged = timeFormat !== savedTimeFormat;
 
-  const savePreferences = async () => {
-    setSaving(true);
+  const savePreferences = async (section: UiSection, data: JsonObject) => {
+    setSaving(section);
     try {
-      await httpRequest({
-        service: UsersService.updatePreferences,
-        data: { page_sizes: pageSizes, sidebar_order: sidebarReset ? [] : sidebarOrderChanged ? sidebarOrder : [] },
-      });
+      await httpRequest({ service: UsersService.updatePreferences, data });
       await refreshSession();
       showNotification(t('pages.settings.success.saved'), { severity: 'success' });
     } catch (value) {
@@ -112,7 +122,7 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
           : t('pages.settings.error.saveFailed');
       showNotification(message, { severity: 'error' });
     } finally {
-      setSaving(false);
+      setSaving(null);
     }
   };
 
@@ -127,12 +137,53 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
     setSidebarReset(false);
   };
 
+  const resetPaginationToDefault = () => {
+    setMasterPageSize(50);
+    setPageSizes((current) =>
+      Object.fromEntries(
+        Object.keys(current).length ? Object.keys(current).map((key) => [key, 50]) : [['default', 50]],
+      ),
+    );
+  };
+
+  const renderSummary = (
+    section: UiSection,
+    title: string,
+    changed: boolean,
+    onSave: () => void,
+    onDiscard: () => void,
+    extraAction?: ReactNode,
+  ) => (
+    <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%', minWidth: 0 }}>
+        <Typography variant="h6" sx={{ flex: 1 }}>
+          {title}
+        </Typography>
+        {expanded === section ? (
+          <Box onClick={(event) => event.stopPropagation()} sx={{ display: 'flex', gap: 1 }}>
+            {extraAction}
+            <Button size="small" disabled={!changed || saving === section} onClick={onDiscard}>
+              {t('form.field.discard')}
+            </Button>
+            <Button size="small" variant="contained" disabled={!changed || saving === section} onClick={onSave}>
+              {t('pages.settings.actions.save')}
+            </Button>
+          </Box>
+        ) : null}
+      </Stack>
+    </AccordionSummary>
+  );
+
   return (
     <Stack spacing={2}>
-      <Accordion defaultExpanded>
-        <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
-          <Typography variant="h6">{t('pages.settings.interface.browser')}</Typography>
-        </AccordionSummary>
+      <Accordion expanded={expanded === 'browser'} onChange={(_event, open) => setExpanded(open ? 'browser' : false)}>
+        {renderSummary(
+          'browser',
+          t('pages.settings.interface.browser'),
+          browserChanged,
+          () => void savePreferences('browser', { time_format: timeFormat }),
+          () => setTimeFormat(savedTimeFormat),
+        )}
         <AccordionDetails>
           <Stack spacing={1.5}>
             <FormControl fullWidth>
@@ -147,36 +198,57 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
                 <MenuItem value="es">{t('pages.settings.language.spanish')}</MenuItem>
               </Select>
             </FormControl>
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={mode === 'dark'}
-                  onChange={() => toggleMode()}
-                  icon={<LightModeIcon fontSize="small" />}
-                  checkedIcon={<DarkModeIcon fontSize="small" />}
-                  inputProps={{ 'aria-label': t('pages.settings.themeMode.ariaLabel') }}
-                />
-              }
-              label={
-                mode === 'dark'
-                  ? t('pages.settings.themeMode.toggleToLight')
-                  : t('pages.settings.themeMode.toggleToDark')
-              }
-            />
+            <ToggleButtonGroup exclusive value={mode} onChange={(_event, value) => value && setMode(value)}>
+              <ToggleButton value="light">{t('pages.settings.themeMode.light')}</ToggleButton>
+              <ToggleButton value="dark">{t('pages.settings.themeMode.dark')}</ToggleButton>
+            </ToggleButtonGroup>
+            <ToggleButtonGroup exclusive value={timeFormat} onChange={(_event, value) => value && setTimeFormat(value)}>
+              <ToggleButton value="24h">{t('pages.settings.interface.time24')}</ToggleButton>
+              <ToggleButton value="12h">{t('pages.settings.interface.time12')}</ToggleButton>
+            </ToggleButtonGroup>
           </Stack>
         </AccordionDetails>
       </Accordion>
 
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
-          <Typography variant="h6">{t('pages.settings.interface.paginationTitle')}</Typography>
-        </AccordionSummary>
+      <Accordion
+        expanded={expanded === 'pagination'}
+        onChange={(_event, open) => setExpanded(open ? 'pagination' : false)}
+      >
+        {renderSummary(
+          'pagination',
+          t('pages.settings.interface.paginationTitle'),
+          pageSizesChanged,
+          () => void savePreferences('pagination', { page_sizes: pageSizes }),
+          () => {
+            setPageSizes(savedPageSizes);
+            setMasterPageSize(savedPageSizes.default ?? 50);
+          },
+          <Button size="small" onClick={resetPaginationToDefault}>
+            {t('pages.settings.interface.resetToDefault')}
+          </Button>,
+        )}
         <AccordionDetails>
           <Stack spacing={1.5}>
-            <Typography variant="body2" color="text.secondary">
-              {t('pages.settings.interface.paginationDescription')}
-            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <TextField
+                type="number"
+                label={t('pages.settings.interface.defaultPageSize')}
+                value={masterPageSize}
+                inputProps={{ min: 5, max: 500 }}
+                onChange={(event) => {
+                  const value = normalizePageSize(Number(event.target.value));
+                  setMasterPageSize(value);
+                  setPageSizes(() =>
+                    Object.fromEntries(
+                      [{ id: 'default' }, ...visibleSections].map((section) => [
+                        section.id === 'default' ? 'default' : `${section.id}-list`,
+                        value,
+                      ]),
+                    ),
+                  );
+                }}
+              />
+            </Stack>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -192,27 +264,15 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
                       <TableRow key={key}>
                         <TableCell>{section.label}</TableCell>
                         <TableCell>
-                          <Autocomplete
-                            freeSolo
-                            options={pageSizeOptions.map(String)}
-                            value={String(pageSizes[key] ?? pageSizes.default ?? 50)}
-                            onChange={(_event, value) => {
-                              const parsed = Number(value);
-                              if (!Number.isInteger(parsed)) return;
-                              setPageSizes((current) => ({ ...current, [key]: parsed }));
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={pageSizes[key] ?? 50}
+                            inputProps={{ min: 5, max: 500 }}
+                            onChange={(event) => {
+                              const value = normalizePageSize(Number(event.target.value));
+                              setPageSizes((current) => ({ ...current, [key]: value }));
                             }}
-                            onInputChange={(_event, value) => {
-                              const parsed = Number(value);
-                              if (!Number.isInteger(parsed) || parsed < 5 || parsed > 500) return;
-                              setPageSizes((current) => ({ ...current, [key]: parsed }));
-                            }}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                size="small"
-                                inputProps={{ ...params.inputProps, inputMode: 'numeric' }}
-                              />
-                            )}
                           />
                         </TableCell>
                       </TableRow>
@@ -225,26 +285,33 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
         </AccordionDetails>
       </Accordion>
 
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
-          <Typography variant="h6">{t('pages.settings.interface.sidebarTitle')}</Typography>
-        </AccordionSummary>
+      <Accordion expanded={expanded === 'sidebar'} onChange={(_event, open) => setExpanded(open ? 'sidebar' : false)}>
+        {renderSummary(
+          'sidebar',
+          t('pages.settings.interface.sidebarTitle'),
+          sidebarOrderChanged,
+          () => void savePreferences('sidebar', { sidebar_order: sidebarReset ? [] : sidebarOrder }),
+          () => {
+            const stored = user?.preferences?.sidebar_order ?? [];
+            setSidebarOrder([
+              ...stored.filter((id) => defaultOrder.includes(id)),
+              ...defaultOrder.filter((id) => !stored.includes(id)),
+            ]);
+            setSidebarReset(false);
+          },
+        )}
         <AccordionDetails>
           <Stack spacing={1.5}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
-              <Typography variant="body2" color="text.secondary">
-                {t('pages.settings.interface.sidebarDescription')}
-              </Typography>
-              <Button
-                startIcon={<SortByAlphaRoundedIcon />}
-                onClick={() => {
-                  setSidebarOrder(defaultOrder);
-                  setSidebarReset(true);
-                }}
-              >
-                {t('pages.settings.interface.sortAlphabetically')}
-              </Button>
-            </Stack>
+            <Button
+              startIcon={<SortByAlphaRoundedIcon />}
+              onClick={() => {
+                setSidebarOrder(defaultOrder);
+                setSidebarReset(true);
+              }}
+              sx={{ alignSelf: 'flex-start' }}
+            >
+              {t('pages.settings.interface.sortAlphabetically')}
+            </Button>
             <List dense disablePadding>
               {sidebarOrder.map((id, index) => (
                 <ListItem
@@ -252,20 +319,22 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
                   divider
                   secondaryAction={
                     <Stack direction="row">
-                      <IconButton
-                        aria-label={t('form.common.moveUp')}
+                      <Button
+                        size="small"
+                        startIcon={<ArrowUpwardRoundedIcon />}
                         disabled={index === 0}
                         onClick={() => moveSection(index, -1)}
                       >
-                        <ArrowUpwardRoundedIcon />
-                      </IconButton>
-                      <IconButton
-                        aria-label={t('form.common.moveDown')}
+                        {t('form.common.moveUp')}
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={<ArrowDownwardRoundedIcon />}
                         disabled={index === sidebarOrder.length - 1}
                         onClick={() => moveSection(index, 1)}
                       >
-                        <ArrowDownwardRoundedIcon />
-                      </IconButton>
+                        {t('form.common.moveDown')}
+                      </Button>
                     </Stack>
                   }
                 >
@@ -276,10 +345,6 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
           </Stack>
         </AccordionDetails>
       </Accordion>
-
-      <Button variant="contained" onClick={() => void savePreferences()} disabled={saving}>
-        {t('pages.settings.actions.save')}
-      </Button>
 
       <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'right' }}>
         {t('pages.settings.frontendVersion', { version: FRONTEND_VERSION })}

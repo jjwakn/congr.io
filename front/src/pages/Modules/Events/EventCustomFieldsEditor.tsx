@@ -1,8 +1,10 @@
+import { OptionsListEditor } from '@components/common/forms/OptionsListEditor';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import {
   Box,
   Button,
+  Divider,
   FormControl,
   FormControlLabel,
   IconButton,
@@ -18,13 +20,14 @@ import { useTranslation } from 'react-i18next';
 import type { EventCustomField, EventFieldType } from '@/types/event.types';
 import type { EventCustomFieldsEditorProps } from './events.types';
 
-const TYPES: EventFieldType[] = ['text', 'paragraph', 'number', 'switch', 'single_option', 'multiple_options'];
+const TYPES: EventFieldType[] = ['text', 'paragraph', 'number', 'yes_no', 'options', 'date'];
 const createField = (): EventCustomField => ({
   id: crypto.randomUUID(),
   label: '',
   type: 'text',
   required: false,
   options: [],
+  allow_multiple: false,
   user_fillable: false,
 });
 
@@ -68,40 +71,6 @@ export const EventCustomFieldsEditor = ({
         return (
           <Stack key={scope} spacing={1.5}>
             <Typography variant="subtitle1">{t(`pages.events.fields.${scope}Title`)}</Typography>
-            {(scope === 'event' || mode === 'event-type') && reusableFields.length ? (
-              <FormControl fullWidth>
-                <InputLabel>{t('pages.events.fields.reusableField')}</InputLabel>
-                <Select
-                  label={t('pages.events.fields.reusableField')}
-                  value=""
-                  onChange={(event) => {
-                    const selected = reusableFields.find(({ id }) => id === event.target.value);
-                    if (!selected) return;
-                    const nextField = {
-                      id: crypto.randomUUID(),
-                      event_field_id: selected.id,
-                      label: selected.label,
-                      type: selected.type,
-                      required: selected.required,
-                      options: selected.options,
-                      user_fillable: selected.user_fillable,
-                      person_field_id: selected.person_field_id,
-                    };
-                    onChange({
-                      eventFields: scope === 'event' ? [...eventFields, nextField] : eventFields,
-                      typeFields: scope === 'type' ? [...typeFields, nextField] : typeFields,
-                    });
-                  }}
-                >
-                  <MenuItem value="">{t('pages.events.fields.selectReusable')}</MenuItem>
-                  {reusableFields.map((field) => (
-                    <MenuItem key={field.id} value={field.id}>
-                      {field.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            ) : null}
             {fields.map((field) => (
               <Box key={field.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 1.5 }}>
                 <Stack spacing={1.5}>
@@ -111,14 +80,14 @@ export const EventCustomFieldsEditor = ({
                       required
                       label={t('pages.events.fields.label')}
                       value={field.label}
-                      disabled={readOnly}
+                      disabled={readOnly || Boolean(field.event_field_id)}
                       onChange={(event) => update(scope, field.id, { label: event.target.value })}
                     />
                     <FormControl fullWidth>
                       <InputLabel>{t('pages.events.fields.type')}</InputLabel>
                       <Select
                         value={field.type}
-                        disabled={readOnly}
+                        disabled={readOnly || Boolean(field.event_field_id)}
                         label={t('pages.events.fields.type')}
                         onChange={(event) => update(scope, field.id, { type: event.target.value as EventFieldType })}
                       >
@@ -138,20 +107,31 @@ export const EventCustomFieldsEditor = ({
                       <DeleteOutlineRoundedIcon />
                     </IconButton>
                   </Stack>
-                  {field.type === 'single_option' || field.type === 'multiple_options' ? (
-                    <TextField
-                      label={t('pages.events.fields.options')}
-                      value={field.options.join(', ')}
-                      disabled={readOnly}
-                      onChange={(event) =>
-                        update(scope, field.id, {
-                          options: event.target.value
-                            .split(',')
-                            .map((value) => value.trim())
-                            .filter(Boolean),
-                        })
-                      }
-                    />
+                  {field.type === 'options' ? (
+                    <>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={field.allow_multiple ?? false}
+                            disabled={readOnly || Boolean(field.event_field_id)}
+                            onChange={(_event, checked) => update(scope, field.id, { allow_multiple: checked })}
+                          />
+                        }
+                        label={t('pages.persons.fieldsCrud.allowMultiple')}
+                      />
+                      <OptionsListEditor
+                        label={t('pages.events.fields.options')}
+                        disabled={readOnly}
+                        addLabel={t('pages.persons.fieldsCrud.addOption')}
+                        removeLabel={t('form.common.delete')}
+                        values={field.options}
+                        onChange={(options) =>
+                          update(scope, field.id, {
+                            options: options.map((value) => value.trim()).filter(Boolean),
+                          })
+                        }
+                      />
+                    </>
                   ) : null}
                   {personFields.length ? (
                     <FormControl fullWidth>
@@ -159,7 +139,7 @@ export const EventCustomFieldsEditor = ({
                       <Select
                         label={t('pages.events.fields.personField')}
                         value={field.person_field_id ?? ''}
-                        disabled={readOnly}
+                        disabled={readOnly || Boolean(field.event_field_id)}
                         onChange={(event) =>
                           update(scope, field.id, { person_field_id: event.target.value || undefined })
                         }
@@ -214,20 +194,68 @@ export const EventCustomFieldsEditor = ({
               </Box>
             ))}
             {canAddFields ? (
-              <Button
-                startIcon={<AddRoundedIcon />}
-                disabled={readOnly}
-                onClick={() =>
-                  onChange(
-                    scope === 'event'
-                      ? { eventFields: [...eventFields, createField()], typeFields }
-                      : { eventFields, typeFields: [...typeFields, createField()] },
-                  )
-                }
-                sx={{ alignSelf: 'flex-start' }}
-              >
-                {t('pages.events.fields.add')}
-              </Button>
+              mode === 'event-type' || reusableFields.length ? (
+                <FormControl fullWidth disabled={readOnly}>
+                  <InputLabel>{t('pages.events.fields.add')}</InputLabel>
+                  <Select
+                    label={t('pages.events.fields.add')}
+                    value=""
+                    onChange={(event) => {
+                      const selectedValue = String(event.target.value);
+                      if (selectedValue === '__new__') {
+                        onChange(
+                          scope === 'event'
+                            ? { eventFields: [...eventFields, createField()], typeFields }
+                            : { eventFields, typeFields: [...typeFields, createField()] },
+                        );
+                        return;
+                      }
+                      const selected = reusableFields.find(({ id }) => id === selectedValue);
+                      if (!selected) return;
+                      const nextField = {
+                        id: crypto.randomUUID(),
+                        event_field_id: selected.id,
+                        label: selected.label,
+                        type: selected.type,
+                        required: selected.required,
+                        options: selected.options,
+                        allow_multiple: selected.allow_multiple,
+                        user_fillable: selected.user_fillable,
+                        link_person_field: selected.link_person_field,
+                        person_field_id: selected.person_field_id,
+                        calculated_conditions: selected.calculated_conditions,
+                      };
+                      onChange({
+                        eventFields: scope === 'event' ? [...eventFields, nextField] : eventFields,
+                        typeFields: scope === 'type' ? [...typeFields, nextField] : typeFields,
+                      });
+                    }}
+                  >
+                    {reusableFields.map((field) => (
+                      <MenuItem key={field.id} value={field.id}>
+                        {field.label}
+                      </MenuItem>
+                    ))}
+                    {reusableFields.length ? <Divider /> : null}
+                    <MenuItem value="__new__">{t('pages.events.fields.addNew')}</MenuItem>
+                  </Select>
+                </FormControl>
+              ) : (
+                <Button
+                  startIcon={<AddRoundedIcon />}
+                  disabled={readOnly}
+                  onClick={() =>
+                    onChange(
+                      scope === 'event'
+                        ? { eventFields: [...eventFields, createField()], typeFields }
+                        : { eventFields, typeFields: [...typeFields, createField()] },
+                    )
+                  }
+                  sx={{ alignSelf: 'flex-start' }}
+                >
+                  {t('pages.events.fields.add')}
+                </Button>
+              )
             ) : null}
           </Stack>
         );

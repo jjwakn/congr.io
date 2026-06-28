@@ -15,6 +15,7 @@ export interface CreateEditDialogProps {
   open: boolean;
   mode: CreateEditDialogMode;
   submitting: boolean;
+  submitDisabled?: boolean;
   onClose: () => void;
   onSubmit: () => void;
   onEnter?: () => void;

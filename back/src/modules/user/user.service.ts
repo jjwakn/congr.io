@@ -85,6 +85,8 @@ export class UserService {
       ...(data.page_sizes ? { page_sizes: pageSizes } : {}),
       ...(data.sidebar_order ? { sidebar_order: Array.from(new Set(data.sidebar_order)) } : {}),
       ...(data.favorites ? { favorites: Array.from(new Set(data.favorites)).slice(0, 50) } : {}),
+      ...(data.time_format ? { time_format: data.time_format } : {}),
+      ...(data.column_visibility ? { column_visibility: data.column_visibility } : {}),
     };
     user.updated_by = user;
     await this.repository.save(user);

@@ -49,6 +49,23 @@ export const PersonFormDialog = ({
   const calculatedAge = values.birthdate
     ? calculateAgeFromBirthdate(values.birthdate)
     : calculateDisplayedRegisteredAge(values.age, person?.age_recorded_at);
+  const standardValues = {
+    first_name: values.first_name,
+    middle_name: values.middle_name,
+    last_name: values.last_name,
+    second_last_name: values.second_last_name,
+    married_name: values.married_name,
+    phone: values.phone,
+    birthdate: values.birthdate,
+    email: values.email,
+  };
+  const requiredCustomFieldsAreComplete = fields.every((field) => {
+    if (!field.required) return true;
+    const value = values.custom_values[field.id];
+    if (Array.isArray(value)) return value.length > 0;
+    return value !== undefined && value !== null && String(value).trim() !== '';
+  });
+  const canSave = Boolean(values.first_name.trim() && values.last_name.trim() && requiredCustomFieldsAreComplete);
   const submit = (regenerateCode = values.regenerate_code) => {
     const payload = {
       ...values,
@@ -74,6 +91,7 @@ export const PersonFormDialog = ({
         submitting={submitting}
         onClose={onClose}
         onSubmit={handleSubmit}
+        submitDisabled={!canSave}
         extraActions={
           canCreateFields ? (
             <Button startIcon={<AddRoundedIcon />} onClick={() => setFieldOpen(true)} disabled={submitting}>
@@ -194,6 +212,7 @@ export const PersonFormDialog = ({
         ) : null}
         <PersonCustomFields
           fields={fields}
+          standardValues={standardValues}
           values={values.custom_values}
           onChange={(custom_values) => setValues((current) => ({ ...current, custom_values }))}
         />

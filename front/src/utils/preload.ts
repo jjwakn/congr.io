@@ -3,9 +3,26 @@ import { PersonsService } from '@services/persons';
 import { ProcessesService } from '@services/processes';
 import { RolesService } from '@services/roles';
 import { UsersService } from '@services/users';
+import type { EventsListResponse } from '@/types/event.types';
+import type { Person } from '@/types/person.types';
+import type { Process } from '@/types/process.types';
+import type { Role } from '@/types/role.types';
+import type { User } from '@/types/user.types';
 import { httpRequest } from './http';
 import type { PreloadResourceId } from './preload.types';
 import { getSelectedCongregationId } from './storage';
+
+type ListResponse<Item> = {
+  result: Item[];
+  total: number;
+};
+
+type PreloadedResource =
+  | EventsListResponse
+  | ListResponse<Person>
+  | ListResponse<Process>
+  | ListResponse<Role>
+  | ListResponse<User>;
 
 const FAVORITE_PRELOAD_REQUIREMENTS: Record<string, PreloadResourceId[]> = {
   events_calendar: ['events'],
@@ -17,8 +34,8 @@ const FAVORITE_PRELOAD_REQUIREMENTS: Record<string, PreloadResourceId[]> = {
   users: ['users'],
 };
 
-const cache = new Map<string, unknown>();
-const inFlight = new Map<string, Promise<unknown>>();
+const cache = new Map<string, PreloadedResource>();
+const inFlight = new Map<string, Promise<PreloadedResource>>();
 
 const getCacheKey = (resource: PreloadResourceId) => `${getSelectedCongregationId() ?? 'none'}:${resource}`;
 
@@ -32,7 +49,7 @@ const loadResource = (resource: PreloadResourceId, pageSize: number) => {
   if (existing) return existing;
 
   const listData = { page: 0, size: pageSize, direction: 'ASC' };
-  const request =
+  const request: Promise<PreloadedResource> =
     resource === 'events'
       ? httpRequest({
           service: EventsService.list,

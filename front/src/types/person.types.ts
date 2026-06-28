@@ -1,4 +1,5 @@
 import type { CommonEntity } from './common.types';
+import type { JsonObject } from './json.types';
 import type { User } from './user.types';
 
 export interface Person extends CommonEntity {
@@ -17,22 +18,31 @@ export interface Person extends CommonEntity {
   email?: string;
   user_id?: string;
   user?: User;
-  custom_values: Record<string, unknown>;
+  custom_values: JsonObject;
 }
-export type PersonFieldType =
-  | 'text'
-  | 'paragraph'
-  | 'number'
-  | 'switch'
-  | 'single_option'
-  | 'multiple_options'
-  | 'date';
+export type PersonFieldType = 'text' | 'paragraph' | 'number' | 'yes_no' | 'options' | 'date';
+export type FieldConditionOperator =
+  | 'not_empty'
+  | 'empty'
+  | 'equals'
+  | 'not_equals'
+  | 'greater_than'
+  | 'less_than'
+  | 'age_greater_than'
+  | 'age_less_than';
+export interface FieldCondition {
+  field_id: string;
+  operator: FieldConditionOperator;
+  value?: string | number | boolean | null;
+}
 export interface PersonField extends CommonEntity {
   id: string;
   label: string;
   type: PersonFieldType;
   required: boolean;
+  allow_multiple: boolean;
   options: string[];
+  calculated_conditions: FieldCondition[];
 }
 export interface PersonFlowStep {
   step_id: string;

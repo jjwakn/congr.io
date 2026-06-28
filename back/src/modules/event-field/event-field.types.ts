@@ -1,18 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { CommonOrder, CongregationEntityActionProps, ListParamsQuery } from 'src/common/common.types';
+import type { FieldCondition } from 'src/modules/person-field/person-field.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
-export type EventFieldType = 'text' | 'paragraph' | 'number' | 'switch' | 'single_option' | 'multiple_options';
+export type EventFieldType = 'text' | 'paragraph' | 'number' | 'yes_no' | 'options' | 'date';
 
-const EVENT_FIELD_TYPES: EventFieldType[] = [
-  'text',
-  'paragraph',
-  'number',
-  'switch',
-  'single_option',
-  'multiple_options',
-];
+const EVENT_FIELD_TYPES: EventFieldType[] = ['text', 'paragraph', 'number', 'yes_no', 'options', 'date'];
 
 export interface EventFieldActionProps extends CongregationEntityActionProps {
   id: string;
@@ -46,14 +40,33 @@ export class EventFieldDto {
   @IsOptional()
   user_fillable?: boolean;
 
-  @IsUUID('4')
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  link_person_field?: boolean;
+
+  @IsString()
   @IsOptional()
   person_field_id?: string;
+
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  allow_multiple?: boolean;
 
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
   options?: string[];
+
+  @IsArray()
+  @IsOptional()
+  calculated_conditions?: FieldCondition[];
+
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  enabled?: boolean;
 }
 
 enum Order {

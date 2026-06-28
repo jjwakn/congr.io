@@ -157,6 +157,7 @@
     "tabs": {
       "congregations": "Preferencias de congregación",
       "ui": "Interfaz",
+      "customFields": "Campos personalizados",
       "eventTypes": "Tipos de evento",
       "eventFields": "Campos de evento",
       "personFields": "Campos de personas",
@@ -269,9 +270,12 @@
     },
     "interface": {
       "browser": "Navegador",
+      "time24": "24 horas",
+      "time12": "AM/PM",
       "paginationTitle": "Elementos por página",
       "paginationDescription": "Configura un valor predeterminado y valores opcionales por sección para tu cuenta.",
       "defaultPageSize": "Elementos predeterminados por página",
+      "resetToDefault": "Restablecer a 50",
       "section": "Sección",
       "itemsPerPage": "Elementos por página",
       "sidebarTitle": "Orden de la barra lateral",
@@ -321,12 +325,23 @@
         "enabled": "Activo",
         "enabledHint": "Los tipos de evento desactivados no pueden seleccionarse para eventos nuevos.",
         "attendance": "Capturar asistencia",
-        "defaultPublic": "Público de forma predeterminada",
-        "defaultSelfRegistration": "Permitir autorregistro de forma predeterminada",
+        "defaultPublic": "Público",
+        "defaultSelfRegistration": "Autorregistro",
         "defaultStartTime": "Hora de inicio predeterminada",
         "defaultDuration": "Duración predeterminada en minutos",
+        "icon": "Icono",
         "color": "Color del calendario",
+        "customFieldsHelp": "Estos campos se agregan cuando un evento usa este tipo de evento.",
         "actions": "Acciones"
+      },
+      "tabs": {
+        "info": "Información",
+        "customFields": "Campos personalizados"
+      },
+      "help": {
+        "attendance": "Habilita la captura de asistencia para eventos creados con este tipo.",
+        "public": "Hace públicos los eventos cuando se selecciona este tipo.",
+        "selfRegistration": "Permite que las personas se registren cuando el registro público está abierto."
       },
       "dialogs": {
         "createTitle": "Crear tipo de evento",
@@ -408,6 +423,7 @@
     }
   },
   "events": {
+    "title": "Eventos",
     "calendar": "Calendario",
     "viewDay": "Ver día",
     "today": "Hoy",
@@ -425,7 +441,7 @@
       "edit": "Editar",
       "delete": "Eliminar",
       "addToCalendar": "Añadir al calendario",
-      "share": "Compartir"
+      "share": "Copiar enlace"
     },
     "form": {
       "createTitle": "Crear evento",
@@ -468,14 +484,20 @@
       "allEvents": "Usar en todos los eventos de este tipo",
       "personField": "Guardar valor en campo de persona",
       "doNotSave": "No guardar en persona",
+      "linkPersonField": "Vincular campo de persona",
+      "linkPersonFieldHelp": "Cuando está activo, este campo de evento usa el tipo y opciones del campo de persona seleccionado.",
       "reusableField": "Campo de evento reutilizable",
       "selectReusable": "Seleccionar campo reutilizable",
       "add": "Añadir campo",
+      "addNew": "Añadir campo nuevo",
       "types": {
         "text": "Texto",
         "paragraph": "Párrafo",
         "number": "Número",
-        "switch": "Interruptor",
+        "yes_no": "Sí/No",
+        "options": "Opciones",
+        "date": "Fecha",
+        "switch": "Sí/No",
         "single_option": "Una opción",
         "multiple_options": "Varias opciones"
       }
@@ -520,7 +542,8 @@
       "regenerateTitle": "¿Generar un nuevo código de persona?",
       "regenerateMessage": "El apellido cambió. ¿Deseas generar un nuevo código y conservar el anterior en el historial?",
       "regenerateConfirm": "Generar nuevo código",
-      "keepCurrent": "Conservar código actual"
+      "keepCurrent": "Conservar código actual",
+      "createdTitle": "Nuevo código de persona"
     },
     "flowsEmpty": "No hay flujos disponibles para esta persona.",
     "fields": {
@@ -544,6 +567,23 @@
       "type": "Tipo",
       "required": "Requerido",
       "options": "Opciones",
+      "allowMultiple": "Permitir múltiples",
+      "addOption": "Añadir opción",
+      "conditionField": "Campo",
+      "conditionOperator": "Condición",
+      "conditionValue": "Valor",
+      "addCondition": "Añadir condición",
+      "calculatedTooltip": "Este valor se calcula por condiciones y no puede editarse manualmente.",
+      "operators": {
+        "notEmpty": "No está vacío",
+        "empty": "Está vacío",
+        "equals": "Es igual a",
+        "notEquals": "No es igual a",
+        "greaterThan": "Mayor que",
+        "lessThan": "Menor que",
+        "ageGreaterThan": "Edad mayor que",
+        "ageLessThan": "Edad menor que"
+      },
       "created": "Campo personalizado creado.",
       "saved": "Campo personalizado guardado.",
       "deleted": "Campo personalizado eliminado.",
@@ -554,7 +594,9 @@
       "text": "Texto",
       "paragraph": "Párrafo",
       "number": "Número",
-      "switch": "Interruptor",
+      "yes_no": "Sí/No",
+      "options": "Opciones",
+      "switch": "Sí/No",
       "single_option": "Una opción",
       "multiple_options": "Varias opciones",
       "date": "Fecha"
@@ -565,6 +607,7 @@
     "event": "Evento",
     "person": "Persona",
     "add": "Añadir asistente",
+    "noCurrentEvent": "No hay un evento de asistencia activo ahora.",
     "publicSubmission": "Registro público",
     "error": "No se pudo actualizar la asistencia."
   },

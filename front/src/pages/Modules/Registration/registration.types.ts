@@ -1,8 +1,9 @@
 import type { EventCustomField } from '@/types/event.types';
+import type { JsonObject } from '@/types/json.types';
 
 export interface EventRegistrationFieldsProps {
   fields: EventCustomField[];
-  values: Record<string, unknown>;
+  values: JsonObject;
   publicOnly?: boolean;
-  onChange: (value: Record<string, unknown>) => void;
+  onChange: (value: JsonObject) => void;
 }

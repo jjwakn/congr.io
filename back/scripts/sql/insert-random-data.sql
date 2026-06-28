@@ -380,7 +380,7 @@ active_congregations AS (
 generated_persons AS (
   SELECT
     gs,
-    format('SD%s', lpad(gs::text, 5, '0')) AS code,
+    format('SD%s', gs::text) AS code,
     first_names[1 + floor(random() * array_length(first_names, 1))::int] AS first_name,
     last_names[1 + floor(random() * array_length(last_names, 1))::int] AS last_name,
     CASE
@@ -441,5 +441,28 @@ FROM generated_persons
 JOIN active_congregations
   ON active_congregations.rn = ((generated_persons.gs - 1) % active_congregations.total) + 1
 ON CONFLICT DO NOTHING;
+
+WITH seed_users AS (
+  SELECT
+    "id",
+    row_number() OVER (ORDER BY "username") AS rn
+  FROM "user"
+  WHERE "username" LIKE 'seed.user.%'
+),
+seed_persons AS (
+  SELECT
+    "id",
+    row_number() OVER (ORDER BY substring("code" from 3)::int) AS rn
+  FROM "person"
+  WHERE "email" LIKE 'seed.person.%@example.test'
+    AND "user_id" IS NULL
+)
+UPDATE "person"
+SET "user_id" = seed_users."id"
+FROM seed_users
+JOIN seed_persons
+  ON seed_persons.rn = seed_users.rn
+WHERE "person"."id" = seed_persons."id"
+  AND seed_users.rn <= 75;
 
 COMMIT;

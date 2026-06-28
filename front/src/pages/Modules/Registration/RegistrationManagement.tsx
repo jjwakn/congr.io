@@ -13,6 +13,7 @@ import { EventsService } from '@services/events';
 import { PersonsService } from '@services/persons';
 import { UsersService } from '@services/users';
 import { httpRequest } from '@utils/http';
+import { MuiIcon } from '@utils/muiIcons';
 import { getModulePath } from '@utils/routes';
 import { DateTime } from 'luxon';
 import { useEffect, useMemo, useState } from 'react';
@@ -20,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { EventParticipant } from '@/types/event-participant.types';
 import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
+import type { JsonObject } from '@/types/json.types';
 import type { Person } from '@/types/person.types';
 import { EventRegistrationFields } from './EventRegistrationFields';
 
@@ -33,7 +35,7 @@ export const RegistrationManagement = () => {
   const favoriteTypeId = new URLSearchParams(location.search).get('type');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [person, setPerson] = useState<Person | null>(null);
-  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [values, setValues] = useState<JsonObject>({});
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
   const selected = useMemo(() => events.find(({ id }) => id === routeEventId) ?? null, [events, routeEventId]);
 
@@ -257,14 +259,39 @@ export const RegistrationManagement = () => {
       ) : null}
       <Stack direction="row" useFlexGap flexWrap="wrap" gap={2}>
         {upcoming.map((event) => (
-          <Paper key={event.id} variant="outlined" sx={{ p: 2, width: { xs: '100%', sm: 280 } }}>
-            <Typography variant="h6">{event.name}</Typography>
+          <Paper
+            key={event.id}
+            variant="outlined"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`${getModulePath('event_registration', i18n.language)}/${event.id}`)}
+            onKeyDown={(keyEvent) => {
+              if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+                navigate(`${getModulePath('event_registration', i18n.language)}/${event.id}`);
+              }
+            }}
+            sx={{
+              p: 2,
+              width: { xs: '100%', sm: 280 },
+              cursor: 'pointer',
+              transition: (theme) => theme.transitions.create(['border-color', 'box-shadow', 'transform']),
+              '&:hover': {
+                borderColor: 'primary.main',
+                boxShadow: 4,
+                transform: 'translateY(-1px)',
+              },
+            }}
+          >
+            <Stack direction="row" alignItems="flex-start" spacing={1}>
+              <MuiIcon name={event.type?.icon} sx={{ color: event.type?.color ?? 'primary.main', mt: 0.25 }} />
+              <Typography variant="h6" sx={{ flex: 1 }}>
+                {event.name}
+              </Typography>
+              {event.registration_locked ? <LockOutlinedIcon color="action" /> : null}
+            </Stack>
             <Typography variant="body2" color="text.secondary">
               {DateTime.fromISO(event.start_datetime).setLocale(i18n.language).toLocaleString(DateTime.DATETIME_MED)}
             </Typography>
-            <Button onClick={() => navigate(`${getModulePath('event_registration', i18n.language)}/${event.id}`)}>
-              {t('pages.registration.open')}
-            </Button>
           </Paper>
         ))}
       </Stack>

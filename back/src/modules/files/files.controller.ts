@@ -35,6 +35,12 @@ export class FilesController {
     return this.service.getStatus();
   }
 
+  @UseGuards(AuthGuard)
+  @Get('event-image-options')
+  eventImageOptions() {
+    return this.service.getEventImageOptions();
+  }
+
   @UseGuards(AuthGuard, PermissionGuard)
   @PermissionDecorator(Module.event, ModuleAction.create)
   @Post('event-image')

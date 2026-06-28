@@ -32,7 +32,6 @@ export interface EventTypeFormValues {
   [key: string]: string | boolean | number | EventCustomField[] | undefined;
   name: string;
   description: string;
-  enabled: boolean;
   attendance_enabled: boolean;
   default_public: boolean;
   default_self_registration: boolean;
@@ -40,6 +39,7 @@ export interface EventTypeFormValues {
   default_duration_minutes?: number;
   custom_fields: EventCustomField[];
   color: string;
+  icon: string;
 }
 
 export interface EventTypeFormDialogProps {

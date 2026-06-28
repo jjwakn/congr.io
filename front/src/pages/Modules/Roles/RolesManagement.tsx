@@ -23,7 +23,7 @@ import { RoleFormDialog } from './RoleFormDialog';
 import type { RoleDialogMode, RoleFormValues, RolePermissionColumn, RoleTableSchema } from './roles.types';
 import { useRolesList } from './useRolesList';
 
-const getErrorMessage = (value: unknown, fallback: string) =>
+const getErrorMessage = (value: Error | null, fallback: string) =>
   value instanceof HttpRequestError || value instanceof Error ? value.message : fallback;
 
 const hasRolePermission = (role: Role, sectionId: string, action: PermissionAction): boolean => {
@@ -35,7 +35,7 @@ const hasRolePermission = (role: Role, sectionId: string, action: PermissionActi
 const createRoleTableSchema = (
   sections: PermissionSection[],
   actions: PermissionAction[],
-  t: (key: string, options?: Record<string, unknown>) => string,
+  t: (key: string, options?: { defaultValue?: string }) => string,
 ): RoleTableSchema => {
   if (!sections.length || !actions.length) {
     return {
@@ -188,7 +188,9 @@ export const RolesManagement = () => {
       setPermissionSections(filterFeaturePermissionSections(sections ?? [], congregation?.features));
       setPermissionActions(actions ?? []);
     } catch (value) {
-      setMetadataError(getErrorMessage(value, t('pages.modules.roles.error.permissionsLoadFailed')));
+      setMetadataError(
+        getErrorMessage(value instanceof Error ? value : null, t('pages.modules.roles.error.permissionsLoadFailed')),
+      );
     } finally {
       setMetadataLoading(false);
     }
@@ -237,9 +239,12 @@ export const RolesManagement = () => {
         setSelectedRole(role);
         setDialogOpen(true);
       } catch (value) {
-        showNotification(getErrorMessage(value, t('pages.modules.roles.error.loadRoleFailed')), {
-          severity: 'error',
-        });
+        showNotification(
+          getErrorMessage(value instanceof Error ? value : null, t('pages.modules.roles.error.loadRoleFailed')),
+          {
+            severity: 'error',
+          },
+        );
       } finally {
         setLoadingRoleId(null);
       }
@@ -288,9 +293,12 @@ export const RolesManagement = () => {
         setSelectedRole(null);
         await refresh();
       } catch (value) {
-        showNotification(getErrorMessage(value, t('pages.modules.roles.error.saveFailed')), {
-          severity: 'error',
-        });
+        showNotification(
+          getErrorMessage(value instanceof Error ? value : null, t('pages.modules.roles.error.saveFailed')),
+          {
+            severity: 'error',
+          },
+        );
       } finally {
         setSubmitting(false);
       }
@@ -317,9 +325,12 @@ export const RolesManagement = () => {
       setRolePendingDelete(null);
       await refresh();
     } catch (value) {
-      showNotification(getErrorMessage(value, t('pages.modules.roles.error.deleteFailed')), {
-        severity: 'error',
-      });
+      showNotification(
+        getErrorMessage(value instanceof Error ? value : null, t('pages.modules.roles.error.deleteFailed')),
+        {
+          severity: 'error',
+        },
+      );
     } finally {
       setDeleting(false);
     }

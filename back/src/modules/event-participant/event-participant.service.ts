@@ -1,5 +1,6 @@
 import { I18nService } from 'nestjs-i18n';
 import { randomUUID } from 'node:crypto';
+import type { JsonObject, JsonValue } from 'src/common/common.types';
 import { getUserCongregationContext } from 'src/utils/congregation-context';
 import { Feature } from 'src/utils/constants';
 import { IsNull, Repository } from 'typeorm';
@@ -43,6 +44,66 @@ export class EventParticipantService {
     if (!event) throw new NotFoundException(this.i18n.t('errors.event.notFound'));
     return event;
   }
+
+  private readonly standardPersonFields = [
+    'first_name',
+    'middle_name',
+    'last_name',
+    'second_last_name',
+    'married_name',
+    'phone',
+    'birthdate',
+    'email',
+  ] as const;
+
+  private isStandardPersonField(key: string): key is (typeof this.standardPersonFields)[number] {
+    return this.standardPersonFields.includes(key as (typeof this.standardPersonFields)[number]);
+  }
+
+  private toPersonTextValue(value: JsonValue | undefined): string | null {
+    if (value === undefined || value === null) return null;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    if (Array.isArray(value))
+      return value.map((item) => (typeof item === 'object' ? JSON.stringify(item) : String(item))).join(', ');
+    return null;
+  }
+
+  private assignPersonValue(person: Person, key: string, value: JsonValue | undefined) {
+    if (!this.isStandardPersonField(key)) {
+      person.custom_values = { ...(person.custom_values ?? {}), [key]: value };
+      return;
+    }
+
+    const textValue = this.toPersonTextValue(value);
+    switch (key) {
+      case 'first_name':
+        if (textValue) person.first_name = textValue;
+        return;
+      case 'middle_name':
+        person.middle_name = textValue;
+        return;
+      case 'last_name':
+        if (textValue) person.last_name = textValue;
+        return;
+      case 'second_last_name':
+        person.second_last_name = textValue;
+        return;
+      case 'married_name':
+        person.married_name = textValue;
+        return;
+      case 'phone':
+        person.phone = textValue ?? '';
+        return;
+      case 'birthdate':
+        person.birthdate = textValue;
+        return;
+      case 'email':
+        person.email = textValue;
+        return;
+    }
+  }
+
   private async updatePersonFromEvent({
     person,
     event,
@@ -52,8 +113,8 @@ export class EventParticipantService {
   }: {
     person: Person;
     event: Event;
-    values: Record<string, unknown>;
-    updates?: Record<string, unknown>;
+    values: JsonObject;
+    updates?: JsonObject;
     attended: boolean;
   }) {
     const mapped = Object.fromEntries(
@@ -66,19 +127,8 @@ export class EventParticipantService {
     const personUpdates = { ...mapped, ...(updates ?? {}) };
     if (attended && event.save_attendance_date && event.attendance_date_person_field_id)
       personUpdates[event.attendance_date_person_field_id] = event.start_datetime.toISOString();
-    const standard = [
-      'first_name',
-      'middle_name',
-      'last_name',
-      'second_last_name',
-      'married_name',
-      'phone',
-      'birthdate',
-      'email',
-    ];
     Object.entries(personUpdates).forEach(([key, value]) => {
-      if (standard.includes(key)) (person as unknown as Record<string, unknown>)[key] = value;
-      else person.custom_values = { ...(person.custom_values ?? {}), [key]: value };
+      this.assignPersonValue(person, key, value);
     });
     if (Object.keys(personUpdates).length) await this.personRepository.save(person);
   }
@@ -89,6 +139,8 @@ export class EventParticipantService {
     }
 
     await this.event(query.event_id, congregation.id);
+    const size = Number.isFinite(query.size) && query.size > 0 ? query.size : 50;
+    const page = Number.isFinite(query.page) && query.page >= 0 ? query.page : 0;
     const [result, total] = await this.repository.findAndCount({
       where: {
         event_id: query.event_id,
@@ -97,8 +149,8 @@ export class EventParticipantService {
       },
       relations: { person: true },
       order: { created_at: 'ASC' },
-      skip: (query.page - 1) * query.size,
-      take: query.size,
+      skip: page * size,
+      take: size,
     });
 
     const publicSubmissions = result.filter(({ public_submission, person_id }) => public_submission && !person_id);
@@ -106,8 +158,9 @@ export class EventParticipantService {
     const people = await this.personRepository.find({
       where: { congregation_id: congregation.id, deleted_at: IsNull() },
     });
-    const score = (person: Person, submitted: Record<string, unknown>) => {
-      const normalized = (value: unknown) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+    const score = (person: Person, submitted: JsonObject) => {
+      const normalized = (value: JsonValue | undefined) =>
+        typeof value === 'string' ? value.trim().toLowerCase() : '';
       let value = 0;
       if (normalized(submitted.email) && normalized(submitted.email) === normalized(person.email)) value += 5;
       if (normalized(submitted.phone) && normalized(submitted.phone) === normalized(person.phone)) value += 4;
@@ -185,20 +238,7 @@ export class EventParticipantService {
     if (!item || item.event.congregation_id !== congregation.id || !person)
       throw new NotFoundException(this.i18n.t('errors.eventParticipant.notFound'));
     Object.entries(item.submitted_person ?? {}).forEach(([key, value]) => {
-      if (
-        [
-          'first_name',
-          'middle_name',
-          'last_name',
-          'second_last_name',
-          'married_name',
-          'phone',
-          'birthdate',
-          'email',
-        ].includes(key) &&
-        value
-      )
-        (person as unknown as Record<string, unknown>)[key] = value;
+      if (value) this.assignPersonValue(person, key, value);
     });
     await this.updatePersonFromEvent({ person, event: item.event, values: item.field_values, attended: item.attended });
     const existing = await this.repository.findOne({

@@ -3,6 +3,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Congregation } from '../congregation/congregation.entity';
 import { EventType } from '../event-type/event-type.entity';
+import type { EventTypeCustomField } from '../event-type/event-type.types';
 
 @Entity()
 @Index('UQ_event_public_id', ['public_id'], { unique: true, where: '"public_id" IS NOT NULL' })
@@ -64,7 +65,7 @@ export class Event extends CommonEntity {
   registration_locked: boolean;
 
   @Column('simple-json', { nullable: false, default: [] })
-  custom_fields: Array<Record<string, unknown>>;
+  custom_fields: EventTypeCustomField[];
 
   @Column({ nullable: false, default: false })
   save_attendance_date: boolean;
