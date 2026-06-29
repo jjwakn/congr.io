@@ -1,5 +1,5 @@
 import type { SxProps, TableCellProps, Theme } from '@mui/material';
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import type { ListDirection } from './useModuleList.types';
 
 export interface ModuleListHeaderCell {
@@ -7,6 +7,12 @@ export interface ModuleListHeaderCell {
   label: ReactNode;
   align?: TableCellProps['align'];
   sortKey?: string;
+  filter?: {
+    active: boolean;
+    disabled?: boolean;
+    label: string;
+    onClick: (event: MouseEvent<HTMLElement>) => void;
+  };
   colSpan?: number;
   rowSpan?: number;
   sx?: SxProps<Theme>;

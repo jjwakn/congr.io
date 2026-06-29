@@ -86,8 +86,20 @@ export const EventFieldFormDialog = ({
           type: eventField.type,
           options: eventField.options,
         })),
+      ...STANDARD_PERSON_FIELDS.map((standardField) => ({
+        id: standardField.id,
+        label: t(standardField.labelKey),
+        type: standardField.type,
+        options: standardField.options,
+      })),
+      ...personFields.map((personField) => ({
+        id: personField.id,
+        label: personField.label,
+        type: personField.type,
+        options: personField.options,
+      })),
     ],
-    [eventFields, field?.id, t],
+    [eventFields, field?.id, personFields, t],
   );
   const effectiveType = linkPersonField && linkedPersonField ? (linkedPersonField.type as EventFieldType) : type;
   const effectiveOptions = linkPersonField && linkedPersonField ? linkedPersonField.options : options;

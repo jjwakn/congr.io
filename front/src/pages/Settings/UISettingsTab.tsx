@@ -154,7 +154,7 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
     onDiscard: () => void,
     extraAction?: ReactNode,
   ) => (
-    <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+    <AccordionSummary component="div" expandIcon={<ExpandMoreRoundedIcon />}>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%', minWidth: 0 }}>
         <Typography variant="h6" sx={{ flex: 1 }}>
           {title}

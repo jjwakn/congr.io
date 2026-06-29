@@ -4,6 +4,7 @@ import { UsersModule } from './Users';
 import type { ModuleRouteDefinition } from './moduleRoutes.types';
 
 const EventCalendar = lazy(() => import('./Events/EventCalendar'));
+const EventsManagement = lazy(() => import('./Events/EventsManagement'));
 const PersonsModule = lazy(() => import('./Persons'));
 const AttendanceManagement = lazy(() => import('./Attendance/AttendanceManagement'));
 const RegistrationManagement = lazy(() => import('./Registration/RegistrationManagement'));
@@ -25,7 +26,7 @@ export const EventsRoute: ModuleRouteDefinition = {
 };
 export const EventsListRoute: ModuleRouteDefinition = {
   id: 'events',
-  Component: EventCalendar,
+  Component: EventsManagement,
 };
 export const PersonsRoute: ModuleRouteDefinition = { id: 'members', Component: PersonsModule };
 export const AttendanceRoute: ModuleRouteDefinition = { id: 'events_attendance', Component: AttendanceManagement };

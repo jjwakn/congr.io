@@ -2,12 +2,25 @@ import { PersonAutocomplete } from '@components/common/PersonAutocomplete';
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
-import { Alert, Button, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { EventParticipantsService } from '@services/eventParticipants';
 import { EventsService } from '@services/events';
 import { PersonsService } from '@services/persons';
@@ -23,7 +36,28 @@ import type { EventParticipant } from '@/types/event-participant.types';
 import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
 import type { JsonObject } from '@/types/json.types';
 import type { Person } from '@/types/person.types';
+import { PersonFormDialog } from '../Persons/PersonFormDialog';
+import type { PersonFormValues } from '../Persons/persons.types';
 import { EventRegistrationFields } from './EventRegistrationFields';
+
+const getPersonMappedValue = (fieldId: string | undefined, person: Person) => {
+  if (!fieldId) return undefined;
+
+  const standardValue = {
+    code: person.code,
+    first_name: person.first_name,
+    middle_name: person.middle_name,
+    last_name: person.last_name,
+    second_last_name: person.second_last_name,
+    married_name: person.married_name,
+    phone: person.phone,
+    birthdate: person.birthdate,
+    email: person.email,
+    age: person.registered_age,
+  }[fieldId];
+
+  return standardValue ?? person.custom_values[fieldId];
+};
 
 export const RegistrationManagement = () => {
   const { t, i18n } = useTranslation();
@@ -37,6 +71,9 @@ export const RegistrationManagement = () => {
   const [person, setPerson] = useState<Person | null>(null);
   const [values, setValues] = useState<JsonObject>({});
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [personOpen, setPersonOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const selected = useMemo(() => events.find(({ id }) => id === routeEventId) ?? null, [events, routeEventId]);
 
   const load = async () => {
@@ -76,6 +113,18 @@ export const RegistrationManagement = () => {
     setParticipants(response.result);
   };
 
+  const savePerson = async (formValues: PersonFormValues) => {
+    setSubmitting(true);
+    try {
+      const created = await httpRequest<Person>({ service: PersonsService.create, data: formValues });
+      setPerson(created);
+      setPersonOpen(false);
+      setRegisterOpen(true);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     if (!routeEventId) return;
     void httpRequest<{ result: EventParticipant[]; total: number }>({
@@ -98,25 +147,30 @@ export const RegistrationManagement = () => {
         >
           {t('form.field.back')}
         </Button>
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="h4">{selected.name}</Typography>
-          <Tooltip title={t('pages.registration.favoriteType')}>
-            <IconButton
-              color={isFavorite ? 'warning' : 'default'}
-              onClick={() =>
-                void (async () => {
-                  const current = user?.preferences?.favorites ?? [];
-                  const next = isFavorite
-                    ? current.filter((id) => id !== favoriteId)
-                    : [...current, favoriteId].slice(0, congregation?.max_favorites ?? 10);
-                  await httpRequest({ service: UsersService.updatePreferences, data: { favorites: next } });
-                  await refreshSession();
-                })()
-              }
-            >
-              {isFavorite ? <StarRoundedIcon /> : <StarBorderRoundedIcon />}
-            </IconButton>
-          </Tooltip>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+            <Tooltip title={t('pages.registration.favoriteType')}>
+              <IconButton
+                color={isFavorite ? 'warning' : 'default'}
+                onClick={() =>
+                  void (async () => {
+                    const current = user?.preferences?.favorites ?? [];
+                    const next = isFavorite
+                      ? current.filter((id) => id !== favoriteId)
+                      : [...current, favoriteId].slice(0, congregation?.max_favorites ?? 10);
+                    await httpRequest({ service: UsersService.updatePreferences, data: { favorites: next } });
+                    await refreshSession();
+                  })()
+                }
+              >
+                {isFavorite ? <StarRoundedIcon /> : <StarBorderRoundedIcon />}
+              </IconButton>
+            </Tooltip>
+            <MuiIcon name={selected.type?.icon} sx={{ color: selected.type?.color ?? 'primary.main' }} />
+            <Typography variant="h4" sx={{ minWidth: 0 }} noWrap>
+              {selected.name}
+            </Typography>
+          </Stack>
           {hasPermission('event_registration', 'lock') ? (
             <Tooltip title={t(selected.registration_locked ? 'pages.registration.unlock' : 'pages.registration.lock')}>
               <IconButton
@@ -132,38 +186,10 @@ export const RegistrationManagement = () => {
             </Tooltip>
           ) : null}
         </Stack>
-        <PersonAutocomplete
-          value={person}
-          onChange={(nextPerson) => {
-            setPerson(nextPerson);
-            if (!nextPerson) return;
-            setValues(
-              Object.fromEntries(
-                selected.custom_fields.flatMap((field) => {
-                  const mapped = field.person_field_id ? nextPerson.custom_values[field.person_field_id] : undefined;
-                  return mapped === undefined ? [] : [[field.id, mapped]];
-                }),
-              ),
-            );
-          }}
-          label={t('pages.attendance.person')}
-        />
-        <EventRegistrationFields fields={selected.custom_fields} values={values} onChange={setValues} />
         <Button
           variant="contained"
-          disabled={
-            !person || requiredMissing || selected.registration_locked || !hasPermission('event_registration', 'create')
-          }
-          onClick={() =>
-            void httpRequest({
-              service: EventParticipantsService.create,
-              data: { event_id: selected.id, person_id: person?.id, field_values: values },
-            }).then(() => {
-              setPerson(null);
-              setValues({});
-              return loadParticipants(selected.id);
-            })
-          }
+          disabled={selected.registration_locked || !hasPermission('event_registration', 'create')}
+          onClick={() => setRegisterOpen(true)}
         >
           {t('pages.registration.register')}
         </Button>
@@ -235,6 +261,69 @@ export const RegistrationManagement = () => {
             </Stack>
           ))}
         </Stack>
+        <Dialog open={registerOpen} onClose={() => setRegisterOpen(false)} fullWidth maxWidth="sm">
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h6">{t('pages.registration.register')}</Typography>
+            <IconButton onClick={() => setRegisterOpen(false)} aria-label={t('form.field.close')}>
+              <CloseRoundedIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Stack spacing={2}>
+              <PersonAutocomplete
+                value={person}
+                onChange={(nextPerson) => {
+                  setPerson(nextPerson);
+                  if (!nextPerson) return;
+                  setValues(
+                    Object.fromEntries(
+                      selected.custom_fields.flatMap((field) => {
+                        const mapped = getPersonMappedValue(field.person_field_id, nextPerson);
+                        return mapped === undefined ? [] : [[field.id, mapped]];
+                      }),
+                    ),
+                  );
+                }}
+                createLabel={t('pages.attendance.createPerson')}
+                onCreate={hasPermission('person', 'create') ? () => setPersonOpen(true) : undefined}
+                label={t('pages.attendance.person')}
+              />
+              <EventRegistrationFields fields={selected.custom_fields} values={values} onChange={setValues} />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setRegisterOpen(false)}>{t('form.field.cancel')}</Button>
+            <Button
+              variant="contained"
+              disabled={!person || requiredMissing || selected.registration_locked || submitting}
+              onClick={() =>
+                void httpRequest({
+                  service: EventParticipantsService.create,
+                  data: { event_id: selected.id, person_id: person?.id, field_values: values },
+                }).then(() => {
+                  setPerson(null);
+                  setValues({});
+                  setRegisterOpen(false);
+                  return loadParticipants(selected.id);
+                })
+              }
+            >
+              {t('pages.registration.register')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+        {personOpen ? (
+          <PersonFormDialog
+            open
+            person={null}
+            fields={[]}
+            canCreateFields={false}
+            submitting={submitting}
+            onClose={() => setPersonOpen(false)}
+            onSubmit={(formValues) => void savePerson(formValues)}
+            onCreateField={() => Promise.resolve(null)}
+          />
+        ) : null}
       </Stack>
     );
   }
@@ -274,11 +363,10 @@ export const RegistrationManagement = () => {
               p: 2,
               width: { xs: '100%', sm: 280 },
               cursor: 'pointer',
-              transition: (theme) => theme.transitions.create(['border-color', 'box-shadow', 'transform']),
+              transition: (theme) => theme.transitions.create(['border-color', 'box-shadow']),
               '&:hover': {
                 borderColor: 'primary.main',
                 boxShadow: 4,
-                transform: 'translateY(-1px)',
               },
             }}
           >

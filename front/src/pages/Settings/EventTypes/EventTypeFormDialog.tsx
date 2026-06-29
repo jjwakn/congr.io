@@ -296,7 +296,7 @@ export const EventTypeFormDialog = ({
                 },
               })}
             >
-              <Box component="legend">Hora predeterminada</Box>
+              <Box component="legend">{t('pages.settings.eventTypes.fields.defaultTime')}</Box>
 
               <Autocomplete
                 freeSolo

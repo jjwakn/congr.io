@@ -57,6 +57,7 @@ export const PersonFormDialog = ({
     married_name: values.married_name,
     phone: values.phone,
     birthdate: values.birthdate,
+    age: calculatedAge,
     email: values.email,
   };
   const requiredCustomFieldsAreComplete = fields.every((field) => {

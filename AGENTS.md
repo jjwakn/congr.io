@@ -38,6 +38,8 @@ These rules apply to all agent chats in this repository.
 - Prefer arrow functions for consistency.
 - Prefer path aliases for project imports (for example `@components/*`, `@utils/*`, `@constants/*`).
 - Avoid deep relative imports when an alias is available.
+- Do not use hover styles that move or offset the hovered element. Hover feedback may change
+  color, shadow, border, or background, but it must not translate or shift layout.
 
 ### New Frontend CRUD Models
 

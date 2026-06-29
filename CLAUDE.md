@@ -10,3 +10,4 @@
 - Scope congregation-owned backend data through `getUserCongregationContext` and verify the selected congregation belongs to the authenticated user.
 - Use switches for all binary selections; do not add checkbox controls.
 - Gate every section and related permission/UI surface by the congregation feature that enables it.
+- Do not use hover styles that translate, offset, or otherwise move the hovered element.

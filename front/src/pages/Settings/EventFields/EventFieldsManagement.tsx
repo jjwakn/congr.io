@@ -25,6 +25,7 @@ import { EventFieldFormDialog } from './EventFieldFormDialog';
 import type { EventFieldFormValues, EventFieldsListResponse } from './eventFields.types';
 
 type EventFieldRow = EventField & { persistent?: boolean };
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const EventFieldsManagement = () => {
   const { t } = useTranslation();
@@ -179,6 +180,27 @@ export const EventFieldsManagement = () => {
         });
         setPersonFields((current) => [...current, createdPersonField]);
         nextValues = { ...values, person_field_id: createdPersonField.id };
+      } else if (values.link_person_field && values.person_field_id && UUID_PATTERN.test(values.person_field_id)) {
+        const existingPersonField = await httpRequest<PersonField>({
+          service: PersonFieldsService.get,
+          data: { id: values.person_field_id },
+        });
+        const updatedPersonField = await httpRequest<PersonField>({
+          service: PersonFieldsService.update,
+          data: {
+            id: existingPersonField.id,
+            label: existingPersonField.label,
+            type: toPersonFieldType(values.type),
+            required: existingPersonField.required,
+            allow_multiple: values.type === 'options' ? values.allow_multiple : false,
+            options: values.type === 'options' ? values.options : [],
+            calculated_conditions: values.type === 'yes_no' ? values.calculated_conditions : [],
+            enabled: existingPersonField.enabled,
+          },
+        });
+        setPersonFields((current) =>
+          current.map((personField) => (personField.id === updatedPersonField.id ? updatedPersonField : personField)),
+        );
       }
       await httpRequest<EventField>({
         service: selected ? EventFieldsService.update : EventFieldsService.create,

@@ -53,3 +53,13 @@ export interface EventCustomFieldsEditorProps {
   canAddFields?: boolean;
   onChange: (value: { eventFields: EventCustomField[]; typeFields: EventCustomField[] }) => void;
 }
+
+export interface EventDetailsDialogProps {
+  event: CalendarEvent | null;
+  timezone: string;
+  imageUrl?: string;
+  use12HourTime: boolean;
+  onClose: () => void;
+  onAddToCalendar: (event: CalendarEvent) => void;
+  onShare: (event: CalendarEvent) => void;
+}

@@ -19,7 +19,15 @@
       "search": "Search",
       "rowsPerPage": "Items per page",
       "view": "View",
-      "emptyValue": " - "
+      "emptyValue": " - ",
+      "columns": "Columns",
+      "filter": "Filter",
+      "filterAll": "All",
+      "filterYes": "Yes",
+      "filterNo": "No",
+      "filterFrom": "From",
+      "filterTo": "To",
+      "clearFilter": "Clear filter"
     },
     "users": {
       "title": "Users",
@@ -328,6 +336,7 @@
         "defaultPublic": "Public",
         "defaultSelfRegistration": "Self-registration",
         "defaultStartTime": "Default start time",
+        "defaultTime": "Default time",
         "defaultDuration": "Default duration in minutes",
         "icon": "Icon",
         "color": "Calendar color",
@@ -433,6 +442,7 @@
     "refresh": "Refresh calendar",
     "create": "Create event",
     "loading": "Loading events...",
+    "empty": "No events found.",
     "views": { "day": "Day", "week": "Week", "month": "Month" },
     "actions": {
       "viewDay": "View day",
@@ -644,6 +654,9 @@
       "addStep": "Add step",
       "addFollowingStep": "Add following step",
       "attachEventType": "Attach event type",
+      "generatedEventType": "Step event type",
+      "generatedEventTypeHelp": "Each active step has a generated event type with the same name.",
+      "stepEnabled": "Active step and event type",
       "completePreviousSteps": "Mark previous steps as completed",
       "stepName": "Step name",
       "stepDescription": "Step description",

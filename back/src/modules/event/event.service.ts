@@ -150,7 +150,7 @@ export class EventService {
       repository: this.repository,
       query,
       searchFields: ['id', 'name', 'description'],
-      booleanFields: ['enabled'],
+      booleanFields: ['enabled', 'all_day', 'is_public', 'attendance_enabled', 'self_registration_enabled'],
       baseWhere: {
         congregation_id: congregation.id,
         deleted_at: IsNull(),
@@ -158,6 +158,10 @@ export class EventService {
         ...(!canViewAll ? { is_public: true } : {}),
         ...(query.start ? { end_datetime: MoreThan(new Date(query.start)) } : {}),
         ...(query.end ? { start_datetime: LessThan(new Date(query.end)) } : {}),
+        ...(query.start_datetime_from ? { start_datetime: MoreThan(new Date(query.start_datetime_from)) } : {}),
+        ...(query.start_datetime_to ? { start_datetime: LessThan(new Date(query.start_datetime_to)) } : {}),
+        ...(query.end_datetime_from ? { end_datetime: MoreThan(new Date(query.end_datetime_from)) } : {}),
+        ...(query.end_datetime_to ? { end_datetime: LessThan(new Date(query.end_datetime_to)) } : {}),
       },
     });
 

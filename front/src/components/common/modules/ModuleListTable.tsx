@@ -1,8 +1,9 @@
+import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import {
   Box,
   CircularProgress,
+  IconButton,
   Paper,
-  Snackbar,
   type SxProps,
   Table,
   TableBody,
@@ -13,6 +14,7 @@ import {
   TableRow,
   TableSortLabel,
   type Theme,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -236,7 +238,7 @@ export const ModuleListTable = <RowType,>({
 
   return (
     <Paper variant="outlined" sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
-      <TableContainer ref={tableContainerRef} sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+      <TableContainer ref={tableContainerRef} sx={{ flex: 1, minHeight: 0, overflow: 'auto', position: 'relative' }}>
         <Table size="small">
           <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5, bgcolor: 'background.paper' }}>
             {headerRows.map((headerRow, rowIndex) => (
@@ -257,20 +259,46 @@ export const ModuleListTable = <RowType,>({
                       cell.sx,
                     )}
                   >
-                    {cell.sortKey ? (
-                      <TableSortLabel
-                        active={sort === cell.sortKey}
-                        direction={
-                          sort === cell.sortKey ? (direction.toLowerCase() === 'desc' ? 'desc' : 'asc') : 'asc'
-                        }
-                        sx={getSortLabelSx(cell.align)}
-                        onClick={() => onSort(cell.sortKey as string)}
-                      >
-                        {cell.label}
-                      </TableSortLabel>
-                    ) : (
-                      cell.label
-                    )}
+                    <Box
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        width: cell.align === 'center' ? '100%' : undefined,
+                        justifyContent: cell.align === 'center' ? 'center' : undefined,
+                      }}
+                    >
+                      {cell.sortKey ? (
+                        <TableSortLabel
+                          active={sort === cell.sortKey}
+                          disabled={loading}
+                          direction={
+                            sort === cell.sortKey ? (direction.toLowerCase() === 'desc' ? 'desc' : 'asc') : 'asc'
+                          }
+                          sx={getSortLabelSx(cell.align)}
+                          onClick={() => onSort(cell.sortKey as string)}
+                        >
+                          {cell.label}
+                        </TableSortLabel>
+                      ) : (
+                        cell.label
+                      )}
+                      {cell.filter ? (
+                        <Tooltip title={cell.filter.label}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              color={cell.filter.active ? 'primary' : 'default'}
+                              disabled={loading || cell.filter.disabled}
+                              onClick={cell.filter.onClick}
+                              aria-label={cell.filter.label}
+                            >
+                              <FilterListRoundedIcon fontSize="inherit" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : null}
+                    </Box>
                   </TableCell>
                 ))}
               </TableRow>
@@ -325,6 +353,27 @@ export const ModuleListTable = <RowType,>({
             )}
           </TableBody>
         </Table>
+        {loading && rows.length ? (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 42,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 6,
+              bgcolor: (theme) => theme.palette.action.disabledBackground,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={20} />
+              <Typography variant="body2">{loadingLabel}</Typography>
+            </Box>
+          </Box>
+        ) : null}
       </TableContainer>
 
       <TablePagination
@@ -336,16 +385,13 @@ export const ModuleListTable = <RowType,>({
         onRowsPerPageChange={(event) => onPageSizeChange(Number(event.target.value))}
         labelRowsPerPage={rowsPerPageLabel}
         rowsPerPageOptions={[10, 25, 50, 100]}
-        sx={{ flexShrink: 0, borderTop: 1, borderColor: 'divider' }}
-      />
-      <Snackbar
-        open={loading && Boolean(rows.length)}
-        message={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CircularProgress size={18} color="inherit" />
-            <Typography variant="body2">{loadingLabel}</Typography>
-          </Box>
-        }
+        sx={{
+          flexShrink: 0,
+          borderTop: 1,
+          borderColor: 'divider',
+          pointerEvents: loading ? 'none' : undefined,
+          opacity: loading ? 0.55 : undefined,
+        }}
       />
     </Paper>
   );

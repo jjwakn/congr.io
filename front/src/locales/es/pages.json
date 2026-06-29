@@ -19,7 +19,15 @@
       "search": "Buscar",
       "rowsPerPage": "Elementos por página",
       "view": "Ver",
-      "emptyValue": " - "
+      "emptyValue": " - ",
+      "columns": "Columnas",
+      "filter": "Filtrar",
+      "filterAll": "Todos",
+      "filterYes": "Sí",
+      "filterNo": "No",
+      "filterFrom": "Desde",
+      "filterTo": "Hasta",
+      "clearFilter": "Limpiar filtro"
     },
     "users": {
       "title": "Usuarios",
@@ -328,6 +336,7 @@
         "defaultPublic": "Público",
         "defaultSelfRegistration": "Autorregistro",
         "defaultStartTime": "Hora de inicio predeterminada",
+        "defaultTime": "Hora predeterminada",
         "defaultDuration": "Duración predeterminada en minutos",
         "icon": "Icono",
         "color": "Color del calendario",
@@ -433,6 +442,7 @@
     "refresh": "Actualizar calendario",
     "create": "Crear evento",
     "loading": "Cargando eventos...",
+    "empty": "No se encontraron eventos.",
     "views": { "day": "Día", "week": "Semana", "month": "Mes" },
     "actions": {
       "viewDay": "Ver día",
@@ -648,6 +658,9 @@
       "addStep": "Añadir paso",
       "addFollowingStep": "Añadir paso siguiente",
       "attachEventType": "Vincular tipo de evento",
+      "generatedEventType": "Tipo de evento del paso",
+      "generatedEventTypeHelp": "Cada paso activo tiene un tipo de evento generado con el mismo nombre.",
+      "stepEnabled": "Paso y tipo de evento activos",
       "completePreviousSteps": "Marcar pasos anteriores como completados",
       "stepName": "Nombre del paso",
       "stepDescription": "Descripción del paso",

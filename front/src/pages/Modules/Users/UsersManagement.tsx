@@ -8,7 +8,6 @@ import { ModuleSection } from '@components/common/modules/ModuleSection';
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
-import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -353,18 +352,6 @@ export const UsersManagement = () => {
     }
   }, [refresh, showNotification, t, userPendingDelete]);
 
-  const getLinkedPersonTooltip = useCallback(
-    (row: User) => {
-      const person = row.person;
-      if (!person) return t('pages.modules.users.actions.linkPerson');
-      const fullName = [person.first_name, person.middle_name, person.last_name, person.second_last_name]
-        .filter(Boolean)
-        .join(' ');
-      return `${t('pages.modules.users.actions.linkPerson')}: ${person.code} ${fullName}`;
-    },
-    [t],
-  );
-
   const columns = useMemo<ModuleListColumn<User>[]>(
     () => [
       {
@@ -391,24 +378,6 @@ export const UsersManagement = () => {
           <ModuleRowActions
             row={user}
             actions={[
-              {
-                id: 'link-person',
-                label: t('pages.modules.users.actions.linkPerson'),
-                tooltip: getLinkedPersonTooltip,
-                icon: AssignmentIndOutlinedIcon,
-                color: 'default',
-                hidden: !canUpdate,
-                disabled: (currentUser) =>
-                  isCurrentUser(currentUser) ||
-                  loadingUserId === currentUser.id ||
-                  submitting ||
-                  deleting ||
-                  passwordSubmitting ||
-                  metadataLoading,
-                onClick: (currentUser) => {
-                  void handleOpenEdit(currentUser.id);
-                },
-              },
               {
                 id: 'view-user',
                 label: t('pages.modules.common.view'),
@@ -466,7 +435,6 @@ export const UsersManagement = () => {
       canChangePassword,
       canDelete,
       canUpdate,
-      getLinkedPersonTooltip,
       deleting,
       handleOpenDetails,
       handleOpenEdit,

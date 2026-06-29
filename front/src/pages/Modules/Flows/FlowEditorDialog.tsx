@@ -62,6 +62,7 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
           name: step.name,
           description: step.description,
           enabled: step.enabled,
+          event_type: step.event_type ?? null,
           position: { x: index * 240, y: 80 },
         }))
       : [createStep(1)],
@@ -117,18 +118,19 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
     );
   };
 
-  const addFollowingStep = () => {
-    if (!selected) return;
+  const addFollowingStep = (sourceKey = selected?.flow_key) => {
+    const sourceStep = steps.find(({ flow_key }) => flow_key === sourceKey);
+    if (!sourceStep) return;
     const step = {
       ...createStep(steps.length + 1),
       position: {
-        x: selected.position.x + 260,
-        y: selected.position.y + selected.next_step_keys.length * 120,
+        x: sourceStep.position.x + 260,
+        y: sourceStep.position.y + sourceStep.next_step_keys.length * 120,
       },
     };
     setSteps((current) => [
       ...current.map((currentStep) =>
-        currentStep.flow_key === selected.flow_key
+        currentStep.flow_key === sourceStep.flow_key
           ? { ...currentStep, next_step_keys: [...currentStep.next_step_keys, step.flow_key] }
           : currentStep,
       ),
@@ -147,7 +149,11 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
       description: description.trim(),
       enabled,
       steps: steps.map(({ position: _position, ...step }, index) => ({
-        ...step,
+        id: step.id,
+        flow_key: step.flow_key,
+        next_step_keys: step.next_step_keys,
+        complete_previous_steps: step.complete_previous_steps,
+        enabled: step.enabled,
         order: index + 1,
         name: step.name.trim(),
         description: step.description.trim(),
@@ -192,6 +198,7 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
               fitView
               onConnect={connect}
               onNodeClick={(_event, node) => setSelectedKey(node.id)}
+              onNodeDoubleClick={(_event, node) => addFollowingStep(node.id)}
               onNodesChange={(changes) =>
                 setSteps((current) =>
                   current.map((step) => {
@@ -260,9 +267,19 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
                   )
                 }
               />
-              <Button startIcon={<AddRoundedIcon />} onClick={addFollowingStep} sx={{ alignSelf: 'flex-start' }}>
+              <Button
+                startIcon={<AddRoundedIcon />}
+                onClick={() => addFollowingStep()}
+                sx={{ alignSelf: 'flex-start' }}
+              >
                 {t('pages.flows.editor.addFollowingStep')}
               </Button>
+              <TextField
+                disabled
+                label={t('pages.flows.editor.generatedEventType')}
+                value={selected.event_type?.name || selected.name || t('pages.flows.editor.unnamedStep')}
+                helperText={t('pages.flows.editor.generatedEventTypeHelp')}
+              />
               <FormControlLabel
                 control={
                   <Switch
@@ -276,7 +293,7 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
                     }
                   />
                 }
-                label={t('pages.flows.editor.attachEventType')}
+                label={t('pages.flows.editor.stepEnabled')}
               />
               <FormControlLabel
                 control={

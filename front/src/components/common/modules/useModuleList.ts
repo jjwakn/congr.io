@@ -109,7 +109,7 @@ export const useModuleList = ({
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedSearch(search);
-    }, 350);
+    }, 600);
 
     return () => window.clearTimeout(timer);
   }, [search]);

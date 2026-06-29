@@ -4,7 +4,6 @@ import { ModuleSection } from '@components/common/modules/ModuleSection';
 import { useModuleList } from '@components/common/modules/useModuleList';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
-import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -104,14 +103,6 @@ export const PersonsManagement = () => {
     [loadPerson],
   );
 
-  const getLinkedUserTooltip = useCallback(
-    (row: Person) =>
-      row.user?.username
-        ? `${t('pages.persons.actions.linkUser')}: ${row.user.username}`
-        : t('pages.persons.actions.linkUser'),
-    [t],
-  );
-
   const personColumns = useMemo(
     () => [
       { id: 'code', minWidth: 90, render: (row: Person) => row.code },
@@ -132,22 +123,12 @@ export const PersonsManagement = () => {
       },
       {
         id: 'actions',
-        minWidth: 180,
+        minWidth: 140,
         align: 'right' as const,
         render: (row: Person) => (
           <ModuleRowActions
             row={row}
             actions={[
-              {
-                id: 'link-user',
-                label: t('pages.persons.actions.linkUser'),
-                tooltip: getLinkedUserTooltip,
-                icon: AccountCircleOutlinedIcon,
-                color: 'default',
-                hidden: !hasPermission('person', 'update'),
-                disabled: (value) => loadingPersonId === value.id,
-                onClick: (value) => void openEdit(value),
-              },
               {
                 id: 'view',
                 label: t('pages.modules.common.view'),
@@ -176,7 +157,7 @@ export const PersonsManagement = () => {
         ),
       },
     ],
-    [getLinkedUserTooltip, hasPermission, loadingPersonId, openDetails, openEdit, t],
+    [hasPermission, loadingPersonId, openDetails, openEdit, t],
   );
   const savePerson = async (values: PersonFormValues) => {
     setSubmitting(true);

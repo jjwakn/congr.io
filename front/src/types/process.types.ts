@@ -9,6 +9,7 @@ export interface ProcessStep extends CommonEntity {
   flow_key?: string | null;
   next_step_keys: string[];
   complete_previous_steps: boolean;
+  enabled: boolean;
   event_type?: EventType | null;
 }
 

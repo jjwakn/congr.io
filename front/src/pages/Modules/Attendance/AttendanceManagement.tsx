@@ -187,14 +187,13 @@ export const AttendanceManagement = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={1.5}>
-            <PersonAutocomplete value={person} onChange={setPerson} label={t('pages.attendance.person')} />
-            {canCreatePerson ? (
-              <Button startIcon={<PersonAddAltOutlinedIcon />} onClick={() => setPersonOpen(true)}>
-                {t('pages.attendance.createPerson')}
-              </Button>
-            ) : null}
-          </Stack>
+          <PersonAutocomplete
+            value={person}
+            onChange={setPerson}
+            label={t('pages.attendance.person')}
+            createLabel={t('pages.attendance.createPerson')}
+            onCreate={canCreatePerson ? () => setPersonOpen(true) : undefined}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAddOpen(false)}>{t('form.field.cancel')}</Button>

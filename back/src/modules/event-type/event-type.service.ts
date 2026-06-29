@@ -133,7 +133,14 @@ export class EventTypeService {
       });
       if (!existing) throw new NotFoundException(this.i18n.t('errors.eventField.notFound'));
 
-      return this.toStoredCustomField(existing, field);
+      const updated = await this.eventFieldService.update({
+        id: existing.id,
+        userId,
+        congregationId,
+        data: this.toEventFieldDto(field),
+      });
+
+      return this.toStoredCustomField(updated, field);
     }
 
     const created = await this.eventFieldService.create({
@@ -180,7 +187,7 @@ export class EventTypeService {
       attendance_date_person_field_id: data.attendance_date_person_field_id ?? null,
       custom_fields: await this.normalizeCustomFields(data, userId, congregationId),
       color: data.color ?? '#1976d2',
-      icon: data.icon?.trim() || 'CalendarMonth',
+      icon: data.icon?.trim() || 'Event',
       default_start_time: data.default_start_time ?? null,
       default_duration_minutes: data.default_duration_minutes ?? null,
     };

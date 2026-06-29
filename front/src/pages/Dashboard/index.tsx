@@ -72,6 +72,14 @@ const Dashboard = () => {
       });
     }
 
+    if (moduleIds.includes('events_calendar') && hasPermission('event', 'get')) {
+      modules.push({
+        id: 'events',
+        title: t('pages.events.title'),
+        path: getModulePath('events', i18n.language),
+      });
+    }
+
     if (
       moduleIds.includes('events_attendance') &&
       hasPermission('event_registration', 'get') &&

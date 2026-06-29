@@ -6,7 +6,20 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Person } from '@/types/person.types';
 import type { PersonAutocompleteProps } from './PersonAutocomplete.types';
 
-export const PersonAutocomplete = ({ value, disabled, label, onChange }: PersonAutocompleteProps) => {
+const CREATE_OPTION_ID = '__create_person__';
+type CreatePersonOption = { id: typeof CREATE_OPTION_ID; search: string };
+type PersonAutocompleteOption = Person | CreatePersonOption;
+
+const isCreateOption = (value: PersonAutocompleteOption): value is CreatePersonOption => value.id === CREATE_OPTION_ID;
+
+export const PersonAutocomplete = ({
+  value,
+  disabled,
+  label,
+  createLabel,
+  onCreate,
+  onChange,
+}: PersonAutocompleteProps) => {
   const { user } = useAuth();
   const pageSize = user?.preferences?.page_sizes?.['members-list'] ?? user?.preferences?.page_sizes?.default ?? 50;
   const [options, setOptions] = useState<Person[]>([]);
@@ -42,20 +55,39 @@ export const PersonAutocomplete = ({ value, disabled, label, onChange }: PersonA
     [pageSize, search],
   );
   useEffect(() => {
-    const timer = window.setTimeout(() => void load(0, true), 250);
+    const timer = window.setTimeout(() => void load(0, true), 500);
     return () => window.clearTimeout(timer);
   }, [load]);
+  const visibleOptions: PersonAutocompleteOption[] =
+    onCreate && search.trim() ? [...options, { id: CREATE_OPTION_ID, search: search.trim() }] : options;
   return (
     <Autocomplete
       fullWidth
       disabled={disabled}
-      options={options}
+      options={visibleOptions}
       value={value}
       loading={loading}
       filterOptions={(items) => items}
-      getOptionLabel={(person) => `${person.code} · ${person.first_name} ${person.last_name}`}
+      getOptionLabel={(person) =>
+        isCreateOption(person)
+          ? (createLabel ?? person.search)
+          : `${person.code} · ${person.first_name} ${person.last_name}`
+      }
       isOptionEqualToValue={(left, right) => left.id === right.id}
-      onChange={(_event, person) => onChange(person)}
+      onChange={(_event, person) => {
+        if (person && isCreateOption(person)) {
+          onCreate?.(person.search);
+          return;
+        }
+        onChange(person);
+      }}
+      renderOption={(props, person) => (
+        <li {...props}>
+          {isCreateOption(person)
+            ? (createLabel ?? person.search)
+            : `${person.code} · ${person.first_name} ${person.last_name}`}
+        </li>
+      )}
       onInputChange={(_event, input, reason) => {
         if (reason === 'input') setSearch(input);
       }}

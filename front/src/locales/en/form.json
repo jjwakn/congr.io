@@ -28,6 +28,7 @@
   "common": {
     "yes": "Yes",
     "no": "No",
+    "muiIconsCatalog": "MUI material icons catalog",
     "replace": "Replace",
     "delete": "Delete",
     "moveUp": "Move up",

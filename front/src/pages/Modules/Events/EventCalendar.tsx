@@ -13,7 +13,6 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
@@ -23,12 +22,7 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import {
   Box,
   Button,
-  Chip,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   FormControlLabel,
   IconButton,
   Menu,
@@ -58,6 +52,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import type { EventType } from '@/types/event-type.types';
 import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
+import { EventDetailsDialog } from './EventDetailsDialog';
 import { EventEditorDialog } from './EventEditorDialog';
 import type { EventFormValues } from './events.types';
 
@@ -68,7 +63,7 @@ const toImageUrl = (event: CalendarEvent) =>
 
 const toCalendarDisplayDate = (value: string, timezone: string, allDay: boolean) => {
   const local = DateTime.fromISO(value).setZone(timezone);
-  return allDay ? (local.toISODate() ?? value) : local.toFormat("yyyy-LL-dd'T'HH:mm:ss");
+  return allDay ? (local.toISODate() ?? value) : (local.toISO() ?? value);
 };
 
 export const EventCalendar = () => {
@@ -379,7 +374,7 @@ export const EventCalendar = () => {
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             locale={i18n.language.startsWith('es') ? esLocale : undefined}
-            timeZone="UTC"
+            timeZone="local"
             events={calendarEvents}
             datesSet={handleDatesSet}
             dateClick={handleDateClick}
@@ -588,61 +583,15 @@ export const EventCalendar = () => {
           />
         ) : null}
 
-        <Dialog open={Boolean(selectedEvent)} onClose={() => setSelectedEvent(null)} fullWidth maxWidth="md">
-          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            {selectedEvent?.name}
-            <IconButton onClick={() => setSelectedEvent(null)}>
-              <CloseRoundedIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent dividers>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              {selectedEvent && toImageUrl(selectedEvent) ? (
-                <Box
-                  component="img"
-                  src={toImageUrl(selectedEvent)}
-                  alt={selectedEvent.name}
-                  sx={{ width: { xs: '100%', md: '45%' }, maxHeight: 360, objectFit: 'contain' }}
-                />
-              ) : null}
-              <Stack spacing={1} flex={1}>
-                <Typography>{selectedEvent?.description}</Typography>
-                <Typography variant="body2">
-                  {selectedEvent
-                    ? DateTime.fromISO(selectedEvent.start_datetime)
-                        .setZone(congregation?.timezone)
-                        .setLocale(i18n.language)
-                        .toLocaleString(DateTime.DATETIME_MED)
-                    : ''}
-                </Typography>
-                {selectedEvent ? (
-                  <Stack direction="row" useFlexGap flexWrap="wrap" gap={1}>
-                    {selectedEvent.is_public ? <Chip size="small" label={t('pages.events.form.public')} /> : null}
-                    {selectedEvent.all_day ? <Chip size="small" label={t('pages.events.form.allDay')} /> : null}
-                    {selectedEvent.attendance_enabled ? (
-                      <Chip size="small" label={t('pages.events.form.attendance')} />
-                    ) : null}
-                  </Stack>
-                ) : null}
-                {selectedEvent?.custom_fields.map((field) => (
-                  <Typography key={field.id} variant="body2">
-                    {field.label}
-                  </Typography>
-                ))}
-              </Stack>
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            {selectedEvent ? (
-              <>
-                <Button onClick={() => addToCalendar(selectedEvent)}>{t('pages.events.actions.addToCalendar')}</Button>
-                {selectedEvent.is_public && selectedEvent.public_id ? (
-                  <Button onClick={() => void shareEvent(selectedEvent)}>{t('pages.events.actions.share')}</Button>
-                ) : null}
-              </>
-            ) : null}
-          </DialogActions>
-        </Dialog>
+        <EventDetailsDialog
+          event={selectedEvent}
+          timezone={congregation?.timezone ?? 'UTC'}
+          imageUrl={selectedEvent ? toImageUrl(selectedEvent) : undefined}
+          use12HourTime={use12HourTime}
+          onClose={() => setSelectedEvent(null)}
+          onAddToCalendar={addToCalendar}
+          onShare={(event) => void shareEvent(event)}
+        />
 
         <ConfirmDialog
           open={Boolean(deleteEvent)}

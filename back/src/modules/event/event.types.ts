@@ -1,8 +1,10 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { CommonOrder, CongregationEntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import type { EventTypeCustomField } from 'src/modules/event-type/event-type.types';
 import { ApiProperty } from '@nestjs/swagger';
+
+const stringToBoolean = ({ value }: { value: boolean | string }) => value === true || value === 'true';
 
 export interface EventGetProps extends CongregationEntityActionProps {
   id: string;
@@ -110,8 +112,13 @@ export class EventDto {
 
 enum Order {
   name = 'name',
+  event_type_id = 'event_type_id',
   start_datetime = 'start_datetime',
   end_datetime = 'end_datetime',
+  all_day = 'all_day',
+  is_public = 'is_public',
+  attendance_enabled = 'attendance_enabled',
+  self_registration_enabled = 'self_registration_enabled',
 }
 
 export class EventQuery extends ListParamsQuery {
@@ -130,4 +137,40 @@ export class EventQuery extends ListParamsQuery {
   @IsString()
   @IsOptional()
   end?: string;
+
+  @Transform(stringToBoolean)
+  @IsBoolean()
+  @IsOptional()
+  all_day?: boolean;
+
+  @Transform(stringToBoolean)
+  @IsBoolean()
+  @IsOptional()
+  is_public?: boolean;
+
+  @Transform(stringToBoolean)
+  @IsBoolean()
+  @IsOptional()
+  attendance_enabled?: boolean;
+
+  @Transform(stringToBoolean)
+  @IsBoolean()
+  @IsOptional()
+  self_registration_enabled?: boolean;
+
+  @IsString()
+  @IsOptional()
+  start_datetime_from?: string;
+
+  @IsString()
+  @IsOptional()
+  start_datetime_to?: string;
+
+  @IsString()
+  @IsOptional()
+  end_datetime_from?: string;
+
+  @IsString()
+  @IsOptional()
+  end_datetime_to?: string;
 }

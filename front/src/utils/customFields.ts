@@ -28,6 +28,7 @@ export const STANDARD_PERSON_FIELDS: StandardFieldDefinition[] = [
   { id: 'married_name', labelKey: 'pages.persons.fields.marriedName', type: 'text', options: [], persistent: true },
   { id: 'phone', labelKey: 'pages.persons.fields.phone', type: 'text', options: [], persistent: true },
   { id: 'birthdate', labelKey: 'pages.persons.fields.birthdate', type: 'date', options: [], persistent: true },
+  { id: 'age', labelKey: 'pages.persons.fields.age', type: 'number', options: [], persistent: true },
   { id: 'email', labelKey: 'pages.persons.fields.email', type: 'text', options: [], persistent: true },
 ];
 
