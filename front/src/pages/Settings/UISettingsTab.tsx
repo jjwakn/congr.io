@@ -64,6 +64,10 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
       events_calendar: ['event', 'get'],
       events: ['event', 'get'],
       events_attendance: ['event_attendance', 'get'],
+      services: ['service', 'get'],
+      services_new_people: ['service_new_people', 'get'],
+      services_follow_up: ['service_follow_up', 'get'],
+      services_attendance: ['service_attendance', 'get'],
     };
     const ids = (congregation?.features ?? []).filter((id) =>
       permissions[id] ? hasPermission(...permissions[id]) : false,
@@ -162,10 +166,16 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
         {expanded === section ? (
           <Box onClick={(event) => event.stopPropagation()} sx={{ display: 'flex', gap: 1 }}>
             {extraAction}
-            <Button size="small" disabled={!changed || saving === section} onClick={onDiscard}>
+            <Button component="span" size="small" disabled={!changed || saving === section} onClick={onDiscard}>
               {t('form.field.discard')}
             </Button>
-            <Button size="small" variant="contained" disabled={!changed || saving === section} onClick={onSave}>
+            <Button
+              component="span"
+              size="small"
+              variant="contained"
+              disabled={!changed || saving === section}
+              onClick={onSave}
+            >
               {t('pages.settings.actions.save')}
             </Button>
           </Box>
@@ -223,7 +233,7 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
             setPageSizes(savedPageSizes);
             setMasterPageSize(savedPageSizes.default ?? 50);
           },
-          <Button size="small" onClick={resetPaginationToDefault}>
+          <Button component="span" size="small" onClick={resetPaginationToDefault}>
             {t('pages.settings.interface.resetToDefault')}
           </Button>,
         )}

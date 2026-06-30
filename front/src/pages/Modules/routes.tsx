@@ -9,6 +9,10 @@ const PersonsModule = lazy(() => import('./Persons'));
 const AttendanceManagement = lazy(() => import('./Attendance/AttendanceManagement'));
 const RegistrationManagement = lazy(() => import('./Registration/RegistrationManagement'));
 const FlowsManagement = lazy(() => import('./Flows'));
+const ServicesManagement = lazy(() => import('./Services/ServicesManagement'));
+const ServiceNewPeopleManagement = lazy(() => import('./Services/ServiceNewPeopleManagement'));
+const ServiceFollowUpManagement = lazy(() => import('./Services/ServiceFollowUpManagement'));
+const ServiceAttendanceManagement = lazy(() => import('./Services/ServiceAttendanceManagement'));
 
 export const UsersRoute: ModuleRouteDefinition = {
   id: 'users',
@@ -32,6 +36,19 @@ export const PersonsRoute: ModuleRouteDefinition = { id: 'members', Component: P
 export const AttendanceRoute: ModuleRouteDefinition = { id: 'events_attendance', Component: AttendanceManagement };
 export const RegistrationRoute: ModuleRouteDefinition = { id: 'event_registration', Component: RegistrationManagement };
 export const FlowsRoute: ModuleRouteDefinition = { id: 'processes', Component: FlowsManagement };
+export const ServicesRoute: ModuleRouteDefinition = { id: 'services', Component: ServicesManagement };
+export const ServiceNewPeopleRoute: ModuleRouteDefinition = {
+  id: 'services_new_people',
+  Component: ServiceNewPeopleManagement,
+};
+export const ServiceFollowUpRoute: ModuleRouteDefinition = {
+  id: 'services_follow_up',
+  Component: ServiceFollowUpManagement,
+};
+export const ServiceAttendanceRoute: ModuleRouteDefinition = {
+  id: 'services_attendance',
+  Component: ServiceAttendanceManagement,
+};
 
 export const moduleRoutes: ModuleRouteDefinition[] = [
   UsersRoute,
@@ -42,6 +59,10 @@ export const moduleRoutes: ModuleRouteDefinition[] = [
   AttendanceRoute,
   RegistrationRoute,
   FlowsRoute,
+  ServicesRoute,
+  ServiceNewPeopleRoute,
+  ServiceFollowUpRoute,
+  ServiceAttendanceRoute,
 ];
 
 export const getModuleRoute = (moduleId: string): ModuleRouteDefinition | null =>

@@ -7,7 +7,6 @@ import { AppLoggerMiddleware } from './middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigurationsModule } from './modules/configurations/configurations.module';
 import { CongregationModule } from './modules/congregation/congregation.module';
-import { EventFieldModule } from './modules/event-field/event-field.module';
 import { EventParticipantModule } from './modules/event-participant/event-participant.module';
 import { EventTypeModule } from './modules/event-type/event-type.module';
 import { EventModule } from './modules/event/event.module';
@@ -18,6 +17,9 @@ import { PersonFieldModule } from './modules/person-field/person-field.module';
 import { PersonModule } from './modules/person/person.module';
 import { ProcessModule } from './modules/process/process.module';
 import { RoleModule } from './modules/role/role.module';
+import { ServiceAttendanceModule } from './modules/service-attendance/service-attendance.module';
+import { ServiceNewPeopleModule } from './modules/service-new-people/service-new-people.module';
+import { ServiceModule } from './modules/service/service.module';
 import { SetupModule } from './modules/setup/setup.module';
 import { UserModule } from './modules/user/user.module';
 
@@ -60,7 +62,6 @@ import { UserModule } from './modules/user/user.module';
     FeatureModule,
     FilesModule,
     ConfigurationsModule,
-    EventFieldModule,
     EventTypeModule,
     EventModule,
     EventParticipantModule,
@@ -68,6 +69,9 @@ import { UserModule } from './modules/user/user.module';
     PersonFieldModule,
     AuthModule,
     ProcessModule,
+    ServiceModule,
+    ServiceNewPeopleModule,
+    ServiceAttendanceModule,
     UserModule,
     RoleModule,
     CongregationModule,

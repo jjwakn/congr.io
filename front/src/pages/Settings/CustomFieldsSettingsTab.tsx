@@ -2,13 +2,11 @@ import { Box, Tab, Tabs } from '@mui/material';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CustomFieldsSettingsTabProps } from './CustomFieldsSettingsTab.types';
-import { EventFieldsManagement } from './EventFields/EventFieldsManagement';
 import { EventTypesManagement } from './EventTypes/EventTypesManagement';
 import { PersonFieldsManagement } from './PersonFields/PersonFieldsManagement';
 
 export const CustomFieldsSettingsTab = ({
   canViewEventTypes,
-  canViewEventFields,
   canViewPersonFields,
   initialTab,
 }: CustomFieldsSettingsTabProps) => {
@@ -16,10 +14,9 @@ export const CustomFieldsSettingsTab = ({
   const tabs = useMemo(
     () => [
       ...(canViewEventTypes ? [{ id: 'eventTypes' as const, label: t('pages.settings.tabs.eventTypes') }] : []),
-      ...(canViewEventFields ? [{ id: 'eventFields' as const, label: t('pages.settings.tabs.eventFields') }] : []),
       ...(canViewPersonFields ? [{ id: 'personFields' as const, label: t('pages.settings.tabs.personFields') }] : []),
     ],
-    [canViewEventFields, canViewEventTypes, canViewPersonFields, t],
+    [canViewEventTypes, canViewPersonFields, t],
   );
   const [activeTab, setActiveTab] = useState(() =>
     initialTab && tabs.some(({ id }) => id === initialTab) ? initialTab : tabs[0]?.id,
@@ -34,7 +31,6 @@ export const CustomFieldsSettingsTab = ({
         ))}
       </Tabs>
       {resolvedTab === 'eventTypes' ? <EventTypesManagement /> : null}
-      {resolvedTab === 'eventFields' ? <EventFieldsManagement /> : null}
       {resolvedTab === 'personFields' ? <PersonFieldsManagement /> : null}
     </Box>
   );

@@ -13,13 +13,8 @@ export interface EventCustomField {
   allow_multiple?: boolean;
   user_fillable: boolean;
   link_person_field?: boolean;
-  event_field_id?: string;
   person_field_id?: string;
   calculated_conditions?: FieldCondition[];
-}
-
-export interface EventField extends CommonEntity, EventCustomField {
-  congregation_id: string;
 }
 
 export interface CalendarEvent extends CommonEntity {

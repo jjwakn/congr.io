@@ -91,7 +91,11 @@ const getSortLabelSx = (align?: ModuleListHeaderCell['align']): SxProps<Theme> =
           margin: 0,
         },
       }
-    : {};
+    : {
+        '& .MuiTableSortLabel-icon': {
+          marginLeft: 0.75,
+        },
+      };
 
 export const ModuleListTable = <RowType,>({
   headerRows,

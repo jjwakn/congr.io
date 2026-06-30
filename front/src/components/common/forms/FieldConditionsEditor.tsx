@@ -4,20 +4,30 @@ import { Button, IconButton, MenuItem, Stack, TextField, Tooltip } from '@mui/ma
 import type { FieldCondition, FieldConditionOperator } from '@/types/person.types';
 import type { FieldConditionsEditorProps } from './FieldConditionsEditor.types';
 
-const OPERATORS: FieldConditionOperator[] = [
-  'not_empty',
-  'empty',
+const TEXT_OPERATORS: FieldConditionOperator[] = ['equals', 'contains', 'starts_with', 'ends_with'];
+const OPTION_OPERATORS: FieldConditionOperator[] = ['equals', 'not_equals'];
+const NUMBER_OPERATORS: FieldConditionOperator[] = [
   'equals',
   'not_equals',
   'greater_than',
+  'greater_or_equal',
   'less_than',
-  'age_greater_than',
-  'age_less_than',
+  'less_or_equal',
 ];
+const BOOLEAN_OPERATORS: FieldConditionOperator[] = ['is_true', 'is_false'];
+
+const getOperatorsForField = (type?: string): FieldConditionOperator[] => {
+  if (type === 'yes_no') return BOOLEAN_OPERATORS;
+  if (type === 'number' || type === 'date') return NUMBER_OPERATORS;
+  if (type === 'options') return OPTION_OPERATORS;
+  return TEXT_OPERATORS;
+};
+
+const operatorExpectsValue = (operator: FieldConditionOperator) => !BOOLEAN_OPERATORS.includes(operator);
 
 const createCondition = (fieldId = ''): FieldCondition => ({
   field_id: fieldId,
-  operator: 'not_empty',
+  operator: 'equals',
   value: '',
 });
 
@@ -29,8 +39,6 @@ export const FieldConditionsEditor = ({
   valueLabel,
   addLabel,
   removeLabel,
-  trueLabel,
-  falseLabel,
   operatorLabels,
   disabled = false,
   onChange,
@@ -44,7 +52,11 @@ export const FieldConditionsEditor = ({
     <Stack spacing={1}>
       {value.map((condition, index) => {
         const selectedField = fields.find((field) => field.id === condition.field_id);
-        const expectsValue = condition.operator !== 'empty' && condition.operator !== 'not_empty';
+        const availableOperators = getOperatorsForField(selectedField?.type);
+        const selectedOperator = availableOperators.includes(condition.operator)
+          ? condition.operator
+          : availableOperators[0];
+        const expectsValue = operatorExpectsValue(selectedOperator);
         const optionValues = selectedField?.options ?? [];
 
         return (
@@ -56,7 +68,14 @@ export const FieldConditionsEditor = ({
               label={fieldLabel}
               value={condition.field_id}
               disabled={disabled}
-              onChange={(event) => update(index, { field_id: event.target.value, value: '' })}
+              onChange={(event) => {
+                const nextField = fields.find((field) => field.id === event.target.value);
+                update(index, {
+                  field_id: event.target.value,
+                  operator: getOperatorsForField(nextField?.type)[0],
+                  value: '',
+                });
+              }}
             >
               {fields.map((field) => (
                 <MenuItem key={field.id} value={field.id}>
@@ -69,41 +88,22 @@ export const FieldConditionsEditor = ({
               fullWidth
               size="small"
               label={operatorLabel}
-              value={condition.operator}
+              value={selectedOperator}
               disabled={disabled}
               onChange={(event) => update(index, { operator: event.target.value as FieldConditionOperator })}
             >
-              {OPERATORS.map((operator) => (
+              {availableOperators.map((operator) => (
                 <MenuItem key={operator} value={operator}>
                   {operatorLabels[operator]}
                 </MenuItem>
               ))}
             </TextField>
-            {expectsValue && selectedField?.type === 'yes_no' ? (
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label={valueLabel}
-                value={condition.value === true ? 'true' : condition.value === false ? 'false' : ''}
-                disabled={disabled}
-                onChange={(event) => update(index, { value: event.target.value === 'true' })}
-              >
-                <MenuItem value="true">{trueLabel}</MenuItem>
-                <MenuItem value="false">{falseLabel}</MenuItem>
-              </TextField>
-            ) : expectsValue ? (
+            {expectsValue ? (
               <TextField
                 select={optionValues.length > 0}
                 fullWidth
                 size="small"
-                type={
-                  condition.operator.startsWith('age_') || selectedField?.type === 'number'
-                    ? 'number'
-                    : selectedField?.type === 'date'
-                      ? 'date'
-                      : 'text'
-                }
+                type={selectedField?.type === 'number' ? 'number' : selectedField?.type === 'date' ? 'date' : 'text'}
                 label={valueLabel}
                 value={condition.value ?? ''}
                 disabled={disabled}
@@ -111,7 +111,7 @@ export const FieldConditionsEditor = ({
                 onChange={(event) =>
                   update(index, {
                     value:
-                      condition.operator.startsWith('age_') || selectedField?.type === 'number'
+                      selectedField?.type === 'number'
                         ? event.target.value === ''
                           ? ''
                           : Number(event.target.value)

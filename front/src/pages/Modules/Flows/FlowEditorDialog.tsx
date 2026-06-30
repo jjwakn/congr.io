@@ -25,6 +25,7 @@ import {
   type Edge,
   MarkerType,
   type Node,
+  Panel,
   ReactFlow,
   addEdge,
 } from '@xyflow/react';
@@ -225,6 +226,43 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
                 )
               }
             >
+              {selected ? (
+                <Panel position="top-right">
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      p: 1,
+                      border: 1,
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      bgcolor: 'background.paper',
+                      boxShadow: 2,
+                    }}
+                  >
+                    <Button size="small" onClick={() => addFollowingStep()}>
+                      {t('pages.flows.editor.addFollowingStep')}
+                    </Button>
+                    <Button
+                      size="small"
+                      color="error"
+                      disabled={steps.length === 1}
+                      onClick={() => {
+                        const remaining = steps
+                          .filter(({ flow_key }) => flow_key !== selected.flow_key)
+                          .map((step) => ({
+                            ...step,
+                            next_step_keys: step.next_step_keys.filter((key) => key !== selected.flow_key),
+                          }));
+                        setSteps(remaining);
+                        setSelectedKey(remaining[0]?.flow_key ?? '');
+                      }}
+                    >
+                      {t('pages.flows.editor.deleteStep')}
+                    </Button>
+                  </Stack>
+                </Panel>
+              ) : null}
               <Background />
               <Controls />
             </ReactFlow>

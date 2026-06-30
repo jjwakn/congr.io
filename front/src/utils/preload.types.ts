@@ -1,1 +1,1 @@
-export type PreloadResourceId = 'events' | 'members' | 'processes' | 'roles' | 'users';
+export type PreloadResourceId = 'events' | 'members' | 'processes' | 'roles' | 'services' | 'users';

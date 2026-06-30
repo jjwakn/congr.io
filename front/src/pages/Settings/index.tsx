@@ -20,8 +20,6 @@ const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
   const canViewCongregations = hasPermission('congregation', 'get');
   const canViewEventTypes =
     hasCongregationFeature(congregation?.features, EVENTS_FEATURE_ID) && hasPermission('event_type', 'get');
-  const canViewEventFields =
-    hasCongregationFeature(congregation?.features, EVENTS_FEATURE_ID) && hasPermission('event_field', 'get');
   const canViewPersonFields =
     hasCongregationFeature(congregation?.features, PERSONS_FEATURE_ID) && hasPermission('person_field', 'get');
   const tabs = useMemo(
@@ -30,12 +28,12 @@ const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
         ? [{ id: 'congregations' as const, label: t('pages.settings.tabs.congregations') }]
         : []),
       { id: 'ui' as const, label: t('pages.settings.tabs.ui') },
-      ...(canViewEventTypes || canViewEventFields || canViewPersonFields
+      ...(canViewEventTypes || canViewPersonFields
         ? [{ id: 'customFields' as const, label: t('pages.settings.tabs.customFields') }]
         : []),
       ...(auth?.fullAccess ? [{ id: 'deployment' as const, label: t('pages.settings.tabs.deployment') }] : []),
     ],
-    [auth?.fullAccess, canViewCongregations, canViewEventFields, canViewEventTypes, canViewPersonFields, t],
+    [auth?.fullAccess, canViewCongregations, canViewEventTypes, canViewPersonFields, t],
   );
   const navigationState = location.state as SettingsNavigationState | null;
   const [activeTab, setActiveTab] = useState<SettingsTabId>(
@@ -93,7 +91,6 @@ const SettingsPage = ({ showHeader = true }: SettingsPageProps) => {
         {resolvedActiveTab === 'customFields' ? (
           <CustomFieldsSettingsTab
             canViewEventTypes={canViewEventTypes}
-            canViewEventFields={canViewEventFields}
             canViewPersonFields={canViewPersonFields}
             initialTab={navigationState?.customFieldsTab}
           />

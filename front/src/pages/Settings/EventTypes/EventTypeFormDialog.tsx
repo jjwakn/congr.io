@@ -17,14 +17,13 @@ import {
   Typography,
 } from '@mui/material';
 import { EventCustomFieldsEditor } from '@pages/Modules/Events/EventCustomFieldsEditor';
-import { EventFieldsService } from '@services/eventFields';
 import { PersonFieldsService } from '@services/persons';
 import { httpRequest } from '@utils/http';
 import { DEFAULT_MUI_ICON } from '@utils/muiIcons';
 import { useCallback, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { EventCustomField, EventField } from '@/types/event.types';
+import type { EventCustomField } from '@/types/event.types';
 import type { PersonField } from '@/types/person.types';
 import type { EventTypeFormDialogProps } from './eventTypes.types';
 
@@ -67,7 +66,6 @@ export const EventTypeFormDialog = ({
   const [defaultDuration, setDefaultDuration] = useState('');
   const [customFields, setCustomFields] = useState<EventCustomField[]>([]);
   const [personFields, setPersonFields] = useState<PersonField[]>([]);
-  const [eventFields, setEventFields] = useState<EventField[]>([]);
   const [color, setColor] = useState('#1976d2');
   const [icon, setIcon] = useState(DEFAULT_MUI_ICON);
   const [nameError, setNameError] = useState('');
@@ -89,22 +87,15 @@ export const EventTypeFormDialog = ({
     setIcon(eventType?.icon || DEFAULT_MUI_ICON);
     setNameError('');
     setFieldError('');
-    void Promise.all([
+    void (
       hasPermission('person_field', 'get')
         ? httpRequest<{ result: PersonField[]; total: number }>({
             service: PersonFieldsService.list,
             data: { page: 0, size: 500, order: 'label', direction: 'ASC' },
           })
-        : Promise.resolve({ result: [], total: 0 }),
-      hasPermission('event_field', 'get')
-        ? httpRequest<{ result: EventField[]; total: number }>({
-            service: EventFieldsService.list,
-            data: { page: 0, size: 500, order: 'label', direction: 'ASC' },
-          })
-        : Promise.resolve({ result: [], total: 0 }),
-    ]).then(([personResponse, eventResponse]) => {
+        : Promise.resolve({ result: [], total: 0 })
+    ).then((personResponse) => {
       setPersonFields(personResponse.result ?? []);
-      setEventFields(eventResponse.result ?? []);
     });
   }, [eventType, hasPermission]);
 
@@ -341,8 +332,7 @@ export const EventTypeFormDialog = ({
             typeFields={customFields}
             canUpdateEventType
             selfRegistration={defaultSelfRegistration}
-            personFields={attendanceEnabled ? personFields : []}
-            reusableFields={eventFields}
+            personFields={personFields}
             onChange={({ typeFields }) => {
               setCustomFields(typeFields);
               if (fieldError) setFieldError('');

@@ -7,7 +7,9 @@ import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import HowToRegOutlinedIcon from '@mui/icons-material/HowToRegOutlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
+import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
 import { type ReactNode, createElement } from 'react';
 import { getSettingsPath } from './routes';
 
@@ -49,6 +51,14 @@ export const getModuleIcon = (moduleId: string): DashboardNavigationItem['icon']
       return createElement(AccountTreeOutlinedIcon, { fontSize: 'small' });
     case 'ministries_calendar':
       return createElement(CalendarMonthOutlinedIcon, { fontSize: 'small' });
+    case 'services':
+      return createElement(VolunteerActivismOutlinedIcon, { fontSize: 'small' });
+    case 'services_new_people':
+      return createElement(PersonAddAltOutlinedIcon, { fontSize: 'small' });
+    case 'services_follow_up':
+      return createElement(AltRouteOutlinedIcon, { fontSize: 'small' });
+    case 'services_attendance':
+      return createElement(HowToRegOutlinedIcon, { fontSize: 'small' });
     default:
       return createElement(AppsOutlinedIcon, { fontSize: 'small' });
   }

@@ -15,20 +15,16 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { CommonOrder, CongregationEntityActionProps, ListParamsQuery } from 'src/common/common.types';
-import type { EventFieldType } from 'src/modules/event-field/event-field.types';
 import type { FieldCondition } from 'src/modules/person-field/person-field.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
+export type EventFieldType = 'text' | 'paragraph' | 'number' | 'yes_no' | 'options' | 'date';
 const EVENT_FIELD_TYPES: EventFieldType[] = ['text', 'paragraph', 'number', 'yes_no', 'options', 'date'];
 
 export class EventTypeCustomFieldDto {
   @IsString()
   @IsOptional()
   id?: string;
-
-  @IsString()
-  @IsOptional()
-  event_field_id?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -74,7 +70,6 @@ export class EventTypeCustomFieldDto {
 
 export interface EventTypeCustomField {
   id: string;
-  event_field_id: string;
   label: string;
   type: EventFieldType;
   required: boolean;

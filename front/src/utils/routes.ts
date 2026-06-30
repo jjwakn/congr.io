@@ -42,6 +42,10 @@ const MODULE_SLUGS: Record<string, LocalizedValue> = {
     en: 'ministries-calendar',
     es: 'calendario-ministerios',
   },
+  services: { en: 'services', es: 'servicios' },
+  services_new_people: { en: 'new-people', es: 'personas-nuevas' },
+  services_follow_up: { en: 'follow-up', es: 'seguimiento' },
+  services_attendance: { en: 'service-attendance', es: 'asistencia-servicios' },
 };
 
 const normalizeLanguage = (language?: string): AppLanguage => (language?.toLowerCase().startsWith('es') ? 'es' : 'en');

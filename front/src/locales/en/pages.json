@@ -19,6 +19,7 @@
       "search": "Search",
       "rowsPerPage": "Items per page",
       "view": "View",
+      "actions": "Actions",
       "emptyValue": " - ",
       "columns": "Columns",
       "filter": "Filter",
@@ -27,7 +28,9 @@
       "filterNo": "No",
       "filterFrom": "From",
       "filterTo": "To",
-      "clearFilter": "Clear filter"
+      "clearFilter": "Clear filter",
+      "enableConfirm": "Enable this item?",
+      "disableConfirm": "Disable this item?"
     },
     "users": {
       "title": "Users",
@@ -167,7 +170,6 @@
       "ui": "UI",
       "customFields": "Custom Fields",
       "eventTypes": "Event Types",
-      "eventFields": "Event Fields",
       "personFields": "Person Fields",
       "deployment": "Deployment"
     },
@@ -252,7 +254,6 @@
           "locationsDetached": "{{count}} shared locations will be detached",
           "events": "{{count}} events will be deleted",
           "eventTypes": "{{count}} event types will be deleted",
-          "eventFields": "{{count}} event fields will be deleted",
           "processes": "{{count}} processes will be deleted",
           "processSteps": "{{count}} process steps will be deleted",
           "configurations": "{{count}} configuration records will be deleted",
@@ -370,18 +371,6 @@
         "saveFailed": "Could not save the event type.",
         "deleteFailed": "Could not delete the event type."
       }
-    },
-    "eventFields": {
-      "title": "Event Fields",
-      "create": "Create event field",
-      "edit": "Edit event field",
-      "loading": "Loading event fields...",
-      "empty": "No event fields found.",
-      "loadFailed": "Could not load event fields.",
-      "saved": "Event field saved.",
-      "saveFailed": "Could not save the event field.",
-      "deleted": "Event field deleted.",
-      "deleteMessage": "Delete {{name}}? Existing event values will remain in historical data."
     }
   },
   "files": {
@@ -484,8 +473,9 @@
       "save": "Save event"
     },
     "fields": {
-      "typeTitle": "Event type fields",
-      "eventTitle": "Event fields",
+      "typeTitle": "Person fields captured",
+      "eventTitle": "Additional person fields captured",
+      "capturedHelp": "These person fields are shown when a person registers or is added to this event.",
       "label": "Field label",
       "type": "Field type",
       "options": "Options",
@@ -586,10 +576,15 @@
         "empty": "Is empty",
         "equals": "Equals",
         "notEquals": "Does not equal",
+        "contains": "Contains",
+        "startsWith": "Starts with",
+        "endsWith": "Ends with",
         "greaterThan": "Greater than",
+        "greaterOrEqual": "Greater than or equal",
         "lessThan": "Less than",
-        "ageGreaterThan": "Age greater than",
-        "ageLessThan": "Age less than"
+        "lessOrEqual": "Less than or equal",
+        "isTrue": "Is true",
+        "isFalse": "Is false"
       },
       "created": "Custom field created.",
       "saved": "Custom field saved.",
@@ -626,12 +621,94 @@
     "lock": "Lock registration",
     "unlock": "Unlock registration",
     "favoriteType": "Quick access to the latest event of this type",
+    "favoriteTypeLabel": "{{type}} registration",
     "noUpcoming": "No upcoming event exists for this event type.",
     "createEvent": "Create event",
     "people": "Registered people",
     "possiblePerson": "Possible match: {{name}}",
     "confirmMatch": "Confirm person match",
     "createPerson": "Create a new person from this submission"
+  },
+  "services": {
+    "title": "Services",
+    "create": "Create service",
+    "edit": "Edit service",
+    "view": "View service",
+    "loading": "Loading services...",
+    "empty": "No services found.",
+    "saved": "Service saved.",
+    "deleted": "Service deleted.",
+    "loadFailed": "Could not load services.",
+    "saveFailed": "Could not save the service.",
+    "deleteTitle": "Delete service",
+    "deleteMessage": "Delete {{name}}?",
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "location": "Location",
+      "dayOfWeek": "Day of week",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "attendanceGroups": "Attendance groups",
+      "groupLabel": "Group name",
+      "groupColor": "Color",
+      "defaultAdults": "Adults",
+      "defaultKids": "Kids",
+      "addGroup": "Add group",
+      "active": "Active"
+    },
+    "days": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "newPeople": {
+      "title": "New People",
+      "today": "Today",
+      "history": "History",
+      "create": "Create group",
+      "edit": "Edit group",
+      "service": "Service",
+      "date": "Date",
+      "notes": "Notes",
+      "people": "People",
+      "addPerson": "Add person",
+      "loading": "Loading new people...",
+      "empty": "No new people groups found.",
+      "saved": "New people group saved.",
+      "deleted": "New people group deleted.",
+      "deleteTitle": "Delete new people group",
+      "deleteMessage": "Delete this new people group?",
+      "noCurrent": "No service is active or later today."
+    },
+    "followUp": {
+      "title": "Follow-up",
+      "firstVisit": "First visit",
+      "person": "Person",
+      "phone": "Phone",
+      "status": "Status",
+      "pending": "Pending",
+      "completed": "Completed",
+      "loading": "Loading follow-up...",
+      "empty": "No follow-up records found."
+    },
+    "attendance": {
+      "title": "Service Attendance",
+      "today": "Today",
+      "history": "History",
+      "service": "Service",
+      "date": "Date",
+      "count": "Count",
+      "loading": "Loading service attendance...",
+      "empty": "No service attendance records found.",
+      "noCurrent": "No service is active or later today.",
+      "saved": "Attendance updated.",
+      "error": "Could not update attendance."
+    }
   },
   "flows": {
     "title": "Flows",

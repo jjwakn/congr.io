@@ -127,17 +127,18 @@ export const PersonFieldSettingsFormDialog = ({
           valueLabel={t('pages.persons.fieldsCrud.conditionValue')}
           addLabel={t('pages.persons.fieldsCrud.addCondition')}
           removeLabel={t('form.common.delete')}
-          trueLabel={t('form.common.yes')}
-          falseLabel={t('form.common.no')}
           operatorLabels={{
-            not_empty: t('pages.persons.fieldsCrud.operators.notEmpty'),
-            empty: t('pages.persons.fieldsCrud.operators.empty'),
             equals: t('pages.persons.fieldsCrud.operators.equals'),
             not_equals: t('pages.persons.fieldsCrud.operators.notEquals'),
+            contains: t('pages.persons.fieldsCrud.operators.contains'),
+            starts_with: t('pages.persons.fieldsCrud.operators.startsWith'),
+            ends_with: t('pages.persons.fieldsCrud.operators.endsWith'),
             greater_than: t('pages.persons.fieldsCrud.operators.greaterThan'),
+            greater_or_equal: t('pages.persons.fieldsCrud.operators.greaterOrEqual'),
             less_than: t('pages.persons.fieldsCrud.operators.lessThan'),
-            age_greater_than: t('pages.persons.fieldsCrud.operators.ageGreaterThan'),
-            age_less_than: t('pages.persons.fieldsCrud.operators.ageLessThan'),
+            less_or_equal: t('pages.persons.fieldsCrud.operators.lessOrEqual'),
+            is_true: t('pages.persons.fieldsCrud.operators.isTrue'),
+            is_false: t('pages.persons.fieldsCrud.operators.isFalse'),
           }}
           onChange={setCalculatedConditions}
         />

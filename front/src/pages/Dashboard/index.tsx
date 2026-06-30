@@ -96,8 +96,21 @@ const Dashboard = () => {
     return modules
       .filter(
         (module) =>
-          module.id !== 'events_attendance' ||
-          (hasPermission('event_attendance', 'get') && hasPermission('event', 'get') && hasPermission('person', 'get')),
+          (module.id !== 'events_attendance' ||
+            (hasPermission('event_attendance', 'get') &&
+              hasPermission('event', 'get') &&
+              hasPermission('person', 'get'))) &&
+          (module.id !== 'services' || hasPermission('service', 'get')) &&
+          (module.id !== 'services_new_people' ||
+            (hasPermission('service_new_people', 'get') &&
+              hasPermission('service', 'get') &&
+              hasPermission('person', 'get'))) &&
+          (module.id !== 'services_follow_up' ||
+            (hasPermission('service_follow_up', 'get') &&
+              hasPermission('service_new_people', 'get') &&
+              hasPermission('person', 'get'))) &&
+          (module.id !== 'services_attendance' ||
+            (hasPermission('service_attendance', 'get') && hasPermission('service', 'get'))),
       )
       .sort((left, right) =>
         left.title.localeCompare(right.title, i18n.language, {
@@ -173,7 +186,7 @@ const Dashboard = () => {
             ? {
                 ...createModuleNavigationItem({
                   moduleId: 'event_registration',
-                  label: event.type?.name ?? event.name,
+                  label: t('pages.registration.favoriteTypeLabel', { type: event.type?.name ?? event.name }),
                   path: `${getModulePath('event_registration', i18n.language)}/${event.id}`,
                 }),
                 id,

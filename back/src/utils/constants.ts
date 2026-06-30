@@ -20,11 +20,14 @@ export enum Module {
   process = 'process',
   event = 'event',
   event_type = 'event_type',
-  event_field = 'event_field',
   person = 'person',
   person_field = 'person_field',
   event_attendance = 'event_attendance',
   event_registration = 'event_registration',
+  service = 'service',
+  service_new_people = 'service_new_people',
+  service_follow_up = 'service_follow_up',
+  service_attendance = 'service_attendance',
 }
 
 export enum Feature {
@@ -36,6 +39,10 @@ export enum Feature {
   PublicEvents = 'public_events',
   Ministries = 'ministries',
   MinistriesCalendar = 'ministries_calendar',
+  Services = 'services',
+  ServicesNewPeople = 'services_new_people',
+  ServicesFollowUp = 'services_follow_up',
+  ServicesAttendance = 'services_attendance',
 }
 //#endregion
 
@@ -64,9 +71,6 @@ export const permission: PermissionType = {
   event_type: {
     permissions: CRUD,
   },
-  event_field: {
-    permissions: CRUD,
-  },
   person: {
     permissions: CRUD,
   },
@@ -78,6 +82,18 @@ export const permission: PermissionType = {
   },
   event_registration: {
     permissions: [...CRUD, ModuleAction.lock],
+  },
+  service: {
+    permissions: CRUD,
+  },
+  service_new_people: {
+    permissions: CRUD,
+  },
+  service_follow_up: {
+    permissions: CRUD,
+  },
+  service_attendance: {
+    permissions: CRUD,
   },
 };
 
@@ -143,6 +159,21 @@ export const FeatureTree: FeatureTreeType = {
   },
   [Feature.MinistriesCalendar]: {
     prerequisites: [Feature.Users, Feature.Members, Feature.Ministries],
+  },
+  [Feature.Services]: {
+    prerequisites: [],
+  },
+  [Feature.ServicesNewPeople]: {
+    parent: Feature.Services,
+    prerequisites: [Feature.Services, Feature.Members],
+  },
+  [Feature.ServicesFollowUp]: {
+    parent: Feature.Services,
+    prerequisites: [Feature.ServicesNewPeople, Feature.Processes],
+  },
+  [Feature.ServicesAttendance]: {
+    parent: Feature.Services,
+    prerequisites: [Feature.Services],
   },
 };
 //#endregion

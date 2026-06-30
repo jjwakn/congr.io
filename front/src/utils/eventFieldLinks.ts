@@ -1,5 +1,5 @@
 import { PersonFieldsService } from '@services/persons';
-import { CREATE_PERSON_FIELD_FROM_EVENT_FIELD } from '@utils/customFields';
+import { CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD } from '@utils/customFields';
 import { httpRequest } from '@utils/http';
 import type { EventCustomField, EventFieldType } from '@/types/event.types';
 import type { PersonField, PersonFieldType } from '@/types/person.types';
@@ -50,7 +50,7 @@ export const resolveEventFieldPersonLinks = async (fields: EventCustomField[]): 
         return field;
       }
 
-      if (field.person_field_id !== CREATE_PERSON_FIELD_FROM_EVENT_FIELD) return field;
+      if (field.person_field_id !== CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD) return field;
 
       const created = await httpRequest<PersonField>({
         service: PersonFieldsService.create,

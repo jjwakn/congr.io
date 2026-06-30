@@ -2,11 +2,13 @@ import { EventsService } from '@services/events';
 import { PersonsService } from '@services/persons';
 import { ProcessesService } from '@services/processes';
 import { RolesService } from '@services/roles';
+import { ServicesService } from '@services/services';
 import { UsersService } from '@services/users';
 import type { EventsListResponse } from '@/types/event.types';
 import type { Person } from '@/types/person.types';
 import type { Process } from '@/types/process.types';
 import type { Role } from '@/types/role.types';
+import type { Service } from '@/types/service.types';
 import type { User } from '@/types/user.types';
 import { httpRequest } from './http';
 import type { PreloadResourceId } from './preload.types';
@@ -22,11 +24,16 @@ type PreloadedResource =
   | ListResponse<Person>
   | ListResponse<Process>
   | ListResponse<Role>
+  | ListResponse<Service>
   | ListResponse<User>;
 
 const FAVORITE_PRELOAD_REQUIREMENTS: Record<string, PreloadResourceId[]> = {
   events_calendar: ['events'],
   events_attendance: ['events', 'members'],
+  services: ['services'],
+  services_new_people: ['services', 'members'],
+  services_follow_up: ['services', 'members'],
+  services_attendance: ['services'],
   event_registration: ['events', 'members'],
   members: ['members'],
   processes: ['processes'],
@@ -64,9 +71,11 @@ const loadResource = (resource: PreloadResourceId, pageSize: number) => {
         ? httpRequest({ service: UsersService.list, data: { ...listData, order: 'name' } })
         : resource === 'roles'
           ? httpRequest({ service: RolesService.list, data: { ...listData, order: 'name' } })
-          : resource === 'members'
-            ? httpRequest({ service: PersonsService.list, data: { ...listData, order: 'last_name' } })
-            : httpRequest({ service: ProcessesService.list, data: { ...listData, order: 'name' } });
+          : resource === 'services'
+            ? httpRequest({ service: ServicesService.list, data: { ...listData, order: 'day_of_week' } })
+            : resource === 'members'
+              ? httpRequest({ service: PersonsService.list, data: { ...listData, order: 'last_name' } })
+              : httpRequest({ service: ProcessesService.list, data: { ...listData, order: 'name' } });
 
   const tracked = request
     .then((response) => {

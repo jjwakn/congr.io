@@ -2,7 +2,6 @@ import type { DateSelectArg } from '@fullcalendar/core';
 import type { EventType } from '@/types/event-type.types';
 import type { CalendarEvent } from '@/types/event.types';
 import type { EventCustomField } from '@/types/event.types';
-import type { EventField } from '@/types/event.types';
 import type { PersonField } from '@/types/person.types';
 
 export interface EventFormValues {
@@ -32,8 +31,6 @@ export interface EventEditorDialogProps {
   eventTypes: EventType[];
   canCreateEventType: boolean;
   canViewPersonFields: boolean;
-  canViewEventFields: boolean;
-  canCreateEventFields: boolean;
   submitting: boolean;
   onClose: () => void;
   onSubmit: (values: EventFormValues, image?: File) => void;
@@ -48,7 +45,6 @@ export interface EventCustomFieldsEditorProps {
   selfRegistration: boolean;
   personFields: PersonField[];
   mode?: 'event' | 'event-type';
-  reusableFields?: EventField[];
   readOnlyTypeFields?: boolean;
   canAddFields?: boolean;
   onChange: (value: { eventFields: EventCustomField[]; typeFields: EventCustomField[] }) => void;

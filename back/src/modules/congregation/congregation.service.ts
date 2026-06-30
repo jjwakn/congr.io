@@ -274,39 +274,29 @@ export class CongregationService {
       );
       return Number(rows[0]?.count ?? 0);
     };
-    const [
-      events,
-      eventTypes,
-      eventFields,
-      processSteps,
-      configurations,
-      persons,
-      personFields,
-      eventParticipants,
-      files,
-    ] = await Promise.all([
-      count('event', 'congregation_id', congregationId),
-      count('event_type', 'congregation_id', congregationId),
-      count('event_field', 'congregation_id', congregationId),
-      processIds.length
-        ? manager
-            .query<
-              Array<{ count: number }>
-            >('SELECT COUNT(*)::int AS "count" FROM "process_step" WHERE "process_id" = ANY($1::uuid[]) AND "deleted_at" IS NULL', [processIds])
-            .then((rows) => Number(rows[0]?.count ?? 0))
-        : Promise.resolve(0),
-      count('congregation_config', 'congregation_id', congregationId),
-      count('person', 'congregation_id', congregationId),
-      count('person_field', 'congregation_id', congregationId),
-      eventIds.length
-        ? manager
-            .query<
-              Array<{ count: number }>
-            >('SELECT COUNT(*)::int AS "count" FROM "event_participant" WHERE "event_id" = ANY($1::uuid[]) AND "deleted_at" IS NULL', [eventIds])
-            .then((rows) => Number(rows[0]?.count ?? 0))
-        : Promise.resolve(0),
-      count('stored_file', 'congregation_id', congregationId),
-    ]);
+    const [events, eventTypes, processSteps, configurations, persons, personFields, eventParticipants, files] =
+      await Promise.all([
+        count('event', 'congregation_id', congregationId),
+        count('event_type', 'congregation_id', congregationId),
+        processIds.length
+          ? manager
+              .query<
+                Array<{ count: number }>
+              >('SELECT COUNT(*)::int AS "count" FROM "process_step" WHERE "process_id" = ANY($1::uuid[]) AND "deleted_at" IS NULL', [processIds])
+              .then((rows) => Number(rows[0]?.count ?? 0))
+          : Promise.resolve(0),
+        count('congregation_config', 'congregation_id', congregationId),
+        count('person', 'congregation_id', congregationId),
+        count('person_field', 'congregation_id', congregationId),
+        eventIds.length
+          ? manager
+              .query<
+                Array<{ count: number }>
+              >('SELECT COUNT(*)::int AS "count" FROM "event_participant" WHERE "event_id" = ANY($1::uuid[]) AND "deleted_at" IS NULL', [eventIds])
+              .then((rows) => Number(rows[0]?.count ?? 0))
+          : Promise.resolve(0),
+        count('stored_file', 'congregation_id', congregationId),
+      ]);
 
     const exclusiveUserIds = userIds.filter((id) => (userCounts.get(id) ?? 0) <= 1);
     const sharedUserIds = userIds.filter((id) => (userCounts.get(id) ?? 0) > 1);
@@ -319,7 +309,6 @@ export class CongregationService {
       locationsDetached: sharedLocationIds.length,
       events,
       eventTypes,
-      eventFields,
       processes: processIds.length,
       processSteps,
       configurations,
@@ -356,7 +345,6 @@ export class CongregationService {
       if (eventIds.length) await softDeleteBy('event_participant', 'event_id', eventIds);
       await softDeleteBy('event', 'congregation_id', id);
       await softDeleteBy('event_type', 'congregation_id', id);
-      await softDeleteBy('event_field', 'congregation_id', id);
 
       if (processIds.length) {
         await softDeleteBy('process_step', 'process_id', processIds);

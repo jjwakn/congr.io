@@ -1,0 +1,5 @@
+{
+  "notFound": "Service attendance record not found.",
+  "groupNotFound": "Attendance group not found.",
+  "invalidDelta": "Attendance changes must include at least one group."
+}

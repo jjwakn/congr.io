@@ -1,0 +1,5 @@
+{
+  "notFound": "No se encontró el registro de asistencia del servicio.",
+  "groupNotFound": "No se encontró el grupo de asistencia.",
+  "invalidDelta": "Los cambios de asistencia deben incluir al menos un grupo."
+}

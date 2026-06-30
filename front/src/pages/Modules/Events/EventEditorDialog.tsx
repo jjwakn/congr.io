@@ -23,7 +23,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { EventFieldsService } from '@services/eventFields';
 import { FilesService } from '@services/files';
 import { PersonFieldsService } from '@services/persons';
 import { httpRequest } from '@utils/http';
@@ -33,7 +32,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { EventType } from '@/types/event-type.types';
-import type { EventField } from '@/types/event.types';
 import type { PersonField } from '@/types/person.types';
 import { EventCustomFieldsEditor } from './EventCustomFieldsEditor';
 import type { EventEditorDialogProps } from './events.types';
@@ -62,8 +60,6 @@ export const EventEditorDialog = ({
   eventTypes,
   canCreateEventType,
   canViewPersonFields,
-  canViewEventFields,
-  canCreateEventFields,
   submitting,
   onClose,
   onSubmit,
@@ -111,7 +107,6 @@ export const EventEditorDialog = ({
   );
   const [typeFields, setTypeFields] = useState(initialType?.custom_fields ?? []);
   const [personFields, setPersonFields] = useState<PersonField[]>([]);
-  const [reusableEventFields, setReusableEventFields] = useState<EventField[]>([]);
   const [saveAttendanceDate, setSaveAttendanceDate] = useState(
     event?.save_attendance_date ?? initialType?.save_attendance_date ?? false,
   );
@@ -139,14 +134,6 @@ export const EventEditorDialog = ({
       data: { page: 0, size: 500, order: 'label', direction: 'ASC' },
     }).then(({ result }) => setPersonFields(result));
   }, [canViewPersonFields]);
-
-  useEffect(() => {
-    if (!canViewEventFields) return;
-    void httpRequest<{ result: EventField[]; total: number }>({
-      service: EventFieldsService.list,
-      data: { page: 0, size: 500, order: 'label', direction: 'ASC' },
-    }).then(({ result }) => setReusableEventFields(result));
-  }, [canViewEventFields]);
 
   useEffect(() => {
     void httpRequest<{ allow_upload: boolean; allow_public_url: boolean }>({
@@ -463,9 +450,7 @@ export const EventEditorDialog = ({
             canUpdateEventType={false}
             selfRegistration={selfRegistration}
             personFields={personFields}
-            reusableFields={reusableEventFields}
             readOnlyTypeFields
-            canAddFields={canCreateEventFields}
             onChange={({ eventFields: nextEventFields }) => setEventFields(nextEventFields)}
           />
         )}

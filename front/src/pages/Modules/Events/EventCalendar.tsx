@@ -40,7 +40,6 @@ import { EventTypesService } from '@services/eventTypes';
 import { EventsService } from '@services/events';
 import { FilesService } from '@services/files';
 import { API_URL } from '@utils/constants';
-import { persistNewEventFields } from '@utils/event-fields';
 import { resolveEventFieldPersonLinks } from '@utils/eventFieldLinks';
 import { HttpRequestError, httpRequest } from '@utils/http';
 import { MuiIcon } from '@utils/muiIcons';
@@ -97,8 +96,6 @@ export const EventCalendar = () => {
   const canCreateType = hasPermission('event_type', 'create');
   const canViewType = hasPermission('event_type', 'get');
   const canViewPersonFields = hasPermission('person_field', 'get');
-  const canViewEventFields = hasPermission('event_field', 'get');
-  const canCreateEventFields = hasPermission('event_field', 'create');
   const use12HourTime = user?.preferences?.time_format === '12h';
 
   useEffect(() => {
@@ -213,9 +210,6 @@ export const EventCalendar = () => {
       const resolvedCustomFields = await resolveEventFieldPersonLinks(values.custom_fields);
       const resolvedEventFields = resolvedCustomFields.filter(({ id }) => eventFieldIds.has(id));
       const inheritedFields = resolvedCustomFields.filter(({ id }) => !eventFieldIds.has(id));
-      const persistedEventFields = canCreateEventFields
-        ? await persistNewEventFields(resolvedEventFields)
-        : resolvedEventFields;
       const { event_fields: _eventFields, ...eventValues } = values;
       let imageFileId = editor?.event?.image_file_id ?? undefined;
       if (image) {
@@ -230,7 +224,7 @@ export const EventCalendar = () => {
         data: {
           ...(editor?.event ? { id: editor.event.id } : {}),
           ...eventValues,
-          custom_fields: [...inheritedFields, ...persistedEventFields],
+          custom_fields: [...inheritedFields, ...resolvedEventFields],
           ...(imageFileId ? { image_file_id: imageFileId } : {}),
         },
       });
@@ -575,8 +569,6 @@ export const EventCalendar = () => {
             eventTypes={eventTypes}
             canCreateEventType={canCreateType}
             canViewPersonFields={canViewPersonFields}
-            canViewEventFields={canViewEventFields}
-            canCreateEventFields={canCreateEventFields}
             submitting={submitting}
             onClose={() => setEditor(undefined)}
             onSubmit={(values, image) => void saveEvent(values, image)}

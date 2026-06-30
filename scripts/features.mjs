@@ -17,6 +17,10 @@ const Features = {
   PublicEvents: 'public_events',
   Ministries: 'ministries',
   MinistriesCalendar: 'ministries_calendar',
+  Services: 'services',
+  ServicesNewPeople: 'services_new_people',
+  ServicesFollowUp: 'services_follow_up',
+  ServicesAttendance: 'services_attendance',
 };
 
 // Get all feature values from the enum

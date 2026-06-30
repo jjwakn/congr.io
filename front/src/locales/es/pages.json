@@ -19,6 +19,7 @@
       "search": "Buscar",
       "rowsPerPage": "Elementos por página",
       "view": "Ver",
+      "actions": "Acciones",
       "emptyValue": " - ",
       "columns": "Columnas",
       "filter": "Filtrar",
@@ -27,7 +28,9 @@
       "filterNo": "No",
       "filterFrom": "Desde",
       "filterTo": "Hasta",
-      "clearFilter": "Limpiar filtro"
+      "clearFilter": "Limpiar filtro",
+      "enableConfirm": "¿Activar este elemento?",
+      "disableConfirm": "¿Desactivar este elemento?"
     },
     "users": {
       "title": "Usuarios",
@@ -167,7 +170,6 @@
       "ui": "Interfaz",
       "customFields": "Campos personalizados",
       "eventTypes": "Tipos de evento",
-      "eventFields": "Campos de evento",
       "personFields": "Campos de personas",
       "deployment": "Despliegue"
     },
@@ -252,7 +254,6 @@
           "locationsDetached": "{{count}} ubicaciones compartidas serán desvinculadas",
           "events": "{{count}} eventos serán eliminados",
           "eventTypes": "{{count}} tipos de evento serán eliminados",
-          "eventFields": "{{count}} campos de evento serán eliminados",
           "processes": "{{count}} procesos serán eliminados",
           "processSteps": "{{count}} pasos de proceso serán eliminados",
           "configurations": "{{count}} registros de configuración serán eliminados",
@@ -370,18 +371,6 @@
         "saveFailed": "No se pudo guardar el tipo de evento.",
         "deleteFailed": "No se pudo eliminar el tipo de evento."
       }
-    },
-    "eventFields": {
-      "title": "Campos de evento",
-      "create": "Crear campo de evento",
-      "edit": "Editar campo de evento",
-      "loading": "Cargando campos de evento...",
-      "empty": "No se encontraron campos de evento.",
-      "loadFailed": "No se pudieron cargar los campos de evento.",
-      "saved": "Campo de evento guardado.",
-      "saveFailed": "No se pudo guardar el campo de evento.",
-      "deleted": "Campo de evento eliminado.",
-      "deleteMessage": "¿Eliminar {{name}}? Los valores existentes permanecerán en los datos históricos."
     }
   },
   "files": {
@@ -484,8 +473,9 @@
       "save": "Guardar evento"
     },
     "fields": {
-      "typeTitle": "Campos del tipo de evento",
-      "eventTitle": "Campos del evento",
+      "typeTitle": "Campos de persona capturados",
+      "eventTitle": "Campos adicionales de persona capturados",
+      "capturedHelp": "Estos campos de persona se muestran cuando una persona se registra o se añade a este evento.",
       "label": "Etiqueta",
       "type": "Tipo de campo",
       "options": "Opciones",
@@ -590,10 +580,15 @@
         "empty": "Está vacío",
         "equals": "Es igual a",
         "notEquals": "No es igual a",
+        "contains": "Contiene",
+        "startsWith": "Empieza con",
+        "endsWith": "Termina con",
         "greaterThan": "Mayor que",
+        "greaterOrEqual": "Mayor o igual que",
         "lessThan": "Menor que",
-        "ageGreaterThan": "Edad mayor que",
-        "ageLessThan": "Edad menor que"
+        "lessOrEqual": "Menor o igual que",
+        "isTrue": "Es verdadero",
+        "isFalse": "Es falso"
       },
       "created": "Campo personalizado creado.",
       "saved": "Campo personalizado guardado.",
@@ -630,12 +625,94 @@
     "lock": "Bloquear registro",
     "unlock": "Desbloquear registro",
     "favoriteType": "Acceso rápido al evento más reciente de este tipo",
+    "favoriteTypeLabel": "Registro de {{type}}",
     "noUpcoming": "No existe un próximo evento para este tipo.",
     "createEvent": "Crear evento",
     "people": "Personas registradas",
     "possiblePerson": "Posible coincidencia: {{name}}",
     "confirmMatch": "Confirmar coincidencia",
     "createPerson": "Crear una persona desde este registro"
+  },
+  "services": {
+    "title": "Servicios",
+    "create": "Crear servicio",
+    "edit": "Editar servicio",
+    "view": "Ver servicio",
+    "loading": "Cargando servicios...",
+    "empty": "No se encontraron servicios.",
+    "saved": "Servicio guardado.",
+    "deleted": "Servicio eliminado.",
+    "loadFailed": "No se pudieron cargar los servicios.",
+    "saveFailed": "No se pudo guardar el servicio.",
+    "deleteTitle": "Eliminar servicio",
+    "deleteMessage": "¿Eliminar {{name}}?",
+    "fields": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "location": "Ubicación",
+      "dayOfWeek": "Día de la semana",
+      "startTime": "Hora de inicio",
+      "endTime": "Hora de finalización",
+      "attendanceGroups": "Grupos de asistencia",
+      "groupLabel": "Nombre del grupo",
+      "groupColor": "Color",
+      "defaultAdults": "Adultos",
+      "defaultKids": "Niños",
+      "addGroup": "Añadir grupo",
+      "active": "Activo"
+    },
+    "days": {
+      "0": "Domingo",
+      "1": "Lunes",
+      "2": "Martes",
+      "3": "Miércoles",
+      "4": "Jueves",
+      "5": "Viernes",
+      "6": "Sábado"
+    },
+    "newPeople": {
+      "title": "Personas nuevas",
+      "today": "Hoy",
+      "history": "Historial",
+      "create": "Crear grupo",
+      "edit": "Editar grupo",
+      "service": "Servicio",
+      "date": "Fecha",
+      "notes": "Notas",
+      "people": "Personas",
+      "addPerson": "Añadir persona",
+      "loading": "Cargando personas nuevas...",
+      "empty": "No se encontraron grupos de personas nuevas.",
+      "saved": "Grupo de personas nuevas guardado.",
+      "deleted": "Grupo de personas nuevas eliminado.",
+      "deleteTitle": "Eliminar grupo de personas nuevas",
+      "deleteMessage": "¿Eliminar este grupo de personas nuevas?",
+      "noCurrent": "No hay un servicio activo o posterior hoy."
+    },
+    "followUp": {
+      "title": "Seguimiento",
+      "firstVisit": "Primera visita",
+      "person": "Persona",
+      "phone": "Teléfono",
+      "status": "Estado",
+      "pending": "Pendiente",
+      "completed": "Completado",
+      "loading": "Cargando seguimiento...",
+      "empty": "No se encontraron registros de seguimiento."
+    },
+    "attendance": {
+      "title": "Asistencia de servicios",
+      "today": "Hoy",
+      "history": "Historial",
+      "service": "Servicio",
+      "date": "Fecha",
+      "count": "Conteo",
+      "loading": "Cargando asistencia de servicios...",
+      "empty": "No se encontraron registros de asistencia de servicios.",
+      "noCurrent": "No hay un servicio activo o posterior hoy.",
+      "saved": "Asistencia actualizada.",
+      "error": "No se pudo actualizar la asistencia."
+    }
   },
   "flows": {
     "title": "Flujos",

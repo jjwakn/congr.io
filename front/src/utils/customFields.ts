@@ -12,7 +12,7 @@ export interface StandardFieldDefinition {
   persistent: true;
 }
 
-export const CREATE_PERSON_FIELD_FROM_EVENT_FIELD = '__create_person_field_from_event_field__';
+export const CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD = '__create_person_field_from_captured_field__';
 
 export const STANDARD_PERSON_FIELDS: StandardFieldDefinition[] = [
   { id: 'first_name', labelKey: 'pages.persons.fields.firstName', type: 'text', options: [], persistent: true },
@@ -56,15 +56,13 @@ const normalizeComparable = (value: JsonValue | undefined) =>
   typeof value === 'string' ? value.trim().toLowerCase() : typeof value === 'number' ? value : value;
 
 const toNumber = (value: JsonValue | undefined) => {
+  if (typeof value === 'string') {
+    const parsedDate = DateTime.fromISO(value);
+    if (parsedDate.isValid) return parsedDate.toMillis();
+  }
+
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
-};
-
-const getAge = (value: JsonValue | undefined) => {
-  if (typeof value !== 'string' || !value.trim()) return null;
-  const birthdate = DateTime.fromISO(value);
-  if (!birthdate.isValid) return null;
-  return Math.floor(Math.abs(birthdate.diffNow('years').years));
 };
 
 export const getFieldValueForCondition = ({
@@ -87,38 +85,40 @@ export const evaluateCondition = ({
   const expected = condition.value;
 
   switch (condition.operator) {
-    case 'not_empty':
-      return Array.isArray(value)
-        ? value.length > 0
-        : value !== undefined && value !== null && String(value).trim() !== '';
-    case 'empty':
-      return Array.isArray(value)
-        ? value.length === 0
-        : value === undefined || value === null || String(value).trim() === '';
     case 'equals':
       return normalizeComparable(value) === normalizeComparable(expected);
     case 'not_equals':
       return normalizeComparable(value) !== normalizeComparable(expected);
+    case 'contains':
+      return String(normalizeComparable(value) ?? '').includes(String(normalizeComparable(expected) ?? ''));
+    case 'starts_with':
+      return String(normalizeComparable(value) ?? '').startsWith(String(normalizeComparable(expected) ?? ''));
+    case 'ends_with':
+      return String(normalizeComparable(value) ?? '').endsWith(String(normalizeComparable(expected) ?? ''));
     case 'greater_than': {
       const actualNumber = toNumber(value);
       const expectedNumber = toNumber(expected);
       return actualNumber !== null && expectedNumber !== null && actualNumber > expectedNumber;
+    }
+    case 'greater_or_equal': {
+      const actualNumber = toNumber(value);
+      const expectedNumber = toNumber(expected);
+      return actualNumber !== null && expectedNumber !== null && actualNumber >= expectedNumber;
     }
     case 'less_than': {
       const actualNumber = toNumber(value);
       const expectedNumber = toNumber(expected);
       return actualNumber !== null && expectedNumber !== null && actualNumber < expectedNumber;
     }
-    case 'age_greater_than': {
-      const actualAge = getAge(value);
+    case 'less_or_equal': {
+      const actualNumber = toNumber(value);
       const expectedNumber = toNumber(expected);
-      return actualAge !== null && expectedNumber !== null && actualAge > expectedNumber;
+      return actualNumber !== null && expectedNumber !== null && actualNumber <= expectedNumber;
     }
-    case 'age_less_than': {
-      const actualAge = getAge(value);
-      const expectedNumber = toNumber(expected);
-      return actualAge !== null && expectedNumber !== null && actualAge < expectedNumber;
-    }
+    case 'is_true':
+      return value === true;
+    case 'is_false':
+      return value === false;
     default:
       return false;
   }

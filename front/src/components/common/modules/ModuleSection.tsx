@@ -1,7 +1,8 @@
-import { Stack, TextField } from '@mui/material';
+import { Stack } from '@mui/material';
 import { DashboardSectionActionsContext } from '@pages/Dashboard/DashboardSectionActionsContext';
 import { useContext, useEffect, useMemo } from 'react';
 import { ModuleListTable } from './ModuleListTable';
+import { ModuleSearchField } from './ModuleSearchField';
 import { ModuleSectionProps } from './ModuleSection.types';
 import { ModuleStandardActions } from './ModuleStandardActions';
 import { SectionTitle } from './SectionTitle';
@@ -62,16 +63,7 @@ export const ModuleSection = <RowType,>({
 
       {alerts ? <Stack spacing={1}>{alerts}</Stack> : null}
 
-      {search ? (
-        <TextField
-          size="small"
-          label={search.label}
-          placeholder={search.placeholder}
-          value={search.value}
-          onChange={(event) => search.onChange(event.target.value)}
-          sx={search.sx}
-        />
-      ) : null}
+      {search ? <ModuleSearchField {...search} /> : null}
 
       {table ? <ModuleListTable<RowType> {...table} /> : null}
 

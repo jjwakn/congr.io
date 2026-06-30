@@ -17,8 +17,8 @@ import { Button, FormControlLabel, Menu, MenuItem, Popover, Stack, Switch, Typog
 import { EventTypesService } from '@services/eventTypes';
 import { EventsService } from '@services/events';
 import { FilesService } from '@services/files';
+import { UsersService } from '@services/users';
 import { API_URL } from '@utils/constants';
-import { persistNewEventFields } from '@utils/event-fields';
 import { resolveEventFieldPersonLinks } from '@utils/eventFieldLinks';
 import { httpRequest } from '@utils/http';
 import { MuiIcon } from '@utils/muiIcons';
@@ -78,6 +78,20 @@ const DEFAULT_VISIBLE_COLUMNS: EventColumnId[] = [
   'enabled',
   'actions',
 ];
+const EVENTS_COLUMNS_KEY = 'events-list';
+const EVENT_COLUMN_IDS: EventColumnId[] = [
+  'icon',
+  'name',
+  'type',
+  'start_datetime',
+  'end_datetime',
+  'all_day',
+  'is_public',
+  'attendance_enabled',
+  'self_registration_enabled',
+  'enabled',
+  'actions',
+];
 
 const BOOLEAN_FILTERS: EventBooleanFilterKey[] = [
   'enabled',
@@ -124,7 +138,7 @@ const hasDateFilter = (filter: DateFilterState) => Boolean(filter.from || filter
 export const EventsManagement = () => {
   const { i18n, t } = useTranslation();
   const { congregation } = useAppContext();
-  const { hasPermission, user } = useAuth();
+  const { hasPermission, refreshSession, user } = useAuth();
   const { showNotification } = useNotificationContext();
   const cached = getPreloadedResource<EventsListResponse>('events');
   const [rows, setRows] = useState<CalendarEvent[]>(cached?.result ?? []);
@@ -138,7 +152,10 @@ export const EventsManagement = () => {
   const [columnAnchor, setColumnAnchor] = useState<HTMLElement | null>(null);
   const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null);
   const [activeFilter, setActiveFilter] = useState<EventFilterKey | null>(null);
-  const [visibleColumns, setVisibleColumns] = useState<EventColumnId[]>(DEFAULT_VISIBLE_COLUMNS);
+  const [visibleColumns, setVisibleColumns] = useState<EventColumnId[]>(() => {
+    const stored = user?.preferences?.column_visibility?.[EVENTS_COLUMNS_KEY] ?? DEFAULT_VISIBLE_COLUMNS;
+    return stored.filter((column): column is EventColumnId => EVENT_COLUMN_IDS.includes(column as EventColumnId));
+  });
   const [booleanFilters, setBooleanFilters] = useState<Record<EventBooleanFilterKey, BooleanFilterValue>>({
     enabled: 'all',
     all_day: 'all',
@@ -156,14 +173,37 @@ export const EventsManagement = () => {
   const canCreateType = hasPermission('event_type', 'create');
   const canViewType = hasPermission('event_type', 'get');
   const canViewPersonFields = hasPermission('person_field', 'get');
-  const canViewEventFields = hasPermission('event_field', 'get');
-  const canCreateEventFields = hasPermission('event_field', 'create');
   const timezone = congregation?.timezone ?? 'UTC';
   const use12HourTime = user?.preferences?.time_format === '12h';
   const list = useModuleList({
-    moduleKey: 'events-list',
+    moduleKey: EVENTS_COLUMNS_KEY,
     defaultSort: 'start_datetime',
   });
+
+  useEffect(() => {
+    const stored = user?.preferences?.column_visibility?.[EVENTS_COLUMNS_KEY];
+    if (!stored) return;
+    setVisibleColumns(
+      stored.filter((column): column is EventColumnId => EVENT_COLUMN_IDS.includes(column as EventColumnId)),
+    );
+  }, [user?.preferences?.column_visibility]);
+
+  const saveVisibleColumns = useCallback(
+    async (nextColumns: EventColumnId[]) => {
+      setVisibleColumns(nextColumns);
+      await httpRequest({
+        service: UsersService.updatePreferences,
+        data: {
+          column_visibility: {
+            ...(user?.preferences?.column_visibility ?? {}),
+            [EVENTS_COLUMNS_KEY]: nextColumns,
+          },
+        },
+      });
+      await refreshSession();
+    },
+    [refreshSession, user?.preferences?.column_visibility],
+  );
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -241,9 +281,6 @@ export const EventsManagement = () => {
       const resolvedCustomFields = await resolveEventFieldPersonLinks(values.custom_fields);
       const resolvedEventFields = resolvedCustomFields.filter(({ id }) => eventFieldIds.has(id));
       const inheritedFields = resolvedCustomFields.filter(({ id }) => !eventFieldIds.has(id));
-      const persistedEventFields = canCreateEventFields
-        ? await persistNewEventFields(resolvedEventFields)
-        : resolvedEventFields;
       const { event_fields: _eventFields, ...eventValues } = values;
       let imageFileId = editor?.event?.image_file_id ?? undefined;
       if (image) {
@@ -257,7 +294,7 @@ export const EventsManagement = () => {
         data: {
           ...(editor?.event ? { id: editor.event.id } : {}),
           ...eventValues,
-          custom_fields: [...inheritedFields, ...persistedEventFields],
+          custom_fields: [...inheritedFields, ...resolvedEventFields],
           ...(imageFileId ? { image_file_id: imageFileId } : {}),
         },
       });
@@ -604,8 +641,10 @@ export const EventsManagement = () => {
                   <Switch
                     checked={visibleColumns.includes(column.id)}
                     onChange={(_event, checked) =>
-                      setVisibleColumns((current) =>
-                        checked ? [...current, column.id] : current.filter((columnId) => columnId !== column.id),
+                      void saveVisibleColumns(
+                        checked
+                          ? Array.from(new Set([...visibleColumns, column.id]))
+                          : visibleColumns.filter((columnId) => columnId !== column.id),
                       )
                     }
                   />
@@ -670,8 +709,6 @@ export const EventsManagement = () => {
           eventTypes={eventTypes}
           canCreateEventType={canCreateType}
           canViewPersonFields={canViewPersonFields}
-          canViewEventFields={canViewEventFields}
-          canCreateEventFields={canCreateEventFields}
           submitting={submitting}
           onClose={() => setEditor(undefined)}
           onSubmit={(values, image) => void saveEvent(values, image)}

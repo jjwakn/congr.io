@@ -22,14 +22,17 @@ export interface Person extends CommonEntity {
 }
 export type PersonFieldType = 'text' | 'paragraph' | 'number' | 'yes_no' | 'options' | 'date';
 export type FieldConditionOperator =
-  | 'not_empty'
-  | 'empty'
   | 'equals'
   | 'not_equals'
+  | 'contains'
+  | 'starts_with'
+  | 'ends_with'
   | 'greater_than'
+  | 'greater_or_equal'
   | 'less_than'
-  | 'age_greater_than'
-  | 'age_less_than';
+  | 'less_or_equal'
+  | 'is_true'
+  | 'is_false';
 export interface FieldCondition {
   field_id: string;
   operator: FieldConditionOperator;
