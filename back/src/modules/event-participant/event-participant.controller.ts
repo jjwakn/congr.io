@@ -70,6 +70,12 @@ export class EventParticipantController {
   ) {
     return this.service.setAttended({ id, attended, ...this.context(request) });
   }
+  @Delete('attendance/:id') @PermissionDecorator(Module.event_attendance, ModuleAction.delete) attendanceRemove(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Req() request: RequestType,
+  ) {
+    return this.service.remove({ id, ...this.context(request) });
+  }
   @Delete(':id') @PermissionDecorator(Module.event_registration, ModuleAction.delete) remove(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Req() request: RequestType,

@@ -1,8 +1,14 @@
 import { PersonAutocomplete } from '@components/common/PersonAutocomplete';
+import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
+import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
+import { ModuleSection } from '@components/common/modules/ModuleSection';
+import { useModuleList } from '@components/common/modules/useModuleList';
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
+import { useNotificationContext } from '@hooks/useNotifications';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
@@ -18,26 +24,29 @@ import {
   IconButton,
   Paper,
   Stack,
+  Tab,
+  Tabs,
   Tooltip,
   Typography,
 } from '@mui/material';
 import { EventParticipantsService } from '@services/eventParticipants';
 import { EventsService } from '@services/events';
-import { PersonsService } from '@services/persons';
+import { PersonFieldsService, PersonsService } from '@services/persons';
 import { UsersService } from '@services/users';
 import { httpRequest } from '@utils/http';
 import { MuiIcon } from '@utils/muiIcons';
 import { getModulePath } from '@utils/routes';
 import { DateTime } from 'luxon';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { EventParticipant } from '@/types/event-participant.types';
 import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
 import type { JsonObject } from '@/types/json.types';
-import type { Person } from '@/types/person.types';
+import type { Person, PersonField } from '@/types/person.types';
+import { EventParticipantsEditorDialog } from '../Events/EventParticipantsEditorDialog';
 import { PersonFormDialog } from '../Persons/PersonFormDialog';
-import type { PersonFormValues } from '../Persons/persons.types';
+import type { PersonFieldFormValues, PersonFormValues } from '../Persons/persons.types';
 import { EventRegistrationFields } from './EventRegistrationFields';
 
 const getPersonMappedValue = (fieldId: string | undefined, person: Person) => {
@@ -62,21 +71,38 @@ const getPersonMappedValue = (fieldId: string | undefined, person: Person) => {
 export const RegistrationManagement = () => {
   const { t, i18n } = useTranslation();
   const { hasPermission, user, refreshSession } = useAuth();
+  const { showNotification } = useNotificationContext();
   const { congregation } = useAppContext();
   const location = useLocation();
   const navigate = useNavigate();
   const routeEventId = location.pathname.split('/').filter(Boolean)[1];
   const favoriteTypeId = new URLSearchParams(location.search).get('type');
+  const [tab, setTab] = useState<'today' | 'history'>('today');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [historyRows, setHistoryRows] = useState<CalendarEvent[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [person, setPerson] = useState<Person | null>(null);
+  const [personFields, setPersonFields] = useState<PersonField[]>([]);
   const [values, setValues] = useState<JsonObject>({});
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
+  const [editorEvent, setEditorEvent] = useState<CalendarEvent | null>(null);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [personOpen, setPersonOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const selected = useMemo(() => events.find(({ id }) => id === routeEventId) ?? null, [events, routeEventId]);
+  const canCreateRegistration = hasPermission('event_registration', 'create');
+  const canDeleteRegistration = hasPermission('event_registration', 'delete');
+  const canCreatePerson = hasPermission('person', 'create');
+  const canCreatePersonFields = hasPermission('person_field', 'create');
+  const canViewPersonFields = hasPermission('person_field', 'get');
+  const historyList = useModuleList({
+    moduleKey: 'event-registration-history',
+    defaultSort: 'start_datetime',
+    defaultDirection: 'DESC',
+  });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const response = await httpRequest<EventsListResponse>({
       service: EventsService.list,
       data: {
@@ -89,29 +115,73 @@ export const RegistrationManagement = () => {
       },
     });
     setEvents(response.result.filter((event) => event.attendance_enabled));
-  };
-
-  useEffect(() => {
-    void httpRequest<EventsListResponse>({
-      service: EventsService.list,
-      data: {
-        start: DateTime.now().minus({ years: 1 }).toISO(),
-        end: DateTime.now().plus({ years: 2 }).toISO(),
-        page: 0,
-        size: 500,
-        order: 'start_datetime',
-        direction: 'ASC',
-      },
-    }).then((response) => setEvents(response.result.filter((event) => event.attendance_enabled)));
   }, []);
 
-  const loadParticipants = async (eventId: string) => {
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  useEffect(() => {
+    if (!canViewPersonFields) return;
+    void httpRequest<{ result: PersonField[]; total: number }>({
+      service: PersonFieldsService.list,
+      data: { page: 0, size: 500, order: 'label', direction: 'ASC' },
+    }).then(({ result }) => setPersonFields(result));
+  }, [canViewPersonFields]);
+
+  const loadParticipants = useCallback(async (eventId: string) => {
     const response = await httpRequest<{ result: EventParticipant[]; total: number }>({
       service: EventParticipantsService.list,
       data: { event_id: eventId, page: 0, size: 500 },
     });
     setParticipants(response.result);
-  };
+  }, []);
+
+  const loadHistoryEvents = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const response = await httpRequest<EventsListResponse>({
+        service: EventsService.list,
+        data: {
+          attendance_enabled: true,
+          end: DateTime.now().endOf('day').toISO(),
+          page: historyList.page,
+          size: historyList.pageSize,
+          order: historyList.sort,
+          direction: historyList.direction,
+          ...(historyList.debouncedSearch ? { search: historyList.debouncedSearch } : {}),
+        },
+      });
+      setHistoryRows(response.result);
+      setHistoryTotal(response.total);
+    } catch (value) {
+      showNotification(value instanceof Error ? value.message : t('pages.registration.loadFailed'), {
+        severity: 'error',
+      });
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [
+    historyList.debouncedSearch,
+    historyList.direction,
+    historyList.page,
+    historyList.pageSize,
+    historyList.sort,
+    showNotification,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (tab === 'history') void loadHistoryEvents();
+  }, [loadHistoryEvents, tab]);
+
+  const openEditor = useCallback(
+    async (event: CalendarEvent) => {
+      setEditorEvent(event);
+      await loadParticipants(event.id);
+    },
+    [loadParticipants],
+  );
 
   const savePerson = async (formValues: PersonFormValues) => {
     setSubmitting(true);
@@ -125,13 +195,55 @@ export const RegistrationManagement = () => {
     }
   };
 
+  const savePersonField = async (formValues: PersonFieldFormValues) => {
+    const created = await httpRequest<PersonField>({ service: PersonFieldsService.create, data: formValues });
+    setPersonFields((current) => [...current, created].sort((left, right) => left.label.localeCompare(right.label)));
+    return created;
+  };
+
   useEffect(() => {
     if (!routeEventId) return;
-    void httpRequest<{ result: EventParticipant[]; total: number }>({
-      service: EventParticipantsService.list,
-      data: { event_id: routeEventId, page: 0, size: 500 },
-    }).then((response) => setParticipants(response.result));
-  }, [routeEventId]);
+    void loadParticipants(routeEventId);
+  }, [loadParticipants, routeEventId]);
+
+  const historyColumns = useMemo<ModuleListColumn<CalendarEvent>[]>(
+    () => [
+      {
+        id: 'type',
+        width: 72,
+        align: 'center',
+        render: (event) => <MuiIcon name={event.type?.icon} sx={{ color: event.type?.color ?? 'primary.main' }} />,
+      },
+      { id: 'name', minWidth: 220, render: (event) => event.name },
+      {
+        id: 'start_datetime',
+        minWidth: 190,
+        render: (event) =>
+          DateTime.fromISO(event.start_datetime).setLocale(i18n.language).toLocaleString(DateTime.DATETIME_MED),
+      },
+      {
+        id: 'actions',
+        minWidth: 120,
+        align: 'right',
+        render: (event) => (
+          <ModuleRowActions
+            row={event}
+            actions={[
+              {
+                id: 'edit',
+                label: t('pages.registration.editPeople'),
+                icon: EditOutlinedIcon,
+                hidden: !canCreateRegistration && !canDeleteRegistration,
+                disabled: historyLoading,
+                onClick: (value) => void openEditor(value),
+              },
+            ]}
+          />
+        ),
+      },
+    ],
+    [canCreateRegistration, canDeleteRegistration, historyLoading, i18n.language, openEditor, t],
+  );
 
   if (selected) {
     const favoriteId = `registration-type:${selected.event_type_id}`;
@@ -188,7 +300,7 @@ export const RegistrationManagement = () => {
         </Stack>
         <Button
           variant="contained"
-          disabled={selected.registration_locked || !hasPermission('event_registration', 'create')}
+          disabled={selected.registration_locked || !canCreateRegistration}
           onClick={() => setRegisterOpen(true)}
         >
           {t('pages.registration.register')}
@@ -285,7 +397,7 @@ export const RegistrationManagement = () => {
                   );
                 }}
                 createLabel={t('pages.attendance.createPerson')}
-                onCreate={hasPermission('person', 'create') ? () => setPersonOpen(true) : undefined}
+                onCreate={canCreatePerson ? () => setPersonOpen(true) : undefined}
                 label={t('pages.attendance.person')}
               />
               <EventRegistrationFields fields={selected.custom_fields} values={values} onChange={setValues} />
@@ -316,12 +428,12 @@ export const RegistrationManagement = () => {
           <PersonFormDialog
             open
             person={null}
-            fields={[]}
-            canCreateFields={false}
+            fields={personFields}
+            canCreateFields={canCreatePersonFields}
             submitting={submitting}
             onClose={() => setPersonOpen(false)}
             onSubmit={(formValues) => void savePerson(formValues)}
-            onCreateField={() => Promise.resolve(null)}
+            onCreateField={savePersonField}
           />
         ) : null}
       </Stack>
@@ -330,60 +442,124 @@ export const RegistrationManagement = () => {
 
   const upcoming = events.filter((event) => DateTime.fromISO(event.end_datetime) >= DateTime.now());
   return (
-    <Stack spacing={2}>
-      <Typography variant="h5">{t('pages.registration.title')}</Typography>
-      {favoriteTypeId && !upcoming.some(({ event_type_id }) => event_type_id === favoriteTypeId) ? (
-        <Alert
-          severity="warning"
-          action={
-            hasPermission('event', 'create') ? (
-              <Button color="inherit" onClick={() => navigate(`/?createEventType=${favoriteTypeId}`)}>
-                {t('pages.registration.createEvent')}
-              </Button>
-            ) : undefined
-          }
-        >
-          {t('pages.registration.noUpcoming')}
-        </Alert>
-      ) : null}
-      <Stack direction="row" useFlexGap flexWrap="wrap" gap={2}>
-        {upcoming.map((event) => (
-          <Paper
-            key={event.id}
-            variant="outlined"
-            role="button"
-            tabIndex={0}
-            onClick={() => navigate(`${getModulePath('event_registration', i18n.language)}/${event.id}`)}
-            onKeyDown={(keyEvent) => {
-              if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
-                navigate(`${getModulePath('event_registration', i18n.language)}/${event.id}`);
-              }
-            }}
-            sx={{
-              p: 2,
-              width: { xs: '100%', sm: 280 },
-              cursor: 'pointer',
-              transition: (theme) => theme.transitions.create(['border-color', 'box-shadow']),
-              '&:hover': {
-                borderColor: 'primary.main',
-                boxShadow: 4,
-              },
-            }}
-          >
-            <Stack direction="row" alignItems="flex-start" spacing={1}>
-              <MuiIcon name={event.type?.icon} sx={{ color: event.type?.color ?? 'primary.main', mt: 0.25 }} />
-              <Typography variant="h6" sx={{ flex: 1 }}>
-                {event.name}
-              </Typography>
-              {event.registration_locked ? <LockOutlinedIcon color="action" /> : null}
+    <ModuleSection
+      refreshAction={{
+        id: 'refresh-registration',
+        label: t('pages.modules.common.refresh'),
+        onClick: () => void (tab === 'history' ? loadHistoryEvents() : load()),
+      }}
+    >
+      <Stack spacing={2}>
+        <Typography variant="h5">{t('pages.registration.title')}</Typography>
+        <Tabs value={tab} onChange={(_event, value: 'today' | 'history') => setTab(value)}>
+          <Tab value="today" label={t('pages.registration.today')} />
+          <Tab value="history" label={t('pages.registration.history')} />
+        </Tabs>
+        {tab === 'today' ? (
+          <>
+            {favoriteTypeId && !upcoming.some(({ event_type_id }) => event_type_id === favoriteTypeId) ? (
+              <Alert
+                severity="warning"
+                action={
+                  hasPermission('event', 'create') ? (
+                    <Button color="inherit" onClick={() => navigate(`/?createEventType=${favoriteTypeId}`)}>
+                      {t('pages.registration.createEvent')}
+                    </Button>
+                  ) : undefined
+                }
+              >
+                {t('pages.registration.noUpcoming')}
+              </Alert>
+            ) : null}
+            <Stack direction="row" useFlexGap flexWrap="wrap" gap={2}>
+              {upcoming.map((event) => (
+                <Paper
+                  key={event.id}
+                  variant="outlined"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`${getModulePath('event_registration', i18n.language)}/${event.id}`)}
+                  onKeyDown={(keyEvent) => {
+                    if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+                      navigate(`${getModulePath('event_registration', i18n.language)}/${event.id}`);
+                    }
+                  }}
+                  sx={{
+                    p: 2,
+                    width: { xs: '100%', sm: 280 },
+                    cursor: 'pointer',
+                    transition: (theme) => theme.transitions.create(['border-color', 'box-shadow']),
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                      boxShadow: 4,
+                    },
+                  }}
+                >
+                  <Stack direction="row" alignItems="flex-start" spacing={1}>
+                    <MuiIcon name={event.type?.icon} sx={{ color: event.type?.color ?? 'primary.main', mt: 0.25 }} />
+                    <Typography variant="h6" sx={{ flex: 1 }}>
+                      {event.name}
+                    </Typography>
+                    {event.registration_locked ? <LockOutlinedIcon color="action" /> : null}
+                  </Stack>
+                  <Typography variant="body2" color="text.secondary">
+                    {DateTime.fromISO(event.start_datetime)
+                      .setLocale(i18n.language)
+                      .toLocaleString(DateTime.DATETIME_MED)}
+                  </Typography>
+                </Paper>
+              ))}
             </Stack>
-            <Typography variant="body2" color="text.secondary">
-              {DateTime.fromISO(event.start_datetime).setLocale(i18n.language).toLocaleString(DateTime.DATETIME_MED)}
-            </Typography>
-          </Paper>
-        ))}
+          </>
+        ) : (
+          <ModuleSection<CalendarEvent>
+            search={{
+              label: t('pages.modules.common.search'),
+              value: historyList.search,
+              onChange: historyList.setSearch,
+            }}
+            table={{
+              headerRows: [
+                [
+                  { id: 'type', label: t('pages.events.form.type'), align: 'center' },
+                  { id: 'name', label: t('pages.events.form.name'), sortKey: 'name' },
+                  { id: 'start_datetime', label: t('pages.events.form.start'), sortKey: 'start_datetime' },
+                  { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
+                ],
+              ],
+              columns: historyColumns,
+              rows: historyRows,
+              getRowId: (row) => row.id,
+              loading: historyLoading,
+              loadingLabel: t('pages.registration.loading'),
+              emptyLabel: t('pages.registration.empty'),
+              sort: historyList.sort,
+              direction: historyList.direction,
+              onSort: historyList.handleSort,
+              page: historyList.page,
+              pageSize: historyList.pageSize,
+              total: historyTotal,
+              onPageChange: historyList.handleChangePage,
+              onPageSizeChange: historyList.handleChangeRowsPerPage,
+              rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+            }}
+          />
+        )}
+        <EventParticipantsEditorDialog
+          open={Boolean(editorEvent)}
+          event={editorEvent}
+          mode="registration"
+          participants={participants}
+          personFields={personFields}
+          canAdd={canCreateRegistration && !editorEvent?.registration_locked}
+          canRemove={canDeleteRegistration}
+          canCreatePerson={canCreatePerson}
+          canCreatePersonFields={canCreatePersonFields}
+          onClose={() => setEditorEvent(null)}
+          onReload={() => (editorEvent ? loadParticipants(editorEvent.id) : Promise.resolve())}
+        />
       </Stack>
-    </Stack>
+    </ModuleSection>
   );
 };
 

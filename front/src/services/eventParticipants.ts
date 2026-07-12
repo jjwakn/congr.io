@@ -6,6 +6,7 @@ export const EventParticipantsService: ModuleType = {
   create: { url: 'event-participant', method: 'POST' },
   attendanceCreate: { url: 'event-participant/attendance', method: 'POST' },
   setAttendance: { url: 'event-participant/{id}/attendance', method: 'PUT' },
+  attendanceRemove: { url: 'event-participant/attendance/{id}', method: 'DELETE' },
   match: { url: 'event-participant/{id}/match', method: 'PUT' },
   remove: { url: 'event-participant/{id}', method: 'DELETE' },
   publicRegister: { url: 'public/event-registration/{id}', method: 'POST' },
