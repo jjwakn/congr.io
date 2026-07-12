@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import type { PaletteMode } from '@mui/material/styles';
 import { ConfigurationsService } from '@services/configurations';
+import { API_URL } from '@utils/constants';
 import { getSupportedTimeZones } from '@utils/datetime';
 import { HttpRequestError, httpRequest } from '@utils/http';
 import { DEFAULT_THEME_PALETTE_CONFIG, isHexColor, normalizeThemePaletteConfig } from '@utils/theme';
@@ -58,6 +59,9 @@ export const CongregationEditDialog = ({
   const [error, setError] = useState('');
   const supportedTimeZones = useMemo(() => getSupportedTimeZones(), []);
   const filterTimeZones = useMemo(() => createFilterOptions<string>(), []);
+  const logoSrc = congregation.logo_small_file_id
+    ? `${API_URL.replace(/\/$/, '')}/files/public/${congregation.logo_small_file_id}`
+    : undefined;
 
   const paletteErrors = useMemo(
     () => ({
@@ -293,6 +297,7 @@ export const CongregationEditDialog = ({
           mode={previewMode}
           paletteConfig={normalizeThemePaletteConfig(palette)}
           congregationName={draft.name.trim() || congregation.name}
+          logoSrc={logoSrc}
           onClose={() => setPreviewMode(null)}
         />
       ) : null}

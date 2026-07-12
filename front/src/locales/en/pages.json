@@ -311,9 +311,11 @@
       "preview": "Preview"
     },
     "palettePreview": {
+      "navbarTitle": "{{name}} · Preview",
       "title": "{{mode}} preview",
       "light": "Light theme",
       "dark": "Dark theme",
+      "user": "Preview",
       "navAction": "Members",
       "nextEvent": "Next event",
       "eventTime": "Sunday, 10:00",

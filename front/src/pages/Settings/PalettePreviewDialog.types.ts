@@ -6,5 +6,6 @@ export interface PalettePreviewDialogProps {
   mode: PaletteMode;
   paletteConfig: ThemePaletteConfig;
   congregationName: string;
+  logoSrc?: string;
   onClose: () => void;
 }

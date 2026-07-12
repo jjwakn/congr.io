@@ -1,9 +1,7 @@
-import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import EventRoundedIcon from '@mui/icons-material/EventRounded';
-import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
-import { AppBar, Box, Button, Chip, Dialog, IconButton, Paper, Stack, Toolbar, Typography } from '@mui/material';
+import { Box, Chip, Dialog, Paper, Stack, Typography } from '@mui/material';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { DashboardHeader } from '@pages/Dashboard/DashboardHeader';
 import { getTheme } from '@utils/theme';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,17 +17,21 @@ const eventDayKeys = new Map<number, 'service' | 'group' | 'outreach'>([
 
 const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
+const noop = () => undefined;
+const ignoreCongregationChange = (_congregationId: string) => undefined;
+const ignoreFavoriteNavigate = (_path: string) => undefined;
+
 export const PalettePreviewDialog = ({
   open,
   mode,
   paletteConfig,
   congregationName,
+  logoSrc,
   onClose,
 }: PalettePreviewDialogProps) => {
   const { t } = useTranslation();
   const theme = useMemo(() => getTheme({ mode, paletteConfig }), [mode, paletteConfig]);
-  const modeLabel =
-    mode === 'dark' ? t('pages.settings.palettePreview.dark') : t('pages.settings.palettePreview.light');
+  const previewCongregationName = t('pages.settings.palettePreview.navbarTitle', { name: congregationName });
 
   return (
     <MuiThemeProvider theme={theme}>
@@ -46,25 +48,21 @@ export const PalettePreviewDialog = ({
           },
         }}
       >
-        <AppBar position="static" color="primary" elevation={0}>
-          <Toolbar sx={{ gap: 2 }}>
-            <CalendarMonthRoundedIcon />
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant="h6" noWrap>
-                {congregationName}
-              </Typography>
-              <Typography variant="body2" noWrap>
-                {t('pages.settings.palettePreview.title', { mode: modeLabel })}
-              </Typography>
-            </Box>
-            <Button variant="contained" color="secondary" startIcon={<GroupsRoundedIcon />}>
-              {t('pages.settings.palettePreview.navAction')}
-            </Button>
-            <IconButton edge="end" color="inherit" onClick={onClose} aria-label={t('form.field.close')}>
-              <CloseRoundedIcon />
-            </IconButton>
-          </Toolbar>
-        </AppBar>
+        <DashboardHeader
+          congregationName={previewCongregationName}
+          logoSrc={logoSrc}
+          congregations={[]}
+          username={t('pages.settings.palettePreview.user')}
+          homeLabel={t('pages.dashboard.home')}
+          logoutLabel={t('form.field.close')}
+          switchCongregationLabel={t('pages.dashboard.switchCongregation')}
+          favoriteItems={[]}
+          onLogout={onClose}
+          onMenuClick={noop}
+          onLogoClick={noop}
+          onCongregationChange={ignoreCongregationChange}
+          onFavoriteNavigate={ignoreFavoriteNavigate}
+        />
 
         <Box sx={{ p: { xs: 2, md: 4 }, display: 'grid', gap: 3 }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ alignItems: 'stretch' }}>

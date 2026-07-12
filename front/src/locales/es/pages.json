@@ -311,9 +311,11 @@
       "preview": "Vista previa"
     },
     "palettePreview": {
+      "navbarTitle": "{{name}} · Vista previa",
       "title": "Vista previa de {{mode}}",
       "light": "tema claro",
       "dark": "tema oscuro",
+      "user": "Vista previa",
       "navAction": "Miembros",
       "nextEvent": "Próximo evento",
       "eventTime": "Domingo, 10:00",
