@@ -12,12 +12,17 @@ import { STANDARD_PERSON_FIELDS } from '@utils/customFields';
 import { httpRequest } from '@utils/http';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PersonField } from '@/types/person.types';
+import type { FieldCondition, FieldConditionOperator, PersonField } from '@/types/person.types';
 import { PersonFieldSettingsFormDialog } from './PersonFieldSettingsFormDialog';
 import type { PersonFieldFormValues } from './personFields.types';
 import { usePersonFieldsList } from './usePersonFieldsList';
 
 type PersonFieldRow = PersonField & { persistent?: boolean };
+
+const VALUELESS_OPERATORS: FieldConditionOperator[] = ['is_empty', 'is_not_empty', 'is_true', 'is_false'];
+
+const formatConditionValue = (value: FieldCondition['value']) =>
+  value === null || value === undefined || value === '' ? '' : String(value);
 
 export const PersonFieldsManagement = () => {
   const { t } = useTranslation();
@@ -54,6 +59,32 @@ export const PersonFieldsManagement = () => {
     ],
     [list.result, t],
   );
+  const conditionFieldLabels = useMemo(
+    () =>
+      new Map([
+        ...STANDARD_PERSON_FIELDS.map((field) => [field.id, t(field.labelKey)] as const),
+        ...list.result.map((field) => [field.id, field.label] as const),
+      ]),
+    [list.result, t],
+  );
+  const operatorLabels = useMemo<Record<FieldConditionOperator, string>>(
+    () => ({
+      equals: t('pages.persons.fieldsCrud.operators.equals'),
+      not_equals: t('pages.persons.fieldsCrud.operators.notEquals'),
+      contains: t('pages.persons.fieldsCrud.operators.contains'),
+      starts_with: t('pages.persons.fieldsCrud.operators.startsWith'),
+      ends_with: t('pages.persons.fieldsCrud.operators.endsWith'),
+      greater_than: t('pages.persons.fieldsCrud.operators.greaterThan'),
+      greater_or_equal: t('pages.persons.fieldsCrud.operators.greaterOrEqual'),
+      less_than: t('pages.persons.fieldsCrud.operators.lessThan'),
+      less_or_equal: t('pages.persons.fieldsCrud.operators.lessOrEqual'),
+      is_empty: t('pages.persons.fieldsCrud.operators.empty'),
+      is_not_empty: t('pages.persons.fieldsCrud.operators.notEmpty'),
+      is_true: t('pages.persons.fieldsCrud.operators.isTrue'),
+      is_false: t('pages.persons.fieldsCrud.operators.isFalse'),
+    }),
+    [t],
+  );
 
   const columns = useMemo<ModuleListColumn<PersonFieldRow>[]>(
     () => [
@@ -63,6 +94,24 @@ export const PersonFieldsManagement = () => {
         id: 'options',
         minWidth: 180,
         render: (row) => (row.options?.length ? row.options.join(', ') : t('pages.modules.common.emptyValue')),
+      },
+      {
+        id: 'conditions',
+        minWidth: 260,
+        render: (row) =>
+          row.type === 'yes_no' && row.calculated_conditions?.length
+            ? row.calculated_conditions
+                .map((condition) => {
+                  const fieldLabel = conditionFieldLabels.get(condition.field_id) ?? condition.field_id;
+                  const operatorLabel = operatorLabels[condition.operator];
+                  const valueLabel = VALUELESS_OPERATORS.includes(condition.operator)
+                    ? ''
+                    : formatConditionValue(condition.value);
+
+                  return [fieldLabel, operatorLabel, valueLabel].filter(Boolean).join(' ');
+                })
+                .join('; ')
+            : t('pages.modules.common.emptyValue'),
       },
       {
         id: 'actions',
@@ -95,7 +144,7 @@ export const PersonFieldsManagement = () => {
         ),
       },
     ],
-    [canDelete, canUpdate, t],
+    [canDelete, canUpdate, conditionFieldLabels, operatorLabels, t],
   );
 
   const save = async (values: PersonFieldFormValues) => {
@@ -160,6 +209,7 @@ export const PersonFieldsManagement = () => {
               { id: 'label', label: t('pages.persons.fieldsCrud.label'), sortKey: 'label' },
               { id: 'type', label: t('pages.persons.fieldsCrud.type') },
               { id: 'options', label: t('pages.persons.fieldsCrud.options') },
+              { id: 'conditions', label: t('pages.persons.fieldsCrud.conditions') },
               { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
             ],
           ],

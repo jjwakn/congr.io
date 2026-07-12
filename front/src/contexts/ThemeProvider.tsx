@@ -3,7 +3,7 @@ import { CssBaseline, ThemeProvider as MuiThemeProvider } from '@mui/material';
 import { PaletteMode } from '@mui/material';
 import { THEME_KEY, THEME_PALETTE_UPDATED_EVENT } from '@utils/constants';
 import { getThemePaletteConfigFromStorage, setThemePaletteConfigToStorage } from '@utils/storage';
-import { getTheme, normalizeThemePaletteConfig } from '@utils/theme';
+import { areThemePaletteConfigsEqual, getTheme, normalizeThemePaletteConfig } from '@utils/theme';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { ThemePaletteConfig } from '@/types/theme.types';
 
@@ -32,13 +32,14 @@ export const ThemeModeProvider = ({ children }: { children: ReactNode }) => {
 
   const setPaletteConfig = useCallback((config: ThemePaletteConfig) => {
     const normalized = normalizeThemePaletteConfig(config);
-    setPaletteConfigState(normalized);
+    setPaletteConfigState((current) => (areThemePaletteConfigsEqual(current, normalized) ? current : normalized));
     setThemePaletteConfigToStorage(normalized);
   }, []);
 
   useEffect(() => {
     const syncFromStorage = () => {
-      setPaletteConfigState(getThemePaletteConfigFromStorage());
+      const next = getThemePaletteConfigFromStorage();
+      setPaletteConfigState((current) => (areThemePaletteConfigsEqual(current, next) ? current : next));
     };
 
     window.addEventListener(THEME_PALETTE_UPDATED_EVENT, syncFromStorage);

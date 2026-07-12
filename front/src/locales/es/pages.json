@@ -307,7 +307,38 @@
     "actions": {
       "save": "Guardar",
       "reset": "Restablecer",
-      "discard": "Descartar"
+      "discard": "Descartar",
+      "preview": "Vista previa"
+    },
+    "palettePreview": {
+      "title": "Vista previa de {{mode}}",
+      "light": "tema claro",
+      "dark": "tema oscuro",
+      "navAction": "Miembros",
+      "nextEvent": "Próximo evento",
+      "eventTime": "Domingo, 10:00",
+      "summary": "Actividad",
+      "calendar": "Calendario",
+      "month": "Marzo",
+      "days": {
+        "sun": "Dom",
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mié",
+        "thu": "Jue",
+        "fri": "Vie",
+        "sat": "Sáb"
+      },
+      "events": {
+        "service": "Servicio",
+        "group": "Grupo",
+        "outreach": "Alcance"
+      },
+      "chips": {
+        "today": "Hoy",
+        "registered": "Registrados",
+        "pending": "Pendientes"
+      }
     },
     "frontendVersion": "Versión del frontend: {{version}}",
     "success": {
@@ -568,6 +599,7 @@
       "type": "Tipo",
       "required": "Requerido",
       "options": "Opciones",
+      "conditions": "Condiciones",
       "allowMultiple": "Permitir seleccionar múltiples",
       "addOption": "Añadir opción",
       "conditionField": "Campo",

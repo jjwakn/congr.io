@@ -307,7 +307,38 @@
     "actions": {
       "save": "Save",
       "reset": "Reset",
-      "discard": "Discard"
+      "discard": "Discard",
+      "preview": "Preview"
+    },
+    "palettePreview": {
+      "title": "{{mode}} preview",
+      "light": "Light theme",
+      "dark": "Dark theme",
+      "navAction": "Members",
+      "nextEvent": "Next event",
+      "eventTime": "Sunday, 10:00",
+      "summary": "Activity",
+      "calendar": "Calendar",
+      "month": "March",
+      "days": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      },
+      "events": {
+        "service": "Service",
+        "group": "Group",
+        "outreach": "Outreach"
+      },
+      "chips": {
+        "today": "Today",
+        "registered": "Registered",
+        "pending": "Pending"
+      }
     },
     "frontendVersion": "Frontend version: {{version}}",
     "success": {
@@ -564,6 +595,7 @@
       "type": "Type",
       "required": "Required",
       "options": "Options",
+      "conditions": "Conditions",
       "allowMultiple": "Allow multiple selection",
       "addOption": "Add option",
       "conditionField": "Field",
