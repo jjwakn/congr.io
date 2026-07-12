@@ -1,26 +1,9 @@
-import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
-import {
-  Box,
-  ClickAwayListener,
-  IconButton,
-  InputAdornment,
-  Link,
-  Paper,
-  Popper,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, ClickAwayListener, IconButton, InputAdornment, Paper, Popper, TextField, Tooltip } from '@mui/material';
 import { DEFAULT_MUI_ICON, MUI_ICON_OPTIONS, MuiIcon } from '@utils/muiIcons';
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import type { IconPickerProps } from './IconPicker.types';
 
-const MUI_ICONS_URL = 'https://mui.com/material-ui/material-icons/';
-
 export const IconPicker = ({ label, value, disabled = false, onChange }: IconPickerProps) => {
-  const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [search, setSearch] = useState(value || DEFAULT_MUI_ICON);
   const selectedIcon = value || DEFAULT_MUI_ICON;
@@ -33,7 +16,16 @@ export const IconPicker = ({ label, value, disabled = false, onChange }: IconPic
       ? MUI_ICON_OPTIONS.filter((name) => name.toLowerCase().includes(normalizedSearch))
       : MUI_ICON_OPTIONS;
   }, [search]);
-  const close = () => setAnchor(null);
+  const close = () => {
+    setAnchor(null);
+    setSearch(selectedIcon);
+  };
+
+  const selectIcon = (iconName: string) => {
+    onChange(iconName);
+    setSearch(iconName);
+    setAnchor(null);
+  };
 
   return (
     <>
@@ -50,12 +42,15 @@ export const IconPicker = ({ label, value, disabled = false, onChange }: IconPic
         onChange={(event) => {
           const nextValue = event.target.value;
           setSearch(nextValue);
-          if (nextValue.trim()) onChange(nextValue.trim());
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
             event.preventDefault();
-            close();
+            const matchingIcon = MUI_ICON_OPTIONS.find(
+              (iconName) => iconName.toLowerCase() === search.trim().toLowerCase(),
+            );
+            if (matchingIcon) selectIcon(matchingIcon);
+            else close();
           }
         }}
         InputProps={{
@@ -77,17 +72,6 @@ export const IconPicker = ({ label, value, disabled = false, onChange }: IconPic
             variant="outlined"
             sx={{ width: 360, maxWidth: 'calc(100vw - 32px)', maxHeight: 360, overflow: 'auto' }}
           >
-            <Stack spacing={1} sx={{ p: 1, pb: 0 }}>
-              <Typography variant="caption" color="text.secondary">
-                {label}
-              </Typography>
-              <Link href={MUI_ICONS_URL} target="_blank" rel="noreferrer" underline="hover">
-                <Stack direction="row" component="span" alignItems="center" spacing={0.5}>
-                  <span>{t('form.common.muiIconsCatalog')}</span>
-                  <OpenInNewRoundedIcon fontSize="inherit" />
-                </Stack>
-              </Link>
-            </Stack>
             <Box
               sx={{
                 display: 'grid',
@@ -100,11 +84,7 @@ export const IconPicker = ({ label, value, disabled = false, onChange }: IconPic
                 <Tooltip key={iconName} title={iconName}>
                   <IconButton
                     color={iconName === selectedIcon ? 'primary' : 'default'}
-                    onClick={() => {
-                      onChange(iconName);
-                      setSearch(iconName);
-                      close();
-                    }}
+                    onClick={() => selectIcon(iconName)}
                     aria-label={iconName}
                   >
                     <MuiIcon name={iconName} fontSize="small" />
