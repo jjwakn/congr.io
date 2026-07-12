@@ -43,9 +43,10 @@ export const ModuleSection = <RowType,>({
       {title || (sectionActions && !shouldPublishFrameActions) ? (
         <Stack
           direction="row"
-          spacing={1.5}
-          alignItems="flex-start"
+          spacing={{ xs: 1, sm: 1.5 }}
+          alignItems="center"
           justifyContent={title ? 'space-between' : 'flex-end'}
+          sx={{ minWidth: 0 }}
         >
           {title ? (
             <Stack sx={{ minWidth: 0, flex: 1 }}>
@@ -54,7 +55,7 @@ export const ModuleSection = <RowType,>({
           ) : null}
 
           {sectionActions && !shouldPublishFrameActions ? (
-            <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+            <Stack direction="row" spacing={{ xs: 0.75, sm: 1 }} sx={{ flexShrink: 0 }}>
               {sectionActions}
             </Stack>
           ) : null}

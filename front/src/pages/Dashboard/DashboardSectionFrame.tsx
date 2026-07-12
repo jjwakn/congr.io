@@ -29,9 +29,9 @@ export const DashboardSectionFrame = ({
       >
         <Box
           sx={{
-            px: { xs: 2, md: 3 },
-            pt: { xs: 2, md: 3 },
-            pb: 2,
+            px: { xs: 1.5, sm: 2, md: 3 },
+            pt: { xs: 1.5, sm: 2, md: 3 },
+            pb: { xs: 1.5, md: 2 },
             borderBottom: '1px solid',
             borderColor: 'divider',
             backgroundColor: 'background.paper',
@@ -40,7 +40,7 @@ export const DashboardSectionFrame = ({
             zIndex: 2,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 0.75 }, minWidth: 0 }}>
             {onToggleFavorite ? (
               <Tooltip title={favoriteLabel}>
                 <IconButton
@@ -48,7 +48,7 @@ export const DashboardSectionFrame = ({
                   onClick={onToggleFavorite}
                   aria-label={favoriteLabel}
                   color={favorite ? 'warning' : 'default'}
-                  sx={{ mt: 0.25 }}
+                  sx={{ flexShrink: 0 }}
                 >
                   {favorite ? <StarRoundedIcon /> : <StarBorderRoundedIcon />}
                 </IconButton>
@@ -57,7 +57,7 @@ export const DashboardSectionFrame = ({
             <Box sx={{ minWidth: 0, flex: 1 }}>
               <SectionTitle title={title} />
             </Box>
-            {actions ? <Box sx={{ display: 'flex', flexShrink: 0 }}>{actions}</Box> : null}
+            {actions ? <Box sx={{ display: 'flex', flexShrink: 0, ml: { xs: 0.25, sm: 0.5 } }}>{actions}</Box> : null}
           </Box>
         </Box>
 

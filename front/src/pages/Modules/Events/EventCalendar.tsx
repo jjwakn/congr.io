@@ -22,17 +22,15 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import {
   Box,
   Button,
+  ButtonGroup,
   CircularProgress,
   FormControlLabel,
-  IconButton,
   Menu,
   MenuItem,
   Popover,
   Snackbar,
   Stack,
   Switch,
-  ToggleButton,
-  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -293,6 +291,11 @@ export const EventCalendar = () => {
     setView(nextView);
   };
 
+  const handleViewChange = (nextView: string) => {
+    setView(nextView);
+    api?.changeView(nextView);
+  };
+
   return (
     <ModuleSection<CalendarEvent>
       createAction={
@@ -312,80 +315,141 @@ export const EventCalendar = () => {
       }}
     >
       <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ flexShrink: 0 }}>
-          <Stack direction="row" alignItems="center" spacing={0.25}>
-            <Tooltip title={t('pages.events.previous')}>
-              <IconButton onClick={() => api?.prev()}>
-                <ChevronLeftRoundedIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={t('pages.events.next')}>
-              <IconButton onClick={() => api?.next()}>
-                <ChevronRightRoundedIcon />
-              </IconButton>
-            </Tooltip>
-            <Button size="small" onClick={() => api?.today()}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          gap={{ xs: 0.75, sm: 1 }}
+          sx={{ flexShrink: 0 }}
+        >
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={{ xs: 0.5, sm: 0.75 }}
+            sx={{ order: { xs: 2, sm: 1 }, flexShrink: 0 }}
+          >
+            <ButtonGroup color="secondary" size="small" variant="contained">
+              <Button
+                aria-label={t('pages.events.previous')}
+                onClick={() => api?.prev()}
+                sx={{ minWidth: { xs: 30, sm: 34 }, px: { xs: 0.5, sm: 0.75 } }}
+              >
+                <ChevronLeftRoundedIcon fontSize="small" />
+              </Button>
+              <Button
+                aria-label={t('pages.events.next')}
+                onClick={() => api?.next()}
+                sx={{ minWidth: { xs: 30, sm: 34 }, px: { xs: 0.5, sm: 0.75 } }}
+              >
+                <ChevronRightRoundedIcon fontSize="small" />
+              </Button>
+            </ButtonGroup>
+            <Button
+              size="small"
+              variant="contained"
+              onClick={() => api?.today()}
+              sx={{ minHeight: { xs: 30, sm: 34 }, px: { xs: 0.9, sm: 1.1 } }}
+            >
               {t('pages.events.today')}
             </Button>
             <Tooltip title={t('pages.events.filter')}>
-              <IconButton disabled={!eventTypes.length} onClick={(e) => setFilterAnchor(e.currentTarget)}>
-                <FilterListRoundedIcon />
-              </IconButton>
+              <span>
+                <Button
+                  aria-label={t('pages.events.filter')}
+                  disabled={!eventTypes.length}
+                  onClick={(e) => setFilterAnchor(e.currentTarget)}
+                  size="small"
+                  variant="contained"
+                  sx={{ minHeight: { xs: 30, sm: 34 }, minWidth: { xs: 30, sm: 34 }, px: 0 }}
+                >
+                  <FilterListRoundedIcon fontSize="small" />
+                </Button>
+              </span>
             </Tooltip>
           </Stack>
-          <Button
-            aria-label={t('pages.events.selectDate')}
-            color="inherit"
-            endIcon={
-              <ExpandMoreRoundedIcon
-                sx={{
-                  fontSize: '0.7em',
-                  transform: dateAnchor ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 150ms ease',
-                }}
-              />
-            }
-            onClick={(e) => setDateAnchor(e.currentTarget)}
+          <Box
             sx={{
-              color: 'text.primary',
-              fontSize: { xs: '1.45rem', md: '1.75rem' },
-              fontWeight: 700,
-              lineHeight: 1.2,
+              order: { xs: 1, sm: 2 },
+              flex: { xs: '0 0 100%', sm: '1 1 0' },
               minWidth: 0,
-              p: 0,
-              textAlign: 'left',
-              textTransform: 'none',
-              whiteSpace: 'normal',
-              '&:hover': {
-                backgroundColor: 'transparent',
-              },
-              '& .MuiButton-endIcon': {
-                ml: 0.25,
-              },
+              display: 'flex',
+              justifyContent: 'center',
             }}
-            variant="text"
           >
-            <Typography component="span" noWrap sx={{ font: 'inherit', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {title}
-            </Typography>
-          </Button>
-          <Stack direction="row" alignItems="center" spacing={0.25}>
-            <ToggleButtonGroup
-              exclusive
-              size="small"
-              value={view}
-              onChange={(_event, value: string | null) => {
-                if (value) {
-                  setView(value);
-                  api?.changeView(value);
-                }
+            <Button
+              aria-label={t('pages.events.selectDate')}
+              color="inherit"
+              endIcon={
+                <ExpandMoreRoundedIcon
+                  sx={{
+                    fontSize: '0.7em',
+                    transform: dateAnchor ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 150ms ease',
+                  }}
+                />
+              }
+              onClick={(e) => setDateAnchor(e.currentTarget)}
+              sx={{
+                color: 'text.primary',
+                fontSize: { xs: '1.35rem', sm: '1.5rem', md: '1.75rem' },
+                fontWeight: 700,
+                lineHeight: 1.2,
+                maxWidth: '100%',
+                minWidth: 0,
+                p: 0,
+                textAlign: 'center',
+                textTransform: 'none',
+                whiteSpace: 'normal',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                },
+                '& .MuiButton-endIcon': {
+                  ml: 0.25,
+                },
               }}
-              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+              variant="text"
             >
-              <ToggleButton value="timeGridDay">{t('pages.events.views.day')}</ToggleButton>
-              <ToggleButton value="timeGridWeek">{t('pages.events.views.week')}</ToggleButton>
-              <ToggleButton value="dayGridMonth">{t('pages.events.views.month')}</ToggleButton>
-            </ToggleButtonGroup>
+              <Typography
+                component="span"
+                noWrap
+                sx={{ font: 'inherit', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
+              >
+                {title}
+              </Typography>
+            </Button>
+          </Box>
+          <Stack direction="row" alignItems="center" spacing={0.25} sx={{ order: { xs: 3, sm: 3 }, flexShrink: 0 }}>
+            <ButtonGroup
+              color="primary"
+              size="small"
+              sx={{
+                '& .MuiButton-root': {
+                  minHeight: { xs: 30, sm: 34 },
+                  px: { xs: 0.75, sm: 1 },
+                  fontSize: { xs: '0.72rem', sm: '0.8125rem' },
+                },
+              }}
+            >
+              <Button
+                onClick={() => handleViewChange('timeGridDay')}
+                variant={view === 'timeGridDay' ? 'contained' : 'outlined'}
+              >
+                {t('pages.events.views.day')}
+              </Button>
+              <Button
+                onClick={() => handleViewChange('timeGridWeek')}
+                variant={view === 'timeGridWeek' ? 'contained' : 'outlined'}
+              >
+                {t('pages.events.views.week')}
+              </Button>
+              <Button
+                onClick={() => handleViewChange('dayGridMonth')}
+                variant={view === 'dayGridMonth' ? 'contained' : 'outlined'}
+              >
+                {t('pages.events.views.month')}
+              </Button>
+            </ButtonGroup>
           </Stack>
         </Stack>
 

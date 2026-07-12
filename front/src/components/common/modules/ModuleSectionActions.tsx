@@ -5,7 +5,7 @@ export const ModuleSectionActions = ({ actions }: ModuleSectionActionsProps) => 
   const theme = useTheme();
 
   return (
-    <Stack direction="row" spacing={1} alignItems="center">
+    <Stack direction="row" spacing={{ xs: 0.75, sm: 1 }} alignItems="center" sx={{ flexShrink: 0 }}>
       {actions.map((action) => {
         const Icon = action.icon;
         const paletteKey = action.color && action.color !== 'default' ? action.color : 'action';
@@ -18,7 +18,10 @@ export const ModuleSectionActions = ({ actions }: ModuleSectionActionsProps) => 
                 aria-label={action.label}
                 disabled={action.disabled}
                 onClick={action.onClick}
+                size="small"
                 sx={{
+                  width: { xs: 34, sm: 40 },
+                  height: { xs: 34, sm: 40 },
                   borderRadius: '999px',
                   border: '1px solid',
                   borderColor: alpha(paletteColor, 0.28),
