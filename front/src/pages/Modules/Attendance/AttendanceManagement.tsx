@@ -31,16 +31,15 @@ import { EventsService } from '@services/events';
 import { PersonFieldsService } from '@services/persons';
 import { httpRequest } from '@utils/http';
 import { MuiIcon } from '@utils/muiIcons';
-import { getHomePath } from '@utils/routes';
 import { DateTime } from 'luxon';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import type { EventParticipant } from '@/types/event-participant.types';
 import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
 import type { JsonValue } from '@/types/json.types';
 import type { PersonField } from '@/types/person.types';
 import { EventParticipantsEditorDialog } from '../Events/EventParticipantsEditorDialog';
+import { PastEventPickerDialog } from '../Events/PastEventPickerDialog';
 
 const formatFieldValue = (value: JsonValue | undefined) => {
   if (Array.isArray(value)) return value.join(', ');
@@ -54,19 +53,22 @@ export const AttendanceManagement = () => {
   const { i18n, t } = useTranslation();
   const { hasPermission } = useAuth();
   const { showNotification } = useNotificationContext();
-  const navigate = useNavigate();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [historyRows, setHistoryRows] = useState<CalendarEvent[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyDeleting, setHistoryDeleting] = useState(false);
+  const [pastEventsLoading, setPastEventsLoading] = useState(false);
   const [tab, setTab] = useState<'today' | 'history'>('today');
   const [eventId, setEventId] = useState('');
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
   const [personFields, setPersonFields] = useState<PersonField[]>([]);
+  const [pastEvents, setPastEvents] = useState<CalendarEvent[]>([]);
+  const [selectedPastEvent, setSelectedPastEvent] = useState<CalendarEvent | null>(null);
   const [editorEvent, setEditorEvent] = useState<CalendarEvent | null>(null);
   const [editorReadOnly, setEditorReadOnly] = useState(false);
   const [deleteEvent, setDeleteEvent] = useState<CalendarEvent | null>(null);
+  const [pastEventPickerOpen, setPastEventPickerOpen] = useState(false);
   const selectedEvent = events.find((event) => event.id === eventId) ?? null;
   const canCreatePerson = hasPermission('person', 'create');
   const canCreatePersonFields = hasPermission('person_field', 'create');
@@ -74,7 +76,6 @@ export const AttendanceManagement = () => {
   const canCreateAttendance = hasPermission('event_attendance', 'create');
   const canUpdateAttendance = hasPermission('event_attendance', 'update');
   const canDeleteAttendance = hasPermission('event_attendance', 'delete');
-  const canCreateEvent = hasPermission('event', 'create');
   const canDeleteEvent = hasPermission('event', 'delete');
   const historyList = useModuleList({
     moduleKey: 'event-attendance-history',
@@ -127,8 +128,7 @@ export const AttendanceManagement = () => {
       const response = await httpRequest<EventsListResponse>({
         service: EventsService.list,
         data: {
-          attendance_enabled: true,
-          end: now.endOf('day').toISO(),
+          end_datetime_to: now.toISO(),
           page: historyList.page,
           size: historyList.pageSize,
           order: historyList.sort,
@@ -153,6 +153,33 @@ export const AttendanceManagement = () => {
     t,
   ]);
 
+  const loadPastEvents = useCallback(async () => {
+    setPastEventsLoading(true);
+    try {
+      const response = await httpRequest<EventsListResponse>({
+        service: EventsService.list,
+        data: {
+          end_datetime_to: DateTime.now().toISO(),
+          page: 0,
+          size: 500,
+          order: 'start_datetime',
+          direction: 'DESC',
+        },
+      });
+      setPastEvents(response.result);
+      setSelectedPastEvent(response.result[0] ?? null);
+    } catch (value) {
+      showNotification(value instanceof Error ? value.message : t('pages.events.errors.load'), { severity: 'error' });
+    } finally {
+      setPastEventsLoading(false);
+    }
+  }, [showNotification, t]);
+
+  const openPastEventPicker = useCallback(() => {
+    setPastEventPickerOpen(true);
+    void loadPastEvents();
+  }, [loadPastEvents]);
+
   useEffect(() => {
     if (tab === 'today') void loadEvents();
     else if (canUpdateAttendance) void loadHistoryEvents();
@@ -176,6 +203,12 @@ export const AttendanceManagement = () => {
     },
     [loadParticipants],
   );
+
+  const confirmPastEvent = useCallback(() => {
+    if (!selectedPastEvent) return;
+    setPastEventPickerOpen(false);
+    void openEditor(selectedPastEvent);
+  }, [openEditor, selectedPastEvent]);
 
   const removeHistoryEvent = useCallback(async () => {
     if (!deleteEvent) return;
@@ -388,7 +421,7 @@ export const AttendanceManagement = () => {
                 </Table>
               </TableContainer>
             </Paper>
-            {canCreateAttendance && selectedEvent && !selectedEvent.registration_locked ? (
+            {canCreateAttendance && selectedEvent ? (
               <Button
                 startIcon={<PersonAddAltOutlinedIcon />}
                 variant="contained"
@@ -401,11 +434,11 @@ export const AttendanceManagement = () => {
         ) : canUpdateAttendance ? (
           <ModuleSection<CalendarEvent>
             createAction={
-              canCreateEvent
+              canCreateAttendance
                 ? {
-                    id: 'create-event',
-                    label: t('pages.events.create'),
-                    onClick: () => navigate(`${getHomePath()}?createEvent=1`),
+                    id: 'add-missing-attendance-event',
+                    label: t('pages.attendance.addMissingEvent'),
+                    onClick: openPastEventPicker,
                   }
                 : undefined
             }
@@ -453,7 +486,7 @@ export const AttendanceManagement = () => {
           mode="attendance"
           participants={participants}
           personFields={personFields}
-          canAdd={!editorReadOnly && canCreateAttendance && !editorEvent?.registration_locked}
+          canAdd={!editorReadOnly && canCreateAttendance}
           canRemove={!editorReadOnly && canDeleteAttendance}
           canUpdateAttendance={!editorReadOnly && canCreateAttendance}
           canCreatePerson={canCreatePerson}
@@ -461,6 +494,20 @@ export const AttendanceManagement = () => {
           readOnly={editorReadOnly}
           onClose={() => setEditorEvent(null)}
           onReload={() => (editorEvent ? loadParticipants(editorEvent.id) : Promise.resolve())}
+        />
+        <PastEventPickerDialog
+          open={pastEventPickerOpen}
+          title={t('pages.attendance.selectPastEventTitle')}
+          eventLabel={t('pages.attendance.pastEvent')}
+          confirmLabel={t('pages.attendance.addMissingEvent')}
+          loadingLabel={t('pages.attendance.loading')}
+          noOptionsLabel={t('pages.attendance.pastEventsEmpty')}
+          events={pastEvents}
+          loading={pastEventsLoading}
+          selectedEvent={selectedPastEvent}
+          onChange={setSelectedPastEvent}
+          onClose={() => setPastEventPickerOpen(false)}
+          onConfirm={confirmPastEvent}
         />
         <ConfirmDialog
           open={Boolean(deleteEvent)}

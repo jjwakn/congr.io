@@ -44,7 +44,7 @@ import { PersonFieldsService, PersonsService } from '@services/persons';
 import { UsersService } from '@services/users';
 import { httpRequest } from '@utils/http';
 import { MuiIcon } from '@utils/muiIcons';
-import { getHomePath, getModulePath } from '@utils/routes';
+import { getModulePath } from '@utils/routes';
 import { DateTime } from 'luxon';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -54,6 +54,7 @@ import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
 import type { JsonObject, JsonValue } from '@/types/json.types';
 import type { Person, PersonField } from '@/types/person.types';
 import { EventParticipantsEditorDialog } from '../Events/EventParticipantsEditorDialog';
+import { PastEventPickerDialog } from '../Events/PastEventPickerDialog';
 import { PersonFormDialog } from '../Persons/PersonFormDialog';
 import type { PersonFieldFormValues, PersonFormValues } from '../Persons/persons.types';
 import { EventRegistrationFields } from './EventRegistrationFields';
@@ -107,13 +108,17 @@ export const RegistrationManagement = () => {
   const [historyTotal, setHistoryTotal] = useState(0);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyDeleting, setHistoryDeleting] = useState(false);
+  const [pastEventsLoading, setPastEventsLoading] = useState(false);
   const [person, setPerson] = useState<Person | null>(null);
   const [personFields, setPersonFields] = useState<PersonField[]>([]);
   const [values, setValues] = useState<JsonObject>({});
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
+  const [pastEvents, setPastEvents] = useState<CalendarEvent[]>([]);
+  const [selectedPastEvent, setSelectedPastEvent] = useState<CalendarEvent | null>(null);
   const [editorEvent, setEditorEvent] = useState<CalendarEvent | null>(null);
   const [editorReadOnly, setEditorReadOnly] = useState(false);
   const [deleteEvent, setDeleteEvent] = useState<CalendarEvent | null>(null);
+  const [pastEventPickerOpen, setPastEventPickerOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [personOpen, setPersonOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -121,7 +126,6 @@ export const RegistrationManagement = () => {
   const canCreateRegistration = hasPermission('event_registration', 'create');
   const canUpdateRegistration = hasPermission('event_registration', 'update');
   const canDeleteRegistration = hasPermission('event_registration', 'delete');
-  const canCreateEvent = hasPermission('event', 'create');
   const canDeleteEvent = hasPermission('event', 'delete');
   const canCreatePerson = hasPermission('person', 'create');
   const canCreatePersonFields = hasPermission('person_field', 'create');
@@ -173,8 +177,7 @@ export const RegistrationManagement = () => {
       const response = await httpRequest<EventsListResponse>({
         service: EventsService.list,
         data: {
-          attendance_enabled: true,
-          end: DateTime.now().endOf('day').toISO(),
+          end_datetime_to: DateTime.now().toISO(),
           page: historyList.page,
           size: historyList.pageSize,
           order: historyList.sort,
@@ -201,6 +204,33 @@ export const RegistrationManagement = () => {
     t,
   ]);
 
+  const loadPastEvents = useCallback(async () => {
+    setPastEventsLoading(true);
+    try {
+      const response = await httpRequest<EventsListResponse>({
+        service: EventsService.list,
+        data: {
+          end_datetime_to: DateTime.now().toISO(),
+          page: 0,
+          size: 500,
+          order: 'start_datetime',
+          direction: 'DESC',
+        },
+      });
+      setPastEvents(response.result);
+      setSelectedPastEvent(response.result[0] ?? null);
+    } catch (value) {
+      showNotification(value instanceof Error ? value.message : t('pages.events.errors.load'), { severity: 'error' });
+    } finally {
+      setPastEventsLoading(false);
+    }
+  }, [showNotification, t]);
+
+  const openPastEventPicker = useCallback(() => {
+    setPastEventPickerOpen(true);
+    void loadPastEvents();
+  }, [loadPastEvents]);
+
   useEffect(() => {
     if (tab === 'history' && canUpdateRegistration) void loadHistoryEvents();
   }, [canUpdateRegistration, loadHistoryEvents, tab]);
@@ -217,6 +247,12 @@ export const RegistrationManagement = () => {
     },
     [loadParticipants],
   );
+
+  const confirmPastEvent = useCallback(() => {
+    if (!selectedPastEvent) return;
+    setPastEventPickerOpen(false);
+    void openEditor(selectedPastEvent);
+  }, [openEditor, selectedPastEvent]);
 
   const removeHistoryEvent = useCallback(async () => {
     if (!deleteEvent) return;
@@ -631,11 +667,11 @@ export const RegistrationManagement = () => {
         ) : canUpdateRegistration ? (
           <ModuleSection<CalendarEvent>
             createAction={
-              canCreateEvent
+              canCreateRegistration
                 ? {
-                    id: 'create-event',
-                    label: t('pages.events.create'),
-                    onClick: () => navigate(`${getHomePath()}?createEvent=1`),
+                    id: 'add-missing-registration-event',
+                    label: t('pages.registration.addMissingEvent'),
+                    onClick: openPastEventPicker,
                   }
                 : undefined
             }
@@ -690,6 +726,20 @@ export const RegistrationManagement = () => {
           readOnly={editorReadOnly}
           onClose={() => setEditorEvent(null)}
           onReload={() => (editorEvent ? loadParticipants(editorEvent.id) : Promise.resolve())}
+        />
+        <PastEventPickerDialog
+          open={pastEventPickerOpen}
+          title={t('pages.registration.selectPastEventTitle')}
+          eventLabel={t('pages.registration.pastEvent')}
+          confirmLabel={t('pages.registration.addMissingEvent')}
+          loadingLabel={t('pages.registration.loading')}
+          noOptionsLabel={t('pages.registration.pastEventsEmpty')}
+          events={pastEvents}
+          loading={pastEventsLoading}
+          selectedEvent={selectedPastEvent}
+          onChange={setSelectedPastEvent}
+          onClose={() => setPastEventPickerOpen(false)}
+          onConfirm={confirmPastEvent}
         />
         <ConfirmDialog
           open={Boolean(deleteEvent)}
