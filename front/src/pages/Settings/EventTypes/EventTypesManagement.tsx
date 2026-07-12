@@ -36,6 +36,8 @@ export const EventTypesManagement = () => {
   const canCreate = hasPermission('event_type', 'create');
   const canUpdate = hasPermission('event_type', 'update');
   const canDelete = hasPermission('event_type', 'delete');
+  const canCreatePersonFields = hasPermission('person_field', 'create');
+  const canUpdatePersonFields = hasPermission('person_field', 'update');
   const list = useEventTypesList({ enabled: canView });
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
@@ -102,7 +104,10 @@ export const EventTypesManagement = () => {
     setSubmitting(true);
     try {
       const isCreate = formMode === 'create';
-      const customFields = await resolveEventFieldPersonLinks(values.custom_fields);
+      const customFields = await resolveEventFieldPersonLinks(values.custom_fields, {
+        canCreatePersonFields,
+        canUpdatePersonFields,
+      });
       await httpRequest<EventType>({
         service: isCreate ? EventTypesService.create : EventTypesService.update,
         data: isCreate

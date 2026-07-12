@@ -37,6 +37,7 @@ import {
 import { EventTypesService } from '@services/eventTypes';
 import { EventsService } from '@services/events';
 import { FilesService } from '@services/files';
+import { PersonFieldsService } from '@services/persons';
 import { API_URL } from '@utils/constants';
 import { resolveEventFieldPersonLinks } from '@utils/eventFieldLinks';
 import { HttpRequestError, httpRequest } from '@utils/http';
@@ -49,6 +50,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import type { EventType } from '@/types/event-type.types';
 import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
+import type { PersonField } from '@/types/person.types';
 import { EventCalendarTitlePickerPopover } from './EventCalendarTitlePickerPopover';
 import { EventDetailsDialog } from './EventDetailsDialog';
 import { EventEditorDialog } from './EventEditorDialog';
@@ -75,6 +77,7 @@ export const EventCalendar = () => {
     () => getPreloadedResource<EventsListResponse>('events')?.result ?? [],
   );
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
+  const [personFields, setPersonFields] = useState<PersonField[]>([]);
   const [visibleTypeIds, setVisibleTypeIds] = useState<string[]>([]);
   const [filterInitialized, setFilterInitialized] = useState(false);
   const [title, setTitle] = useState('');
@@ -94,6 +97,8 @@ export const EventCalendar = () => {
   const canDelete = hasPermission('event', 'delete');
   const canCreateType = hasPermission('event_type', 'create');
   const canViewType = hasPermission('event_type', 'get');
+  const canCreatePersonFields = hasPermission('person_field', 'create');
+  const canUpdatePersonFields = hasPermission('person_field', 'update');
   const canViewPersonFields = hasPermission('person_field', 'get');
   const use12HourTime = user?.preferences?.time_format === '12h';
 
@@ -111,6 +116,20 @@ export const EventCalendar = () => {
     const typeId = new URLSearchParams(location.search).get('createEventType');
     if (typeId && canCreate) setEditor({ event: null, typeId });
   }, [canCreate, location.search]);
+
+  useEffect(() => {
+    if (!canViewPersonFields) return;
+    void httpRequest<{ result: PersonField[]; total: number }>({
+      service: PersonFieldsService.list,
+      data: { page: 0, size: 500, order: 'label', direction: 'ASC' },
+    })
+      .then(({ result }) => setPersonFields(result ?? []))
+      .catch((value) =>
+        showNotification(value instanceof Error ? value.message : t('pages.persons.fieldsCrud.loadFailed'), {
+          severity: 'error',
+        }),
+      );
+  }, [canViewPersonFields, showNotification, t]);
 
   const loadEventTypes = useCallback(async () => {
     try {
@@ -206,7 +225,10 @@ export const EventCalendar = () => {
     setSubmitting(true);
     try {
       const eventFieldIds = new Set(values.event_fields.map(({ id }) => id));
-      const resolvedCustomFields = await resolveEventFieldPersonLinks(values.custom_fields);
+      const resolvedCustomFields = await resolveEventFieldPersonLinks(values.custom_fields, {
+        canCreatePersonFields,
+        canUpdatePersonFields,
+      });
       const resolvedEventFields = resolvedCustomFields.filter(({ id }) => eventFieldIds.has(id));
       const inheritedFields = resolvedCustomFields.filter(({ id }) => !eventFieldIds.has(id));
       const { event_fields: _eventFields, ...eventValues } = values;
@@ -634,6 +656,8 @@ export const EventCalendar = () => {
             timezone={congregation?.timezone ?? 'UTC'}
             eventTypes={eventTypes}
             canCreateEventType={canCreateType}
+            canCreatePersonFields={canCreatePersonFields}
+            canUpdatePersonFields={canUpdatePersonFields}
             canViewPersonFields={canViewPersonFields}
             submitting={submitting}
             onClose={() => setEditor(undefined)}
@@ -645,9 +669,15 @@ export const EventCalendar = () => {
           event={selectedEvent}
           timezone={congregation?.timezone ?? 'UTC'}
           imageUrl={selectedEvent ? toImageUrl(selectedEvent) : undefined}
+          canEdit={canUpdate}
+          personFields={personFields}
           use12HourTime={use12HourTime}
           onClose={() => setSelectedEvent(null)}
           onAddToCalendar={addToCalendar}
+          onEdit={(event) => {
+            setSelectedEvent(null);
+            setEditor({ event });
+          }}
           onShare={(event) => void shareEvent(event)}
         />
 

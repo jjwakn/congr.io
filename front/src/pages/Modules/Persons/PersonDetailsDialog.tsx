@@ -1,7 +1,8 @@
 import { ViewDialog } from '@components/common/forms/ViewDialog';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded';
-import { Box, Chip, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Chip, IconButton, Stack, Tab, Tabs, Tooltip, Typography } from '@mui/material';
 import { PersonsService } from '@services/persons';
 import { calculateAgeFromBirthdate, calculateDisplayedRegisteredAge, formatDateForInput } from '@utils/datetime';
 import { httpRequest } from '@utils/http';
@@ -17,10 +18,17 @@ const formatCustomValue = (value: JsonValue | undefined) => {
   return String(value ?? '-');
 };
 
-export const PersonDetailsDialog = ({ person, fields, onClose }: PersonDetailsDialogProps) => {
+export const PersonDetailsDialog = ({
+  person,
+  fields,
+  editDisabled = false,
+  onClose,
+  onEdit,
+}: PersonDetailsDialogProps) => {
   const { i18n, t } = useTranslation();
   const [tab, setTab] = useState<'details' | 'flows' | 'codes'>('details');
   const [flows, setFlows] = useState<PersonFlowProgress[]>([]);
+  const editLabel = t('pages.persons.edit');
   const displayedAge = person.birthdate
     ? calculateAgeFromBirthdate(person.birthdate)
     : calculateDisplayedRegisteredAge(person.registered_age, person.age_recorded_at);
@@ -36,6 +44,17 @@ export const PersonDetailsDialog = ({ person, fields, onClose }: PersonDetailsDi
       closeLabel={t('form.field.close')}
       onClose={onClose}
       maxWidth="lg"
+      titleAction={
+        onEdit ? (
+          <Tooltip title={editLabel}>
+            <span>
+              <IconButton aria-label={editLabel} color="secondary" disabled={editDisabled} onClick={onEdit}>
+                <EditOutlinedIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        ) : undefined
+      }
     >
       <Tabs value={tab} onChange={(_event, value) => setTab(value)}>
         <Tab value="details" label={t('pages.persons.tabs.details')} />

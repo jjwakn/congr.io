@@ -1,8 +1,11 @@
+import { FieldConditionsEditor } from '@components/common/forms/FieldConditionsEditor';
+import type { FieldConditionOption } from '@components/common/forms/FieldConditionsEditor.types';
 import { OptionsListEditor } from '@components/common/forms/OptionsListEditor';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import {
+  Autocomplete,
   Box,
   Button,
   FormControl,
@@ -18,9 +21,10 @@ import {
   Typography,
 } from '@mui/material';
 import { CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD, STANDARD_PERSON_FIELDS } from '@utils/customFields';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EventCustomField, EventFieldType } from '@/types/event.types';
+import type { FieldCondition } from '@/types/person.types';
 import type { EventCustomFieldsEditorProps } from './events.types';
 
 const TYPES: EventFieldType[] = ['text', 'paragraph', 'number', 'yes_no', 'options', 'date'];
@@ -28,7 +32,23 @@ const TYPES: EventFieldType[] = ['text', 'paragraph', 'number', 'yes_no', 'optio
 const areOptionsEqual = (left: string[], right: string[]) =>
   left.length === right.length && left.every((value, index) => value === right[index]);
 
-const createField = (): EventCustomField => ({
+const areConditionsEqual = (left: FieldCondition[] = [], right: FieldCondition[] = []) =>
+  left.length === right.length &&
+  left.every(
+    (condition, index) =>
+      condition.field_id === right[index]?.field_id &&
+      condition.operator === right[index]?.operator &&
+      condition.value === right[index]?.value,
+  );
+
+interface PersonFieldOption extends FieldConditionOption {
+  allow_multiple: boolean;
+  calculated_conditions: FieldCondition[];
+  options: string[];
+  type: EventFieldType;
+}
+
+const createField = (canCreatePersonFields: boolean): EventCustomField => ({
   id: crypto.randomUUID(),
   label: '',
   type: 'text',
@@ -36,86 +56,142 @@ const createField = (): EventCustomField => ({
   options: [],
   allow_multiple: false,
   user_fillable: false,
-  link_person_field: true,
-  person_field_id: CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD,
+  link_person_field: canCreatePersonFields,
+  person_field_id: canCreatePersonFields ? CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD : undefined,
 });
 
 export const EventCustomFieldsEditor = ({
   eventFields,
   typeFields,
   canUpdateEventType,
+  canCreatePersonFields = false,
+  canUpdatePersonFields = false,
   selfRegistration,
   personFields,
   mode = 'event',
+  readOnly: readOnlyEditor = false,
   readOnlyTypeFields = false,
   canAddFields = true,
   onChange,
 }: EventCustomFieldsEditorProps) => {
   const { t } = useTranslation();
-  const syncedOptionSources = useRef<Set<string>>(new Set());
-  const persistedPersonFieldById = useMemo(
-    () => new Map(personFields.map((personField) => [personField.id, personField])),
-    [personFields],
-  );
-  const personFieldOptions = useMemo(
+  const personFieldOptions = useMemo<PersonFieldOption[]>(
     () => [
       ...STANDARD_PERSON_FIELDS.map((field) => ({
         id: field.id,
         label: t(field.labelKey),
-        type: field.type,
+        type: field.type as EventFieldType,
         options: field.options,
         allow_multiple: field.allow_multiple ?? false,
+        calculated_conditions: [],
       })),
-      ...personFields,
+      ...personFields.map((personField) => ({
+        id: personField.id,
+        label: personField.label,
+        type: personField.type,
+        options: personField.options,
+        allow_multiple: personField.allow_multiple,
+        calculated_conditions: personField.calculated_conditions,
+      })),
     ],
     [personFields, t],
   );
+  const personFieldOptionById = useMemo(
+    () => new Map(personFieldOptions.map((personField) => [personField.id, personField])),
+    [personFieldOptions],
+  );
+  const conditionOperatorLabels = useMemo(
+    () => ({
+      equals: t('pages.persons.fieldsCrud.operators.equals'),
+      not_equals: t('pages.persons.fieldsCrud.operators.notEquals'),
+      contains: t('pages.persons.fieldsCrud.operators.contains'),
+      starts_with: t('pages.persons.fieldsCrud.operators.startsWith'),
+      ends_with: t('pages.persons.fieldsCrud.operators.endsWith'),
+      greater_than: t('pages.persons.fieldsCrud.operators.greaterThan'),
+      greater_or_equal: t('pages.persons.fieldsCrud.operators.greaterOrEqual'),
+      less_than: t('pages.persons.fieldsCrud.operators.lessThan'),
+      less_or_equal: t('pages.persons.fieldsCrud.operators.lessOrEqual'),
+      is_empty: t('pages.persons.fieldsCrud.operators.empty'),
+      is_not_empty: t('pages.persons.fieldsCrud.operators.notEmpty'),
+      is_true: t('pages.persons.fieldsCrud.operators.isTrue'),
+      is_false: t('pages.persons.fieldsCrud.operators.isFalse'),
+    }),
+    [t],
+  );
 
-  const getCompatiblePersonFields = (field: EventCustomField) =>
-    personFieldOptions.filter(
-      (personField) =>
-        personField.type === field.type ||
-        ((field.type === 'text' || field.type === 'paragraph') &&
-          (personField.type === 'text' || personField.type === 'paragraph')),
-    );
+  const getLinkedPersonFieldPatch = (personField: PersonFieldOption): Partial<EventCustomField> => ({
+    label: personField.label,
+    type: personField.type as EventFieldType,
+    options: personField.type === 'options' ? personField.options : [],
+    allow_multiple: personField.type === 'options' ? personField.allow_multiple : false,
+    calculated_conditions: personField.type === 'yes_no' ? personField.calculated_conditions : [],
+    link_person_field: true,
+    person_field_id: personField.id,
+  });
 
-  useEffect(() => {
-    const syncField = (field: EventCustomField) => {
-      const personField =
-        field.link_person_field && field.person_field_id
-          ? persistedPersonFieldById.get(field.person_field_id)
-          : undefined;
-
-      if (!personField || field.type !== 'options' || personField.type !== 'options') return field;
-
-      const syncKey = [field.id, personField.id, personField.allow_multiple, ...personField.options].join('\u001f');
-      if (syncedOptionSources.current.has(syncKey)) return field;
-
-      syncedOptionSources.current.add(syncKey);
-      if (field.allow_multiple === personField.allow_multiple && areOptionsEqual(field.options, personField.options))
+  const getSyncedLinkedConfig = useCallback(
+    (field: EventCustomField) => {
+      if (
+        !field.link_person_field ||
+        !field.person_field_id ||
+        field.person_field_id === CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD
+      ) {
         return field;
+      }
+
+      const personField = personFieldOptionById.get(field.person_field_id);
+      if (!personField) return field;
+
+      const nextOptions = personField.type === 'options' ? personField.options : [];
+      const nextAllowMultiple = personField.type === 'options' ? personField.allow_multiple : false;
+      const nextConditions = personField.type === 'yes_no' ? personField.calculated_conditions : [];
+      if (
+        field.type === personField.type &&
+        field.allow_multiple === nextAllowMultiple &&
+        areOptionsEqual(field.options, nextOptions) &&
+        areConditionsEqual(field.calculated_conditions ?? [], nextConditions)
+      ) {
+        return field;
+      }
 
       return {
         ...field,
-        allow_multiple: personField.allow_multiple,
-        options: personField.options,
+        type: personField.type as EventFieldType,
+        options: nextOptions,
+        allow_multiple: nextAllowMultiple,
+        calculated_conditions: nextConditions,
       };
-    };
+    },
+    [personFieldOptionById],
+  );
 
+  const getFieldInputValue = (field: EventCustomField) => {
+    const personField = field.person_field_id ? personFieldOptionById.get(field.person_field_id) : undefined;
+    return personField && personField.label === field.label ? personField : null;
+  };
+
+  const isLinkedToExistingPersonField = (field: EventCustomField) =>
+    Boolean(
+      field.link_person_field &&
+      field.person_field_id &&
+      field.person_field_id !== CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD,
+    );
+
+  useEffect(() => {
     let changed = false;
     const nextEventFields = eventFields.map((field) => {
-      const nextField = syncField(field);
+      const nextField = getSyncedLinkedConfig(field);
       if (nextField !== field) changed = true;
       return nextField;
     });
     const nextTypeFields = typeFields.map((field) => {
-      const nextField = syncField(field);
+      const nextField = getSyncedLinkedConfig(field);
       if (nextField !== field) changed = true;
       return nextField;
     });
 
     if (changed) onChange({ eventFields: nextEventFields, typeFields: nextTypeFields });
-  }, [eventFields, onChange, persistedPersonFieldById, typeFields]);
+  }, [eventFields, getSyncedLinkedConfig, onChange, typeFields]);
 
   const update = (scope: 'event' | 'type', id: string, patch: Partial<EventCustomField>) => {
     const targetField = (scope === 'event' ? eventFields : typeFields).find((field) => field.id === id);
@@ -128,6 +204,8 @@ export const EventCustomFieldsEditor = ({
       Boolean(linkedPersonFieldId) &&
       patchedTarget?.type === 'options' &&
       ('options' in patch || 'allow_multiple' in patch);
+    const shouldSyncLinkedConditions =
+      Boolean(linkedPersonFieldId) && patchedTarget?.type === 'yes_no' && 'calculated_conditions' in patch;
 
     const applyPatch = (field: EventCustomField) => {
       if (field.id === id) return { ...field, ...patch };
@@ -141,6 +219,17 @@ export const EventCustomFieldsEditor = ({
           ...field,
           ...('options' in patch ? { options: patch.options ?? [] } : {}),
           ...('allow_multiple' in patch ? { allow_multiple: patch.allow_multiple ?? false } : {}),
+        };
+      }
+      if (
+        shouldSyncLinkedConditions &&
+        field.link_person_field &&
+        field.person_field_id === linkedPersonFieldId &&
+        field.type === 'yes_no'
+      ) {
+        return {
+          ...field,
+          calculated_conditions: patch.calculated_conditions ?? [],
         };
       }
 
@@ -170,7 +259,7 @@ export const EventCustomFieldsEditor = ({
       {(mode === 'event-type' ? (['type'] as const) : (['type', 'event'] as const)).map((scope) => {
         const fields = scope === 'type' ? typeFields : eventFields;
         if (scope === 'type' && !canUpdateEventType && !fields.length) return null;
-        const readOnly = scope === 'type' && readOnlyTypeFields;
+        const readOnly = readOnlyEditor || (scope === 'type' && readOnlyTypeFields);
         return (
           <Stack key={scope} spacing={1.5}>
             <Stack direction="row" alignItems="center" spacing={0.5}>
@@ -185,19 +274,58 @@ export const EventCustomFieldsEditor = ({
               <Box key={field.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 1.5 }}>
                 <Stack spacing={1.5}>
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                    <TextField
+                    <Autocomplete<PersonFieldOption, false, false, true>
                       fullWidth
-                      required
-                      label={t('pages.events.fields.label')}
-                      value={field.label}
+                      freeSolo
+                      options={personFieldOptions}
+                      getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      inputValue={field.label}
+                      value={getFieldInputValue(field)}
                       disabled={readOnly}
-                      onChange={(event) => update(scope, field.id, { label: event.target.value })}
+                      onChange={(_event, value) => {
+                        if (typeof value === 'string') {
+                          update(scope, field.id, {
+                            label: value,
+                            link_person_field: canCreatePersonFields,
+                            person_field_id: canCreatePersonFields
+                              ? CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD
+                              : undefined,
+                          });
+                          return;
+                        }
+
+                        if (value) {
+                          update(scope, field.id, getLinkedPersonFieldPatch(value));
+                        }
+                      }}
+                      onInputChange={(_event, value, reason) => {
+                        if (reason !== 'input') return;
+                        const linkedPersonField = field.person_field_id
+                          ? personFieldOptionById.get(field.person_field_id)
+                          : undefined;
+                        const renamedLinkedField = Boolean(linkedPersonField && value !== linkedPersonField.label);
+                        update(scope, field.id, {
+                          label: value,
+                          ...(renamedLinkedField
+                            ? {
+                                link_person_field: canCreatePersonFields,
+                                person_field_id: canCreatePersonFields
+                                  ? CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD
+                                  : undefined,
+                              }
+                            : {}),
+                        });
+                      }}
+                      renderInput={(params) => (
+                        <TextField {...params} required label={t('pages.events.fields.label')} />
+                      )}
                     />
                     <FormControl fullWidth>
                       <InputLabel>{t('pages.events.fields.type')}</InputLabel>
                       <Select
                         value={field.type}
-                        disabled={readOnly}
+                        disabled={readOnly || (isLinkedToExistingPersonField(field) && !canUpdatePersonFields)}
                         label={t('pages.events.fields.type')}
                         onChange={(event) => update(scope, field.id, { type: event.target.value as EventFieldType })}
                       >
@@ -223,7 +351,7 @@ export const EventCustomFieldsEditor = ({
                         control={
                           <Switch
                             checked={field.allow_multiple ?? false}
-                            disabled={readOnly}
+                            disabled={readOnly || (isLinkedToExistingPersonField(field) && !canUpdatePersonFields)}
                             onChange={(_event, checked) => update(scope, field.id, { allow_multiple: checked })}
                           />
                         }
@@ -231,7 +359,7 @@ export const EventCustomFieldsEditor = ({
                       />
                       <OptionsListEditor
                         label={t('pages.events.fields.options')}
-                        disabled={readOnly}
+                        disabled={readOnly || (isLinkedToExistingPersonField(field) && !canUpdatePersonFields)}
                         addLabel={t('pages.persons.fieldsCrud.addOption')}
                         removeLabel={t('form.common.delete')}
                         values={field.options}
@@ -239,7 +367,23 @@ export const EventCustomFieldsEditor = ({
                       />
                     </>
                   ) : null}
-                  {personFieldOptions.length ? (
+                  {field.type === 'yes_no' ? (
+                    <FieldConditionsEditor
+                      fields={personFieldOptions}
+                      value={field.calculated_conditions ?? []}
+                      fieldLabel={t('pages.persons.fieldsCrud.conditionField')}
+                      operatorLabel={t('pages.persons.fieldsCrud.conditionOperator')}
+                      valueLabel={t('pages.persons.fieldsCrud.conditionValue')}
+                      addLabel={t('pages.persons.fieldsCrud.addCondition')}
+                      removeLabel={t('form.common.delete')}
+                      operatorLabels={conditionOperatorLabels}
+                      disabled={readOnly || (isLinkedToExistingPersonField(field) && !canUpdatePersonFields)}
+                      onChange={(calculatedConditions) =>
+                        update(scope, field.id, { calculated_conditions: calculatedConditions })
+                      }
+                    />
+                  ) : null}
+                  {personFieldOptions.length || canCreatePersonFields ? (
                     <>
                       <FormControlLabel
                         control={
@@ -249,7 +393,10 @@ export const EventCustomFieldsEditor = ({
                             onChange={(_event, checked) =>
                               update(scope, field.id, {
                                 link_person_field: checked,
-                                person_field_id: checked ? field.person_field_id : undefined,
+                                person_field_id: checked
+                                  ? field.person_field_id ||
+                                    (canCreatePersonFields ? CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD : undefined)
+                                  : undefined,
                               })
                             }
                           />
@@ -267,26 +414,24 @@ export const EventCustomFieldsEditor = ({
                               const personFieldId = event.target.value || undefined;
                               const personField = personFieldOptions.find(({ id }) => id === personFieldId);
                               update(scope, field.id, {
-                                person_field_id: personFieldId,
-                                ...(personField
-                                  ? {
-                                      type: personField.type,
-                                      options: personField.options,
-                                      allow_multiple: personField.allow_multiple,
-                                    }
-                                  : {}),
+                                ...(personFieldId
+                                  ? { link_person_field: true, person_field_id: personFieldId }
+                                  : { link_person_field: false, person_field_id: undefined }),
+                                ...(personField ? getLinkedPersonFieldPatch(personField) : {}),
                               });
                             }}
                           >
                             <MenuItem value="">{t('pages.events.fields.doNotSave')}</MenuItem>
-                            {getCompatiblePersonFields(field).map((personField) => (
+                            {personFieldOptions.map((personField) => (
                               <MenuItem key={personField.id} value={personField.id}>
                                 {personField.label}
                               </MenuItem>
                             ))}
-                            <MenuItem value={CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD}>
-                              {t('pages.events.fields.createPersonFieldFromThis')}
-                            </MenuItem>
+                            {canCreatePersonFields ? (
+                              <MenuItem value={CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD}>
+                                {t('pages.events.fields.createPersonFieldFromThis')}
+                              </MenuItem>
+                            ) : null}
                           </Select>
                         </FormControl>
                       ) : null}
@@ -317,7 +462,9 @@ export const EventCustomFieldsEditor = ({
                     ) : null}
                     {canUpdateEventType && mode === 'event' ? (
                       <FormControlLabel
-                        control={<Switch checked={scope === 'type'} onChange={() => move(scope, field)} />}
+                        control={
+                          <Switch checked={scope === 'type'} disabled={readOnly} onChange={() => move(scope, field)} />
+                        }
                         label={t('pages.events.fields.allEvents')}
                       />
                     ) : null}
@@ -325,15 +472,15 @@ export const EventCustomFieldsEditor = ({
                 </Stack>
               </Box>
             ))}
-            {canAddFields ? (
+            {canAddFields && !readOnly ? (
               <Button
                 startIcon={<AddRoundedIcon />}
                 disabled={readOnly}
                 onClick={() =>
                   onChange(
                     scope === 'event'
-                      ? { eventFields: [...eventFields, createField()], typeFields }
-                      : { eventFields, typeFields: [...typeFields, createField()] },
+                      ? { eventFields: [...eventFields, createField(canCreatePersonFields)], typeFields }
+                      : { eventFields, typeFields: [...typeFields, createField(canCreatePersonFields)] },
                   )
                 }
                 sx={{ alignSelf: 'flex-start' }}

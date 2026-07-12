@@ -1,6 +1,6 @@
+import { DialogTitleBar } from '@components/common/forms/DialogTitleBar';
 import { LocalizedDateField } from '@components/common/forms/LocalizedDateField';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import {
   Alert,
@@ -10,7 +10,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   FormControlLabel,
   IconButton,
   Stack,
@@ -59,6 +58,8 @@ export const EventEditorDialog = ({
   timezone,
   eventTypes,
   canCreateEventType,
+  canCreatePersonFields,
+  canUpdatePersonFields,
   canViewPersonFields,
   submitting,
   onClose,
@@ -213,14 +214,11 @@ export const EventEditorDialog = ({
 
   return (
     <Dialog open={open} fullWidth maxWidth="md" fullScreen={fullScreen} onClose={submitting ? undefined : onClose}>
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        {event ? t('pages.events.form.editTitle') : t('pages.events.form.createTitle')}
-        <Tooltip title={t('form.field.close')}>
-          <IconButton onClick={onClose} disabled={submitting} aria-label={t('form.field.close')}>
-            <CloseRoundedIcon />
-          </IconButton>
-        </Tooltip>
-      </DialogTitle>
+      <DialogTitleBar
+        title={event ? t('pages.events.form.editTitle') : t('pages.events.form.createTitle')}
+        closeDisabled={submitting}
+        onClose={onClose}
+      />
       <DialogContent dividers>
         <Tabs value={activeTab} onChange={(_event, value) => setActiveTab(value)} sx={{ mb: 2 }}>
           <Tab value="details" label={t('pages.events.form.tabs.details')} />
@@ -448,6 +446,8 @@ export const EventEditorDialog = ({
             eventFields={eventFields}
             typeFields={typeFields}
             canUpdateEventType={false}
+            canCreatePersonFields={canCreatePersonFields}
+            canUpdatePersonFields={canUpdatePersonFields}
             selfRegistration={selfRegistration}
             personFields={personFields}
             readOnlyTypeFields

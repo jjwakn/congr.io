@@ -17,6 +17,7 @@ import { Button, FormControlLabel, Menu, MenuItem, Popover, Stack, Switch, Typog
 import { EventTypesService } from '@services/eventTypes';
 import { EventsService } from '@services/events';
 import { FilesService } from '@services/files';
+import { PersonFieldsService } from '@services/persons';
 import { UsersService } from '@services/users';
 import { API_URL } from '@utils/constants';
 import { resolveEventFieldPersonLinks } from '@utils/eventFieldLinks';
@@ -28,6 +29,7 @@ import { type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useSt
 import { useTranslation } from 'react-i18next';
 import type { EventType } from '@/types/event-type.types';
 import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
+import type { PersonField } from '@/types/person.types';
 import { EventDetailsDialog } from './EventDetailsDialog';
 import { EventEditorDialog } from './EventEditorDialog';
 import type { EventFormValues } from './events.types';
@@ -145,6 +147,7 @@ export const EventsManagement = () => {
   const [total, setTotal] = useState(cached?.total ?? 0);
   const [loading, setLoading] = useState(false);
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
+  const [personFields, setPersonFields] = useState<PersonField[]>([]);
   const [editor, setEditor] = useState<{ event: CalendarEvent | null }>();
   const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
   const [deleteEvent, setDeleteEvent] = useState<CalendarEvent | null>(null);
@@ -172,6 +175,8 @@ export const EventsManagement = () => {
   const canDelete = hasPermission('event', 'delete');
   const canCreateType = hasPermission('event_type', 'create');
   const canViewType = hasPermission('event_type', 'get');
+  const canCreatePersonFields = hasPermission('person_field', 'create');
+  const canUpdatePersonFields = hasPermission('person_field', 'update');
   const canViewPersonFields = hasPermission('person_field', 'get');
   const timezone = congregation?.timezone ?? 'UTC';
   const use12HourTime = user?.preferences?.time_format === '12h';
@@ -274,11 +279,29 @@ export const EventsManagement = () => {
       );
   }, [canViewType, showNotification, t]);
 
+  useEffect(() => {
+    if (!canViewPersonFields) return;
+
+    void httpRequest<{ result: PersonField[]; total: number }>({
+      service: PersonFieldsService.list,
+      data: { page: 0, size: 500, order: 'label', direction: 'ASC' },
+    })
+      .then(({ result }) => setPersonFields(result ?? []))
+      .catch((value) =>
+        showNotification(value instanceof Error ? value.message : t('pages.persons.fieldsCrud.loadFailed'), {
+          severity: 'error',
+        }),
+      );
+  }, [canViewPersonFields, showNotification, t]);
+
   const saveEvent = async (values: EventFormValues, image?: File) => {
     setSubmitting(true);
     try {
       const eventFieldIds = new Set(values.event_fields.map(({ id }) => id));
-      const resolvedCustomFields = await resolveEventFieldPersonLinks(values.custom_fields);
+      const resolvedCustomFields = await resolveEventFieldPersonLinks(values.custom_fields, {
+        canCreatePersonFields,
+        canUpdatePersonFields,
+      });
       const resolvedEventFields = resolvedCustomFields.filter(({ id }) => eventFieldIds.has(id));
       const inheritedFields = resolvedCustomFields.filter(({ id }) => !eventFieldIds.has(id));
       const { event_fields: _eventFields, ...eventValues } = values;
@@ -708,6 +731,8 @@ export const EventsManagement = () => {
           timezone={timezone}
           eventTypes={eventTypes}
           canCreateEventType={canCreateType}
+          canCreatePersonFields={canCreatePersonFields}
+          canUpdatePersonFields={canUpdatePersonFields}
           canViewPersonFields={canViewPersonFields}
           submitting={submitting}
           onClose={() => setEditor(undefined)}
@@ -719,9 +744,15 @@ export const EventsManagement = () => {
         event={detailEvent}
         timezone={timezone}
         imageUrl={detailEvent ? toImageUrl(detailEvent) : undefined}
+        canEdit={canUpdate}
+        personFields={personFields}
         use12HourTime={use12HourTime}
         onClose={() => setDetailEvent(null)}
         onAddToCalendar={addToCalendar}
+        onEdit={(event) => {
+          setDetailEvent(null);
+          setEditor({ event });
+        }}
         onShare={(event) => void shareEvent(event)}
       />
 

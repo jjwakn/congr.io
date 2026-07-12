@@ -251,7 +251,21 @@ export const PersonsManagement = () => {
         />
       ) : null}
       {detailPerson ? (
-        <PersonDetailsDialog person={detailPerson} fields={fields} onClose={() => setDetailPerson(undefined)} />
+        <PersonDetailsDialog
+          person={detailPerson}
+          fields={fields}
+          editDisabled={!hasPermission('person', 'update')}
+          onClose={() => setDetailPerson(undefined)}
+          onEdit={
+            hasPermission('person', 'update')
+              ? () => {
+                  setEditPerson(detailPerson);
+                  setPersonOpen(true);
+                  setDetailPerson(undefined);
+                }
+              : undefined
+          }
+        />
       ) : null}
       <ConfirmDialog
         open={Boolean(pendingDelete)}

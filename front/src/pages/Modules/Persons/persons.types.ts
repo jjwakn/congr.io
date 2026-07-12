@@ -50,5 +50,7 @@ export interface PersonCustomFieldsProps {
 export interface PersonDetailsDialogProps {
   person: Person;
   fields: PersonField[];
+  editDisabled?: boolean;
   onClose: () => void;
+  onEdit?: () => void;
 }

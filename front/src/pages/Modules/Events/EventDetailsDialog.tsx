@@ -1,20 +1,23 @@
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { DialogTitleBar } from '@components/common/forms/DialogTitleBar';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import {
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
-  IconButton,
   Stack,
   Switch,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from '@mui/material';
 import { MuiIcon } from '@utils/muiIcons';
 import { DateTime } from 'luxon';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { EventCustomFieldsEditor } from './EventCustomFieldsEditor';
 import type { EventDetailsDialogProps } from './events.types';
 
 const formatDateTime = (value: string, timezone: string, language: string, use12HourTime: boolean) =>
@@ -27,111 +30,133 @@ export const EventDetailsDialog = ({
   event,
   timezone,
   imageUrl,
+  canEdit = false,
+  personFields,
   use12HourTime,
   onClose,
   onAddToCalendar,
+  onEdit,
   onShare,
 }: EventDetailsDialogProps) => {
   const { i18n, t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<'details' | 'fields'>('details');
+  const typeFieldIds = useMemo(
+    () => new Set((event?.type?.custom_fields ?? []).map(({ id }) => id)),
+    [event?.type?.custom_fields],
+  );
+  const typeFields = useMemo(
+    () => (event?.custom_fields ?? []).filter(({ id }) => typeFieldIds.has(id)),
+    [event?.custom_fields, typeFieldIds],
+  );
+  const eventFields = useMemo(
+    () => (event?.custom_fields ?? []).filter(({ id }) => !typeFieldIds.has(id)),
+    [event?.custom_fields, typeFieldIds],
+  );
 
   return (
     <Dialog open={Boolean(event)} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
-          <MuiIcon name={event?.type?.icon} sx={{ color: event?.type?.color ?? 'primary.main' }} />
-          <Typography variant="h6" noWrap>
-            {event?.name}
-          </Typography>
-        </Stack>
-        <IconButton onClick={onClose} aria-label={t('form.field.close')}>
-          <CloseRoundedIcon />
-        </IconButton>
-      </DialogTitle>
+      <DialogTitleBar
+        title={
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+            <MuiIcon name={event?.type?.icon} sx={{ color: event?.type?.color ?? 'primary.main' }} />
+            <Typography variant="h6" noWrap>
+              {event?.name}
+            </Typography>
+          </Stack>
+        }
+        action={
+          canEdit && event && onEdit ? (
+            <Button startIcon={<EditOutlinedIcon />} onClick={() => onEdit(event)}>
+              {t('pages.events.actions.edit')}
+            </Button>
+          ) : undefined
+        }
+        onClose={onClose}
+      />
       <DialogContent dividers>
-        <Stack spacing={2}>
-          {event && imageUrl ? (
-            <Box
-              component="img"
-              src={imageUrl}
-              alt={event.name}
-              sx={{ width: '100%', maxHeight: 320, objectFit: 'contain' }}
-            />
-          ) : null}
-          <TextField
-            fullWidth
-            label={t('pages.events.form.type')}
-            value={event?.type?.name ?? ''}
-            slotProps={{ input: { readOnly: true } }}
-          />
-          <TextField
-            fullWidth
-            label={t('pages.events.form.name')}
-            value={event?.name ?? ''}
-            slotProps={{ input: { readOnly: true } }}
-          />
-          <TextField
-            fullWidth
-            multiline
-            minRows={3}
-            label={t('pages.events.form.description')}
-            value={event?.description ?? ''}
-            slotProps={{ input: { readOnly: true } }}
-          />
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+        <Tabs value={activeTab} onChange={(_event, value) => setActiveTab(value)} sx={{ mb: 2 }}>
+          <Tab value="details" label={t('pages.events.form.tabs.details')} />
+          <Tab value="fields" label={t('pages.events.form.tabs.fields')} />
+        </Tabs>
+        {activeTab === 'details' ? (
+          <Stack spacing={2}>
+            {event && imageUrl ? (
+              <Box
+                component="img"
+                src={imageUrl}
+                alt={event.name}
+                sx={{ width: '100%', maxHeight: 320, objectFit: 'contain' }}
+              />
+            ) : null}
             <TextField
               fullWidth
-              label={t('pages.events.form.start')}
-              value={event ? formatDateTime(event.start_datetime, timezone, i18n.language, use12HourTime) : ''}
+              label={t('pages.events.form.type')}
+              value={event?.type?.name ?? ''}
               slotProps={{ input: { readOnly: true } }}
             />
             <TextField
               fullWidth
-              label={t('pages.events.form.end')}
-              value={event ? formatDateTime(event.end_datetime, timezone, i18n.language, use12HourTime) : ''}
+              label={t('pages.events.form.name')}
+              value={event?.name ?? ''}
               slotProps={{ input: { readOnly: true } }}
             />
-          </Stack>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Switch checked={Boolean(event?.all_day)} disabled />
-              <Typography>{t('pages.events.form.allDay')}</Typography>
+            <TextField
+              fullWidth
+              multiline
+              minRows={3}
+              label={t('pages.events.form.description')}
+              value={event?.description ?? ''}
+              slotProps={{ input: { readOnly: true } }}
+            />
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <TextField
+                fullWidth
+                label={t('pages.events.form.start')}
+                value={event ? formatDateTime(event.start_datetime, timezone, i18n.language, use12HourTime) : ''}
+                slotProps={{ input: { readOnly: true } }}
+              />
+              <TextField
+                fullWidth
+                label={t('pages.events.form.end')}
+                value={event ? formatDateTime(event.end_datetime, timezone, i18n.language, use12HourTime) : ''}
+                slotProps={{ input: { readOnly: true } }}
+              />
             </Stack>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Switch checked={Boolean(event?.is_public)} disabled />
-              <Typography>{t('pages.events.form.public')}</Typography>
-            </Stack>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Switch checked={Boolean(event?.attendance_enabled)} disabled />
-              <Typography>{t('pages.events.form.attendance')}</Typography>
-            </Stack>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Switch checked={Boolean(event?.self_registration_enabled)} disabled />
-              <Typography>{t('pages.events.form.selfRegistration')}</Typography>
-            </Stack>
-          </Stack>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Switch checked={Boolean(event?.save_attendance_date)} disabled />
-            <Typography>{t('pages.events.form.saveAttendanceDate')}</Typography>
-          </Stack>
-          {event?.custom_fields.length ? (
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                {t('pages.events.form.tabs.fields')}
-              </Typography>
-              <Stack spacing={1}>
-                {event.custom_fields.map((field) => (
-                  <TextField
-                    key={field.id}
-                    fullWidth
-                    label={field.label}
-                    value={t(`pages.events.fields.types.${field.type}`)}
-                    slotProps={{ input: { readOnly: true } }}
-                  />
-                ))}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Switch checked={Boolean(event?.all_day)} disabled />
+                <Typography>{t('pages.events.form.allDay')}</Typography>
               </Stack>
-            </Box>
-          ) : null}
-        </Stack>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Switch checked={Boolean(event?.is_public)} disabled />
+                <Typography>{t('pages.events.form.public')}</Typography>
+              </Stack>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Switch checked={Boolean(event?.attendance_enabled)} disabled />
+                <Typography>{t('pages.events.form.attendance')}</Typography>
+              </Stack>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Switch checked={Boolean(event?.self_registration_enabled)} disabled />
+                <Typography>{t('pages.events.form.selfRegistration')}</Typography>
+              </Stack>
+            </Stack>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Switch checked={Boolean(event?.save_attendance_date)} disabled />
+              <Typography>{t('pages.events.form.saveAttendanceDate')}</Typography>
+            </Stack>
+          </Stack>
+        ) : (
+          <EventCustomFieldsEditor
+            eventFields={eventFields}
+            typeFields={typeFields}
+            canUpdateEventType={false}
+            selfRegistration={Boolean(event?.self_registration_enabled)}
+            personFields={personFields}
+            readOnly
+            canAddFields={false}
+            onChange={() => undefined}
+          />
+        )}
       </DialogContent>
       <DialogActions>
         {event ? (

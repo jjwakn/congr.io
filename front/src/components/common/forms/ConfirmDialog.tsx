@@ -1,17 +1,6 @@
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { useTranslation } from 'react-i18next';
+import { Button, Dialog, DialogActions, DialogContent, Typography } from '@mui/material';
 import { ConfirmDialogProps } from './ConfirmDialog.types';
+import { DialogTitleBar } from './DialogTitleBar';
 
 export const ConfirmDialog = ({
   open,
@@ -26,20 +15,9 @@ export const ConfirmDialog = ({
   confirmColor = 'primary',
   confirmVariant = 'contained',
 }: ConfirmDialogProps) => {
-  const { t } = useTranslation();
-
   return (
     <Dialog open={open} onClose={confirming ? undefined : onClose} maxWidth={maxWidth} fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-        <Box component="span" sx={{ minWidth: 0 }}>
-          {title}
-        </Box>
-        <Tooltip title={t('form.field.close')}>
-          <IconButton onClick={onClose} disabled={confirming} aria-label={t('form.field.close')} edge="end">
-            <CloseRoundedIcon />
-          </IconButton>
-        </Tooltip>
-      </DialogTitle>
+      <DialogTitleBar title={title} closeDisabled={confirming} onClose={onClose} />
 
       <DialogContent>
         <Typography variant="body2">{message}</Typography>

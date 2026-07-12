@@ -31,6 +31,8 @@ export interface EventEditorDialogProps {
   timezone: string;
   eventTypes: EventType[];
   canCreateEventType: boolean;
+  canCreatePersonFields: boolean;
+  canUpdatePersonFields: boolean;
   canViewPersonFields: boolean;
   submitting: boolean;
   onClose: () => void;
@@ -43,9 +45,12 @@ export interface EventCustomFieldsEditorProps {
   eventFields: EventCustomField[];
   typeFields: EventCustomField[];
   canUpdateEventType: boolean;
+  canCreatePersonFields?: boolean;
+  canUpdatePersonFields?: boolean;
   selfRegistration: boolean;
   personFields: PersonField[];
   mode?: 'event' | 'event-type';
+  readOnly?: boolean;
   readOnlyTypeFields?: boolean;
   canAddFields?: boolean;
   onChange: (value: { eventFields: EventCustomField[]; typeFields: EventCustomField[] }) => void;
@@ -55,9 +60,12 @@ export interface EventDetailsDialogProps {
   event: CalendarEvent | null;
   timezone: string;
   imageUrl?: string;
+  canEdit?: boolean;
+  personFields: PersonField[];
   use12HourTime: boolean;
   onClose: () => void;
   onAddToCalendar: (event: CalendarEvent) => void;
+  onEdit?: (event: CalendarEvent) => void;
   onShare: (event: CalendarEvent) => void;
 }
 

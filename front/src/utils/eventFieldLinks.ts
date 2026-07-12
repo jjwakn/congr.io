@@ -15,6 +15,11 @@ const normalizeFieldOptions = (field: EventCustomField): EventCustomField => ({
   calculated_conditions: field.type === 'yes_no' ? (field.calculated_conditions ?? []) : [],
 });
 
+export interface ResolveEventFieldPersonLinksOptions {
+  canCreatePersonFields: boolean;
+  canUpdatePersonFields: boolean;
+}
+
 export const toPersonFieldType = (type: EventFieldType): PersonFieldType => {
   switch (type) {
     case 'paragraph':
@@ -33,13 +38,28 @@ export const toPersonFieldType = (type: EventFieldType): PersonFieldType => {
   }
 };
 
-export const resolveEventFieldPersonLinks = async (fields: EventCustomField[]): Promise<EventCustomField[]> => {
+export const resolveEventFieldPersonLinks = async (
+  fields: EventCustomField[],
+  options: ResolveEventFieldPersonLinksOptions,
+): Promise<EventCustomField[]> => {
   const normalizedFields = fields.map(normalizeFieldOptions);
   const resolvedFields = [...normalizedFields];
   const existingLinkedFieldIds = new Set<string>();
 
   for (const field of normalizedFields) {
     if (!field.link_person_field || field.person_field_id !== CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD) continue;
+    if (!options.canCreatePersonFields) {
+      resolvedFields.forEach((resolvedField, index) => {
+        if (resolvedField.id === field.id) {
+          resolvedFields[index] = {
+            ...resolvedField,
+            link_person_field: false,
+            person_field_id: undefined,
+          };
+        }
+      });
+      continue;
+    }
 
     const created = await httpRequest<PersonField>({
       service: PersonFieldsService.create,
@@ -68,6 +88,8 @@ export const resolveEventFieldPersonLinks = async (fields: EventCustomField[]): 
       existingLinkedFieldIds.add(field.person_field_id);
     }
   });
+
+  if (!options.canUpdatePersonFields) return resolvedFields;
 
   for (const personFieldId of existingLinkedFieldIds) {
     const linkedFields = resolvedFields.filter(

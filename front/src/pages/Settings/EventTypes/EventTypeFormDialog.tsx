@@ -54,6 +54,8 @@ export const EventTypeFormDialog = ({
 }: EventTypeFormDialogProps) => {
   const { t } = useTranslation();
   const { hasPermission } = useAuth();
+  const canCreatePersonFields = hasPermission('person_field', 'create');
+  const canUpdatePersonFields = hasPermission('person_field', 'update');
   const [tab, setTab] = useState<EventTypeFormTab>('info');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -331,6 +333,8 @@ export const EventTypeFormDialog = ({
             eventFields={[]}
             typeFields={customFields}
             canUpdateEventType
+            canCreatePersonFields={canCreatePersonFields}
+            canUpdatePersonFields={canUpdatePersonFields}
             selfRegistration={defaultSelfRegistration}
             personFields={personFields}
             onChange={({ typeFields }) => {
