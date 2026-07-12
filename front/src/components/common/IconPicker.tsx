@@ -6,16 +6,24 @@ import type { IconPickerProps } from './IconPicker.types';
 export const IconPicker = ({ label, value, disabled = false, onChange }: IconPickerProps) => {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [search, setSearch] = useState(value || DEFAULT_MUI_ICON);
-  const selectedIcon = value || DEFAULT_MUI_ICON;
+  const supportedIcon = MUI_ICON_OPTIONS.includes(value ?? '');
+  const selectedIcon = supportedIcon && value ? value : DEFAULT_MUI_ICON;
+
   useEffect(() => {
     setSearch(selectedIcon);
   }, [selectedIcon]);
+
+  useEffect(() => {
+    if (value && !supportedIcon) onChange(DEFAULT_MUI_ICON);
+  }, [onChange, supportedIcon, value]);
+
   const filteredIcons = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    return normalizedSearch
-      ? MUI_ICON_OPTIONS.filter((name) => name.toLowerCase().includes(normalizedSearch))
-      : MUI_ICON_OPTIONS;
-  }, [search]);
+    if (!normalizedSearch || normalizedSearch === selectedIcon.toLowerCase()) return MUI_ICON_OPTIONS;
+
+    const matches = MUI_ICON_OPTIONS.filter((name) => name.toLowerCase().includes(normalizedSearch));
+    return matches.length ? matches : MUI_ICON_OPTIONS;
+  }, [search, selectedIcon]);
   const close = () => {
     setAnchor(null);
     setSearch(selectedIcon);
