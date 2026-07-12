@@ -51,6 +51,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import type { EventType } from '@/types/event-type.types';
 import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
+import { EventCalendarTitlePickerPopover } from './EventCalendarTitlePickerPopover';
 import { EventDetailsDialog } from './EventDetailsDialog';
 import { EventEditorDialog } from './EventEditorDialog';
 import type { EventFormValues } from './events.types';
@@ -284,6 +285,13 @@ export const EventCalendar = () => {
   };
 
   const api = calendarRef.current?.getApi();
+  const currentViewDate = api?.getDate() ?? new Date();
+  const weekStartsOn = i18n.language.startsWith('es') ? 1 : 0;
+
+  const handleDatePickerNavigate = (nextView: string, date: Date) => {
+    api?.changeView(nextView, date);
+    setView(nextView);
+  };
 
   return (
     <ModuleSection<CalendarEvent>
@@ -326,11 +334,38 @@ export const EventCalendar = () => {
             </Tooltip>
           </Stack>
           <Button
-            endIcon={<ExpandMoreRoundedIcon />}
+            aria-label={t('pages.events.selectDate')}
+            color="inherit"
+            endIcon={
+              <ExpandMoreRoundedIcon
+                sx={{
+                  fontSize: '0.7em',
+                  transform: dateAnchor ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 150ms ease',
+                }}
+              />
+            }
             onClick={(e) => setDateAnchor(e.currentTarget)}
-            sx={{ minWidth: 0 }}
+            sx={{
+              color: 'text.primary',
+              fontSize: { xs: '1.45rem', md: '1.75rem' },
+              fontWeight: 700,
+              lineHeight: 1.2,
+              minWidth: 0,
+              p: 0,
+              textAlign: 'left',
+              textTransform: 'none',
+              whiteSpace: 'normal',
+              '&:hover': {
+                backgroundColor: 'transparent',
+              },
+              '& .MuiButton-endIcon': {
+                ml: 0.25,
+              },
+            }}
+            variant="text"
           >
-            <Typography noWrap fontWeight={600}>
+            <Typography component="span" noWrap sx={{ font: 'inherit', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {title}
             </Typography>
           </Button>
@@ -423,52 +458,19 @@ export const EventCalendar = () => {
           ))}
         </Menu>
 
-        <Popover
-          open={Boolean(dateAnchor)}
+        <EventCalendarTitlePickerPopover
           anchorEl={dateAnchor}
+          currentViewDate={currentViewDate}
+          currentViewType={view}
+          locale={i18n.language}
+          nextLabel={t('pages.events.next')}
+          previousLabel={t('pages.events.previous')}
+          selectTitleLabel={t('pages.events.selectDate')}
           onClose={() => setDateAnchor(null)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ p: 1, maxWidth: 320 }}>
-            {Array.from(
-              { length: 7 },
-              (_value, index) => DateTime.fromJSDate(api?.getDate() ?? new Date()).year - 3 + index,
-            ).map((year) => (
-              <Button
-                key={year}
-                size="small"
-                variant={year === DateTime.fromJSDate(api?.getDate() ?? new Date()).year ? 'contained' : 'text'}
-                onClick={() =>
-                  api?.gotoDate(
-                    DateTime.fromJSDate(api?.getDate() ?? new Date())
-                      .set({ year })
-                      .toISODate() ?? '',
-                  )
-                }
-              >
-                {year}
-              </Button>
-            ))}
-            {Array.from({ length: 12 }, (_value, month) => (
-              <Button
-                key={month}
-                size="small"
-                onClick={() => {
-                  api?.gotoDate(
-                    DateTime.fromJSDate(api?.getDate() ?? new Date())
-                      .set({ month: month + 1 })
-                      .toISODate() ?? '',
-                  );
-                  setDateAnchor(null);
-                }}
-              >
-                {DateTime.local(2026, month + 1)
-                  .setLocale(i18n.language)
-                  .toFormat('LLL')}
-              </Button>
-            ))}
-          </Stack>
-        </Popover>
+          onNavigate={handleDatePickerNavigate}
+          open={Boolean(dateAnchor)}
+          weekStartsOn={weekStartsOn}
+        />
 
         <Popover
           open={Boolean(dayMenu)}

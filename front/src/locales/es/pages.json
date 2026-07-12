@@ -461,6 +461,7 @@
     "filter": "Filtrar tipos de evento",
     "previous": "Anterior",
     "next": "Siguiente",
+    "selectDate": "Seleccionar fecha",
     "refresh": "Actualizar calendario",
     "create": "Crear evento",
     "loading": "Cargando eventos...",

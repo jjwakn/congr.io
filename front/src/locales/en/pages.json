@@ -461,6 +461,7 @@
     "filter": "Filter event types",
     "previous": "Previous",
     "next": "Next",
+    "selectDate": "Select date",
     "refresh": "Refresh calendar",
     "create": "Create event",
     "loading": "Loading events...",

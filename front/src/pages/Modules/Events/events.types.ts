@@ -1,4 +1,5 @@
 import type { DateSelectArg } from '@fullcalendar/core';
+import { DateTime } from 'luxon';
 import type { EventType } from '@/types/event-type.types';
 import type { CalendarEvent } from '@/types/event.types';
 import type { EventCustomField } from '@/types/event.types';
@@ -58,4 +59,33 @@ export interface EventDetailsDialogProps {
   onClose: () => void;
   onAddToCalendar: (event: CalendarEvent) => void;
   onShare: (event: CalendarEvent) => void;
+}
+
+export type EventCalendarTitlePickerPanel = 'days' | 'months' | 'weeks' | 'years';
+export type EventCalendarDateTime = ReturnType<typeof DateTime.now>;
+
+export interface EventCalendarTitlePickerDayCell {
+  date: EventCalendarDateTime;
+  isoDate: string;
+  isCurrentMonth: boolean;
+}
+
+export interface EventCalendarTitlePickerWeekRow {
+  endDate: EventCalendarDateTime;
+  isSelected: boolean;
+  startDate: EventCalendarDateTime;
+}
+
+export interface EventCalendarTitlePickerPopoverProps {
+  anchorEl: HTMLElement | null;
+  currentViewDate: Date;
+  currentViewType: string;
+  locale: string;
+  nextLabel: string;
+  previousLabel: string;
+  selectTitleLabel: string;
+  onClose: () => void;
+  onNavigate: (viewType: string, date: Date) => void;
+  open: boolean;
+  weekStartsOn: number;
 }
