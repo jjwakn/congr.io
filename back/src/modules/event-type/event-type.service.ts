@@ -1,13 +1,14 @@
 import { I18nService } from 'nestjs-i18n';
 import { randomUUID } from 'node:crypto';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { Injectable, NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getUserCongregationContext } from '../../utils/congregation-context';
 import { Congregation } from '../congregation/congregation.entity';
 import { Event } from '../event/event.entity';
 import type { FieldCondition } from '../person-field/person-field.entity';
+import { PersonField } from '../person-field/person-field.entity';
 import { ProcessStep } from '../process/process-step.entity';
 import { User } from '../user/user.entity';
 import { EventType } from './event-type.entity';
@@ -53,6 +54,9 @@ export class EventTypeService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    @InjectRepository(PersonField)
+    private readonly personFieldRepository: Repository<PersonField>,
 
     @InjectRepository(Congregation)
     private readonly congregationRepository: Repository<Congregation>,
@@ -127,10 +131,62 @@ export class EventTypeService {
     };
   }
 
+  private async hydrateLinkedFieldOptions({
+    customFields,
+    congregationId,
+  }: {
+    customFields: EventTypeCustomField[];
+    congregationId: string;
+  }): Promise<EventTypeCustomField[]> {
+    const personFieldIds = Array.from(
+      new Set(
+        customFields
+          .filter(
+            (field): field is EventTypeCustomField & { person_field_id: string } =>
+              field.link_person_field && field.type === 'options' && Boolean(field.person_field_id),
+          )
+          .map((field) => field.person_field_id),
+      ),
+    );
+
+    if (!personFieldIds.length) return customFields;
+
+    const personFields = await this.personFieldRepository.find({
+      where: {
+        id: In(personFieldIds),
+        congregation_id: congregationId,
+        type: 'options',
+        deleted_at: IsNull(),
+      },
+    });
+    const personFieldById = new Map(personFields.map((personField) => [personField.id, personField]));
+
+    return customFields.map((field) => {
+      const personField = field.person_field_id ? personFieldById.get(field.person_field_id) : undefined;
+      if (!personField) return field;
+
+      return {
+        ...field,
+        options: personField.options,
+        allow_multiple: personField.allow_multiple,
+      };
+    });
+  }
+
+  private async hydrateEventType(eventType: EventType, congregationId: string): Promise<EventType> {
+    return {
+      ...eventType,
+      custom_fields: await this.hydrateLinkedFieldOptions({
+        customFields: eventType.custom_fields ?? [],
+        congregationId,
+      }),
+    };
+  }
+
   async list({ query, userId, congregationId }: EventTypeListProps) {
     const { congregation } = await this.getContext(userId, congregationId);
 
-    return findWithFilters<EventType, EventTypeQuery>({
+    const { result, total } = await findWithFilters<EventType, EventTypeQuery>({
       repository: this.repository,
       query,
       searchFields: ['id', 'name', 'description'],
@@ -141,6 +197,11 @@ export class EventTypeService {
         deleted_by: IsNull(),
       },
     });
+
+    return {
+      result: await Promise.all(result.map((eventType) => this.hydrateEventType(eventType, congregation.id))),
+      total,
+    };
   }
 
   async get({ id, userId, congregationId }: EventTypeGetProps) {
@@ -162,7 +223,7 @@ export class EventTypeService {
 
     if (!result) throw new NotFoundException(this.i18n.t('errors.eventType.notFound'));
 
-    return cleanColumns<EventType>(result);
+    return this.hydrateEventType(cleanColumns<EventType>(result), congregation.id);
   }
 
   async create({ data, userId, congregationId }: EventTypeCreateProps) {

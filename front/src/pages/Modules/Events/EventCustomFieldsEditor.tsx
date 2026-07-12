@@ -18,11 +18,16 @@ import {
   Typography,
 } from '@mui/material';
 import { CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD, STANDARD_PERSON_FIELDS } from '@utils/customFields';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EventCustomField, EventFieldType } from '@/types/event.types';
 import type { EventCustomFieldsEditorProps } from './events.types';
 
 const TYPES: EventFieldType[] = ['text', 'paragraph', 'number', 'yes_no', 'options', 'date'];
+
+const areOptionsEqual = (left: string[], right: string[]) =>
+  left.length === right.length && left.every((value, index) => value === right[index]);
+
 const createField = (): EventCustomField => ({
   id: crypto.randomUUID(),
   label: '',
@@ -47,16 +52,24 @@ export const EventCustomFieldsEditor = ({
   onChange,
 }: EventCustomFieldsEditorProps) => {
   const { t } = useTranslation();
-  const personFieldOptions = [
-    ...STANDARD_PERSON_FIELDS.map((field) => ({
-      id: field.id,
-      label: t(field.labelKey),
-      type: field.type,
-      options: field.options,
-      allow_multiple: field.allow_multiple ?? false,
-    })),
-    ...personFields,
-  ];
+  const syncedOptionSources = useRef<Set<string>>(new Set());
+  const persistedPersonFieldById = useMemo(
+    () => new Map(personFields.map((personField) => [personField.id, personField])),
+    [personFields],
+  );
+  const personFieldOptions = useMemo(
+    () => [
+      ...STANDARD_PERSON_FIELDS.map((field) => ({
+        id: field.id,
+        label: t(field.labelKey),
+        type: field.type,
+        options: field.options,
+        allow_multiple: field.allow_multiple ?? false,
+      })),
+      ...personFields,
+    ],
+    [personFields, t],
+  );
 
   const getCompatiblePersonFields = (field: EventCustomField) =>
     personFieldOptions.filter(
@@ -66,10 +79,78 @@ export const EventCustomFieldsEditor = ({
           (personField.type === 'text' || personField.type === 'paragraph')),
     );
 
+  useEffect(() => {
+    const syncField = (field: EventCustomField) => {
+      const personField =
+        field.link_person_field && field.person_field_id
+          ? persistedPersonFieldById.get(field.person_field_id)
+          : undefined;
+
+      if (!personField || field.type !== 'options' || personField.type !== 'options') return field;
+
+      const syncKey = [field.id, personField.id, personField.allow_multiple, ...personField.options].join('\u001f');
+      if (syncedOptionSources.current.has(syncKey)) return field;
+
+      syncedOptionSources.current.add(syncKey);
+      if (field.allow_multiple === personField.allow_multiple && areOptionsEqual(field.options, personField.options))
+        return field;
+
+      return {
+        ...field,
+        allow_multiple: personField.allow_multiple,
+        options: personField.options,
+      };
+    };
+
+    let changed = false;
+    const nextEventFields = eventFields.map((field) => {
+      const nextField = syncField(field);
+      if (nextField !== field) changed = true;
+      return nextField;
+    });
+    const nextTypeFields = typeFields.map((field) => {
+      const nextField = syncField(field);
+      if (nextField !== field) changed = true;
+      return nextField;
+    });
+
+    if (changed) onChange({ eventFields: nextEventFields, typeFields: nextTypeFields });
+  }, [eventFields, onChange, persistedPersonFieldById, typeFields]);
+
   const update = (scope: 'event' | 'type', id: string, patch: Partial<EventCustomField>) => {
-    const source = scope === 'event' ? eventFields : typeFields;
-    const next = source.map((field) => (field.id === id ? { ...field, ...patch } : field));
-    onChange(scope === 'event' ? { eventFields: next, typeFields } : { eventFields, typeFields: next });
+    const targetField = (scope === 'event' ? eventFields : typeFields).find((field) => field.id === id);
+    const patchedTarget = targetField ? { ...targetField, ...patch } : undefined;
+    const linkedPersonFieldId =
+      patchedTarget?.link_person_field && patchedTarget.person_field_id !== CREATE_PERSON_FIELD_FROM_CAPTURED_FIELD
+        ? patchedTarget.person_field_id
+        : undefined;
+    const shouldSyncLinkedOptions =
+      Boolean(linkedPersonFieldId) &&
+      patchedTarget?.type === 'options' &&
+      ('options' in patch || 'allow_multiple' in patch);
+
+    const applyPatch = (field: EventCustomField) => {
+      if (field.id === id) return { ...field, ...patch };
+      if (
+        shouldSyncLinkedOptions &&
+        field.link_person_field &&
+        field.person_field_id === linkedPersonFieldId &&
+        field.type === 'options'
+      ) {
+        return {
+          ...field,
+          ...('options' in patch ? { options: patch.options ?? [] } : {}),
+          ...('allow_multiple' in patch ? { allow_multiple: patch.allow_multiple ?? false } : {}),
+        };
+      }
+
+      return field;
+    };
+
+    onChange({
+      eventFields: eventFields.map(applyPatch),
+      typeFields: typeFields.map(applyPatch),
+    });
   };
   const remove = (scope: 'event' | 'type', id: string) =>
     onChange(
@@ -154,11 +235,7 @@ export const EventCustomFieldsEditor = ({
                         addLabel={t('pages.persons.fieldsCrud.addOption')}
                         removeLabel={t('form.common.delete')}
                         values={field.options}
-                        onChange={(options) =>
-                          update(scope, field.id, {
-                            options: options.map((value) => value.trim()).filter(Boolean),
-                          })
-                        }
+                        onChange={(options) => update(scope, field.id, { options })}
                       />
                     </>
                   ) : null}

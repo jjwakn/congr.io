@@ -9,7 +9,9 @@ import { Feature } from '../../utils/constants';
 import { parseDateTimeInTimeZone } from '../../utils/datetime';
 import { Congregation } from '../congregation/congregation.entity';
 import { EventType } from '../event-type/event-type.entity';
+import type { EventTypeCustomField } from '../event-type/event-type.types';
 import { FilesService } from '../files/files.service';
+import { PersonField } from '../person-field/person-field.entity';
 import { User } from '../user/user.entity';
 import { Event } from './event.entity';
 import {
@@ -22,6 +24,10 @@ import {
   EventUpdateProps,
 } from './event.types';
 
+export interface HydratableEvent extends Omit<Event, 'type'> {
+  type?: EventType | null;
+}
+
 @Injectable()
 export class EventService {
   constructor(
@@ -33,6 +39,9 @@ export class EventService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    @InjectRepository(PersonField)
+    private readonly personFieldRepository: Repository<PersonField>,
 
     @InjectRepository(Congregation)
     private readonly congregationRepository: Repository<Congregation>,
@@ -123,6 +132,67 @@ export class EventService {
     return eventType;
   }
 
+  private async hydrateLinkedFieldOptions({
+    customFields,
+    congregationId,
+  }: {
+    customFields: EventTypeCustomField[];
+    congregationId: string;
+  }): Promise<EventTypeCustomField[]> {
+    const personFieldIds = Array.from(
+      new Set(
+        customFields
+          .filter(
+            (field): field is EventTypeCustomField & { person_field_id: string } =>
+              field.link_person_field && field.type === 'options' && Boolean(field.person_field_id),
+          )
+          .map((field) => field.person_field_id),
+      ),
+    );
+
+    if (!personFieldIds.length) return customFields;
+
+    const personFields = await this.personFieldRepository.find({
+      where: {
+        id: In(personFieldIds),
+        congregation_id: congregationId,
+        type: 'options',
+        deleted_at: IsNull(),
+      },
+    });
+    const personFieldById = new Map(personFields.map((personField) => [personField.id, personField]));
+
+    return customFields.map((field) => {
+      const personField = field.person_field_id ? personFieldById.get(field.person_field_id) : undefined;
+      if (!personField) return field;
+
+      return {
+        ...field,
+        options: personField.options,
+        allow_multiple: personField.allow_multiple,
+      };
+    });
+  }
+
+  private async hydrateEvent(event: HydratableEvent, congregationId: string): Promise<HydratableEvent> {
+    return {
+      ...event,
+      custom_fields: await this.hydrateLinkedFieldOptions({
+        customFields: event.custom_fields ?? [],
+        congregationId,
+      }),
+      type: event.type
+        ? {
+            ...event.type,
+            custom_fields: await this.hydrateLinkedFieldOptions({
+              customFields: event.type.custom_fields ?? [],
+              congregationId,
+            }),
+          }
+        : event.type,
+    };
+  }
+
   private async loadEventOrThrow({ id, congregationId }: { id: string; congregationId: string }) {
     const result = await this.repository.findOne({
       where: {
@@ -140,7 +210,7 @@ export class EventService {
 
     if (!result) throw new NotFoundException(this.i18n.t('errors.event.notFound'));
 
-    return cleanColumns<Event>(result);
+    return this.hydrateEvent(cleanColumns<Event>(result), congregationId);
   }
 
   async list({ query, userId, congregationId, canViewAll = false }: EventListProps) {
@@ -176,11 +246,13 @@ export class EventService {
         : [];
     const eventTypeById = new Map(eventTypes.map((eventType) => [eventType.id, eventType]));
 
+    const events = result.map((event) => ({
+      ...event,
+      type: eventTypeById.get(event.event_type_id) ?? null,
+    }));
+
     return {
-      result: result.map((event) => ({
-        ...event,
-        type: eventTypeById.get(event.event_type_id) ?? null,
-      })),
+      result: await Promise.all(events.map((event) => this.hydrateEvent(event, congregation.id))),
       total,
     };
   }
@@ -327,7 +399,10 @@ export class EventService {
         ...(query.end ? { start_datetime: LessThan(new Date(query.end)) } : {}),
       },
     });
-    return { result, total };
+    return {
+      result: await Promise.all(result.map((event) => this.hydrateEvent(event, congregationId))),
+      total,
+    };
   }
 
   async getPublic(publicId: string) {
@@ -337,6 +412,6 @@ export class EventService {
     });
     if (!result || !result.congregation.features?.includes(Feature.PublicEvents))
       throw new NotFoundException(this.i18n.t('errors.event.notFound'));
-    return result;
+    return this.hydrateEvent(result, result.congregation_id);
   }
 }
