@@ -1,4 +1,5 @@
 import { PersonAutocomplete } from '@components/common/PersonAutocomplete';
+import { ConfirmDialog } from '@components/common/forms/ConfirmDialog';
 import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
@@ -8,12 +9,14 @@ import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import {
   Alert,
   Button,
@@ -25,6 +28,12 @@ import {
   Paper,
   Stack,
   Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Tabs,
   Tooltip,
   Typography,
@@ -35,14 +44,14 @@ import { PersonFieldsService, PersonsService } from '@services/persons';
 import { UsersService } from '@services/users';
 import { httpRequest } from '@utils/http';
 import { MuiIcon } from '@utils/muiIcons';
-import { getModulePath } from '@utils/routes';
+import { getHomePath, getModulePath } from '@utils/routes';
 import { DateTime } from 'luxon';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { EventParticipant } from '@/types/event-participant.types';
 import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
-import type { JsonObject } from '@/types/json.types';
+import type { JsonObject, JsonValue } from '@/types/json.types';
 import type { Person, PersonField } from '@/types/person.types';
 import { EventParticipantsEditorDialog } from '../Events/EventParticipantsEditorDialog';
 import { PersonFormDialog } from '../Persons/PersonFormDialog';
@@ -68,6 +77,21 @@ const getPersonMappedValue = (fieldId: string | undefined, person: Person) => {
   return standardValue ?? person.custom_values[fieldId];
 };
 
+const formatFieldValue = (value: JsonValue | undefined) => {
+  if (Array.isArray(value)) return value.join(', ');
+  return String(value ?? '-');
+};
+
+const getParticipantCode = (participant: EventParticipant) =>
+  participant.person?.code ?? String(participant.submitted_person.code ?? '-');
+
+const getParticipantName = (participant: EventParticipant) =>
+  participant.person
+    ? `${participant.person.first_name} ${participant.person.last_name}`
+    : `${String(participant.submitted_person.first_name ?? '')} ${String(
+        participant.submitted_person.last_name ?? '',
+      )}`.trim();
+
 export const RegistrationManagement = () => {
   const { t, i18n } = useTranslation();
   const { hasPermission, user, refreshSession } = useAuth();
@@ -82,17 +106,23 @@ export const RegistrationManagement = () => {
   const [historyRows, setHistoryRows] = useState<CalendarEvent[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyDeleting, setHistoryDeleting] = useState(false);
   const [person, setPerson] = useState<Person | null>(null);
   const [personFields, setPersonFields] = useState<PersonField[]>([]);
   const [values, setValues] = useState<JsonObject>({});
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
   const [editorEvent, setEditorEvent] = useState<CalendarEvent | null>(null);
+  const [editorReadOnly, setEditorReadOnly] = useState(false);
+  const [deleteEvent, setDeleteEvent] = useState<CalendarEvent | null>(null);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [personOpen, setPersonOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const selected = useMemo(() => events.find(({ id }) => id === routeEventId) ?? null, [events, routeEventId]);
   const canCreateRegistration = hasPermission('event_registration', 'create');
+  const canUpdateRegistration = hasPermission('event_registration', 'update');
   const canDeleteRegistration = hasPermission('event_registration', 'delete');
+  const canCreateEvent = hasPermission('event', 'create');
+  const canDeleteEvent = hasPermission('event', 'delete');
   const canCreatePerson = hasPermission('person', 'create');
   const canCreatePersonFields = hasPermission('person_field', 'create');
   const canViewPersonFields = hasPermission('person_field', 'get');
@@ -172,15 +202,49 @@ export const RegistrationManagement = () => {
   ]);
 
   useEffect(() => {
-    if (tab === 'history') void loadHistoryEvents();
-  }, [loadHistoryEvents, tab]);
+    if (tab === 'history' && canUpdateRegistration) void loadHistoryEvents();
+  }, [canUpdateRegistration, loadHistoryEvents, tab]);
+
+  useEffect(() => {
+    if (!canUpdateRegistration && tab === 'history') setTab('today');
+  }, [canUpdateRegistration, tab]);
 
   const openEditor = useCallback(
-    async (event: CalendarEvent) => {
+    async (event: CalendarEvent, readOnly = false) => {
+      setEditorReadOnly(readOnly);
       setEditorEvent(event);
       await loadParticipants(event.id);
     },
     [loadParticipants],
+  );
+
+  const removeHistoryEvent = useCallback(async () => {
+    if (!deleteEvent) return;
+    setHistoryDeleting(true);
+    try {
+      await httpRequest({ service: EventsService.remove, data: { id: deleteEvent.id } });
+      setDeleteEvent(null);
+      await loadHistoryEvents();
+      showNotification(t('pages.events.success.deleted'), { severity: 'success' });
+    } catch (value) {
+      showNotification(value instanceof Error ? value.message : t('pages.events.errors.delete'), { severity: 'error' });
+    } finally {
+      setHistoryDeleting(false);
+    }
+  }, [deleteEvent, loadHistoryEvents, showNotification, t]);
+
+  const removeRegisteredParticipant = useCallback(
+    async (participantId: string, eventId: string) => {
+      try {
+        await httpRequest({ service: EventParticipantsService.remove, data: { id: participantId } });
+        await loadParticipants(eventId);
+      } catch (value) {
+        showNotification(value instanceof Error ? value.message : t('pages.registration.loadFailed'), {
+          severity: 'error',
+        });
+      }
+    },
+    [loadParticipants, showNotification, t],
   );
 
   const savePerson = async (formValues: PersonFormValues) => {
@@ -230,19 +294,35 @@ export const RegistrationManagement = () => {
             row={event}
             actions={[
               {
+                id: 'view',
+                label: t('pages.events.actions.view'),
+                icon: VisibilityOutlinedIcon,
+                disabled: historyLoading,
+                onClick: (value) => void openEditor(value, true),
+              },
+              {
                 id: 'edit',
                 label: t('pages.registration.editPeople'),
                 icon: EditOutlinedIcon,
-                hidden: !canCreateRegistration && !canDeleteRegistration,
+                hidden: !canUpdateRegistration,
                 disabled: historyLoading,
                 onClick: (value) => void openEditor(value),
+              },
+              {
+                id: 'delete',
+                label: t('pages.events.actions.delete'),
+                icon: DeleteOutlineRoundedIcon,
+                color: 'error',
+                hidden: !canDeleteEvent,
+                disabled: historyLoading,
+                onClick: setDeleteEvent,
               },
             ]}
           />
         ),
       },
     ],
-    [canCreateRegistration, canDeleteRegistration, historyLoading, i18n.language, openEditor, t],
+    [canDeleteEvent, canUpdateRegistration, historyLoading, i18n.language, openEditor, t],
   );
 
   if (selected) {
@@ -306,73 +386,110 @@ export const RegistrationManagement = () => {
           {t('pages.registration.register')}
         </Button>
         <Typography variant="h6">{t('pages.registration.people')}</Typography>
-        <Stack spacing={1}>
-          {participants.map((participant) => (
-            <Stack
-              key={participant.id}
-              direction="row"
-              alignItems="center"
-              spacing={1}
-              sx={{ py: 1, borderBottom: 1, borderColor: 'divider' }}
-            >
-              <Typography sx={{ flex: 1 }}>
-                {participant.person
-                  ? `${participant.person.first_name} ${participant.person.last_name}`
-                  : `${String(participant.submitted_person.first_name ?? '')} ${String(participant.submitted_person.last_name ?? '')}`}
-              </Typography>
-              {!participant.person && participant.possible_person ? (
-                <>
-                  <Typography variant="body2" color="text.secondary">
-                    {t('pages.registration.possiblePerson', {
-                      name: `${participant.possible_person.first_name} ${participant.possible_person.last_name}`,
-                    })}
-                  </Typography>
-                  {hasPermission('event_registration', 'update') ? (
-                    <Tooltip title={t('pages.registration.confirmMatch')}>
-                      <IconButton
-                        color="success"
-                        onClick={() =>
-                          void httpRequest({
-                            service: EventParticipantsService.match,
-                            data: { id: participant.id, person_id: participant.possible_person?.id },
-                          }).then(() => loadParticipants(selected.id))
-                        }
-                      >
-                        <CheckRoundedIcon />
-                      </IconButton>
-                    </Tooltip>
-                  ) : null}
-                </>
-              ) : null}
-              {!participant.person && hasPermission('person', 'create') ? (
-                <Tooltip title={t('pages.registration.createPerson')}>
-                  <IconButton
-                    onClick={() =>
-                      void httpRequest<Person>({
-                        service: PersonsService.create,
-                        data: {
-                          first_name: String(participant.submitted_person.first_name ?? ''),
-                          last_name: String(participant.submitted_person.last_name ?? ''),
-                          phone: String(participant.submitted_person.phone ?? ''),
-                          email: String(participant.submitted_person.email ?? '') || undefined,
-                        },
-                      })
-                        .then((created) =>
-                          httpRequest({
-                            service: EventParticipantsService.match,
-                            data: { id: participant.id, person_id: created.id },
-                          }),
-                        )
-                        .then(() => loadParticipants(selected.id))
-                    }
-                  >
-                    <PersonAddAltOutlinedIcon />
-                  </IconButton>
-                </Tooltip>
-              ) : null}
-            </Stack>
-          ))}
-        </Stack>
+        <Paper variant="outlined">
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t('pages.persons.fields.code')}</TableCell>
+                  <TableCell>{t('pages.attendance.person')}</TableCell>
+                  {selected.custom_fields.map((field) => (
+                    <TableCell key={field.id}>{field.label}</TableCell>
+                  ))}
+                  <TableCell align="right">{t('pages.settings.congregation.actions')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {participants.length ? (
+                  participants.map((participant) => (
+                    <TableRow key={participant.id}>
+                      <TableCell>{getParticipantCode(participant)}</TableCell>
+                      <TableCell>{getParticipantName(participant) || t('pages.attendance.publicSubmission')}</TableCell>
+                      {selected.custom_fields.map((field) => (
+                        <TableCell key={`${participant.id}-${field.id}`}>
+                          {formatFieldValue(participant.field_values[field.id])}
+                        </TableCell>
+                      ))}
+                      <TableCell align="right">
+                        <Stack direction="row" justifyContent="flex-end" spacing={1}>
+                          {!participant.person && participant.possible_person ? (
+                            <Tooltip
+                              title={t('pages.registration.possiblePerson', {
+                                name: `${participant.possible_person.first_name} ${participant.possible_person.last_name}`,
+                              })}
+                            >
+                              <span>
+                                <IconButton
+                                  color="success"
+                                  disabled={!canUpdateRegistration}
+                                  onClick={() =>
+                                    void httpRequest({
+                                      service: EventParticipantsService.match,
+                                      data: { id: participant.id, person_id: participant.possible_person?.id },
+                                    }).then(() => loadParticipants(selected.id))
+                                  }
+                                >
+                                  <CheckRoundedIcon />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : null}
+                          {!participant.person && canCreatePerson ? (
+                            <Tooltip title={t('pages.registration.createPerson')}>
+                              <IconButton
+                                onClick={() =>
+                                  void httpRequest<Person>({
+                                    service: PersonsService.create,
+                                    data: {
+                                      first_name: String(participant.submitted_person.first_name ?? ''),
+                                      last_name: String(participant.submitted_person.last_name ?? ''),
+                                      phone: String(participant.submitted_person.phone ?? ''),
+                                      email: String(participant.submitted_person.email ?? '') || undefined,
+                                    },
+                                  })
+                                    .then((created) =>
+                                      httpRequest({
+                                        service: EventParticipantsService.match,
+                                        data: { id: participant.id, person_id: created.id },
+                                      }),
+                                    )
+                                    .then(() => loadParticipants(selected.id))
+                                }
+                              >
+                                <PersonAddAltOutlinedIcon />
+                              </IconButton>
+                            </Tooltip>
+                          ) : null}
+                          <ModuleRowActions
+                            row={participant}
+                            actions={[
+                              {
+                                id: 'delete',
+                                label: t('form.common.delete'),
+                                icon: DeleteOutlineRoundedIcon,
+                                color: 'error',
+                                hidden: !canDeleteRegistration || selected.registration_locked,
+                                onClick: (value) => void removeRegisteredParticipant(value.id, selected.id),
+                              },
+                            ]}
+                          />
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={selected.custom_fields.length + 3} align="center">
+                      <Typography variant="body2" color="text.secondary">
+                        {t('pages.registration.peopleEmpty')}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
         <Dialog open={registerOpen} onClose={() => setRegisterOpen(false)} fullWidth maxWidth="sm">
           <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography variant="h6">{t('pages.registration.register')}</Typography>
@@ -446,14 +563,14 @@ export const RegistrationManagement = () => {
       refreshAction={{
         id: 'refresh-registration',
         label: t('pages.modules.common.refresh'),
-        onClick: () => void (tab === 'history' ? loadHistoryEvents() : load()),
+        onClick: () => void (tab === 'history' && canUpdateRegistration ? loadHistoryEvents() : load()),
       }}
     >
       <Stack spacing={2}>
         <Typography variant="h5">{t('pages.registration.title')}</Typography>
         <Tabs value={tab} onChange={(_event, value: 'today' | 'history') => setTab(value)}>
           <Tab value="today" label={t('pages.registration.today')} />
-          <Tab value="history" label={t('pages.registration.history')} />
+          {canUpdateRegistration ? <Tab value="history" label={t('pages.registration.history')} /> : null}
         </Tabs>
         {tab === 'today' ? (
           <>
@@ -511,8 +628,23 @@ export const RegistrationManagement = () => {
               ))}
             </Stack>
           </>
-        ) : (
+        ) : canUpdateRegistration ? (
           <ModuleSection<CalendarEvent>
+            createAction={
+              canCreateEvent
+                ? {
+                    id: 'create-event',
+                    label: t('pages.events.create'),
+                    onClick: () => navigate(`${getHomePath()}?createEvent=1`),
+                  }
+                : undefined
+            }
+            refreshAction={{
+              id: 'refresh-registration-history',
+              label: t('pages.modules.common.refresh'),
+              disabled: historyLoading,
+              onClick: () => void loadHistoryEvents(),
+            }}
             search={{
               label: t('pages.modules.common.search'),
               value: historyList.search,
@@ -544,19 +676,31 @@ export const RegistrationManagement = () => {
               rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
             }}
           />
-        )}
+        ) : null}
         <EventParticipantsEditorDialog
           open={Boolean(editorEvent)}
           event={editorEvent}
           mode="registration"
           participants={participants}
           personFields={personFields}
-          canAdd={canCreateRegistration && !editorEvent?.registration_locked}
-          canRemove={canDeleteRegistration}
+          canAdd={!editorReadOnly && canCreateRegistration && !editorEvent?.registration_locked}
+          canRemove={!editorReadOnly && canDeleteRegistration}
           canCreatePerson={canCreatePerson}
           canCreatePersonFields={canCreatePersonFields}
+          readOnly={editorReadOnly}
           onClose={() => setEditorEvent(null)}
           onReload={() => (editorEvent ? loadParticipants(editorEvent.id) : Promise.resolve())}
+        />
+        <ConfirmDialog
+          open={Boolean(deleteEvent)}
+          title={t('pages.events.delete.title')}
+          message={t('pages.events.delete.message')}
+          confirmLabel={t('pages.events.actions.delete')}
+          cancelLabel={t('form.field.cancel')}
+          confirming={historyDeleting}
+          confirmColor="error"
+          onClose={() => setDeleteEvent(null)}
+          onConfirm={() => void removeHistoryEvent()}
         />
       </Stack>
     </ModuleSection>

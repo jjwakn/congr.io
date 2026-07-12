@@ -1,44 +1,81 @@
+import { ConfirmDialog } from '@components/common/forms/ConfirmDialog';
 import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
 import { useModuleList } from '@components/common/modules/useModuleList';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
-import { Button, MenuItem, Stack, Switch, Tab, Tabs, TextField, Typography } from '@mui/material';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import {
+  Button,
+  MenuItem,
+  Paper,
+  Stack,
+  Switch,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { EventParticipantsService } from '@services/eventParticipants';
 import { EventsService } from '@services/events';
 import { PersonFieldsService } from '@services/persons';
 import { httpRequest } from '@utils/http';
 import { MuiIcon } from '@utils/muiIcons';
+import { getHomePath } from '@utils/routes';
 import { DateTime } from 'luxon';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import type { EventParticipant } from '@/types/event-participant.types';
 import type { CalendarEvent, EventsListResponse } from '@/types/event.types';
+import type { JsonValue } from '@/types/json.types';
 import type { PersonField } from '@/types/person.types';
 import { EventParticipantsEditorDialog } from '../Events/EventParticipantsEditorDialog';
+
+const formatFieldValue = (value: JsonValue | undefined) => {
+  if (Array.isArray(value)) return value.join(', ');
+  return String(value ?? '-');
+};
+
+const getParticipantName = (participant: EventParticipant) =>
+  participant.person ? `${participant.person.first_name} ${participant.person.last_name}` : '';
 
 export const AttendanceManagement = () => {
   const { i18n, t } = useTranslation();
   const { hasPermission } = useAuth();
   const { showNotification } = useNotificationContext();
+  const navigate = useNavigate();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [historyRows, setHistoryRows] = useState<CalendarEvent[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyDeleting, setHistoryDeleting] = useState(false);
   const [tab, setTab] = useState<'today' | 'history'>('today');
   const [eventId, setEventId] = useState('');
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
   const [personFields, setPersonFields] = useState<PersonField[]>([]);
   const [editorEvent, setEditorEvent] = useState<CalendarEvent | null>(null);
+  const [editorReadOnly, setEditorReadOnly] = useState(false);
+  const [deleteEvent, setDeleteEvent] = useState<CalendarEvent | null>(null);
   const selectedEvent = events.find((event) => event.id === eventId) ?? null;
   const canCreatePerson = hasPermission('person', 'create');
   const canCreatePersonFields = hasPermission('person_field', 'create');
   const canViewPersonFields = hasPermission('person_field', 'get');
   const canCreateAttendance = hasPermission('event_attendance', 'create');
+  const canUpdateAttendance = hasPermission('event_attendance', 'update');
   const canDeleteAttendance = hasPermission('event_attendance', 'delete');
+  const canCreateEvent = hasPermission('event', 'create');
+  const canDeleteEvent = hasPermission('event', 'delete');
   const historyList = useModuleList({
     moduleKey: 'event-attendance-history',
     defaultSort: 'start_datetime',
@@ -77,7 +114,10 @@ export const AttendanceManagement = () => {
     if (current) {
       setEventId(current.id);
       await loadParticipants(current.id);
+      return;
     }
+    setEventId('');
+    setParticipants([]);
   }, [loadParticipants]);
 
   const loadHistoryEvents = useCallback(async () => {
@@ -115,8 +155,11 @@ export const AttendanceManagement = () => {
 
   useEffect(() => {
     if (tab === 'today') void loadEvents();
-    else void loadHistoryEvents();
-  }, [loadEvents, loadHistoryEvents, tab]);
+    else if (canUpdateAttendance) void loadHistoryEvents();
+  }, [canUpdateAttendance, loadEvents, loadHistoryEvents, tab]);
+  useEffect(() => {
+    if (!canUpdateAttendance && tab === 'history') setTab('today');
+  }, [canUpdateAttendance, tab]);
   useEffect(() => {
     if (!canViewPersonFields) return;
     void httpRequest<{ result: PersonField[]; total: number }>({
@@ -126,11 +169,39 @@ export const AttendanceManagement = () => {
   }, [canViewPersonFields]);
 
   const openEditor = useCallback(
-    async (event: CalendarEvent) => {
+    async (event: CalendarEvent, readOnly = false) => {
+      setEditorReadOnly(readOnly);
       setEditorEvent(event);
       await loadParticipants(event.id);
     },
     [loadParticipants],
+  );
+
+  const removeHistoryEvent = useCallback(async () => {
+    if (!deleteEvent) return;
+    setHistoryDeleting(true);
+    try {
+      await httpRequest({ service: EventsService.remove, data: { id: deleteEvent.id } });
+      setDeleteEvent(null);
+      await loadHistoryEvents();
+      showNotification(t('pages.events.success.deleted'), { severity: 'success' });
+    } catch (value) {
+      showNotification(value instanceof Error ? value.message : t('pages.events.errors.delete'), { severity: 'error' });
+    } finally {
+      setHistoryDeleting(false);
+    }
+  }, [deleteEvent, loadHistoryEvents, showNotification, t]);
+
+  const removeParticipant = useCallback(
+    async (participantId: string) => {
+      try {
+        await httpRequest({ service: EventParticipantsService.attendanceRemove, data: { id: participantId } });
+        await loadParticipants(eventId);
+      } catch (value) {
+        showNotification(value instanceof Error ? value.message : t('pages.attendance.error'), { severity: 'error' });
+      }
+    },
+    [eventId, loadParticipants, showNotification, t],
   );
 
   const historyColumns = useMemo<ModuleListColumn<CalendarEvent>[]>(
@@ -157,19 +228,35 @@ export const AttendanceManagement = () => {
             row={event}
             actions={[
               {
+                id: 'view',
+                label: t('pages.events.actions.view'),
+                icon: VisibilityOutlinedIcon,
+                disabled: historyLoading,
+                onClick: (value) => void openEditor(value, true),
+              },
+              {
                 id: 'edit',
                 label: t('pages.attendance.editPeople'),
                 icon: EditOutlinedIcon,
-                hidden: !canCreateAttendance && !canDeleteAttendance,
+                hidden: !canUpdateAttendance,
                 disabled: historyLoading,
                 onClick: (value) => void openEditor(value),
+              },
+              {
+                id: 'delete',
+                label: t('pages.events.actions.delete'),
+                icon: DeleteOutlineRoundedIcon,
+                color: 'error',
+                hidden: !canDeleteEvent,
+                disabled: historyLoading,
+                onClick: setDeleteEvent,
               },
             ]}
           />
         ),
       },
     ],
-    [canCreateAttendance, canDeleteAttendance, historyLoading, i18n.language, openEditor, t],
+    [canDeleteEvent, canUpdateAttendance, historyLoading, i18n.language, openEditor, t],
   );
 
   return (
@@ -178,13 +265,17 @@ export const AttendanceManagement = () => {
         id: 'refresh-attendance',
         label: t('pages.modules.common.refresh'),
         onClick: () =>
-          void (tab === 'history' ? loadHistoryEvents() : eventId ? loadParticipants(eventId) : loadEvents()),
+          void (tab === 'history' && canUpdateAttendance
+            ? loadHistoryEvents()
+            : eventId
+              ? loadParticipants(eventId)
+              : loadEvents()),
       }}
     >
       <Stack spacing={2}>
         <Tabs value={tab} onChange={(_event, value: 'today' | 'history') => setTab(value)}>
           <Tab value="today" label={t('pages.services.attendance.today')} />
-          <Tab value="history" label={t('pages.services.attendance.history')} />
+          {canUpdateAttendance ? <Tab value="history" label={t('pages.services.attendance.history')} /> : null}
         </Tabs>
         {tab === 'today' ? (
           <>
@@ -220,50 +311,83 @@ export const AttendanceManagement = () => {
                     .toLocaleString(DateTime.DATETIME_MED)
                 : t('pages.attendance.noCurrentEvent')}
             </Typography>
-            <Stack>
-              {participants.map((participant) => (
-                <Stack
-                  key={participant.id}
-                  direction={{ xs: 'column', md: 'row' }}
-                  alignItems="center"
-                  justifyContent="space-between"
-                  spacing={1}
-                  sx={{ py: 1, borderBottom: 1, borderColor: 'divider' }}
-                >
-                  <Stack sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography>
-                      {participant.person
-                        ? `${participant.person.code} · ${participant.person.first_name} ${participant.person.last_name}`
-                        : t('pages.attendance.publicSubmission')}
-                    </Typography>
-                    {selectedEvent?.custom_fields?.length ? (
-                      <Typography variant="caption" color="text.secondary">
-                        {selectedEvent.custom_fields
-                          .map((field) => `${field.label}: ${String(participant.field_values[field.id] ?? '-')}`)
-                          .join(' · ')}
-                      </Typography>
-                    ) : null}
-                  </Stack>
-                  <Switch
-                    checked={participant.attended}
-                    disabled={!canCreateAttendance}
-                    onChange={async (e) => {
-                      try {
-                        await httpRequest({
-                          service: EventParticipantsService.setAttendance,
-                          data: { id: participant.id, attended: e.target.checked },
-                        });
-                        await loadParticipants(eventId);
-                      } catch (value) {
-                        showNotification(value instanceof Error ? value.message : t('pages.attendance.error'), {
-                          severity: 'error',
-                        });
-                      }
-                    }}
-                  />
-                </Stack>
-              ))}
-            </Stack>
+            <Paper variant="outlined">
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>{t('pages.persons.fields.code')}</TableCell>
+                      <TableCell>{t('pages.attendance.person')}</TableCell>
+                      {selectedEvent?.custom_fields.map((field) => (
+                        <TableCell key={field.id}>{field.label}</TableCell>
+                      ))}
+                      <TableCell align="center">{t('pages.attendance.attended')}</TableCell>
+                      <TableCell align="right">{t('pages.settings.congregation.actions')}</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {participants.length ? (
+                      participants.map((participant) => (
+                        <TableRow key={participant.id}>
+                          <TableCell>{participant.person?.code ?? '-'}</TableCell>
+                          <TableCell>
+                            {getParticipantName(participant) || t('pages.attendance.publicSubmission')}
+                          </TableCell>
+                          {selectedEvent?.custom_fields.map((field) => (
+                            <TableCell key={`${participant.id}-${field.id}`}>
+                              {formatFieldValue(participant.field_values[field.id])}
+                            </TableCell>
+                          ))}
+                          <TableCell align="center">
+                            <Switch
+                              checked={participant.attended}
+                              disabled={!canCreateAttendance}
+                              onChange={async (event) => {
+                                try {
+                                  await httpRequest({
+                                    service: EventParticipantsService.setAttendance,
+                                    data: { id: participant.id, attended: event.target.checked },
+                                  });
+                                  await loadParticipants(eventId);
+                                } catch (value) {
+                                  showNotification(
+                                    value instanceof Error ? value.message : t('pages.attendance.error'),
+                                    { severity: 'error' },
+                                  );
+                                }
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            <ModuleRowActions
+                              row={participant}
+                              actions={[
+                                {
+                                  id: 'delete',
+                                  label: t('form.common.delete'),
+                                  icon: DeleteOutlineRoundedIcon,
+                                  color: 'error',
+                                  hidden: !canDeleteAttendance,
+                                  onClick: (value) => void removeParticipant(value.id),
+                                },
+                              ]}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={(selectedEvent?.custom_fields.length ?? 0) + 4} align="center">
+                          <Typography variant="body2" color="text.secondary">
+                            {t('pages.attendance.peopleEmpty')}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
             {canCreateAttendance && selectedEvent && !selectedEvent.registration_locked ? (
               <Button
                 startIcon={<PersonAddAltOutlinedIcon />}
@@ -274,8 +398,23 @@ export const AttendanceManagement = () => {
               </Button>
             ) : null}
           </>
-        ) : (
+        ) : canUpdateAttendance ? (
           <ModuleSection<CalendarEvent>
+            createAction={
+              canCreateEvent
+                ? {
+                    id: 'create-event',
+                    label: t('pages.events.create'),
+                    onClick: () => navigate(`${getHomePath()}?createEvent=1`),
+                  }
+                : undefined
+            }
+            refreshAction={{
+              id: 'refresh-attendance-history',
+              label: t('pages.modules.common.refresh'),
+              disabled: historyLoading,
+              onClick: () => void loadHistoryEvents(),
+            }}
             search={{
               label: t('pages.modules.common.search'),
               value: historyList.search,
@@ -307,20 +446,32 @@ export const AttendanceManagement = () => {
               rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
             }}
           />
-        )}
+        ) : null}
         <EventParticipantsEditorDialog
           open={Boolean(editorEvent)}
           event={editorEvent}
           mode="attendance"
           participants={participants}
           personFields={personFields}
-          canAdd={canCreateAttendance && !editorEvent?.registration_locked}
-          canRemove={canDeleteAttendance}
-          canUpdateAttendance={canCreateAttendance}
+          canAdd={!editorReadOnly && canCreateAttendance && !editorEvent?.registration_locked}
+          canRemove={!editorReadOnly && canDeleteAttendance}
+          canUpdateAttendance={!editorReadOnly && canCreateAttendance}
           canCreatePerson={canCreatePerson}
           canCreatePersonFields={canCreatePersonFields}
+          readOnly={editorReadOnly}
           onClose={() => setEditorEvent(null)}
           onReload={() => (editorEvent ? loadParticipants(editorEvent.id) : Promise.resolve())}
+        />
+        <ConfirmDialog
+          open={Boolean(deleteEvent)}
+          title={t('pages.events.delete.title')}
+          message={t('pages.events.delete.message')}
+          confirmLabel={t('pages.events.actions.delete')}
+          cancelLabel={t('form.field.cancel')}
+          confirming={historyDeleting}
+          confirmColor="error"
+          onClose={() => setDeleteEvent(null)}
+          onConfirm={() => void removeHistoryEvent()}
         />
       </Stack>
     </ModuleSection>

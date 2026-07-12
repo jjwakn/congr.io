@@ -33,6 +33,8 @@ import {
   Switch,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { EventTypesService } from '@services/eventTypes';
 import { EventsService } from '@services/events';
@@ -71,6 +73,8 @@ export const EventCalendar = () => {
   const { congregation } = useAppContext();
   const { hasPermission, user } = useAuth();
   const { showNotification } = useNotificationContext();
+  const theme = useTheme();
+  const compactControls = useMediaQuery(theme.breakpoints.down('sm'));
   const location = useLocation();
   const calendarRef = useRef<FullCalendar | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>(
@@ -92,6 +96,7 @@ export const EventCalendar = () => {
   const [eventMenu, setEventMenu] = useState<{ top: number; left: number; event: CalendarEvent }>();
   const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null);
   const [dateAnchor, setDateAnchor] = useState<HTMLElement | null>(null);
+  const [viewMenuAnchor, setViewMenuAnchor] = useState<HTMLElement | null>(null);
   const canCreate = hasPermission('event', 'create');
   const canUpdate = hasPermission('event', 'update');
   const canDelete = hasPermission('event', 'delete');
@@ -115,6 +120,11 @@ export const EventCalendar = () => {
   useEffect(() => {
     const typeId = new URLSearchParams(location.search).get('createEventType');
     if (typeId && canCreate) setEditor({ event: null, typeId });
+  }, [canCreate, location.search]);
+
+  useEffect(() => {
+    const shouldCreateEvent = new URLSearchParams(location.search).get('createEvent') === '1';
+    if (shouldCreateEvent && canCreate) setEditor((current) => current ?? { event: null });
   }, [canCreate, location.search]);
 
   useEffect(() => {
@@ -317,6 +327,15 @@ export const EventCalendar = () => {
     setView(nextView);
     api?.changeView(nextView);
   };
+  const viewOptions = useMemo(
+    () => [
+      { id: 'timeGridDay', label: t('pages.events.views.day') },
+      { id: 'timeGridWeek', label: t('pages.events.views.week') },
+      { id: 'dayGridMonth', label: t('pages.events.views.month') },
+    ],
+    [t],
+  );
+  const currentViewLabel = viewOptions.find((option) => option.id === view)?.label ?? t('pages.events.views.month');
 
   return (
     <ModuleSection<CalendarEvent>
@@ -355,14 +374,14 @@ export const EventCalendar = () => {
               <Button
                 aria-label={t('pages.events.previous')}
                 onClick={() => api?.prev()}
-                sx={{ minWidth: { xs: 30, sm: 34 }, px: { xs: 0.5, sm: 0.75 } }}
+                sx={{ minWidth: { xs: 0, sm: 34 }, px: { xs: 0.75, sm: 0.75 } }}
               >
                 <ChevronLeftRoundedIcon fontSize="small" />
               </Button>
               <Button
                 aria-label={t('pages.events.next')}
                 onClick={() => api?.next()}
-                sx={{ minWidth: { xs: 30, sm: 34 }, px: { xs: 0.5, sm: 0.75 } }}
+                sx={{ minWidth: { xs: 0, sm: 34 }, px: { xs: 0.75, sm: 0.75 } }}
               >
                 <ChevronRightRoundedIcon fontSize="small" />
               </Button>
@@ -371,7 +390,7 @@ export const EventCalendar = () => {
               size="small"
               variant="contained"
               onClick={() => api?.today()}
-              sx={{ minHeight: { xs: 30, sm: 34 }, px: { xs: 0.9, sm: 1.1 } }}
+              sx={{ minHeight: { xs: 30, sm: 34 }, minWidth: { xs: 0, sm: 64 }, px: { xs: 1, sm: 1.1 } }}
             >
               {t('pages.events.today')}
             </Button>
@@ -442,36 +461,56 @@ export const EventCalendar = () => {
             </Button>
           </Box>
           <Stack direction="row" alignItems="center" spacing={0.25} sx={{ order: { xs: 3, sm: 3 }, flexShrink: 0 }}>
-            <ButtonGroup
-              color="primary"
-              size="small"
-              sx={{
-                '& .MuiButton-root': {
-                  minHeight: { xs: 30, sm: 34 },
-                  px: { xs: 0.75, sm: 1 },
-                  fontSize: { xs: '0.72rem', sm: '0.8125rem' },
-                },
-              }}
-            >
-              <Button
-                onClick={() => handleViewChange('timeGridDay')}
-                variant={view === 'timeGridDay' ? 'contained' : 'outlined'}
+            {compactControls ? (
+              <>
+                <Button
+                  color="primary"
+                  endIcon={<ExpandMoreRoundedIcon fontSize="small" />}
+                  onClick={(event) => setViewMenuAnchor(event.currentTarget)}
+                  size="small"
+                  variant="contained"
+                  sx={{ minHeight: 30, minWidth: 0, px: 1, fontSize: '0.72rem' }}
+                >
+                  {currentViewLabel}
+                </Button>
+                <Menu anchorEl={viewMenuAnchor} open={Boolean(viewMenuAnchor)} onClose={() => setViewMenuAnchor(null)}>
+                  {viewOptions.map((option) => (
+                    <MenuItem
+                      key={option.id}
+                      selected={view === option.id}
+                      onClick={() => {
+                        handleViewChange(option.id);
+                        setViewMenuAnchor(null);
+                      }}
+                    >
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </>
+            ) : (
+              <ButtonGroup
+                color="primary"
+                size="small"
+                sx={{
+                  '& .MuiButton-root': {
+                    minHeight: { xs: 30, sm: 34 },
+                    px: { xs: 0.75, sm: 1 },
+                    fontSize: { xs: '0.72rem', sm: '0.8125rem' },
+                  },
+                }}
               >
-                {t('pages.events.views.day')}
-              </Button>
-              <Button
-                onClick={() => handleViewChange('timeGridWeek')}
-                variant={view === 'timeGridWeek' ? 'contained' : 'outlined'}
-              >
-                {t('pages.events.views.week')}
-              </Button>
-              <Button
-                onClick={() => handleViewChange('dayGridMonth')}
-                variant={view === 'dayGridMonth' ? 'contained' : 'outlined'}
-              >
-                {t('pages.events.views.month')}
-              </Button>
-            </ButtonGroup>
+                {viewOptions.map((option) => (
+                  <Button
+                    key={option.id}
+                    onClick={() => handleViewChange(option.id)}
+                    variant={view === option.id ? 'contained' : 'outlined'}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </ButtonGroup>
+            )}
           </Stack>
         </Stack>
 

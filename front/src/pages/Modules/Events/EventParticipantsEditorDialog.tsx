@@ -72,6 +72,7 @@ export const EventParticipantsEditorDialog = ({
   open,
   participants,
   personFields,
+  readOnly = false,
 }: EventParticipantsEditorDialogProps) => {
   const { t } = useTranslation();
   const [person, setPerson] = useState<Person | null>(null);
@@ -83,7 +84,10 @@ export const EventParticipantsEditorDialog = ({
   const requiredMissing = fields.some(
     (field) => field.required && (fieldValues[field.id] === undefined || fieldValues[field.id] === ''),
   );
-  const title = mode === 'attendance' ? t('pages.attendance.editPeople') : t('pages.registration.editPeople');
+  const title =
+    mode === 'attendance'
+      ? t(readOnly ? 'pages.attendance.viewPeople' : 'pages.attendance.editPeople')
+      : t(readOnly ? 'pages.registration.viewPeople' : 'pages.registration.editPeople');
   const emptyText = mode === 'attendance' ? t('pages.attendance.peopleEmpty') : t('pages.registration.peopleEmpty');
   const addService =
     mode === 'attendance' ? EventParticipantsService.attendanceCreate : EventParticipantsService.create;
@@ -201,11 +205,11 @@ export const EventParticipantsEditorDialog = ({
                     {mode === 'attendance' ? (
                       <Switch
                         checked={participant.attended}
-                        disabled={!canUpdateAttendance || submitting}
+                        disabled={readOnly || !canUpdateAttendance || submitting}
                         onChange={(_event, checked) => void setAttendance(participant.id, checked)}
                       />
                     ) : null}
-                    {canRemove ? (
+                    {canRemove && !readOnly ? (
                       <Tooltip title={t('form.common.delete')}>
                         <span>
                           <IconButton
@@ -227,7 +231,7 @@ export const EventParticipantsEditorDialog = ({
                 </Typography>
               ) : null}
             </Stack>
-            {canAdd ? (
+            {canAdd && !readOnly ? (
               <Stack spacing={1.5}>
                 <PersonAutocomplete
                   value={person}

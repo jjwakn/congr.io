@@ -17,4 +17,5 @@ export interface EventParticipantsEditorDialogProps {
   open: boolean;
   participants: EventParticipant[];
   personFields: PersonField[];
+  readOnly?: boolean;
 }
