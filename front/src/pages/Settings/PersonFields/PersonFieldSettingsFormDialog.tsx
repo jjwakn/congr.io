@@ -137,6 +137,8 @@ export const PersonFieldSettingsFormDialog = ({
             greater_or_equal: t('pages.persons.fieldsCrud.operators.greaterOrEqual'),
             less_than: t('pages.persons.fieldsCrud.operators.lessThan'),
             less_or_equal: t('pages.persons.fieldsCrud.operators.lessOrEqual'),
+            is_empty: t('pages.persons.fieldsCrud.operators.empty'),
+            is_not_empty: t('pages.persons.fieldsCrud.operators.notEmpty'),
             is_true: t('pages.persons.fieldsCrud.operators.isTrue'),
             is_false: t('pages.persons.fieldsCrud.operators.isFalse'),
           }}

@@ -55,6 +55,14 @@ export const STANDARD_EVENT_FIELDS: StandardFieldDefinition[] = [
 const normalizeComparable = (value: JsonValue | undefined) =>
   typeof value === 'string' ? value.trim().toLowerCase() : typeof value === 'number' ? value : value;
 
+const isEmptyValue = (value: JsonValue | undefined) => {
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'string') return !value.trim();
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === 'object') return Object.keys(value).length === 0;
+  return false;
+};
+
 const toNumber = (value: JsonValue | undefined) => {
   if (typeof value === 'string') {
     const parsedDate = DateTime.fromISO(value);
@@ -115,6 +123,10 @@ export const evaluateCondition = ({
       const expectedNumber = toNumber(expected);
       return actualNumber !== null && expectedNumber !== null && actualNumber <= expectedNumber;
     }
+    case 'is_empty':
+      return isEmptyValue(value);
+    case 'is_not_empty':
+      return !isEmptyValue(value);
     case 'is_true':
       return value === true;
     case 'is_false':

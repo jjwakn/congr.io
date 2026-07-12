@@ -4,9 +4,19 @@ import { Button, IconButton, MenuItem, Stack, TextField, Tooltip } from '@mui/ma
 import type { FieldCondition, FieldConditionOperator } from '@/types/person.types';
 import type { FieldConditionsEditorProps } from './FieldConditionsEditor.types';
 
-const TEXT_OPERATORS: FieldConditionOperator[] = ['equals', 'contains', 'starts_with', 'ends_with'];
-const OPTION_OPERATORS: FieldConditionOperator[] = ['equals', 'not_equals'];
+const EMPTY_OPERATORS: FieldConditionOperator[] = ['is_empty', 'is_not_empty'];
+const TEXT_OPERATORS: FieldConditionOperator[] = [
+  'is_empty',
+  'is_not_empty',
+  'equals',
+  'contains',
+  'starts_with',
+  'ends_with',
+];
+const OPTION_OPERATORS: FieldConditionOperator[] = ['is_empty', 'is_not_empty', 'equals', 'not_equals'];
 const NUMBER_OPERATORS: FieldConditionOperator[] = [
+  'is_empty',
+  'is_not_empty',
   'equals',
   'not_equals',
   'greater_than',
@@ -23,7 +33,8 @@ const getOperatorsForField = (type?: string): FieldConditionOperator[] => {
   return TEXT_OPERATORS;
 };
 
-const operatorExpectsValue = (operator: FieldConditionOperator) => !BOOLEAN_OPERATORS.includes(operator);
+const operatorExpectsValue = (operator: FieldConditionOperator) =>
+  !BOOLEAN_OPERATORS.includes(operator) && !EMPTY_OPERATORS.includes(operator);
 
 const createCondition = (fieldId = ''): FieldCondition => ({
   field_id: fieldId,
@@ -90,7 +101,13 @@ export const FieldConditionsEditor = ({
               label={operatorLabel}
               value={selectedOperator}
               disabled={disabled}
-              onChange={(event) => update(index, { operator: event.target.value as FieldConditionOperator })}
+              onChange={(event) => {
+                const operator = event.target.value as FieldConditionOperator;
+                update(index, {
+                  operator,
+                  ...(operatorExpectsValue(operator) ? {} : { value: null }),
+                });
+              }}
             >
               {availableOperators.map((operator) => (
                 <MenuItem key={operator} value={operator}>

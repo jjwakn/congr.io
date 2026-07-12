@@ -31,6 +31,8 @@ export type FieldConditionOperator =
   | 'greater_or_equal'
   | 'less_than'
   | 'less_or_equal'
+  | 'is_empty'
+  | 'is_not_empty'
   | 'is_true'
   | 'is_false';
 export interface FieldCondition {
