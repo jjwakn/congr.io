@@ -374,14 +374,24 @@ export const EventCalendar = () => {
               <Button
                 aria-label={t('pages.events.previous')}
                 onClick={() => api?.prev()}
-                sx={{ minWidth: { xs: 0, sm: 34 }, px: { xs: 0.75, sm: 0.75 } }}
+                sx={{
+                  height: { xs: 40, sm: 34 },
+                  minHeight: { xs: 40, sm: 34 },
+                  minWidth: { xs: 0, sm: 34 },
+                  px: { xs: 0.75, sm: 0.75 },
+                }}
               >
                 <ChevronLeftRoundedIcon fontSize="small" />
               </Button>
               <Button
                 aria-label={t('pages.events.next')}
                 onClick={() => api?.next()}
-                sx={{ minWidth: { xs: 0, sm: 34 }, px: { xs: 0.75, sm: 0.75 } }}
+                sx={{
+                  height: { xs: 40, sm: 34 },
+                  minHeight: { xs: 40, sm: 34 },
+                  minWidth: { xs: 0, sm: 34 },
+                  px: { xs: 0.75, sm: 0.75 },
+                }}
               >
                 <ChevronRightRoundedIcon fontSize="small" />
               </Button>
@@ -390,7 +400,12 @@ export const EventCalendar = () => {
               size="small"
               variant="contained"
               onClick={() => api?.today()}
-              sx={{ minHeight: { xs: 30, sm: 34 }, minWidth: { xs: 0, sm: 64 }, px: { xs: 1, sm: 1.1 } }}
+              sx={{
+                height: { xs: 40, sm: 34 },
+                minHeight: { xs: 40, sm: 34 },
+                minWidth: { xs: 0, sm: 64 },
+                px: { xs: 1, sm: 1.1 },
+              }}
             >
               {t('pages.events.today')}
             </Button>
@@ -402,7 +417,12 @@ export const EventCalendar = () => {
                   onClick={(e) => setFilterAnchor(e.currentTarget)}
                   size="small"
                   variant="contained"
-                  sx={{ minHeight: { xs: 30, sm: 34 }, minWidth: { xs: 30, sm: 34 }, px: 0 }}
+                  sx={{
+                    height: { xs: 40, sm: 34 },
+                    minHeight: { xs: 40, sm: 34 },
+                    minWidth: { xs: 40, sm: 34 },
+                    px: 0,
+                  }}
                 >
                   <FilterListRoundedIcon fontSize="small" />
                 </Button>

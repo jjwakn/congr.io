@@ -175,6 +175,11 @@ export const EventParticipantsEditorDialog = ({
     }
   };
 
+  const saveAndClose = async () => {
+    if (person) await addPerson(person, fieldValues);
+    onClose();
+  };
+
   return (
     <>
       <Dialog open={open} onClose={submitting ? undefined : onClose} fullWidth maxWidth="md">
@@ -263,6 +268,15 @@ export const EventParticipantsEditorDialog = ({
           <Button onClick={onClose} disabled={submitting}>
             {t('form.field.close')}
           </Button>
+          {!readOnly ? (
+            <Button
+              variant="contained"
+              onClick={() => void saveAndClose()}
+              disabled={(Boolean(person) && requiredMissing) || submitting}
+            >
+              {t('form.field.save')}
+            </Button>
+          ) : null}
         </DialogActions>
       </Dialog>
       <PersonFormDialog

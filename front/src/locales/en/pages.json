@@ -657,7 +657,12 @@
     "peopleEmpty": "No attendees found.",
     "noCurrentEvent": "No attendance event is active right now.",
     "publicSubmission": "Public submission",
-    "error": "Could not update attendance."
+    "error": "Could not update attendance.",
+    "deleted": "Attendance capture deleted.",
+    "deleteFailed": "Could not delete attendance capture.",
+    "deleteAction": "Clear attendance",
+    "deleteTitle": "Delete attendance capture",
+    "deleteMessage": "Remove the attendance marks for {{name}}? The event will stay available."
   },
   "registration": {
     "title": "Event Registration",
@@ -684,7 +689,12 @@
     "people": "Registered people",
     "possiblePerson": "Possible match: {{name}}",
     "confirmMatch": "Confirm person match",
-    "createPerson": "Create a new person from this submission"
+    "createPerson": "Create a new person from this submission",
+    "deleted": "Registration capture deleted.",
+    "deleteFailed": "Could not delete registration capture.",
+    "deleteAction": "Clear registration",
+    "deleteTitle": "Delete registration capture",
+    "deleteMessage": "Remove all registered people for {{name}}? The event will stay available."
   },
   "services": {
     "title": "Services",

@@ -1,13 +1,15 @@
 import { I18nService } from 'nestjs-i18n';
 import { randomUUID } from 'node:crypto';
+import { Direction } from 'src/common/common.types';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
-import { In, IsNull, LessThan, MoreThan, Repository } from 'typeorm';
+import { Brackets, In, IsNull, LessThan, MoreThan, Repository } from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getUserCongregationContext } from '../../utils/congregation-context';
 import { Feature } from '../../utils/constants';
 import { parseDateTimeInTimeZone } from '../../utils/datetime';
 import { Congregation } from '../congregation/congregation.entity';
+import { EventParticipant } from '../event-participant/event-participant.entity';
 import { EventType } from '../event-type/event-type.entity';
 import type { EventTypeCustomField } from '../event-type/event-type.types';
 import { FilesService } from '../files/files.service';
@@ -20,6 +22,7 @@ import {
   EventDto,
   EventGetProps,
   EventListProps,
+  EventParticipantFilter,
   EventQuery,
   EventUpdateProps,
 } from './event.types';
@@ -27,6 +30,8 @@ import {
 export interface HydratableEvent extends Omit<Event, 'type'> {
   type?: EventType | null;
 }
+
+const escapeLikePattern = (value: string) => value.replace(/[\\%_]/g, '\\$&');
 
 @Injectable()
 export class EventService {
@@ -36,6 +41,9 @@ export class EventService {
 
     @InjectRepository(EventType)
     private readonly eventTypeRepository: Repository<EventType>,
+
+    @InjectRepository(EventParticipant)
+    private readonly eventParticipantRepository: Repository<EventParticipant>,
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -216,40 +224,104 @@ export class EventService {
   async list({ query, userId, congregationId, canViewAll = false }: EventListProps) {
     const { congregation } = await this.getContext(userId, congregationId);
 
-    const { result, total } = await findWithFilters<Event, EventQuery>({
-      repository: this.repository,
-      query,
-      searchFields: ['id', 'name', 'description'],
-      booleanFields: ['enabled', 'all_day', 'is_public', 'attendance_enabled', 'self_registration_enabled'],
-      baseWhere: {
-        congregation_id: congregation.id,
-        deleted_at: IsNull(),
-        deleted_by: IsNull(),
-        ...(!canViewAll ? { is_public: true } : {}),
-        ...(query.start ? { end_datetime: MoreThan(new Date(query.start)) } : {}),
-        ...(query.end ? { start_datetime: LessThan(new Date(query.end)) } : {}),
-        ...(query.start_datetime_from ? { start_datetime: MoreThan(new Date(query.start_datetime_from)) } : {}),
-        ...(query.start_datetime_to ? { start_datetime: LessThan(new Date(query.start_datetime_to)) } : {}),
-        ...(query.end_datetime_from ? { end_datetime: MoreThan(new Date(query.end_datetime_from)) } : {}),
-        ...(query.end_datetime_to ? { end_datetime: LessThan(new Date(query.end_datetime_to)) } : {}),
-      },
+    const size = Number.isFinite(Number(query.size)) && Number(query.size) > 0 ? Number(query.size) : 50;
+    const page = Number.isFinite(Number(query.page)) && Number(query.page) >= 0 ? Number(query.page) : 0;
+    const direction = query.direction === Direction.ASC ? Direction.ASC : Direction.DESC;
+    const orderMap: Record<string, string> = {
+      id: 'event.id',
+      enabled: 'event.enabled',
+      name: 'event.name',
+      event_type_id: 'event.event_type_id',
+      start_datetime: 'event.start_datetime',
+      end_datetime: 'event.end_datetime',
+      all_day: 'event.all_day',
+      is_public: 'event.is_public',
+      attendance_enabled: 'event.attendance_enabled',
+      self_registration_enabled: 'event.self_registration_enabled',
+    };
+    const orderBy = orderMap[query.order] ?? orderMap.start_datetime;
+    const participantAlias = this.eventParticipantRepository.metadata.tableName;
+    const registrationExists = `EXISTS (
+      SELECT 1 FROM "${participantAlias}" "participant"
+      WHERE "participant"."event_id" = "event"."id"
+      AND "participant"."deleted_at" IS NULL
+    )`;
+    const attendanceExists = `EXISTS (
+      SELECT 1 FROM "${participantAlias}" "participant"
+      WHERE "participant"."event_id" = "event"."id"
+      AND "participant"."deleted_at" IS NULL
+      AND "participant"."attended" = TRUE
+    )`;
+
+    const builder = this.repository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.type', 'type')
+      .where('"event"."congregation_id" = :congregationId', { congregationId: congregation.id })
+      .andWhere('"event"."deleted_at" IS NULL')
+      .andWhere('"event"."deleted_by" IS NULL');
+
+    if (!canViewAll) builder.andWhere('"event"."is_public" = TRUE');
+    if (query.start) builder.andWhere('"event"."end_datetime" > :start', { start: new Date(query.start) });
+    if (query.end) builder.andWhere('"event"."start_datetime" < :end', { end: new Date(query.end) });
+    if (query.start_datetime_from)
+      builder.andWhere('"event"."start_datetime" > :startDateTimeFrom', {
+        startDateTimeFrom: new Date(query.start_datetime_from),
+      });
+    if (query.start_datetime_to)
+      builder.andWhere('"event"."start_datetime" < :startDateTimeTo', {
+        startDateTimeTo: new Date(query.start_datetime_to),
+      });
+    if (query.end_datetime_from)
+      builder.andWhere('"event"."end_datetime" > :endDateTimeFrom', {
+        endDateTimeFrom: new Date(query.end_datetime_from),
+      });
+    if (query.end_datetime_to)
+      builder.andWhere('"event"."end_datetime" < :endDateTimeTo', { endDateTimeTo: new Date(query.end_datetime_to) });
+
+    if (query.enabled !== undefined) builder.andWhere('"event"."enabled" = :enabled', { enabled: query.enabled });
+    if (query.all_day !== undefined) builder.andWhere('"event"."all_day" = :allDay', { allDay: query.all_day });
+    if (query.is_public !== undefined)
+      builder.andWhere('"event"."is_public" = :isPublic', { isPublic: query.is_public });
+    if (query.attendance_enabled !== undefined)
+      builder.andWhere('"event"."attendance_enabled" = :attendanceEnabled', {
+        attendanceEnabled: query.attendance_enabled,
+      });
+    if (query.self_registration_enabled !== undefined)
+      builder.andWhere('"event"."self_registration_enabled" = :selfRegistrationEnabled', {
+        selfRegistrationEnabled: query.self_registration_enabled,
+      });
+
+    if (query.participant_filter === EventParticipantFilter.with_registration) builder.andWhere(registrationExists);
+    if (query.participant_filter === EventParticipantFilter.without_registration)
+      builder.andWhere(`NOT ${registrationExists}`);
+    if (query.participant_filter === EventParticipantFilter.with_attendance) builder.andWhere(attendanceExists);
+    if (query.participant_filter === EventParticipantFilter.without_attendance)
+      builder.andWhere(`NOT ${attendanceExists}`);
+
+    const searchTerms = (query.search?.trim() ?? '').split(/\s+/).filter(Boolean);
+    searchTerms.forEach((term, index) => {
+      const parameterName = `eventSearch${index}`;
+      builder.andWhere(
+        new Brackets((searchBuilder) => {
+          searchBuilder
+            .where(`LOWER(CAST("event"."id" AS text)) LIKE :${parameterName} ESCAPE '\\'`)
+            .orWhere(`LOWER("event"."name") LIKE :${parameterName} ESCAPE '\\'`)
+            .orWhere(`LOWER("event"."description") LIKE :${parameterName} ESCAPE '\\'`)
+            .orWhere(`LOWER("type"."name") LIKE :${parameterName} ESCAPE '\\'`)
+            .orWhere(
+              `LOWER(TO_CHAR("event"."start_datetime", 'YYYY-MM-DD HH24:MI')) LIKE :${parameterName} ESCAPE '\\'`,
+            )
+            .orWhere(`LOWER(TO_CHAR("event"."end_datetime", 'YYYY-MM-DD HH24:MI')) LIKE :${parameterName} ESCAPE '\\'`);
+        }),
+        { [parameterName]: `%${escapeLikePattern(term.toLowerCase())}%` },
+      );
     });
 
-    const eventTypeIds = result.map((event) => event.event_type_id);
-    const eventTypes =
-      eventTypeIds.length > 0
-        ? await this.eventTypeRepository.find({
-            where: {
-              id: In(eventTypeIds),
-            },
-          })
-        : [];
-    const eventTypeById = new Map(eventTypes.map((eventType) => [eventType.id, eventType]));
-
-    const events = result.map((event) => ({
-      ...event,
-      type: eventTypeById.get(event.event_type_id) ?? null,
-    }));
+    const [events, total] = await builder
+      .orderBy(orderBy, direction)
+      .skip(page * size)
+      .take(size)
+      .getManyAndCount();
 
     return {
       result: await Promise.all(events.map((event) => this.hydrateEvent(event, congregation.id))),

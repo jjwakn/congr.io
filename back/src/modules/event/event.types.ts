@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { CommonOrder, CongregationEntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import type { EventTypeCustomField } from 'src/modules/event-type/event-type.types';
 import { ApiProperty } from '@nestjs/swagger';
@@ -121,6 +121,13 @@ enum Order {
   self_registration_enabled = 'self_registration_enabled',
 }
 
+export enum EventParticipantFilter {
+  with_registration = 'with_registration',
+  without_registration = 'without_registration',
+  with_attendance = 'with_attendance',
+  without_attendance = 'without_attendance',
+}
+
 export class EventQuery extends ListParamsQuery {
   @ApiProperty({
     required: false,
@@ -173,4 +180,12 @@ export class EventQuery extends ListParamsQuery {
   @IsString()
   @IsOptional()
   end_datetime_to?: string;
+
+  @ApiProperty({
+    required: false,
+    enum: EventParticipantFilter,
+  })
+  @IsEnum(EventParticipantFilter)
+  @IsOptional()
+  participant_filter?: EventParticipantFilter;
 }

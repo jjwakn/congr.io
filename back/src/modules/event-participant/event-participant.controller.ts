@@ -70,11 +70,23 @@ export class EventParticipantController {
   ) {
     return this.service.setAttended({ id, attended, ...this.context(request) });
   }
+  @Delete('attendance/event/:id') @PermissionDecorator(Module.event_attendance, ModuleAction.delete) attendanceClear(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) eventId: string,
+    @Req() request: RequestType,
+  ) {
+    return this.service.clearAttendance({ eventId, ...this.context(request) });
+  }
   @Delete('attendance/:id') @PermissionDecorator(Module.event_attendance, ModuleAction.delete) attendanceRemove(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Req() request: RequestType,
   ) {
     return this.service.remove({ id, ...this.context(request) });
+  }
+  @Delete('event/:id') @PermissionDecorator(Module.event_registration, ModuleAction.delete) clear(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) eventId: string,
+    @Req() request: RequestType,
+  ) {
+    return this.service.clearRegistration({ eventId, ...this.context(request) });
   }
   @Delete(':id') @PermissionDecorator(Module.event_registration, ModuleAction.delete) remove(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,

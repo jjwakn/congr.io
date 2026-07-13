@@ -36,7 +36,7 @@ export const PersonAutocomplete = ({
           data: {
             page: nextPage,
             size: pageSize,
-            order: 'last_name',
+            order: 'code',
             direction: 'ASC',
             ...(search.trim() ? { search: search.trim() } : {}),
           },

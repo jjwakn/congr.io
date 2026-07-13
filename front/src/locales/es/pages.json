@@ -661,7 +661,12 @@
     "peopleEmpty": "No se encontraron asistentes.",
     "noCurrentEvent": "No hay un evento de asistencia activo ahora.",
     "publicSubmission": "Registro público",
-    "error": "No se pudo actualizar la asistencia."
+    "error": "No se pudo actualizar la asistencia.",
+    "deleted": "Captura de asistencia eliminada.",
+    "deleteFailed": "No se pudo eliminar la captura de asistencia.",
+    "deleteAction": "Limpiar asistencia",
+    "deleteTitle": "Eliminar captura de asistencia",
+    "deleteMessage": "¿Quitar las marcas de asistencia de {{name}}? El evento seguirá disponible."
   },
   "registration": {
     "title": "Registro a eventos",
@@ -688,7 +693,12 @@
     "people": "Personas registradas",
     "possiblePerson": "Posible coincidencia: {{name}}",
     "confirmMatch": "Confirmar coincidencia",
-    "createPerson": "Crear una persona desde este registro"
+    "createPerson": "Crear una persona desde este registro",
+    "deleted": "Captura de registro eliminada.",
+    "deleteFailed": "No se pudo eliminar la captura de registro.",
+    "deleteAction": "Limpiar registro",
+    "deleteTitle": "Eliminar captura de registro",
+    "deleteMessage": "¿Quitar todas las personas registradas de {{name}}? El evento seguirá disponible."
   },
   "services": {
     "title": "Servicios",

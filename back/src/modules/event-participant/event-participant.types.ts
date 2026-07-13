@@ -9,6 +9,9 @@ export interface ParticipantListProps extends CongregationEntityActionProps {
 export interface ParticipantActionProps extends CongregationEntityActionProps {
   id: string;
 }
+export interface ParticipantEventActionProps extends CongregationEntityActionProps {
+  eventId: string;
+}
 export interface ParticipantCreateProps extends CongregationEntityActionProps {
   data: ParticipantDto;
 }

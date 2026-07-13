@@ -14,6 +14,7 @@ import { EventParticipant } from './event-participant.entity';
 import type {
   ParticipantActionProps,
   ParticipantCreateProps,
+  ParticipantEventActionProps,
   ParticipantListProps,
   PublicRegistrationDto,
 } from './event-participant.types';
@@ -188,9 +189,20 @@ export class EventParticipantService {
       : null;
     if (data.person_id && !person) throw new NotFoundException(this.i18n.t('errors.person.notFound'));
     let existing = person
-      ? await this.repository.findOne({ where: { event_id: event.id, person_id: person.id } })
+      ? await this.repository.findOne({
+          where: { event_id: event.id, person_id: person.id },
+          withDeleted: true,
+        })
       : null;
-    if (!existing)
+    if (existing?.deleted_at) {
+      await this.repository.restore(existing.id);
+      existing.deleted_at = null;
+      existing.deleted_by = null;
+      existing.attended = false;
+      existing.field_values = {};
+      existing.submitted_person = {};
+      existing.updated_by = user;
+    } else if (!existing)
       existing = this.repository.create({
         event_id: event.id,
         event,
@@ -229,6 +241,41 @@ export class EventParticipantService {
     item.deleted_by = user;
     await this.repository.save(item);
     await this.repository.softDelete(id);
+    return { deleted: true };
+  }
+  async clearAttendance({ eventId, userId, congregationId }: ParticipantEventActionProps) {
+    const { user, congregation } = await this.getContext(userId, congregationId);
+    const event = await this.event(eventId, congregation.id);
+    const participants = await this.repository.find({
+      where: {
+        event_id: event.id,
+        attended: true,
+        deleted_at: IsNull(),
+      },
+    });
+    participants.forEach((participant) => {
+      participant.attended = false;
+      participant.updated_by = user;
+    });
+    if (participants.length) await this.repository.save(participants);
+    return { deleted: true };
+  }
+  async clearRegistration({ eventId, userId, congregationId }: ParticipantEventActionProps) {
+    const { user, congregation } = await this.getContext(userId, congregationId);
+    const event = await this.event(eventId, congregation.id);
+    const participants = await this.repository.find({
+      where: {
+        event_id: event.id,
+        deleted_at: IsNull(),
+      },
+    });
+    participants.forEach((participant) => {
+      participant.deleted_by = user;
+    });
+    if (participants.length) {
+      await this.repository.save(participants);
+      await this.repository.softDelete(participants.map((participant) => participant.id));
+    }
     return { deleted: true };
   }
   async match({ id, personId, userId, congregationId }: ParticipantActionProps & { personId: string }) {

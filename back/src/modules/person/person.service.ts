@@ -1,14 +1,30 @@
 import { DateTime } from 'luxon';
 import { I18nService } from 'nestjs-i18n';
+import { Direction } from 'src/common/common.types';
 import { getUserCongregationContext } from 'src/utils/congregation-context';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
-import { DataSource, IsNull, Like, Repository } from 'typeorm';
+import { Brackets, DataSource, IsNull, Like, Repository, type SelectQueryBuilder } from 'typeorm';
 import { Injectable, NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Congregation } from '../congregation/congregation.entity';
 import { User } from '../user/user.entity';
 import { Person } from './person.entity';
 import type { PersonActionProps, PersonCreateProps, PersonListProps, PersonUpdateProps } from './person.types';
+
+const PERSON_SEARCH_FIELDS = [
+  'code',
+  'first_name',
+  'middle_name',
+  'last_name',
+  'second_last_name',
+  'phone',
+  'email',
+] as const;
+
+type PersonSearchField = (typeof PERSON_SEARCH_FIELDS)[number];
+type SortDirection = 'ASC' | 'DESC';
+
+const escapeLikePattern = (value: string) => value.replace(/[\\%_]/g, '\\$&');
 
 @Injectable()
 export class PersonService {
@@ -67,12 +83,87 @@ export class PersonService {
     };
   }
 
+  private addSearchFilters(builder: SelectQueryBuilder<Person>, search?: string) {
+    const searchTerms = (search?.trim() ?? '').split(/\s+/).filter(Boolean);
+    if (!searchTerms.length) return;
+
+    if (searchTerms.length > PERSON_SEARCH_FIELDS.length) {
+      builder.andWhere('FALSE');
+      return;
+    }
+
+    let combinationIndex = 0;
+    builder.andWhere(
+      new Brackets((searchBuilder) => {
+        const appendCombinations = (
+          termIndex: number,
+          usedFields: Set<PersonSearchField>,
+          conditions: string[],
+          parameters: Record<string, string>,
+        ) => {
+          const term = searchTerms[termIndex];
+          const isLastTerm = termIndex === searchTerms.length - 1;
+
+          PERSON_SEARCH_FIELDS.forEach((field) => {
+            if (usedFields.has(field)) return;
+
+            const parameterName = `personSearch${combinationIndex}_${termIndex}`;
+            const nextConditions = [
+              ...conditions,
+              `LOWER(CAST("person"."${field}" AS text)) LIKE :${parameterName} ESCAPE '\\'`,
+            ];
+            const nextParameters = {
+              ...parameters,
+              [parameterName]: `%${escapeLikePattern(term.toLowerCase())}%`,
+            };
+
+            if (isLastTerm) {
+              combinationIndex += 1;
+              searchBuilder.orWhere(`(${nextConditions.join(' AND ')})`, nextParameters);
+              return;
+            }
+
+            appendCombinations(termIndex + 1, new Set([...usedFields, field]), nextConditions, nextParameters);
+          });
+        };
+
+        appendCombinations(0, new Set(), [], {});
+      }),
+    );
+  }
+
+  private applyNaturalCodeOrder(builder: SelectQueryBuilder<Person>, direction: SortDirection) {
+    builder
+      .orderBy(`LOWER(REGEXP_REPLACE("person"."code", '[0-9]+$', ''))`, direction)
+      .addOrderBy(`COALESCE(NULLIF(SUBSTRING("person"."code" FROM '([0-9]+)$'), '')::int, 0)`, direction)
+      .addOrderBy('"person"."code"', direction);
+  }
+
   async list({ query, userId, congregationId }: PersonListProps) {
     const { congregation } = await this.getContext(userId, congregationId);
+    if (String(query.order) === 'code') {
+      const pageSize = Number(query.size);
+      const page = Number(query.page);
+      const paginate = Number.isFinite(pageSize) && pageSize > 0 && Number.isFinite(page) && page >= 0;
+      const direction: SortDirection = query.direction === Direction.DESC ? Direction.DESC : Direction.ASC;
+      const builder = this.repository
+        .createQueryBuilder('person')
+        .where('"person"."congregation_id" = :congregationId', { congregationId: congregation.id })
+        .andWhere('"person"."deleted_at" IS NULL');
+
+      if (query.enabled !== undefined) builder.andWhere('"person"."enabled" = :enabled', { enabled: query.enabled });
+      this.addSearchFilters(builder, query.search);
+      this.applyNaturalCodeOrder(builder, direction);
+      if (paginate) builder.skip(pageSize * page).take(pageSize);
+
+      const [result, total] = await builder.getManyAndCount();
+      return { result, total };
+    }
+
     return findWithFilters<Person, typeof query>({
       repository: this.repository,
       query,
-      searchFields: ['code', 'first_name', 'middle_name', 'last_name', 'second_last_name', 'phone', 'email'],
+      searchFields: [...PERSON_SEARCH_FIELDS],
       booleanFields: ['enabled'],
       baseWhere: { congregation_id: congregation.id, deleted_at: IsNull() },
     });

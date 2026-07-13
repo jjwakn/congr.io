@@ -41,6 +41,8 @@ import type { PersonField } from '@/types/person.types';
 import { EventParticipantsEditorDialog } from '../Events/EventParticipantsEditorDialog';
 import { PastEventPickerDialog } from '../Events/PastEventPickerDialog';
 
+const PAST_EVENTS_PAGE_SIZE = 50;
+
 const formatFieldValue = (value: JsonValue | undefined) => {
   if (Array.isArray(value)) return value.join(', ');
   return String(value ?? '-');
@@ -64,10 +66,14 @@ export const AttendanceManagement = () => {
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
   const [personFields, setPersonFields] = useState<PersonField[]>([]);
   const [pastEvents, setPastEvents] = useState<CalendarEvent[]>([]);
+  const [pastEventsPage, setPastEventsPage] = useState(0);
+  const [pastEventsTotal, setPastEventsTotal] = useState(0);
+  const [pastEventSearch, setPastEventSearch] = useState('');
+  const [debouncedPastEventSearch, setDebouncedPastEventSearch] = useState('');
   const [selectedPastEvent, setSelectedPastEvent] = useState<CalendarEvent | null>(null);
   const [editorEvent, setEditorEvent] = useState<CalendarEvent | null>(null);
   const [editorReadOnly, setEditorReadOnly] = useState(false);
-  const [deleteEvent, setDeleteEvent] = useState<CalendarEvent | null>(null);
+  const [captureEventToClear, setCaptureEventToClear] = useState<CalendarEvent | null>(null);
   const [pastEventPickerOpen, setPastEventPickerOpen] = useState(false);
   const selectedEvent = events.find((event) => event.id === eventId) ?? null;
   const canCreatePerson = hasPermission('person', 'create');
@@ -76,7 +82,6 @@ export const AttendanceManagement = () => {
   const canCreateAttendance = hasPermission('event_attendance', 'create');
   const canUpdateAttendance = hasPermission('event_attendance', 'update');
   const canDeleteAttendance = hasPermission('event_attendance', 'delete');
-  const canDeleteEvent = hasPermission('event', 'delete');
   const historyList = useModuleList({
     moduleKey: 'event-attendance-history',
     defaultSort: 'start_datetime',
@@ -128,7 +133,9 @@ export const AttendanceManagement = () => {
       const response = await httpRequest<EventsListResponse>({
         service: EventsService.list,
         data: {
+          attendance_enabled: true,
           end_datetime_to: now.toISO(),
+          participant_filter: 'with_attendance',
           page: historyList.page,
           size: historyList.pageSize,
           order: historyList.sort,
@@ -153,32 +160,60 @@ export const AttendanceManagement = () => {
     t,
   ]);
 
-  const loadPastEvents = useCallback(async () => {
-    setPastEventsLoading(true);
-    try {
-      const response = await httpRequest<EventsListResponse>({
-        service: EventsService.list,
-        data: {
-          end_datetime_to: DateTime.now().toISO(),
-          page: 0,
-          size: 500,
-          order: 'start_datetime',
-          direction: 'DESC',
-        },
-      });
-      setPastEvents(response.result);
-      setSelectedPastEvent(response.result[0] ?? null);
-    } catch (value) {
-      showNotification(value instanceof Error ? value.message : t('pages.events.errors.load'), { severity: 'error' });
-    } finally {
-      setPastEventsLoading(false);
-    }
-  }, [showNotification, t]);
+  const loadPastEvents = useCallback(
+    async (page: number, search: string, append: boolean) => {
+      setPastEventsLoading(true);
+      try {
+        const response = await httpRequest<EventsListResponse>({
+          service: EventsService.list,
+          data: {
+            attendance_enabled: true,
+            end_datetime_to: DateTime.now().toISO(),
+            participant_filter: 'without_attendance',
+            page,
+            size: PAST_EVENTS_PAGE_SIZE,
+            order: 'start_datetime',
+            direction: 'DESC',
+            ...(search.trim() ? { search: search.trim() } : {}),
+          },
+        });
+        setPastEvents((current) => (append ? [...current, ...response.result] : response.result));
+        setPastEventsPage(page);
+        setPastEventsTotal(response.total);
+        if (!append) setSelectedPastEvent(null);
+      } catch (value) {
+        showNotification(value instanceof Error ? value.message : t('pages.events.errors.load'), { severity: 'error' });
+      } finally {
+        setPastEventsLoading(false);
+      }
+    },
+    [showNotification, t],
+  );
 
   const openPastEventPicker = useCallback(() => {
+    setPastEvents([]);
+    setPastEventsPage(0);
+    setPastEventsTotal(0);
+    setPastEventSearch('');
+    setDebouncedPastEventSearch('');
+    setSelectedPastEvent(null);
     setPastEventPickerOpen(true);
-    void loadPastEvents();
-  }, [loadPastEvents]);
+  }, []);
+
+  const loadMorePastEvents = useCallback(() => {
+    if (pastEventsLoading || pastEvents.length >= pastEventsTotal) return;
+    void loadPastEvents(pastEventsPage + 1, debouncedPastEventSearch, true);
+  }, [debouncedPastEventSearch, loadPastEvents, pastEvents.length, pastEventsLoading, pastEventsPage, pastEventsTotal]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedPastEventSearch(pastEventSearch), 600);
+    return () => window.clearTimeout(timer);
+  }, [pastEventSearch]);
+
+  useEffect(() => {
+    if (!pastEventPickerOpen) return;
+    void loadPastEvents(0, debouncedPastEventSearch, false);
+  }, [debouncedPastEventSearch, loadPastEvents, pastEventPickerOpen]);
 
   useEffect(() => {
     if (tab === 'today') void loadEvents();
@@ -210,20 +245,25 @@ export const AttendanceManagement = () => {
     void openEditor(selectedPastEvent);
   }, [openEditor, selectedPastEvent]);
 
-  const removeHistoryEvent = useCallback(async () => {
-    if (!deleteEvent) return;
+  const clearHistoryAttendance = useCallback(async () => {
+    if (!captureEventToClear) return;
     setHistoryDeleting(true);
     try {
-      await httpRequest({ service: EventsService.remove, data: { id: deleteEvent.id } });
-      setDeleteEvent(null);
+      await httpRequest({
+        service: EventParticipantsService.clearAttendanceEvent,
+        data: { id: captureEventToClear.id },
+      });
+      setCaptureEventToClear(null);
       await loadHistoryEvents();
-      showNotification(t('pages.events.success.deleted'), { severity: 'success' });
+      showNotification(t('pages.attendance.deleted'), { severity: 'success' });
     } catch (value) {
-      showNotification(value instanceof Error ? value.message : t('pages.events.errors.delete'), { severity: 'error' });
+      showNotification(value instanceof Error ? value.message : t('pages.attendance.deleteFailed'), {
+        severity: 'error',
+      });
     } finally {
       setHistoryDeleting(false);
     }
-  }, [deleteEvent, loadHistoryEvents, showNotification, t]);
+  }, [captureEventToClear, loadHistoryEvents, showNotification, t]);
 
   const removeParticipant = useCallback(
     async (participantId: string) => {
@@ -277,19 +317,19 @@ export const AttendanceManagement = () => {
               },
               {
                 id: 'delete',
-                label: t('pages.events.actions.delete'),
+                label: t('pages.attendance.deleteAction'),
                 icon: DeleteOutlineRoundedIcon,
                 color: 'error',
-                hidden: !canDeleteEvent,
+                hidden: !canDeleteAttendance,
                 disabled: historyLoading,
-                onClick: setDeleteEvent,
+                onClick: setCaptureEventToClear,
               },
             ]}
           />
         ),
       },
     ],
-    [canDeleteEvent, canUpdateAttendance, historyLoading, i18n.language, openEditor, t],
+    [canDeleteAttendance, canUpdateAttendance, historyLoading, i18n.language, openEditor, t],
   );
 
   return (
@@ -497,22 +537,26 @@ export const AttendanceManagement = () => {
           loadingLabel={t('pages.attendance.loading')}
           noOptionsLabel={t('pages.attendance.pastEventsEmpty')}
           events={pastEvents}
+          hasMore={pastEvents.length < pastEventsTotal}
           loading={pastEventsLoading}
+          search={pastEventSearch}
           selectedEvent={selectedPastEvent}
           onChange={setSelectedPastEvent}
           onClose={() => setPastEventPickerOpen(false)}
           onConfirm={confirmPastEvent}
+          onLoadMore={loadMorePastEvents}
+          onSearchChange={setPastEventSearch}
         />
         <ConfirmDialog
-          open={Boolean(deleteEvent)}
-          title={t('pages.events.delete.title')}
-          message={t('pages.events.delete.message')}
-          confirmLabel={t('pages.events.actions.delete')}
+          open={Boolean(captureEventToClear)}
+          title={t('pages.attendance.deleteTitle')}
+          message={t('pages.attendance.deleteMessage', { name: captureEventToClear?.name ?? '' })}
+          confirmLabel={t('pages.attendance.deleteAction')}
           cancelLabel={t('form.field.cancel')}
           confirming={historyDeleting}
           confirmColor="error"
-          onClose={() => setDeleteEvent(null)}
-          onConfirm={() => void removeHistoryEvent()}
+          onClose={() => setCaptureEventToClear(null)}
+          onConfirm={() => void clearHistoryAttendance()}
         />
       </Stack>
     </ModuleSection>
