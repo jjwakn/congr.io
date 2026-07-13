@@ -401,6 +401,7 @@ export const UsersManagement = () => {
       {
         id: 'id',
         label: t('pages.modules.common.id'),
+        sortKey: 'id',
         minWidth: 260,
         render: (user) => user.id,
       },

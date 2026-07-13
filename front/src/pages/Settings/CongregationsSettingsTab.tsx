@@ -8,6 +8,7 @@ import {
   getCrudAuditColumnDefinitions,
 } from '@components/common/modules/crudAuditColumns';
 import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
+import type { ListDirection } from '@components/common/modules/useModuleList.types';
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
@@ -33,6 +34,22 @@ type CongregationColumnId = 'id' | 'name' | 'type' | 'timezone' | 'modules' | 'c
 const getErrorMessage = (value: Error | null, fallback: string) =>
   value instanceof HttpRequestError || value instanceof Error ? value.message : fallback;
 
+const getCongregationSortValue = (
+  item: Congregation,
+  sort: string,
+  currentCongregationId: string | undefined,
+): number | string => {
+  if (sort === 'modules') return item.features?.length ?? 0;
+  if (sort === 'current') return item.id === currentCongregationId ? 1 : 0;
+  if (sort === 'created_at') return item.created_at ? String(item.created_at) : '';
+  if (sort === 'updated_at') return item.updated_at ? String(item.updated_at) : '';
+  if (sort === 'deleted_at') return item.deleted_at ? String(item.deleted_at) : '';
+  if (sort === 'id') return item.id;
+  if (sort === 'type') return item.type;
+  if (sort === 'timezone') return item.timezone;
+  return item.name;
+};
+
 export const CongregationsSettingsTab = () => {
   const { i18n, t } = useTranslation();
   const { congregation, refreshIsSetup, selectCongregation } = useAppContext();
@@ -43,10 +60,22 @@ export const CongregationsSettingsTab = () => {
   const canCreate = hasPermission('congregation', 'create');
   const canUpdate = hasPermission('congregation', 'update');
   const canDelete = hasPermission('congregation', 'delete');
-  const congregations = useMemo(
-    () => [...(user?.congregations ?? [])].sort((left, right) => left.name.localeCompare(right.name)),
-    [user?.congregations],
-  );
+  const [sort, setSort] = useState<CongregationColumnId>('name');
+  const [direction, setDirection] = useState<ListDirection>('ASC');
+  const congregations = useMemo(() => {
+    const collator = new Intl.Collator(i18n.language, { numeric: true, sensitivity: 'base' });
+
+    return [...(user?.congregations ?? [])].sort((left, right) => {
+      const leftValue = getCongregationSortValue(left, sort, congregation?.id);
+      const rightValue = getCongregationSortValue(right, sort, congregation?.id);
+      const result =
+        typeof leftValue === 'number' && typeof rightValue === 'number'
+          ? leftValue - rightValue
+          : collator.compare(String(leftValue), String(rightValue));
+
+      return direction === 'ASC' ? result : -result;
+    });
+  }, [congregation?.id, direction, i18n.language, sort, user?.congregations]);
   const [createOpen, setCreateOpen] = useState(false);
   const [editCongregation, setEditCongregation] = useState<Congregation | null>(null);
   const [deleteCongregation, setDeleteCongregation] = useState<Congregation | null>(null);
@@ -75,6 +104,20 @@ export const CongregationsSettingsTab = () => {
     fixedColumnIds: ['name', 'actions'],
     defaultSearchColumnIds: ['name', 'type', 'timezone'],
   });
+
+  const handleSort = useCallback(
+    (value: string) => {
+      const nextSort = value as CongregationColumnId;
+      if (nextSort === sort) {
+        setDirection((current) => (current === 'ASC' ? 'DESC' : 'ASC'));
+        return;
+      }
+
+      setSort(nextSort);
+      setDirection('ASC');
+    },
+    [sort],
+  );
 
   const handleCreate = async (values: CongregationCreateValues) => {
     setSubmitting(true);
@@ -281,12 +324,12 @@ export const CongregationsSettingsTab = () => {
 
   const headerDefinitions = useMemo<ModuleListHeaderCell[]>(
     () => [
-      { id: 'id', label: t('pages.modules.common.id') },
-      { id: 'name', label: t('form.field.name') },
-      { id: 'type', label: t('form.field.type') },
-      { id: 'timezone', label: t('form.field.timezone') },
-      { id: 'modules', label: t('pages.settings.congregation.modules.column'), align: 'center' },
-      { id: 'current', label: t('pages.settings.congregation.current'), align: 'center' },
+      { id: 'id', label: t('pages.modules.common.id'), sortKey: 'id' },
+      { id: 'name', label: t('form.field.name'), sortKey: 'name' },
+      { id: 'type', label: t('form.field.type'), sortKey: 'type' },
+      { id: 'timezone', label: t('form.field.timezone'), sortKey: 'timezone' },
+      { id: 'modules', label: t('pages.settings.congregation.modules.column'), sortKey: 'modules', align: 'center' },
+      { id: 'current', label: t('pages.settings.congregation.current'), sortKey: 'current', align: 'center' },
       ...auditColumnDefinitions.map(({ id, label, sortKey, align }) => ({ id, label, sortKey, align })),
       { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
     ],
@@ -338,9 +381,9 @@ export const CongregationsSettingsTab = () => {
           loading: false,
           loadingLabel: t('pages.settings.congregation.loading'),
           emptyLabel: t('pages.settings.congregation.empty'),
-          sort: 'name',
-          direction: 'ASC',
-          onSort: () => undefined,
+          sort,
+          direction,
+          onSort: handleSort,
           page: 0,
           pageSize: 10,
           total: congregations.length,

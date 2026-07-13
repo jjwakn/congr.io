@@ -395,7 +395,7 @@ export const RolesManagement = () => {
     >
   >(
     () => [
-      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (role) => role.id },
+      { id: 'id', label: t('pages.modules.common.id'), sortKey: 'id', minWidth: 260, render: (role) => role.id },
       {
         id: 'name',
         label: t('pages.modules.roles.columns.role'),
@@ -406,6 +406,7 @@ export const RolesManagement = () => {
       {
         id: 'full-access',
         label: t('pages.modules.roles.columns.fullAccess'),
+        sortKey: 'full_access',
         minWidth: 96,
         align: 'center',
         render: (role) => <CrudPermissionStatus enabled={Boolean(role.full_access)} />,
@@ -424,7 +425,6 @@ export const RolesManagement = () => {
           })} · ${t(`pages.modules.roles.columns.${column.action}`, {
             defaultValue: column.action,
           })}`,
-          sortKey: column.id,
           minWidth: 72,
           align: 'center',
           render: (role) => (

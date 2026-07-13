@@ -155,7 +155,7 @@ export const PersonFieldsManagement = () => {
     >
   >(
     () => [
-      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row) => row.id },
+      { id: 'id', label: t('pages.modules.common.id'), sortKey: 'id', minWidth: 260, render: (row) => row.id },
       {
         id: 'label',
         label: t('pages.persons.fieldsCrud.label'),
@@ -166,6 +166,7 @@ export const PersonFieldsManagement = () => {
       {
         id: 'type',
         label: t('pages.persons.fieldsCrud.type'),
+        sortKey: 'type',
         minWidth: 120,
         render: (row) => t(`pages.persons.fieldTypes.${row.type}`),
       },
@@ -197,12 +198,14 @@ export const PersonFieldsManagement = () => {
       {
         id: 'required',
         label: t('pages.persons.fieldsCrud.required'),
+        sortKey: 'required',
         minWidth: 120,
         render: (row) => (row.required ? t('pages.modules.common.filterYes') : t('pages.modules.common.filterNo')),
       },
       {
         id: 'allow_multiple',
         label: t('pages.persons.fieldsCrud.allowMultiple'),
+        sortKey: 'allow_multiple',
         minWidth: 150,
         render: (row) =>
           row.allow_multiple ? t('pages.modules.common.filterYes') : t('pages.modules.common.filterNo'),

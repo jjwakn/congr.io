@@ -234,7 +234,7 @@ export const EventTypesManagement = () => {
     >
   >(
     () => [
-      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row) => row.id },
+      { id: 'id', label: t('pages.modules.common.id'), sortKey: 'id', minWidth: 260, render: (row) => row.id },
       {
         id: 'icon',
         label: t('pages.settings.eventTypes.fields.icon'),
@@ -284,6 +284,7 @@ export const EventTypesManagement = () => {
       {
         id: 'description',
         label: t('pages.settings.eventTypes.fields.description'),
+        sortKey: 'description',
         minWidth: 240,
         render: (row) => (
           <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 420 }}>

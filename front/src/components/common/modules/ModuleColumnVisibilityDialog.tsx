@@ -14,9 +14,18 @@ import {
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModuleColumnVisibilityDialogProps } from './ModuleColumnVisibilityDialog.types';
+import { CRUD_AUDIT_COLUMN_IDS } from './crudAuditColumns';
 
 const areStringArraysEqual = (left: string[], right: string[]) =>
   left.length === right.length && left.every((value, index) => right[index] === value);
+
+const auditColumnIdSet = new Set<string>(CRUD_AUDIT_COLUMN_IDS);
+
+const getLabelText = (label: ModuleColumnVisibilityDialogProps['options'][number]['label'], fallback: string) => {
+  if (typeof label !== 'string' && typeof label !== 'number') return fallback;
+
+  return String(label).trim() || fallback;
+};
 
 export const ModuleColumnVisibilityDialog = ({
   open,
@@ -26,12 +35,25 @@ export const ModuleColumnVisibilityDialog = ({
   onClose,
   onSave,
 }: ModuleColumnVisibilityDialogProps) => {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [draftVisibleIds, setDraftVisibleIds] = useState<string[]>(visibleIds);
 
   const hasChanges = useMemo(() => !areStringArraysEqual(draftVisibleIds, visibleIds), [draftVisibleIds, visibleIds]);
+
+  const sortedOptions = useMemo(() => {
+    const collator = new Intl.Collator(i18n.language, { numeric: true, sensitivity: 'base' });
+
+    return [...options].sort((left, right) => {
+      const leftIsAudit = auditColumnIdSet.has(left.id);
+      const rightIsAudit = auditColumnIdSet.has(right.id);
+
+      if (leftIsAudit !== rightIsAudit) return leftIsAudit ? 1 : -1;
+
+      return collator.compare(getLabelText(left.label, left.id), getLabelText(right.label, right.id));
+    });
+  }, [i18n.language, options]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" fullScreen={isMobile}>
@@ -39,7 +61,7 @@ export const ModuleColumnVisibilityDialog = ({
 
       <DialogContent>
         <List disablePadding>
-          {options.map((option) => (
+          {sortedOptions.map((option) => (
             <ListItem key={option.id} disableGutters>
               <FormControlLabel
                 control={

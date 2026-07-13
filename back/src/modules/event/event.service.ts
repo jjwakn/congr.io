@@ -238,6 +238,9 @@ export class EventService {
       is_public: 'event.is_public',
       attendance_enabled: 'event.attendance_enabled',
       self_registration_enabled: 'event.self_registration_enabled',
+      created_at: 'event.created_at',
+      updated_at: 'event.updated_at',
+      deleted_at: 'event.deleted_at',
     };
     const orderBy = orderMap[query.order] ?? orderMap.start_datetime;
     const participantAlias = this.eventParticipantRepository.metadata.tableName;

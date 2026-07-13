@@ -44,35 +44,6 @@ REPORTS? FOR THE DAY, week, location
 - events
 - attendance
 
-Se need to group the sidebar per category, i'll send you the categories, but take this into consideration
-
-- each category needs an icon
-- each category will be expandable so show its subitems
-- depending on the route that we are we will show the current item selected (coloring the icon) and the category expanded
-- each subitem needs to be aligned with the icon and text of the parent (so no paddin/margin on the expandable body), what will make it disting maybe another icon style (like outlined) and having a different backgorund color
-- when we have only one subitem on the category (like flows) or because of the current user permissions we can only see one of the items of the category we will show the subtiem as an item (without expandable), keeping the selected behavior and the category style
-- if the current logged user doesnt have access to any of the subitems of the categroy then we wont show the category at all
-- for the settings allowing the user to sort the items, the user will be able only to change the order of the categoreis (or items without a parent like flows) and internally the category items also
-- this is the list, sort it by default alfabetically depending on the language (unless the user changes its order for them), sort the events categories first and then every subitem on the category only in its category
-
-- Events
-  - Calendar
-  - Asistencia a Events
-  - eventos
-  - registro a eventos
-    Servicios
-  - asistencia a servicios
-  - servicios
-    personas
-  - personas nuevas
-  - personas
-  - seguimiento
-    flujos
-  - flujos
-    systema
-  - usuarios
-  - roles
-
 12. Flow Creation is still broken
 
 - use react flow
@@ -103,14 +74,6 @@ Se need to group the sidebar per category, i'll send you the categories, but tak
   - checking this will insert a new configuration step when creating a congregation (and when adding or editing one) to select "what people are we counting" by default just add "Adults" and "Kids" but on the setup we could add/remove to be as specific as we want. Each one needs its own color
   - it will be just a counter, similar to "new people" we will ned a crud section we will have two tabs, one for today and one historic crud.
   - for the today (if there is a service in the day and is happening right now) we will show just 3 big things per group counted. Minus button, current and plus button. So we will show "cards" for each item, so in our initial example one card for adults and one for kids. this needs to autorefresh every 30 seconds so multiple people could take attendance at the same time, but again, it will only associate one "main" attendance per service regardless of how many people are marking it. And we dont need a "save" button but we need a debounce, so a person can click 5 times, the counter will increase 5 times but it will save just once. And we need to "queue" or be smart about the attendance, meaning that if we have 10 people now, User A increase 5 peoples, User B increases 4, user C removes 1 and user A increase 2 more at the end we will have 10+5+3-1+2 = 19 (i think, you get the idea)
-
-15. also adding new modules requires that each congregation goes to their settings and turn it on, so its opt in on new modules on the code
-
-16. Simlar to other section, we need 2 tabs in event attendance, the "today" tab (or right now) displaying the current event in progress (what we already have) and the CRUD historic one were we can edit old ones or create missing ones
-
-17. for all the "today" / "right now" tabs (service attendance, new people, event attendance):
-
-- we could have multiple things happenign at once or have services one after another, so by default we load the one thing happening now or that will happen later in the day, and we automatically will have a top input/dropdown/something to select the next service or the next event (we will have it so we can "go back" on the day to add a missing one)
 
 TEST FLOWS, ATTENDANCE AND REGISTRATION
 

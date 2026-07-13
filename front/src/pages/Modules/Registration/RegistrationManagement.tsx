@@ -400,7 +400,7 @@ export const RegistrationManagement = () => {
     >
   >(
     () => [
-      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (event) => event.id },
+      { id: 'id', label: t('pages.modules.common.id'), sortKey: 'id', minWidth: 260, render: (event) => event.id },
       {
         id: 'type',
         label: t('pages.events.form.type'),

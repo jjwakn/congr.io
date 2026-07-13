@@ -129,7 +129,13 @@ export const FlowsManagement = () => {
     >
   >(
     () => [
-      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row: Process) => row.id },
+      {
+        id: 'id',
+        label: t('pages.modules.common.id'),
+        sortKey: 'id',
+        minWidth: 260,
+        render: (row: Process) => row.id,
+      },
       {
         id: 'name',
         label: t('form.field.name'),

@@ -208,7 +208,7 @@ export const PersonsManagement = () => {
     >
   >(
     () => [
-      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row: Person) => row.id },
+      { id: 'id', label: t('pages.modules.common.id'), sortKey: 'id', minWidth: 260, render: (row: Person) => row.id },
       {
         id: 'code',
         label: t('pages.persons.fields.code'),
@@ -233,6 +233,7 @@ export const PersonsManagement = () => {
       {
         id: 'middle_name',
         label: t('pages.persons.fields.middleName'),
+        sortKey: 'middle_name',
         minWidth: 140,
         render: (row: Person) => row.middle_name || t('pages.modules.common.emptyValue'),
       },
@@ -246,12 +247,14 @@ export const PersonsManagement = () => {
       {
         id: 'second_last_name',
         label: t('pages.persons.fields.secondLastName'),
+        sortKey: 'second_last_name',
         minWidth: 140,
         render: (row: Person) => row.second_last_name || t('pages.modules.common.emptyValue'),
       },
       {
         id: 'married_name',
         label: t('pages.persons.fields.marriedName'),
+        sortKey: 'married_name',
         minWidth: 140,
         render: (row: Person) => row.married_name || t('pages.modules.common.emptyValue'),
       },
@@ -265,6 +268,7 @@ export const PersonsManagement = () => {
       {
         id: 'birthdate',
         label: t('pages.persons.fields.birthdate'),
+        sortKey: 'birthdate',
         minWidth: 140,
         render: (row: Person) => row.birthdate || t('pages.modules.common.emptyValue'),
       },
@@ -281,6 +285,7 @@ export const PersonsManagement = () => {
       {
         id: 'email',
         label: t('pages.persons.fields.email'),
+        sortKey: 'email',
         minWidth: 180,
         render: (row: Person) => row.email || t('pages.modules.common.emptyValue'),
       },

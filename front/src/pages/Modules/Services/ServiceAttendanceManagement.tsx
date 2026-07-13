@@ -210,7 +210,7 @@ const ServiceAttendanceManagement = () => {
     >
   >(
     () => [
-      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row) => row.id },
+      { id: 'id', label: t('pages.modules.common.id'), sortKey: 'id', minWidth: 260, render: (row) => row.id },
       { id: 'date', label: t('pages.services.attendance.date'), sortKey: 'date', render: (row) => row.date },
       {
         id: 'service',
@@ -223,7 +223,12 @@ const ServiceAttendanceManagement = () => {
         label: t('pages.services.attendance.count'),
         render: (row) => row.counts.reduce((sum, count) => sum + count.count, 0),
       },
-      { id: 'notes', label: t('pages.services.newPeople.notes'), render: (row) => row.notes || '-' },
+      {
+        id: 'notes',
+        label: t('pages.services.newPeople.notes'),
+        sortKey: 'notes',
+        render: (row) => row.notes || '-',
+      },
       ...auditColumnDefinitions,
     ],
     [auditColumnDefinitions, services, t],

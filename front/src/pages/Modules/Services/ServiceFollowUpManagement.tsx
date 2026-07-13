@@ -28,11 +28,20 @@ type FollowUpColumnId = 'id' | 'person' | 'phone' | 'firstVisit' | 'serviceName'
 const personName = (entry: ServiceNewPerson) =>
   `${entry.person.code} · ${entry.person.first_name} ${entry.person.last_name}`.trim();
 
+const getFollowUpSortValue = (row: FollowUpRow, sort: string) => {
+  if (sort === 'id') return row.id;
+  if (sort === 'phone') return row.phone;
+  if (sort === 'firstVisit') return row.firstVisit;
+  if (sort === 'serviceName') return row.serviceName;
+  if (sort === 'status') return row.status;
+  return row.personName;
+};
+
 const ServiceFollowUpManagement = () => {
   const { t } = useTranslation();
   const list = useModuleList({
     moduleKey: 'services-follow-up-list',
-    defaultSort: 'date',
+    defaultSort: 'firstVisit',
     defaultDirection: 'ASC',
   });
   const [rows, setRows] = useState<FollowUpRow[]>([]);
@@ -59,7 +68,7 @@ const ServiceFollowUpManagement = () => {
           data: {
             page: list.page,
             size: list.pageSize,
-            order: list.sort,
+            order: list.sort === 'serviceName' ? 'service_id' : 'date',
             direction: list.direction,
             ...(list.debouncedSearch ? { search: list.debouncedSearch } : {}),
           },
@@ -106,6 +115,18 @@ const ServiceFollowUpManagement = () => {
     );
   }, [list.debouncedSearch, rows]);
 
+  const sortedRows = useMemo(() => {
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+    return [...filteredRows].sort((left, right) => {
+      const leftValue = getFollowUpSortValue(left, list.sort);
+      const rightValue = getFollowUpSortValue(right, list.sort);
+      const result = collator.compare(String(leftValue), String(rightValue));
+
+      return list.direction === 'ASC' ? result : -result;
+    });
+  }, [filteredRows, list.direction, list.sort]);
+
   const columnDefinitions = useMemo<ModuleListColumn<FollowUpRow>[]>(
     () => [
       { id: 'id', render: (row) => row.id },
@@ -120,12 +141,12 @@ const ServiceFollowUpManagement = () => {
 
   const headerDefinitions = useMemo<ModuleListHeaderCell[]>(
     () => [
-      { id: 'id', label: t('pages.modules.common.id') },
-      { id: 'person', label: t('pages.services.followUp.person') },
-      { id: 'phone', label: t('pages.services.followUp.phone') },
-      { id: 'firstVisit', label: t('pages.services.followUp.firstVisit'), sortKey: 'date' },
-      { id: 'serviceName', label: t('pages.services.newPeople.service') },
-      { id: 'status', label: t('pages.services.followUp.status') },
+      { id: 'id', label: t('pages.modules.common.id'), sortKey: 'id' },
+      { id: 'person', label: t('pages.services.followUp.person'), sortKey: 'person' },
+      { id: 'phone', label: t('pages.services.followUp.phone'), sortKey: 'phone' },
+      { id: 'firstVisit', label: t('pages.services.followUp.firstVisit'), sortKey: 'firstVisit' },
+      { id: 'serviceName', label: t('pages.services.newPeople.service'), sortKey: 'serviceName' },
+      { id: 'status', label: t('pages.services.followUp.status'), sortKey: 'status' },
     ],
     [t],
   );
@@ -158,7 +179,7 @@ const ServiceFollowUpManagement = () => {
       table={{
         headerRows,
         columns,
-        rows: filteredRows,
+        rows: sortedRows,
         getRowId: (row) => row.id,
         loading,
         loadingLabel: t('pages.services.followUp.loading'),
@@ -168,7 +189,7 @@ const ServiceFollowUpManagement = () => {
         onSort: list.handleSort,
         page: list.page,
         pageSize: list.pageSize,
-        total: filteredRows.length,
+        total: sortedRows.length,
         onPageChange: list.handleChangePage,
         onPageSizeChange: list.handleChangeRowsPerPage,
         rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),

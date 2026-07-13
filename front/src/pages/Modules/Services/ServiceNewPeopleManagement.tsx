@@ -239,7 +239,7 @@ const ServiceNewPeopleManagement = () => {
     >
   >(
     () => [
-      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row) => row.id },
+      { id: 'id', label: t('pages.modules.common.id'), sortKey: 'id', minWidth: 260, render: (row) => row.id },
       { id: 'date', label: t('pages.services.newPeople.date'), sortKey: 'date', render: (row) => row.date },
       {
         id: 'service',
@@ -247,7 +247,12 @@ const ServiceNewPeopleManagement = () => {
         sortKey: 'service_id',
         render: (row) => services.find(({ id }) => id === row.service_id)?.name ?? row.service?.name ?? '-',
       },
-      { id: 'notes', label: t('pages.services.newPeople.notes'), render: (row) => row.notes || '-' },
+      {
+        id: 'notes',
+        label: t('pages.services.newPeople.notes'),
+        sortKey: 'notes',
+        render: (row) => row.notes || '-',
+      },
       ...auditColumnDefinitions,
       {
         id: 'actions',

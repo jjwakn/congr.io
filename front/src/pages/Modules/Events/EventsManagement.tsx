@@ -43,6 +43,7 @@ type EventDateFilterKey = 'start_datetime' | 'end_datetime';
 type EventFilterKey = EventBooleanFilterKey | EventDateFilterKey;
 type EventColumnId =
   | 'icon'
+  | 'id'
   | 'name'
   | 'type'
   | 'start_datetime'
@@ -87,6 +88,7 @@ const DEFAULT_VISIBLE_COLUMNS: EventColumnId[] = [
 const EVENTS_COLUMNS_KEY = 'events-list';
 const EVENT_COLUMN_IDS: EventColumnId[] = [
   'icon',
+  'id',
   'name',
   'type',
   'start_datetime',
@@ -435,6 +437,13 @@ export const EventsManagement = () => {
         width: 64,
         align: 'center',
         render: (event) => <MuiIcon name={event.type?.icon} sx={{ color: event.type?.color ?? 'primary.main' }} />,
+      },
+      {
+        id: 'id',
+        label: t('pages.modules.common.id'),
+        sortKey: 'id',
+        minWidth: 260,
+        render: (event) => event.id,
       },
       {
         id: 'name',

@@ -293,11 +293,12 @@ const ServicesManagement = () => {
     >
   >(
     () => [
-      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row) => row.id },
+      { id: 'id', label: t('pages.modules.common.id'), sortKey: 'id', minWidth: 260, render: (row) => row.id },
       { id: 'name', label: t('pages.services.fields.name'), sortKey: 'name', render: (row) => row.name },
       {
         id: 'location',
         label: t('pages.services.fields.location'),
+        sortKey: 'location_id',
         render: (row) =>
           row.location?.name ?? congregation?.locations.find(({ id }) => id === row.location_id)?.name ?? '-',
       },
@@ -322,6 +323,7 @@ const ServicesManagement = () => {
       {
         id: 'description',
         label: t('pages.services.fields.description'),
+        sortKey: 'description',
         minWidth: 220,
         render: (row) => row.description || t('pages.modules.common.emptyValue'),
       },
