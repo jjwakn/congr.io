@@ -52,7 +52,7 @@ const ServiceFollowUpManagement = () => {
             size: list.pageSize,
             order: list.sort,
             direction: list.direction,
-            search: list.debouncedSearch || undefined,
+            ...(list.debouncedSearch ? { search: list.debouncedSearch } : {}),
           },
         }),
       ]);

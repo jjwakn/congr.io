@@ -44,6 +44,10 @@ const parseResponseBody = async (response: Response): Promise<JsonValue | null> 
 const isJsonObject = (payload: JsonValue | null): payload is JsonObject =>
   Boolean(payload) && typeof payload === 'object' && !Array.isArray(payload);
 
+const isEmptyQueryValue = (value: JsonValue | undefined) => value === null || value === undefined || value === '';
+const hasQueryValue = (entry: [string, JsonValue | undefined]): entry is [string, Exclude<JsonValue, null>] =>
+  !isEmptyQueryValue(entry[1]);
+
 const parseErrorMessage = (payload: JsonValue | null, fallback: string): string => {
   if (isJsonObject(payload) && 'message' in payload) {
     const message = payload.message;
@@ -96,16 +100,18 @@ export const httpRequest = async <ResponseType>({
 
   // Converting to query params if method is GET
   if (service.method === 'GET' && jsonData && Object.keys(jsonData).length) {
-    const queryParams = Object.entries(jsonData).map(([key, value]) => {
-      if (value === null || value === undefined || value === '')
-        throw new Error(i18n.t('http.error.missingParam', { key }));
+    const queryEntries = Object.entries(jsonData).filter(hasQueryValue);
+
+    const queryParams = queryEntries.map(([key, value]) => {
       if (typeof value === 'object') throw new Error(i18n.t('http.error.missingParam', { key }));
 
       return `${encodeURIComponent(key)}=${encodeURIComponent(value.toString())}`;
     });
 
-    const separator = url.includes('?') ? '&' : '?';
-    url += `${separator}${queryParams.join('&')}`;
+    if (queryParams.length) {
+      const separator = url.includes('?') ? '&' : '?';
+      url += `${separator}${queryParams.join('&')}`;
+    }
   }
 
   const requestHeaders: Record<string, string> = {
