@@ -8,6 +8,7 @@ export interface UseModuleColumnVisibilityProps<ColumnId extends string> {
 
 export interface UseModuleColumnVisibilityState<ColumnId extends string> {
   visibleColumnIds: ColumnId[];
+  defaultVisibleColumnIds: ColumnId[];
   columnsQuery: string;
   searchColumnsQuery: string;
   setVisibleColumnIds: (value: ColumnId[]) => void;

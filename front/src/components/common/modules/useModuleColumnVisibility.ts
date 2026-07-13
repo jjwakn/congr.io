@@ -31,6 +31,10 @@ export const useModuleColumnVisibility = <ColumnId extends string>({
   );
 
   const [localColumnIds, setLocalColumnIds] = useState<ColumnId[] | null>(null);
+  const sanitizedDefaultVisibleColumnIds = useMemo(
+    () => sanitizeColumnIds(defaultVisibleColumnIds),
+    [sanitizeColumnIds, defaultVisibleColumnIds],
+  );
   const visibleColumnIds = useMemo(
     () => sanitizeColumnIds(localColumnIds ?? storedColumnIds),
     [localColumnIds, sanitizeColumnIds, storedColumnIds],
@@ -65,6 +69,7 @@ export const useModuleColumnVisibility = <ColumnId extends string>({
 
   return {
     visibleColumnIds,
+    defaultVisibleColumnIds: sanitizedDefaultVisibleColumnIds,
     columnsQuery,
     searchColumnsQuery,
     setVisibleColumnIds: persistVisibleColumnIds,

@@ -13,7 +13,11 @@ import { ConfigurationsService } from '@services/configurations';
 import { CongregationsService } from '@services/congregations';
 import { UsersService } from '@services/users';
 import { API_URL } from '@utils/constants';
-import { createModuleNavigationItem, createSettingsNavigationItem } from '@utils/dashboard';
+import {
+  createDashboardNavigationCategories,
+  createModuleNavigationItem,
+  createSettingsNavigationItem,
+} from '@utils/dashboard';
 import { HttpRequestError, httpRequest } from '@utils/http';
 import { getPreloadedResource, preloadDashboardResources } from '@utils/preload';
 import {
@@ -123,16 +127,6 @@ const Dashboard = () => {
     [availableModules],
   );
   const sidebarOrder = useMemo(() => user?.preferences?.sidebar_order ?? [], [user?.preferences?.sidebar_order]);
-  const orderedModules = useMemo(() => {
-    const order = new Map(sidebarOrder.map((id, index) => [id, index]));
-    return [...renderableModules].sort((left, right) => {
-      const leftIndex = order.get(left.id);
-      const rightIndex = order.get(right.id);
-      if (leftIndex !== undefined || rightIndex !== undefined)
-        return (leftIndex ?? Number.MAX_SAFE_INTEGER) - (rightIndex ?? Number.MAX_SAFE_INTEGER);
-      return left.title.localeCompare(right.title, i18n.language, { sensitivity: 'base' });
-    });
-  }, [i18n.language, renderableModules, sidebarOrder]);
   const favorites = useMemo(() => user?.preferences?.favorites ?? [], [user?.preferences?.favorites]);
   const [favoriteRegistrationEvents, setFavoriteRegistrationEvents] = useState<CalendarEvent[]>([]);
   const settingsPath = useMemo(() => getSettingsPath(i18n.language), [i18n.language]);
@@ -142,21 +136,35 @@ const Dashboard = () => {
     ? `${API_URL.replace(/\/$/, '')}/files/public/${congregation.logo_small_file_id}`
     : undefined;
 
+  const navigationCategories = useMemo(
+    () =>
+      createDashboardNavigationCategories({
+        modules: renderableModules,
+        sidebarOrder,
+        language: i18n.language,
+        t,
+      }),
+    [i18n.language, renderableModules, sidebarOrder, t],
+  );
+  const orderedModules = useMemo(() => {
+    const moduleById = new Map(renderableModules.map((module) => [module.id, module]));
+
+    return navigationCategories
+      .flatMap((category) => category.items)
+      .map((item) => moduleById.get(item.id))
+      .filter((module): module is DashboardModuleView => Boolean(module));
+  }, [navigationCategories, renderableModules]);
   const navigationItems = useMemo(
-    () => [
-      ...orderedModules.map((module) =>
-        createModuleNavigationItem({
-          moduleId: module.id,
-          label: module.title,
-          path: module.path,
-        }),
-      ),
+    () => navigationCategories.flatMap((category) => category.items),
+    [navigationCategories],
+  );
+  const settingsItem = useMemo(
+    () =>
       createSettingsNavigationItem({
         label: t('pages.dashboard.settings'),
         language: i18n.language,
       }),
-    ],
-    [i18n.language, orderedModules, t],
+    [i18n.language, t],
   );
   useEffect(() => {
     const typeIds = favorites.filter((id) => id.startsWith('registration-type:')).map((id) => id.split(':')[1]);
@@ -340,7 +348,8 @@ const Dashboard = () => {
 
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
         <DashboardNavigationDrawer
-          items={navigationItems}
+          categories={navigationCategories}
+          settingsItem={settingsItem}
           selectedPath={selectedPath}
           congregationName={congregation?.name || 'Congr.io'}
           logoSrc={congregationLogoSrc}

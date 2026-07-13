@@ -11,7 +11,14 @@
     "settings": "Settings",
     "switchCongregation": "Switch congregation",
     "congregationSwitchFailed": "Could not switch congregations.",
-    "toggleFavorite": "Add or remove this section from quick access"
+    "toggleFavorite": "Add or remove this section from quick access",
+    "categories": {
+      "events": "Events",
+      "services": "Services",
+      "people": "People",
+      "flows": "Flows",
+      "system": "System"
+    }
   },
   "modules": {
     "common": {

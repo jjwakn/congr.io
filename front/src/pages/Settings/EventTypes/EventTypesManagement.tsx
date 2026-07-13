@@ -416,6 +416,7 @@ export const EventTypesManagement = () => {
               .filter((column) => column.id !== 'actions')
               .map((column) => ({ id: column.id, label: column.label })),
             visibleIds: columnVisibility.visibleColumnIds,
+            defaultVisibleIds: columnVisibility.defaultVisibleColumnIds,
             disabled: list.loading,
             onChange: (value) => columnVisibility.setVisibleColumnIds(value as EventTypeColumnId[]),
           },

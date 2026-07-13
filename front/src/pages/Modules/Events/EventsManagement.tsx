@@ -432,18 +432,18 @@ export const EventsManagement = () => {
   const columnsDefinitions = useMemo<EventColumnDefinition[]>(
     () => [
       {
-        id: 'icon',
-        label: '',
-        width: 64,
-        align: 'center',
-        render: (event) => <MuiIcon name={event.type?.icon} sx={{ color: event.type?.color ?? 'primary.main' }} />,
-      },
-      {
         id: 'id',
         label: t('pages.modules.common.id'),
         sortKey: 'id',
         minWidth: 260,
         render: (event) => event.id,
+      },
+      {
+        id: 'icon',
+        label: '',
+        width: 64,
+        align: 'center',
+        render: (event) => <MuiIcon name={event.type?.icon} sx={{ color: event.type?.color ?? 'primary.main' }} />,
       },
       {
         id: 'name',
@@ -663,6 +663,7 @@ export const EventsManagement = () => {
                 label: column.label || column.id,
               })),
             visibleIds: columnVisibility.visibleColumnIds,
+            defaultVisibleIds: columnVisibility.defaultVisibleColumnIds,
             disabled: loading,
             onChange: (value) => columnVisibility.setVisibleColumnIds(value as EventColumnId[]),
           },

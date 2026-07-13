@@ -338,6 +338,7 @@ const ServiceAttendanceManagement = () => {
               label: t('pages.modules.common.columns'),
               options: columnDefinitions.map((column) => ({ id: column.id, label: column.label })),
               visibleIds: columnVisibility.visibleColumnIds,
+              defaultVisibleIds: columnVisibility.defaultVisibleColumnIds,
               disabled: loading,
               onChange: (value) => columnVisibility.setVisibleColumnIds(value as ServiceAttendanceColumnId[]),
             },

@@ -474,6 +474,7 @@ export const PersonsManagement = () => {
               .filter((column) => column.id !== 'actions')
               .map((column) => ({ id: column.id, label: column.label })),
             visibleIds: columnVisibility.visibleColumnIds,
+            defaultVisibleIds: columnVisibility.defaultVisibleColumnIds,
             disabled: loading,
             onChange: (value) => columnVisibility.setVisibleColumnIds(value as PersonColumnId[]),
           },

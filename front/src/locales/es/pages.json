@@ -11,7 +11,14 @@
     "settings": "Preferencias",
     "switchCongregation": "Cambiar congregación",
     "congregationSwitchFailed": "No se pudo cambiar de congregación.",
-    "toggleFavorite": "Añadir o quitar esta sección del acceso rápido"
+    "toggleFavorite": "Añadir o quitar esta sección del acceso rápido",
+    "categories": {
+      "events": "Eventos",
+      "services": "Servicios",
+      "people": "Personas",
+      "flows": "Flujos",
+      "system": "Sistema"
+    }
   },
   "modules": {
     "common": {

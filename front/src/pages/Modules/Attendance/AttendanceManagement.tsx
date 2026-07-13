@@ -607,6 +607,7 @@ export const AttendanceManagement = () => {
                   .filter((column) => column.id !== 'actions')
                   .map((column) => ({ id: column.id, label: column.label })),
                 visibleIds: historyColumnVisibility.visibleColumnIds,
+                defaultVisibleIds: historyColumnVisibility.defaultVisibleColumnIds,
                 disabled: historyLoading,
                 onChange: (value) => historyColumnVisibility.setVisibleColumnIds(value as AttendanceHistoryColumnId[]),
               },

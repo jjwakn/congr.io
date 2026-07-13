@@ -7,7 +7,8 @@ import { NavigationItems } from './NavigationItems';
 const DRAWER_WIDTH = 260;
 
 export const DashboardNavigationDrawer = ({
-  items,
+  categories,
+  settingsItem,
   selectedPath,
   congregationName,
   logoSrc,
@@ -87,7 +88,8 @@ export const DashboardNavigationDrawer = ({
       ) : null}
 
       <NavigationItems
-        items={items}
+        categories={categories}
+        settingsItem={settingsItem}
         selectedPath={selectedPath}
         onNavigate={(path) => {
           onNavigate(path);

@@ -33,8 +33,9 @@ import {
 } from '@mui/material';
 import { UsersService } from '@services/users';
 import { FRONTEND_VERSION } from '@utils/constants';
+import { createDashboardNavigationCategories } from '@utils/dashboard';
 import { HttpRequestError, httpRequest } from '@utils/http';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { JsonObject } from '@/types/json.types';
@@ -44,6 +45,9 @@ type UiSection = 'browser' | 'pagination' | 'sidebar';
 type TimeFormat = '24h' | '12h';
 
 const normalizePageSize = (value: number) => Math.max(5, Math.min(500, Math.trunc(value || 50)));
+
+const areStringArraysEqual = (left: string[], right: string[]) =>
+  left.length === right.length && left.every((value, index) => right[index] === value);
 
 export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps) => {
   const { i18n, t } = useTranslation();
@@ -89,28 +93,49 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
                 : (byId.get(id) ?? id),
     }));
   }, [congregation?.features, features, hasPermission, t]);
-  const defaultOrder = useMemo(
-    () =>
-      visibleSections
-        .map(({ id }) => id)
-        .sort((left, right) => {
-          const leftLabel = visibleSections.find((section) => section.id === left)?.label ?? left;
-          const rightLabel = visibleSections.find((section) => section.id === right)?.label ?? right;
-          return leftLabel.localeCompare(rightLabel, i18n.language, { sensitivity: 'base' });
-        }),
-    [i18n.language, visibleSections],
+  const defaultOrder = useMemo(() => {
+    const categories = createDashboardNavigationCategories({
+      modules: visibleSections.map((section) => ({ id: section.id, title: section.label, path: '' })),
+      sidebarOrder: [],
+      language: i18n.language,
+      t,
+    });
+
+    return categories.flatMap((category) => [category.preferenceId, ...category.items.map((item) => item.id)]);
+  }, [i18n.language, t, visibleSections]);
+  const sanitizeSidebarOrder = useCallback(
+    (value: string[] | undefined) => {
+      const source = value ?? [];
+
+      return [
+        ...source.filter((id) => defaultOrder.includes(id)),
+        ...defaultOrder.filter((id) => !source.includes(id)),
+      ];
+    },
+    [defaultOrder],
+  );
+  const savedSidebarOrder = useMemo(
+    () => sanitizeSidebarOrder(user?.preferences?.sidebar_order),
+    [sanitizeSidebarOrder, user?.preferences?.sidebar_order],
   );
   const savedPageSizes = useMemo(() => ({ default: 50, ...(user?.preferences?.page_sizes ?? {}) }), [user]);
   const [pageSizes, setPageSizes] = useState<Record<string, number>>(savedPageSizes);
   const [masterPageSize, setMasterPageSize] = useState(savedPageSizes.default ?? 50);
-  const [sidebarOrder, setSidebarOrder] = useState<string[]>(() => {
-    const stored = user?.preferences?.sidebar_order ?? [];
-    return [...stored.filter((id) => defaultOrder.includes(id)), ...defaultOrder.filter((id) => !stored.includes(id))];
-  });
+  const [sidebarOrder, setSidebarOrder] = useState<string[]>(() => savedSidebarOrder);
+  const orderedSidebarCategories = useMemo(
+    () =>
+      createDashboardNavigationCategories({
+        modules: visibleSections.map((section) => ({ id: section.id, title: section.label, path: '' })),
+        sidebarOrder,
+        language: i18n.language,
+        t,
+      }),
+    [i18n.language, sidebarOrder, t, visibleSections],
+  );
   const [sidebarReset, setSidebarReset] = useState(false);
   const [saving, setSaving] = useState<UiSection | null>(null);
   const pageSizesChanged = JSON.stringify(pageSizes) !== JSON.stringify(savedPageSizes);
-  const sidebarOrderChanged = sidebarReset || sidebarOrder.some((id, index) => id !== defaultOrder[index]);
+  const sidebarOrderChanged = sidebarReset || !areStringArraysEqual(sidebarOrder, savedSidebarOrder);
   const browserChanged = timeFormat !== savedTimeFormat;
 
   const savePreferences = async (section: UiSection, data: JsonObject) => {
@@ -130,12 +155,17 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
     }
   };
 
-  const moveSection = (index: number, offset: number) => {
+  const moveSidebarEntry = (ids: string[], index: number, offset: number) => {
     const target = index + offset;
-    if (target < 0 || target >= sidebarOrder.length) return;
+    if (target < 0 || target >= ids.length) return;
+
     setSidebarOrder((current) => {
-      const next = [...current];
-      [next[index], next[target]] = [next[target], next[index]];
+      const next = sanitizeSidebarOrder(current);
+      const currentPosition = next.indexOf(ids[index]);
+      const targetPosition = next.indexOf(ids[target]);
+      if (currentPosition < 0 || targetPosition < 0) return next;
+
+      [next[currentPosition], next[targetPosition]] = [next[targetPosition], next[currentPosition]];
       return next;
     });
     setSidebarReset(false);
@@ -306,11 +336,7 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
           sidebarOrderChanged,
           () => void savePreferences('sidebar', { sidebar_order: sidebarReset ? [] : sidebarOrder }),
           () => {
-            const stored = user?.preferences?.sidebar_order ?? [];
-            setSidebarOrder([
-              ...stored.filter((id) => defaultOrder.includes(id)),
-              ...defaultOrder.filter((id) => !stored.includes(id)),
-            ]);
+            setSidebarOrder(savedSidebarOrder);
             setSidebarReset(false);
           },
         )}
@@ -327,34 +353,75 @@ export const UISettingsTab = ({ language, onLanguageChange }: UISettingsTabProps
               {t('pages.settings.interface.sortAlphabetically')}
             </Button>
             <List dense disablePadding>
-              {sidebarOrder.map((id, index) => (
-                <ListItem
-                  key={id}
-                  divider
-                  secondaryAction={
-                    <Stack direction="row">
-                      <Button
-                        size="small"
-                        startIcon={<ArrowUpwardRoundedIcon />}
-                        disabled={index === 0}
-                        onClick={() => moveSection(index, -1)}
-                      >
-                        {t('form.common.moveUp')}
-                      </Button>
-                      <Button
-                        size="small"
-                        startIcon={<ArrowDownwardRoundedIcon />}
-                        disabled={index === sidebarOrder.length - 1}
-                        onClick={() => moveSection(index, 1)}
-                      >
-                        {t('form.common.moveDown')}
-                      </Button>
-                    </Stack>
-                  }
-                >
-                  <ListItemText primary={visibleSections.find((section) => section.id === id)?.label ?? id} />
-                </ListItem>
-              ))}
+              {orderedSidebarCategories.map((category, categoryIndex) => {
+                const categoryOrderIds = orderedSidebarCategories.map(({ preferenceId }) => preferenceId);
+                const topLevelLabel = category.items.length === 1 ? category.items[0].label : category.label;
+
+                return (
+                  <Box key={category.preferenceId}>
+                    <ListItem
+                      divider
+                      secondaryAction={
+                        <Stack direction="row">
+                          <Button
+                            size="small"
+                            startIcon={<ArrowUpwardRoundedIcon />}
+                            disabled={categoryIndex === 0}
+                            onClick={() => moveSidebarEntry(categoryOrderIds, categoryIndex, -1)}
+                          >
+                            {t('form.common.moveUp')}
+                          </Button>
+                          <Button
+                            size="small"
+                            startIcon={<ArrowDownwardRoundedIcon />}
+                            disabled={categoryIndex === orderedSidebarCategories.length - 1}
+                            onClick={() => moveSidebarEntry(categoryOrderIds, categoryIndex, 1)}
+                          >
+                            {t('form.common.moveDown')}
+                          </Button>
+                        </Stack>
+                      }
+                    >
+                      <ListItemText primary={topLevelLabel} />
+                    </ListItem>
+                    {category.items.length > 1
+                      ? category.items.map((item, itemIndex) => {
+                          const itemOrderIds = category.items.map(({ id }) => id);
+
+                          return (
+                            <ListItem
+                              key={item.id}
+                              divider
+                              sx={{ bgcolor: 'action.hover' }}
+                              secondaryAction={
+                                <Stack direction="row">
+                                  <Button
+                                    size="small"
+                                    startIcon={<ArrowUpwardRoundedIcon />}
+                                    disabled={itemIndex === 0}
+                                    onClick={() => moveSidebarEntry(itemOrderIds, itemIndex, -1)}
+                                  >
+                                    {t('form.common.moveUp')}
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    startIcon={<ArrowDownwardRoundedIcon />}
+                                    disabled={itemIndex === category.items.length - 1}
+                                    onClick={() => moveSidebarEntry(itemOrderIds, itemIndex, 1)}
+                                  >
+                                    {t('form.common.moveDown')}
+                                  </Button>
+                                </Stack>
+                              }
+                            >
+                              <ListItemText primary={item.label} />
+                            </ListItem>
+                          );
+                        })
+                      : null}
+                  </Box>
+                );
+              })}
             </List>
           </Stack>
         </AccordionDetails>

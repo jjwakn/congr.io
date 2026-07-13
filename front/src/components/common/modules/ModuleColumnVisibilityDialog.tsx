@@ -32,6 +32,7 @@ export const ModuleColumnVisibilityDialog = ({
   title,
   options,
   visibleIds,
+  defaultVisibleIds,
   onClose,
   onSave,
 }: ModuleColumnVisibilityDialogProps) => {
@@ -41,11 +42,18 @@ export const ModuleColumnVisibilityDialog = ({
   const [draftVisibleIds, setDraftVisibleIds] = useState<string[]>(visibleIds);
 
   const hasChanges = useMemo(() => !areStringArraysEqual(draftVisibleIds, visibleIds), [draftVisibleIds, visibleIds]);
+  const resetVisibleIds = defaultVisibleIds ?? visibleIds;
+  const isDefaultDraft = useMemo(
+    () => areStringArraysEqual(draftVisibleIds, resetVisibleIds),
+    [draftVisibleIds, resetVisibleIds],
+  );
 
   const sortedOptions = useMemo(() => {
     const collator = new Intl.Collator(i18n.language, { numeric: true, sensitivity: 'base' });
 
     return [...options].sort((left, right) => {
+      if (left.id === 'id' || right.id === 'id') return left.id === 'id' ? -1 : 1;
+
       const leftIsAudit = auditColumnIdSet.has(left.id);
       const rightIsAudit = auditColumnIdSet.has(right.id);
 
@@ -85,6 +93,9 @@ export const ModuleColumnVisibilityDialog = ({
       </DialogContent>
 
       <DialogActions>
+        <Button disabled={isDefaultDraft} onClick={() => setDraftVisibleIds(resetVisibleIds)}>
+          {t('pages.settings.actions.reset')}
+        </Button>
         <Button onClick={onClose}>{t('form.field.cancel')}</Button>
         <Button variant="contained" disabled={!hasChanges} onClick={() => onSave(draftVisibleIds)}>
           {t('form.field.save')}

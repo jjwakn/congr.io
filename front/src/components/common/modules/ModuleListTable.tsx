@@ -441,6 +441,7 @@ export const ModuleListTable = <RowType,>({
           title={columnVisibility.label}
           options={columnVisibility.options}
           visibleIds={columnVisibility.visibleIds}
+          defaultVisibleIds={columnVisibility.defaultVisibleIds}
           onClose={() => setColumnVisibilityOpen(false)}
           onSave={(value) => {
             columnVisibility.onChange(value);

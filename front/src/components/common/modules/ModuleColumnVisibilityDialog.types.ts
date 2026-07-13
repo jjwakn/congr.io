@@ -5,6 +5,7 @@ export interface ModuleColumnVisibilityDialogProps {
   title: string;
   options: ModuleColumnVisibilityOption[];
   visibleIds: string[];
+  defaultVisibleIds?: string[];
   onClose: () => void;
   onSave: (value: string[]) => void;
 }

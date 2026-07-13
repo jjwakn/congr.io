@@ -200,6 +200,7 @@ const ServiceFollowUpManagement = () => {
             label: cell.label,
           })),
           visibleIds: columnVisibility.visibleColumnIds,
+          defaultVisibleIds: columnVisibility.defaultVisibleColumnIds,
           onChange: (value) => columnVisibility.setVisibleColumnIds(value as FollowUpColumnId[]),
         },
       }}

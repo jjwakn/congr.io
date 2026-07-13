@@ -398,6 +398,7 @@ export const CongregationsSettingsTab = () => {
               disabled: cell.id === 'name' || cell.id === 'actions',
             })),
             visibleIds: columnVisibility.visibleColumnIds,
+            defaultVisibleIds: columnVisibility.defaultVisibleColumnIds,
             onChange: (value) => columnVisibility.setVisibleColumnIds(value as CongregationColumnId[]),
           },
           fixedStartColumnIds: ['name'],

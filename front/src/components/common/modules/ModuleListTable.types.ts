@@ -12,6 +12,7 @@ export interface ModuleColumnVisibilityProps {
   label: string;
   options: ModuleColumnVisibilityOption[];
   visibleIds: string[];
+  defaultVisibleIds?: string[];
   disabled?: boolean;
   onChange: (value: string[]) => void;
 }
