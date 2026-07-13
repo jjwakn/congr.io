@@ -294,6 +294,15 @@ export const AttendanceManagement = () => {
 
   return (
     <ModuleSection
+      createAction={
+        tab === 'history' && canUpdateAttendance && canCreateAttendance
+          ? {
+              id: 'add-missing-attendance-event',
+              label: t('pages.attendance.addMissingEvent'),
+              onClick: openPastEventPicker,
+            }
+          : undefined
+      }
       refreshAction={{
         id: 'refresh-attendance',
         label: t('pages.modules.common.refresh'),
@@ -433,21 +442,6 @@ export const AttendanceManagement = () => {
           </>
         ) : canUpdateAttendance ? (
           <ModuleSection<CalendarEvent>
-            createAction={
-              canCreateAttendance
-                ? {
-                    id: 'add-missing-attendance-event',
-                    label: t('pages.attendance.addMissingEvent'),
-                    onClick: openPastEventPicker,
-                  }
-                : undefined
-            }
-            refreshAction={{
-              id: 'refresh-attendance-history',
-              label: t('pages.modules.common.refresh'),
-              disabled: historyLoading,
-              onClick: () => void loadHistoryEvents(),
-            }}
             search={{
               label: t('pages.modules.common.search'),
               value: historyList.search,

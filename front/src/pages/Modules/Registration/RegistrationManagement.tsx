@@ -596,6 +596,15 @@ export const RegistrationManagement = () => {
   const upcoming = events.filter((event) => DateTime.fromISO(event.end_datetime) >= DateTime.now());
   return (
     <ModuleSection
+      createAction={
+        tab === 'history' && canUpdateRegistration && canCreateRegistration
+          ? {
+              id: 'add-missing-registration-event',
+              label: t('pages.registration.addMissingEvent'),
+              onClick: openPastEventPicker,
+            }
+          : undefined
+      }
       refreshAction={{
         id: 'refresh-registration',
         label: t('pages.modules.common.refresh'),
@@ -666,21 +675,6 @@ export const RegistrationManagement = () => {
           </>
         ) : canUpdateRegistration ? (
           <ModuleSection<CalendarEvent>
-            createAction={
-              canCreateRegistration
-                ? {
-                    id: 'add-missing-registration-event',
-                    label: t('pages.registration.addMissingEvent'),
-                    onClick: openPastEventPicker,
-                  }
-                : undefined
-            }
-            refreshAction={{
-              id: 'refresh-registration-history',
-              label: t('pages.modules.common.refresh'),
-              disabled: historyLoading,
-              onClick: () => void loadHistoryEvents(),
-            }}
             search={{
               label: t('pages.modules.common.search'),
               value: historyList.search,
