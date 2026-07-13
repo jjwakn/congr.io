@@ -1,6 +1,13 @@
 import { ConfirmDialog } from '@components/common/forms/ConfirmDialog';
+import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import {
+  CRUD_AUDIT_COLUMN_IDS,
+  type CrudAuditColumnId,
+  getCrudAuditColumnDefinitions,
+} from '@components/common/modules/crudAuditColumns';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useModuleList } from '@components/common/modules/useModuleList';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
@@ -14,11 +21,26 @@ import { useTranslation } from 'react-i18next';
 import type { Process, ProcessInput } from '@/types/process.types';
 import { FlowEditorDialog } from './FlowEditorDialog';
 
+type FlowColumnId = 'id' | 'name' | 'description' | 'steps' | 'actions' | CrudAuditColumnId;
+const FLOW_COLUMN_IDS: FlowColumnId[] = ['id', 'name', 'description', 'steps', 'actions'];
+const DEFAULT_FLOW_VISIBLE_COLUMNS: FlowColumnId[] = ['name', 'description', 'steps', 'actions'];
+
 export const FlowsManagement = () => {
-  const { t } = useTranslation();
-  const { hasPermission } = useAuth();
+  const { i18n, t } = useTranslation();
+  const { auth, hasPermission } = useAuth();
   const { showNotification } = useNotificationContext();
   const list = useModuleList({ moduleKey: 'processes-list', defaultSort: 'name' });
+  const allColumnIds = useMemo<FlowColumnId[]>(
+    () => [...FLOW_COLUMN_IDS, ...(auth?.fullAccess ? CRUD_AUDIT_COLUMN_IDS : [])],
+    [auth?.fullAccess],
+  );
+  const columnVisibility = useModuleColumnVisibility<FlowColumnId>({
+    moduleKey: 'processes-list',
+    allColumnIds,
+    defaultVisibleColumnIds: DEFAULT_FLOW_VISIBLE_COLUMNS,
+    fixedColumnIds: ['actions'],
+    defaultSearchColumnIds: ['name', 'description'],
+  });
   const cached = getPreloadedResource<{ result: Process[]; total: number }>('processes');
   const [rows, setRows] = useState<Process[]>(cached?.result ?? []);
   const [total, setTotal] = useState(cached?.total ?? 0);
@@ -37,6 +59,8 @@ export const FlowsManagement = () => {
           size: list.pageSize,
           order: list.sort,
           direction: list.direction,
+          columns: columnVisibility.columnsQuery,
+          search_columns: columnVisibility.searchColumnsQuery,
           ...(list.debouncedSearch ? { search: list.debouncedSearch } : {}),
         },
       });
@@ -49,7 +73,17 @@ export const FlowsManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [list.debouncedSearch, list.direction, list.page, list.pageSize, list.sort, showNotification, t]);
+  }, [
+    columnVisibility.columnsQuery,
+    columnVisibility.searchColumnsQuery,
+    list.debouncedSearch,
+    list.direction,
+    list.page,
+    list.pageSize,
+    list.sort,
+    showNotification,
+    t,
+  ]);
 
   useEffect(() => {
     void refresh();
@@ -74,13 +108,53 @@ export const FlowsManagement = () => {
     }
   };
 
-  const columns = useMemo(
+  const auditColumnDefinitions = useMemo(
+    () =>
+      auth?.fullAccess
+        ? getCrudAuditColumnDefinitions<Process>({
+            language: i18n.language,
+            t,
+          }).columns
+        : [],
+    [auth?.fullAccess, i18n.language, t],
+  );
+
+  const columnDefinitions = useMemo<
+    Array<
+      {
+        id: FlowColumnId;
+        label: string;
+        sortKey?: string;
+      } & ModuleListColumn<Process>
+    >
+  >(
     () => [
-      { id: 'name', minWidth: 180, render: (row: Process) => row.name },
-      { id: 'description', minWidth: 260, render: (row: Process) => row.description },
-      { id: 'steps', width: 100, align: 'center' as const, render: (row: Process) => row.steps.length },
+      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row: Process) => row.id },
+      {
+        id: 'name',
+        label: t('form.field.name'),
+        sortKey: 'name',
+        minWidth: 180,
+        render: (row: Process) => row.name,
+      },
+      {
+        id: 'description',
+        label: t('pages.flows.description'),
+        sortKey: 'description',
+        minWidth: 260,
+        render: (row: Process) => row.description,
+      },
+      {
+        id: 'steps',
+        label: t('pages.flows.steps'),
+        width: 100,
+        align: 'center' as const,
+        render: (row: Process) => row.steps.length,
+      },
+      ...auditColumnDefinitions,
       {
         id: 'actions',
+        label: t('pages.settings.congregation.actions'),
         width: 100,
         align: 'right' as const,
         render: (row: Process) => (
@@ -107,7 +181,36 @@ export const FlowsManagement = () => {
         ),
       },
     ],
-    [hasPermission, t],
+    [auditColumnDefinitions, hasPermission, t],
+  );
+  const visibleColumnDefinitions = useMemo(
+    () =>
+      columnDefinitions.filter(
+        (column) => column.id === 'actions' || columnVisibility.visibleColumnIds.includes(column.id),
+      ),
+    [columnDefinitions, columnVisibility.visibleColumnIds],
+  );
+  const columns = useMemo<ModuleListColumn<Process>[]>(
+    () =>
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        minWidth: column.minWidth,
+        width: column.width,
+        align: column.align,
+        render: column.render,
+      })),
+    [visibleColumnDefinitions],
+  );
+  const headerRows = useMemo<ModuleListHeaderCell[][]>(
+    () => [
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        label: column.label,
+        sortKey: column.sortKey,
+        align: column.align,
+      })),
+    ],
+    [visibleColumnDefinitions],
   );
 
   return (
@@ -121,14 +224,7 @@ export const FlowsManagement = () => {
         refreshAction={{ id: 'refresh-flows', label: t('pages.modules.common.refresh'), onClick: () => void refresh() }}
         search={{ label: t('pages.modules.common.search'), value: list.search, onChange: list.setSearch }}
         table={{
-          headerRows: [
-            [
-              { id: 'name', label: t('form.field.name') },
-              { id: 'description', label: t('pages.flows.description') },
-              { id: 'steps', label: t('pages.flows.steps'), align: 'center' },
-              { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
-            ],
-          ],
+          headerRows,
           columns,
           rows,
           getRowId: (row) => row.id,
@@ -144,6 +240,15 @@ export const FlowsManagement = () => {
           onPageChange: list.handleChangePage,
           onPageSizeChange: list.handleChangeRowsPerPage,
           rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+          columnVisibility: {
+            label: t('pages.modules.common.columns'),
+            options: columnDefinitions
+              .filter((column) => column.id !== 'actions')
+              .map((column) => ({ id: column.id, label: column.label })),
+            visibleIds: columnVisibility.visibleColumnIds,
+            disabled: loading,
+            onChange: (value) => columnVisibility.setVisibleColumnIds(value as FlowColumnId[]),
+          },
         }}
       />
       {editor !== undefined ? (

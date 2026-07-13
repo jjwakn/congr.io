@@ -17,6 +17,7 @@
     "common": {
       "refresh": "Refresh",
       "search": "Search",
+      "id": "ID",
       "rowsPerPage": "Items per page",
       "view": "View",
       "actions": "Actions",
@@ -30,7 +31,15 @@
       "filterTo": "To",
       "clearFilter": "Clear filter",
       "enableConfirm": "Enable this item?",
-      "disableConfirm": "Disable this item?"
+      "disableConfirm": "Disable this item?",
+      "audit": {
+        "created_at": "Created at",
+        "updated_at": "Updated at",
+        "deleted_at": "Deleted at",
+        "created_by": "Created by",
+        "updated_by": "Updated by",
+        "deleted_by": "Deleted by"
+      }
     },
     "users": {
       "title": "Users",
@@ -51,6 +60,8 @@
         "name": "Name",
         "username": "Username",
         "enabled": "Enabled",
+        "person": "Person",
+        "roles": "Roles",
         "actions": "Actions"
       },
       "form": {

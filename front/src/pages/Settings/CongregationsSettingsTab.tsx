@@ -1,7 +1,13 @@
 import { CrudPermissionStatus } from '@components/common/modules/CrudPermissionStatus';
-import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
+import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import {
+  CRUD_AUDIT_COLUMN_IDS,
+  type CrudAuditColumnId,
+  getCrudAuditColumnDefinitions,
+} from '@components/common/modules/crudAuditColumns';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
@@ -22,13 +28,15 @@ import { CongregationDeleteDialog } from './CongregationDeleteDialog';
 import { CongregationEditDialog } from './CongregationEditDialog';
 import type { CongregationCreateValues, CongregationDeletionPreview, CongregationEditValues } from './settings.types';
 
+type CongregationColumnId = 'id' | 'name' | 'type' | 'timezone' | 'modules' | 'current' | 'actions' | CrudAuditColumnId;
+
 const getErrorMessage = (value: Error | null, fallback: string) =>
   value instanceof HttpRequestError || value instanceof Error ? value.message : fallback;
 
 export const CongregationsSettingsTab = () => {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { congregation, refreshIsSetup, selectCongregation } = useAppContext();
-  const { user, hasPermission, refreshSession } = useAuth();
+  const { auth, user, hasPermission, refreshSession } = useAuth();
   const { showNotification } = useNotificationContext();
   const { features } = useSetup();
   const { setPaletteConfig } = useTheme();
@@ -47,6 +55,26 @@ export const CongregationsSettingsTab = () => {
   const [deleting, setDeleting] = useState(false);
   const [loadingDeleteId, setLoadingDeleteId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const allColumnIds = useMemo<CongregationColumnId[]>(
+    () => [
+      'id',
+      'name',
+      'type',
+      'timezone',
+      'modules',
+      'current',
+      ...(auth?.fullAccess ? CRUD_AUDIT_COLUMN_IDS : []),
+      'actions',
+    ],
+    [auth?.fullAccess],
+  );
+  const columnVisibility = useModuleColumnVisibility<CongregationColumnId>({
+    moduleKey: 'settings-congregations-list',
+    allColumnIds,
+    defaultVisibleColumnIds: ['name', 'type', 'timezone', 'modules', 'current', 'actions'],
+    fixedColumnIds: ['name', 'actions'],
+    defaultSearchColumnIds: ['name', 'type', 'timezone'],
+  });
 
   const handleCreate = async (values: CongregationCreateValues) => {
     setSubmitting(true);
@@ -175,8 +203,20 @@ export const CongregationsSettingsTab = () => {
     }
   };
 
-  const columns = useMemo<ModuleListColumn<Congregation>[]>(
+  const auditColumnDefinitions = useMemo(
+    () =>
+      auth?.fullAccess
+        ? getCrudAuditColumnDefinitions<Congregation>({
+            language: i18n.language,
+            t,
+          }).columns
+        : [],
+    [auth?.fullAccess, i18n.language, t],
+  );
+
+  const columnDefinitions = useMemo<ModuleListColumn<Congregation>[]>(
     () => [
+      { id: 'id', minWidth: 220, render: (item) => item.id },
       { id: 'name', minWidth: 180, render: (item) => item.name },
       { id: 'type', minWidth: 140, render: (item) => item.type },
       { id: 'timezone', minWidth: 180, render: (item) => item.timezone },
@@ -192,6 +232,7 @@ export const CongregationsSettingsTab = () => {
         width: 100,
         render: (item) => <CrudPermissionStatus enabled={item.id === congregation?.id} />,
       },
+      ...auditColumnDefinitions,
       {
         id: 'actions',
         align: 'right',
@@ -226,7 +267,48 @@ export const CongregationsSettingsTab = () => {
         ),
       },
     ],
-    [canDelete, canUpdate, congregation?.id, congregations.length, loadingDeleteId, openDelete, t],
+    [
+      auditColumnDefinitions,
+      canDelete,
+      canUpdate,
+      congregation?.id,
+      congregations.length,
+      loadingDeleteId,
+      openDelete,
+      t,
+    ],
+  );
+
+  const headerDefinitions = useMemo<ModuleListHeaderCell[]>(
+    () => [
+      { id: 'id', label: t('pages.modules.common.id') },
+      { id: 'name', label: t('form.field.name') },
+      { id: 'type', label: t('form.field.type') },
+      { id: 'timezone', label: t('form.field.timezone') },
+      { id: 'modules', label: t('pages.settings.congregation.modules.column'), align: 'center' },
+      { id: 'current', label: t('pages.settings.congregation.current'), align: 'center' },
+      ...auditColumnDefinitions.map(({ id, label, sortKey, align }) => ({ id, label, sortKey, align })),
+      { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
+    ],
+    [auditColumnDefinitions, t],
+  );
+
+  const columns = useMemo<ModuleListColumn<Congregation>[]>(
+    () =>
+      columnDefinitions.filter(
+        (column) =>
+          column.id === 'actions' || columnVisibility.visibleColumnIds.includes(column.id as CongregationColumnId),
+      ),
+    [columnDefinitions, columnVisibility.visibleColumnIds],
+  );
+
+  const headerRows = useMemo<ModuleListHeaderCell[][]>(
+    () => [
+      headerDefinitions.filter(
+        (cell) => cell.id === 'actions' || columnVisibility.visibleColumnIds.includes(cell.id as CongregationColumnId),
+      ),
+    ],
+    [columnVisibility.visibleColumnIds, headerDefinitions],
   );
 
   return (
@@ -249,16 +331,7 @@ export const CongregationsSettingsTab = () => {
         }}
         alerts={error ? <Alert severity="error">{error}</Alert> : undefined}
         table={{
-          headerRows: [
-            [
-              { id: 'name', label: t('form.field.name') },
-              { id: 'type', label: t('form.field.type') },
-              { id: 'timezone', label: t('form.field.timezone') },
-              { id: 'modules', label: t('pages.settings.congregation.modules.column'), align: 'center' },
-              { id: 'current', label: t('pages.settings.congregation.current'), align: 'center' },
-              { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
-            ],
-          ],
+          headerRows,
           columns,
           rows: congregations,
           getRowId: (item) => item.id,
@@ -274,6 +347,16 @@ export const CongregationsSettingsTab = () => {
           onPageChange: () => undefined,
           onPageSizeChange: () => undefined,
           rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+          columnVisibility: {
+            label: t('pages.modules.common.columns'),
+            options: headerDefinitions.map((cell) => ({
+              id: cell.id,
+              label: cell.label,
+              disabled: cell.id === 'name' || cell.id === 'actions',
+            })),
+            visibleIds: columnVisibility.visibleColumnIds,
+            onChange: (value) => columnVisibility.setVisibleColumnIds(value as CongregationColumnId[]),
+          },
           fixedStartColumnIds: ['name'],
           fixedEndColumnIds: ['actions'],
         }}

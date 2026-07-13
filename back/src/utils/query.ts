@@ -37,6 +37,12 @@ const getSearchExpression = (alias: string, columnType?: ColumnType) =>
     ? `LOWER(${normalizeColumnAlias(alias)})`
     : `LOWER(CAST(${normalizeColumnAlias(alias)} AS text))`;
 
+const getRequestedColumns = (value?: string) =>
+  (value ?? '')
+    .split(',')
+    .map((column) => column.trim())
+    .filter(Boolean);
+
 export const findWithFilters = async <Entity extends ObjectLiteral, Query extends ListParamsQuery>({
   repository,
   query,
@@ -44,6 +50,11 @@ export const findWithFilters = async <Entity extends ObjectLiteral, Query extend
   booleanFields = [],
   baseWhere = {},
 }: FindWithFiltersProps<Entity, Query>) => {
+  const availableColumnNames = new Set(repository.metadata.columns.map((column) => column.propertyName));
+  const requestedSearchFields = getRequestedColumns(query.search_columns);
+  const effectiveSearchFields = Array.from(new Set([...searchFields.map(String), ...requestedSearchFields])).filter(
+    (field): field is keyof Entity & string => availableColumnNames.has(field),
+  );
   const searchTerms = (query.search?.trim() ?? '').split(/\s+/).filter(Boolean);
   const pageSize = Number(query.size);
   const page = Number(query.page);
@@ -74,7 +85,7 @@ export const findWithFilters = async <Entity extends ObjectLiteral, Query extend
         const term = searchTerms[termIndex];
         const isLastTerm = termIndex === searchTerms.length - 1;
 
-        searchFields.forEach((field) => {
+        effectiveSearchFields.forEach((field) => {
           if (usedFields.has(field)) return;
 
           const nextCondition = {
@@ -91,7 +102,7 @@ export const findWithFilters = async <Entity extends ObjectLiteral, Query extend
         });
       };
 
-      if (searchFields.length >= searchTerms.length) appendCombinations(0, new Set(), {});
+      if (effectiveSearchFields.length >= searchTerms.length) appendCombinations(0, new Set(), {});
     }
 
     booleanFields.forEach((field) => {

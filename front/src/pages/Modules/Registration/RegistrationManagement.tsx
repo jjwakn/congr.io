@@ -1,8 +1,14 @@
 import { PersonAutocomplete } from '@components/common/PersonAutocomplete';
 import { ConfirmDialog } from '@components/common/forms/ConfirmDialog';
-import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
+import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import {
+  CRUD_AUDIT_COLUMN_IDS,
+  type CrudAuditColumnId,
+  getCrudAuditColumnDefinitions,
+} from '@components/common/modules/crudAuditColumns';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useModuleList } from '@components/common/modules/useModuleList';
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
@@ -60,6 +66,20 @@ import type { PersonFieldFormValues, PersonFormValues } from '../Persons/persons
 import { EventRegistrationFields } from './EventRegistrationFields';
 
 const PAST_EVENTS_PAGE_SIZE = 50;
+type RegistrationHistoryColumnId = 'id' | 'type' | 'name' | 'start_datetime' | 'actions' | CrudAuditColumnId;
+const REGISTRATION_HISTORY_COLUMN_IDS: RegistrationHistoryColumnId[] = [
+  'id',
+  'type',
+  'name',
+  'start_datetime',
+  'actions',
+];
+const DEFAULT_REGISTRATION_HISTORY_VISIBLE_COLUMNS: RegistrationHistoryColumnId[] = [
+  'type',
+  'name',
+  'start_datetime',
+  'actions',
+];
 
 const getPersonMappedValue = (fieldId: string | undefined, person: Person) => {
   if (!fieldId) return undefined;
@@ -97,7 +117,7 @@ const getParticipantName = (participant: EventParticipant) =>
 
 export const RegistrationManagement = () => {
   const { t, i18n } = useTranslation();
-  const { hasPermission, user, refreshSession } = useAuth();
+  const { auth, hasPermission, user, refreshSession } = useAuth();
   const { showNotification } = useNotificationContext();
   const { congregation } = useAppContext();
   const location = useLocation();
@@ -139,6 +159,17 @@ export const RegistrationManagement = () => {
     moduleKey: 'event-registration-history',
     defaultSort: 'start_datetime',
     defaultDirection: 'DESC',
+  });
+  const historyColumnIds = useMemo<RegistrationHistoryColumnId[]>(
+    () => [...REGISTRATION_HISTORY_COLUMN_IDS, ...(auth?.fullAccess ? CRUD_AUDIT_COLUMN_IDS : [])],
+    [auth?.fullAccess],
+  );
+  const historyColumnVisibility = useModuleColumnVisibility<RegistrationHistoryColumnId>({
+    moduleKey: 'event-registration-history',
+    allColumnIds: historyColumnIds,
+    defaultVisibleColumnIds: DEFAULT_REGISTRATION_HISTORY_VISIBLE_COLUMNS,
+    fixedColumnIds: ['actions'],
+    defaultSearchColumnIds: ['name'],
   });
 
   const load = useCallback(async () => {
@@ -188,6 +219,8 @@ export const RegistrationManagement = () => {
           size: historyList.pageSize,
           order: historyList.sort,
           direction: historyList.direction,
+          columns: historyColumnVisibility.columnsQuery,
+          search_columns: historyColumnVisibility.searchColumnsQuery,
           ...(historyList.debouncedSearch ? { search: historyList.debouncedSearch } : {}),
         },
       });
@@ -206,6 +239,8 @@ export const RegistrationManagement = () => {
     historyList.page,
     historyList.pageSize,
     historyList.sort,
+    historyColumnVisibility.columnsQuery,
+    historyColumnVisibility.searchColumnsQuery,
     showNotification,
     t,
   ]);
@@ -344,23 +379,54 @@ export const RegistrationManagement = () => {
     void loadParticipants(routeEventId);
   }, [loadParticipants, routeEventId]);
 
-  const historyColumns = useMemo<ModuleListColumn<CalendarEvent>[]>(
+  const historyAuditColumnDefinitions = useMemo(
+    () =>
+      auth?.fullAccess
+        ? getCrudAuditColumnDefinitions<CalendarEvent>({
+            language: i18n.language,
+            t,
+          }).columns
+        : [],
+    [auth?.fullAccess, i18n.language, t],
+  );
+
+  const historyColumnDefinitions = useMemo<
+    Array<
+      {
+        id: RegistrationHistoryColumnId;
+        label: string;
+        sortKey?: string;
+      } & ModuleListColumn<CalendarEvent>
+    >
+  >(
     () => [
+      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (event) => event.id },
       {
         id: 'type',
+        label: t('pages.events.form.type'),
         width: 72,
         align: 'center',
         render: (event) => <MuiIcon name={event.type?.icon} sx={{ color: event.type?.color ?? 'primary.main' }} />,
       },
-      { id: 'name', minWidth: 220, render: (event) => event.name },
+      {
+        id: 'name',
+        label: t('pages.events.form.name'),
+        sortKey: 'name',
+        minWidth: 220,
+        render: (event) => event.name,
+      },
       {
         id: 'start_datetime',
+        label: t('pages.events.form.start'),
+        sortKey: 'start_datetime',
         minWidth: 190,
         render: (event) =>
           DateTime.fromISO(event.start_datetime).setLocale(i18n.language).toLocaleString(DateTime.DATETIME_MED),
       },
+      ...historyAuditColumnDefinitions,
       {
         id: 'actions',
+        label: t('pages.settings.congregation.actions'),
         minWidth: 120,
         align: 'right',
         render: (event) => (
@@ -396,7 +462,44 @@ export const RegistrationManagement = () => {
         ),
       },
     ],
-    [canDeleteRegistration, canUpdateRegistration, historyLoading, i18n.language, openEditor, t],
+    [
+      canDeleteRegistration,
+      canUpdateRegistration,
+      historyAuditColumnDefinitions,
+      historyLoading,
+      i18n.language,
+      openEditor,
+      t,
+    ],
+  );
+  const visibleHistoryColumnDefinitions = useMemo(
+    () =>
+      historyColumnDefinitions.filter(
+        (column) => column.id === 'actions' || historyColumnVisibility.visibleColumnIds.includes(column.id),
+      ),
+    [historyColumnDefinitions, historyColumnVisibility.visibleColumnIds],
+  );
+  const historyColumns = useMemo<ModuleListColumn<CalendarEvent>[]>(
+    () =>
+      visibleHistoryColumnDefinitions.map((column) => ({
+        id: column.id,
+        minWidth: column.minWidth,
+        width: column.width,
+        align: column.align,
+        render: column.render,
+      })),
+    [visibleHistoryColumnDefinitions],
+  );
+  const historyHeaderRows = useMemo<ModuleListHeaderCell[][]>(
+    () => [
+      visibleHistoryColumnDefinitions.map((column) => ({
+        id: column.id,
+        label: column.label,
+        sortKey: column.sortKey,
+        align: column.align,
+      })),
+    ],
+    [visibleHistoryColumnDefinitions],
   );
 
   if (selected) {
@@ -719,14 +822,7 @@ export const RegistrationManagement = () => {
               onChange: historyList.setSearch,
             }}
             table={{
-              headerRows: [
-                [
-                  { id: 'type', label: t('pages.events.form.type'), align: 'center' },
-                  { id: 'name', label: t('pages.events.form.name'), sortKey: 'name' },
-                  { id: 'start_datetime', label: t('pages.events.form.start'), sortKey: 'start_datetime' },
-                  { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
-                ],
-              ],
+              headerRows: historyHeaderRows,
               columns: historyColumns,
               rows: historyRows,
               getRowId: (row) => row.id,
@@ -742,6 +838,16 @@ export const RegistrationManagement = () => {
               onPageChange: historyList.handleChangePage,
               onPageSizeChange: historyList.handleChangeRowsPerPage,
               rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+              columnVisibility: {
+                label: t('pages.modules.common.columns'),
+                options: historyColumnDefinitions
+                  .filter((column) => column.id !== 'actions')
+                  .map((column) => ({ id: column.id, label: column.label })),
+                visibleIds: historyColumnVisibility.visibleColumnIds,
+                disabled: historyLoading,
+                onChange: (value) =>
+                  historyColumnVisibility.setVisibleColumnIds(value as RegistrationHistoryColumnId[]),
+              },
             }}
           />
         ) : null}

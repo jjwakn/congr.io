@@ -6,7 +6,11 @@ import { useTranslation } from 'react-i18next';
 import type { EventType } from '@/types/event-type.types';
 import type { EventTypesListResponse, UseEventTypesListProps, UseEventTypesListResult } from './eventTypes.types';
 
-export const useEventTypesList = ({ enabled = true }: UseEventTypesListProps = {}): UseEventTypesListResult => {
+export const useEventTypesList = ({
+  enabled = true,
+  columnsQuery,
+  searchColumnsQuery,
+}: UseEventTypesListProps = {}): UseEventTypesListResult => {
   const { t } = useTranslation();
   const [result, setResult] = useState<EventType[]>([]);
   const [total, setTotal] = useState(0);
@@ -33,6 +37,8 @@ export const useEventTypesList = ({ enabled = true }: UseEventTypesListProps = {
           size: list.pageSize,
           order: list.sort,
           direction: list.direction,
+          ...(columnsQuery ? { columns: columnsQuery } : {}),
+          ...(searchColumnsQuery ? { search_columns: searchColumnsQuery } : {}),
           ...(normalizedSearch ? { search: normalizedSearch } : {}),
         },
       });
@@ -47,7 +53,17 @@ export const useEventTypesList = ({ enabled = true }: UseEventTypesListProps = {
     } finally {
       setLoading(false);
     }
-  }, [enabled, list.debouncedSearch, list.direction, list.page, list.pageSize, list.sort, t]);
+  }, [
+    columnsQuery,
+    enabled,
+    list.debouncedSearch,
+    list.direction,
+    list.page,
+    list.pageSize,
+    list.sort,
+    searchColumnsQuery,
+    t,
+  ]);
 
   useEffect(() => {
     void refresh();

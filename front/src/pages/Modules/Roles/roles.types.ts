@@ -11,6 +11,8 @@ export interface RolesListResponse {
 
 export interface UseRolesListProps {
   enabled?: boolean;
+  columnsQuery?: string;
+  searchColumnsQuery?: string;
 }
 
 export type RolePermissionSort = `${string}-${PermissionAction}`;

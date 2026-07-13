@@ -10,6 +10,8 @@ export interface EventTypesListResponse {
 
 export interface UseEventTypesListProps {
   enabled?: boolean;
+  columnsQuery?: string;
+  searchColumnsQuery?: string;
 }
 
 export interface UseEventTypesListResult extends EventTypesListResponse {

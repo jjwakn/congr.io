@@ -1,5 +1,6 @@
 import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useModuleList } from '@components/common/modules/useModuleList';
 import { Alert } from '@mui/material';
 import { ServiceNewPeopleService, ServicesService } from '@services/services';
@@ -22,6 +23,8 @@ interface FollowUpRow {
   status: 'pending' | 'completed';
 }
 
+type FollowUpColumnId = 'id' | 'person' | 'phone' | 'firstVisit' | 'serviceName' | 'status';
+
 const personName = (entry: ServiceNewPerson) =>
   `${entry.person.code} · ${entry.person.first_name} ${entry.person.last_name}`.trim();
 
@@ -35,6 +38,12 @@ const ServiceFollowUpManagement = () => {
   const [rows, setRows] = useState<FollowUpRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const columnVisibility = useModuleColumnVisibility<FollowUpColumnId>({
+    moduleKey: 'services-follow-up-list',
+    allColumnIds: ['id', 'person', 'phone', 'firstVisit', 'serviceName', 'status'],
+    defaultVisibleColumnIds: ['person', 'phone', 'firstVisit', 'serviceName', 'status'],
+    defaultSearchColumnIds: ['person', 'phone', 'firstVisit', 'serviceName'],
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,8 +106,9 @@ const ServiceFollowUpManagement = () => {
     );
   }, [list.debouncedSearch, rows]);
 
-  const columns = useMemo<ModuleListColumn<FollowUpRow>[]>(
+  const columnDefinitions = useMemo<ModuleListColumn<FollowUpRow>[]>(
     () => [
+      { id: 'id', render: (row) => row.id },
       { id: 'person', render: (row) => row.personName },
       { id: 'phone', render: (row) => row.phone || '-' },
       { id: 'firstVisit', render: (row) => row.firstVisit },
@@ -108,17 +118,27 @@ const ServiceFollowUpManagement = () => {
     [t],
   );
 
-  const headerRows = useMemo<ModuleListHeaderCell[][]>(
+  const headerDefinitions = useMemo<ModuleListHeaderCell[]>(
     () => [
-      [
-        { id: 'person', label: t('pages.services.followUp.person') },
-        { id: 'phone', label: t('pages.services.followUp.phone') },
-        { id: 'firstVisit', label: t('pages.services.followUp.firstVisit'), sortKey: 'date' },
-        { id: 'serviceName', label: t('pages.services.newPeople.service') },
-        { id: 'status', label: t('pages.services.followUp.status') },
-      ],
+      { id: 'id', label: t('pages.modules.common.id') },
+      { id: 'person', label: t('pages.services.followUp.person') },
+      { id: 'phone', label: t('pages.services.followUp.phone') },
+      { id: 'firstVisit', label: t('pages.services.followUp.firstVisit'), sortKey: 'date' },
+      { id: 'serviceName', label: t('pages.services.newPeople.service') },
+      { id: 'status', label: t('pages.services.followUp.status') },
     ],
     [t],
+  );
+
+  const columns = useMemo<ModuleListColumn<FollowUpRow>[]>(
+    () =>
+      columnDefinitions.filter((column) => columnVisibility.visibleColumnIds.includes(column.id as FollowUpColumnId)),
+    [columnDefinitions, columnVisibility.visibleColumnIds],
+  );
+
+  const headerRows = useMemo<ModuleListHeaderCell[][]>(
+    () => [headerDefinitions.filter((cell) => columnVisibility.visibleColumnIds.includes(cell.id as FollowUpColumnId))],
+    [columnVisibility.visibleColumnIds, headerDefinitions],
   );
 
   return (
@@ -152,6 +172,15 @@ const ServiceFollowUpManagement = () => {
         onPageChange: list.handleChangePage,
         onPageSizeChange: list.handleChangeRowsPerPage,
         rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+        columnVisibility: {
+          label: t('pages.modules.common.columns'),
+          options: headerDefinitions.map((cell) => ({
+            id: cell.id,
+            label: cell.label,
+          })),
+          visibleIds: columnVisibility.visibleColumnIds,
+          onChange: (value) => columnVisibility.setVisibleColumnIds(value as FollowUpColumnId[]),
+        },
       }}
     />
   );

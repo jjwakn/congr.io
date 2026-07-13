@@ -17,6 +17,7 @@
     "common": {
       "refresh": "Actualizar",
       "search": "Buscar",
+      "id": "ID",
       "rowsPerPage": "Elementos por página",
       "view": "Ver",
       "actions": "Acciones",
@@ -30,7 +31,15 @@
       "filterTo": "Hasta",
       "clearFilter": "Limpiar filtro",
       "enableConfirm": "¿Activar este elemento?",
-      "disableConfirm": "¿Desactivar este elemento?"
+      "disableConfirm": "¿Desactivar este elemento?",
+      "audit": {
+        "created_at": "Creado",
+        "updated_at": "Actualizado",
+        "deleted_at": "Eliminado",
+        "created_by": "Creado por",
+        "updated_by": "Actualizado por",
+        "deleted_by": "Eliminado por"
+      }
     },
     "users": {
       "title": "Usuarios",
@@ -51,6 +60,8 @@
         "name": "Nombre",
         "username": "Usuario",
         "enabled": "Activo",
+        "person": "Persona",
+        "roles": "Roles",
         "actions": "Acciones"
       },
       "form": {

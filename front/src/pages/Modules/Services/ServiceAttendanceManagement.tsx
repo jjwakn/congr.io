@@ -1,5 +1,11 @@
 import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import {
+  CRUD_AUDIT_COLUMN_IDS,
+  type CrudAuditColumnId,
+  getCrudAuditColumnDefinitions,
+} from '@components/common/modules/crudAuditColumns';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useModuleList } from '@components/common/modules/useModuleList';
 import { Alert, Box, Button, MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography } from '@mui/material';
 import { ServiceAttendanceService, ServicesService } from '@services/services';
@@ -7,6 +13,7 @@ import { httpRequest } from '@utils/http';
 import { DateTime } from 'luxon';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/useAuth';
 import { useNotificationContext } from '@/hooks/useNotifications';
 import type {
   Service,
@@ -17,16 +24,30 @@ import type {
 } from '@/types/service.types';
 
 type PendingDeltas = Record<string, number>;
+type ServiceAttendanceColumnId = 'id' | 'date' | 'service' | 'count' | 'notes' | CrudAuditColumnId;
 
+const SERVICE_ATTENDANCE_COLUMN_IDS: ServiceAttendanceColumnId[] = ['id', 'date', 'service', 'count', 'notes'];
+const DEFAULT_SERVICE_ATTENDANCE_VISIBLE_COLUMNS: ServiceAttendanceColumnId[] = ['date', 'service', 'count'];
 const isTodayService = (service: Service) => service.day_of_week === DateTime.local().weekday % 7;
 
 const ServiceAttendanceManagement = () => {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
+  const { auth } = useAuth();
   const { showNotification } = useNotificationContext();
   const list = useModuleList({
     moduleKey: 'service-attendance-list',
     defaultSort: 'date',
     defaultDirection: 'DESC',
+  });
+  const allColumnIds = useMemo<ServiceAttendanceColumnId[]>(
+    () => [...SERVICE_ATTENDANCE_COLUMN_IDS, ...(auth?.fullAccess ? CRUD_AUDIT_COLUMN_IDS : [])],
+    [auth?.fullAccess],
+  );
+  const columnVisibility = useModuleColumnVisibility<ServiceAttendanceColumnId>({
+    moduleKey: 'service-attendance-list',
+    allColumnIds,
+    defaultVisibleColumnIds: DEFAULT_SERVICE_ATTENDANCE_VISIBLE_COLUMNS,
+    defaultSearchColumnIds: ['date', 'notes'],
   });
   const saveTimerRef = useRef<number | null>(null);
   const [tab, setTab] = useState<'today' | 'history'>('today');
@@ -63,6 +84,8 @@ const ServiceAttendanceManagement = () => {
           size: list.pageSize,
           order: list.sort,
           direction: list.direction,
+          columns: columnVisibility.columnsQuery,
+          search_columns: columnVisibility.searchColumnsQuery,
           ...(list.debouncedSearch ? { search: list.debouncedSearch } : {}),
         },
       });
@@ -73,7 +96,16 @@ const ServiceAttendanceManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [list.debouncedSearch, list.direction, list.page, list.pageSize, list.sort, t]);
+  }, [
+    columnVisibility.columnsQuery,
+    columnVisibility.searchColumnsQuery,
+    list.debouncedSearch,
+    list.direction,
+    list.page,
+    list.pageSize,
+    list.sort,
+    t,
+  ]);
 
   const loadToday = useCallback(async () => {
     if (!selectedServiceId) return;
@@ -157,30 +189,71 @@ const ServiceAttendanceManagement = () => {
     setPendingDeltas((current) => ({ ...current, [groupId]: (current[groupId] ?? 0) + delta }));
   };
 
-  const columns = useMemo<ModuleListColumn<ServiceAttendance>[]>(
+  const auditColumnDefinitions = useMemo(
+    () =>
+      auth?.fullAccess
+        ? getCrudAuditColumnDefinitions<ServiceAttendance>({
+            language: i18n.language,
+            t,
+          }).columns
+        : [],
+    [auth?.fullAccess, i18n.language, t],
+  );
+
+  const columnDefinitions = useMemo<
+    Array<
+      {
+        id: ServiceAttendanceColumnId;
+        label: string;
+        sortKey?: string;
+      } & ModuleListColumn<ServiceAttendance>
+    >
+  >(
     () => [
-      { id: 'date', render: (row) => row.date },
+      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row) => row.id },
+      { id: 'date', label: t('pages.services.attendance.date'), sortKey: 'date', render: (row) => row.date },
       {
         id: 'service',
+        label: t('pages.services.attendance.service'),
+        sortKey: 'service_id',
         render: (row) => services.find(({ id }) => id === row.service_id)?.name ?? row.service?.name ?? '-',
       },
       {
         id: 'count',
+        label: t('pages.services.attendance.count'),
         render: (row) => row.counts.reduce((sum, count) => sum + count.count, 0),
       },
+      { id: 'notes', label: t('pages.services.newPeople.notes'), render: (row) => row.notes || '-' },
+      ...auditColumnDefinitions,
     ],
-    [services],
+    [auditColumnDefinitions, services, t],
+  );
+  const visibleColumnDefinitions = useMemo(
+    () => columnDefinitions.filter((column) => columnVisibility.visibleColumnIds.includes(column.id)),
+    [columnDefinitions, columnVisibility.visibleColumnIds],
+  );
+  const columns = useMemo<ModuleListColumn<ServiceAttendance>[]>(
+    () =>
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        minWidth: column.minWidth,
+        width: column.width,
+        align: column.align,
+        render: column.render,
+      })),
+    [visibleColumnDefinitions],
   );
 
   const headerRows = useMemo<ModuleListHeaderCell[][]>(
     () => [
-      [
-        { id: 'date', label: t('pages.services.attendance.date'), sortKey: 'date' },
-        { id: 'service', label: t('pages.services.attendance.service'), sortKey: 'service_id' },
-        { id: 'count', label: t('pages.services.attendance.count') },
-      ],
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        label: column.label,
+        sortKey: column.sortKey,
+        align: column.align,
+      })),
     ],
-    [t],
+    [visibleColumnDefinitions],
   );
 
   return (
@@ -256,6 +329,13 @@ const ServiceAttendanceManagement = () => {
             onPageChange: list.handleChangePage,
             onPageSizeChange: list.handleChangeRowsPerPage,
             rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+            columnVisibility: {
+              label: t('pages.modules.common.columns'),
+              options: columnDefinitions.map((column) => ({ id: column.id, label: column.label })),
+              visibleIds: columnVisibility.visibleColumnIds,
+              disabled: loading,
+              onChange: (value) => columnVisibility.setVisibleColumnIds(value as ServiceAttendanceColumnId[]),
+            },
           }}
         />
       )}

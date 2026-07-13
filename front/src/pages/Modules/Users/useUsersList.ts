@@ -7,7 +7,11 @@ import { useTranslation } from 'react-i18next';
 import type { User } from '@/types/user.types';
 import type { UseUsersListProps, UseUsersListResult, UserSort, UsersListResponse } from './users.types';
 
-export const useUsersList = ({ enabled = true }: UseUsersListProps = {}): UseUsersListResult => {
+export const useUsersList = ({
+  enabled = true,
+  columnsQuery,
+  searchColumnsQuery,
+}: UseUsersListProps = {}): UseUsersListResult => {
   const { t } = useTranslation();
   const cached = getPreloadedResource<UsersListResponse>('users');
   const [users, setUsers] = useState<User[]>(cached?.result ?? []);
@@ -53,6 +57,8 @@ export const useUsersList = ({ enabled = true }: UseUsersListProps = {}): UseUse
           size: pageSize,
           order: sort,
           direction,
+          ...(columnsQuery ? { columns: columnsQuery } : {}),
+          ...(searchColumnsQuery ? { search_columns: searchColumnsQuery } : {}),
           ...(normalizedSearch ? { search: normalizedSearch } : {}),
         },
       });
@@ -68,7 +74,7 @@ export const useUsersList = ({ enabled = true }: UseUsersListProps = {}): UseUse
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, direction, enabled, page, pageSize, sort, t]);
+  }, [columnsQuery, debouncedSearch, direction, enabled, page, pageSize, searchColumnsQuery, sort, t]);
 
   useEffect(() => {
     if (!enabled) {

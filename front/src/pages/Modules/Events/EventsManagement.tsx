@@ -4,21 +4,24 @@ import { CrudPermissionStatus } from '@components/common/modules/CrudPermissionS
 import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
-import type { ModuleSectionAction } from '@components/common/modules/ModuleSectionActions.types';
+import {
+  CRUD_AUDIT_COLUMN_IDS,
+  type CrudAuditColumnId,
+  getCrudAuditColumnDefinitions,
+} from '@components/common/modules/crudAuditColumns';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useModuleList } from '@components/common/modules/useModuleList';
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import ViewColumnRoundedIcon from '@mui/icons-material/ViewColumnRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { Button, FormControlLabel, Menu, MenuItem, Popover, Stack, Switch, Typography } from '@mui/material';
+import { Button, Menu, MenuItem, Popover, Stack, Typography } from '@mui/material';
 import { EventTypesService } from '@services/eventTypes';
 import { EventsService } from '@services/events';
 import { FilesService } from '@services/files';
 import { PersonFieldsService } from '@services/persons';
-import { UsersService } from '@services/users';
 import { API_URL } from '@utils/constants';
 import { resolveEventFieldPersonLinks } from '@utils/eventFieldLinks';
 import { httpRequest } from '@utils/http';
@@ -49,7 +52,8 @@ type EventColumnId =
   | 'attendance_enabled'
   | 'self_registration_enabled'
   | 'enabled'
-  | 'actions';
+  | 'actions'
+  | CrudAuditColumnId;
 
 interface DateFilterState {
   from: string;
@@ -140,7 +144,7 @@ const hasDateFilter = (filter: DateFilterState) => Boolean(filter.from || filter
 export const EventsManagement = () => {
   const { i18n, t } = useTranslation();
   const { congregation } = useAppContext();
-  const { hasPermission, refreshSession, user } = useAuth();
+  const { auth, hasPermission, user } = useAuth();
   const { showNotification } = useNotificationContext();
   const cached = getPreloadedResource<EventsListResponse>('events');
   const [rows, setRows] = useState<CalendarEvent[]>(cached?.result ?? []);
@@ -152,13 +156,8 @@ export const EventsManagement = () => {
   const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
   const [deleteEvent, setDeleteEvent] = useState<CalendarEvent | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [columnAnchor, setColumnAnchor] = useState<HTMLElement | null>(null);
   const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null);
   const [activeFilter, setActiveFilter] = useState<EventFilterKey | null>(null);
-  const [visibleColumns, setVisibleColumns] = useState<EventColumnId[]>(() => {
-    const stored = user?.preferences?.column_visibility?.[EVENTS_COLUMNS_KEY] ?? DEFAULT_VISIBLE_COLUMNS;
-    return stored.filter((column): column is EventColumnId => EVENT_COLUMN_IDS.includes(column as EventColumnId));
-  });
   const [booleanFilters, setBooleanFilters] = useState<Record<EventBooleanFilterKey, BooleanFilterValue>>({
     enabled: 'all',
     all_day: 'all',
@@ -184,31 +183,17 @@ export const EventsManagement = () => {
     moduleKey: EVENTS_COLUMNS_KEY,
     defaultSort: 'start_datetime',
   });
-
-  useEffect(() => {
-    const stored = user?.preferences?.column_visibility?.[EVENTS_COLUMNS_KEY];
-    if (!stored) return;
-    setVisibleColumns(
-      stored.filter((column): column is EventColumnId => EVENT_COLUMN_IDS.includes(column as EventColumnId)),
-    );
-  }, [user?.preferences?.column_visibility]);
-
-  const saveVisibleColumns = useCallback(
-    async (nextColumns: EventColumnId[]) => {
-      setVisibleColumns(nextColumns);
-      await httpRequest({
-        service: UsersService.updatePreferences,
-        data: {
-          column_visibility: {
-            ...(user?.preferences?.column_visibility ?? {}),
-            [EVENTS_COLUMNS_KEY]: nextColumns,
-          },
-        },
-      });
-      await refreshSession();
-    },
-    [refreshSession, user?.preferences?.column_visibility],
+  const allColumnIds = useMemo<EventColumnId[]>(
+    () => [...EVENT_COLUMN_IDS, ...(auth?.fullAccess ? CRUD_AUDIT_COLUMN_IDS : [])],
+    [auth?.fullAccess],
   );
+  const columnVisibility = useModuleColumnVisibility<EventColumnId>({
+    moduleKey: EVENTS_COLUMNS_KEY,
+    allColumnIds,
+    defaultVisibleColumnIds: DEFAULT_VISIBLE_COLUMNS,
+    fixedColumnIds: ['actions'],
+    defaultSearchColumnIds: ['name', 'type'],
+  });
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -224,6 +209,8 @@ export const EventsManagement = () => {
           size: list.pageSize,
           order: list.sort,
           direction: list.direction,
+          columns: columnVisibility.columnsQuery,
+          search_columns: columnVisibility.searchColumnsQuery,
           ...(list.debouncedSearch ? { search: list.debouncedSearch } : {}),
           ...(booleanFilters.enabled !== 'all' ? { enabled: booleanFilters.enabled === 'yes' } : {}),
           ...(booleanFilters.all_day !== 'all' ? { all_day: booleanFilters.all_day === 'yes' } : {}),
@@ -249,6 +236,8 @@ export const EventsManagement = () => {
     }
   }, [
     booleanFilters,
+    columnVisibility.columnsQuery,
+    columnVisibility.searchColumnsQuery,
     dateFilters,
     list.debouncedSearch,
     list.direction,
@@ -420,6 +409,24 @@ export const EventsManagement = () => {
     setActiveFilter(null);
   };
 
+  const auditColumnDefinitions = useMemo<EventColumnDefinition[]>(
+    () =>
+      auth?.fullAccess
+        ? getCrudAuditColumnDefinitions<CalendarEvent>({
+            language: i18n.language,
+            t,
+          }).columns.map((column) => ({
+            id: column.id,
+            label: column.label,
+            sortKey: column.sortKey,
+            minWidth: column.minWidth ? Number(column.minWidth) : undefined,
+            align: column.align,
+            render: column.render,
+          }))
+        : [],
+    [auth?.fullAccess, i18n.language, t],
+  );
+
   const columnsDefinitions = useMemo<EventColumnDefinition[]>(
     () => [
       {
@@ -516,6 +523,7 @@ export const EventsManagement = () => {
         align: 'center',
         render: (event) => <CrudPermissionStatus enabled={Boolean(event.enabled)} />,
       },
+      ...auditColumnDefinitions,
       {
         id: 'actions',
         label: t('pages.settings.congregation.actions'),
@@ -555,12 +563,12 @@ export const EventsManagement = () => {
         ),
       },
     ],
-    [canDelete, canUpdate, i18n.language, loading, t, timezone, use12HourTime],
+    [auditColumnDefinitions, canDelete, canUpdate, i18n.language, loading, t, timezone, use12HourTime],
   );
 
   const visibleColumnDefinitions = useMemo(
-    () => columnsDefinitions.filter((column) => column.fixed || visibleColumns.includes(column.id)),
-    [columnsDefinitions, visibleColumns],
+    () => columnsDefinitions.filter((column) => column.fixed || columnVisibility.visibleColumnIds.includes(column.id)),
+    [columnVisibility.visibleColumnIds, columnsDefinitions],
   );
 
   const columns = useMemo<ModuleListColumn<CalendarEvent>[]>(
@@ -595,19 +603,6 @@ export const EventsManagement = () => {
     [isFilterActive, loading, openFilter, t, visibleColumnDefinitions],
   );
 
-  const extraActions = useMemo<ModuleSectionAction[]>(
-    () => [
-      {
-        id: 'columns',
-        label: t('pages.modules.common.columns'),
-        icon: ViewColumnRoundedIcon,
-        disabled: loading,
-        onClick: (event) => setColumnAnchor(event.currentTarget),
-      },
-    ],
-    [loading, t],
-  );
-
   const activeDateFilter =
     activeFilter && DATE_FILTERS.includes(activeFilter as EventDateFilterKey)
       ? dateFilters[activeFilter as EventDateFilterKey]
@@ -632,7 +627,6 @@ export const EventsManagement = () => {
           disabled: loading,
           onClick: () => void refresh(),
         }}
-        extraActions={extraActions}
         search={{ label: t('pages.modules.common.search'), value: list.search, onChange: list.setSearch }}
         table={{
           headerRows,
@@ -651,32 +645,20 @@ export const EventsManagement = () => {
           onPageChange: list.handleChangePage,
           onPageSizeChange: list.handleChangeRowsPerPage,
           rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+          columnVisibility: {
+            label: t('pages.modules.common.columns'),
+            options: columnsDefinitions
+              .filter((column) => !column.fixed)
+              .map((column) => ({
+                id: column.id,
+                label: column.label || column.id,
+              })),
+            visibleIds: columnVisibility.visibleColumnIds,
+            disabled: loading,
+            onChange: (value) => columnVisibility.setVisibleColumnIds(value as EventColumnId[]),
+          },
         }}
       />
-
-      <Menu anchorEl={columnAnchor} open={Boolean(columnAnchor)} onClose={() => setColumnAnchor(null)}>
-        {columnsDefinitions
-          .filter((column) => !column.fixed)
-          .map((column) => (
-            <MenuItem key={column.id}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={visibleColumns.includes(column.id)}
-                    onChange={(_event, checked) =>
-                      void saveVisibleColumns(
-                        checked
-                          ? Array.from(new Set([...visibleColumns, column.id]))
-                          : visibleColumns.filter((columnId) => columnId !== column.id),
-                      )
-                    }
-                  />
-                }
-                label={column.label || column.id}
-              />
-            </MenuItem>
-          ))}
-      </Menu>
 
       {activeFilter && BOOLEAN_FILTERS.includes(activeFilter as EventBooleanFilterKey) ? (
         <Menu anchorEl={filterAnchor} open={Boolean(filterAnchor)} onClose={() => setFilterAnchor(null)}>

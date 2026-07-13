@@ -3,7 +3,7 @@ import { I18nService } from 'nestjs-i18n';
 import { TokenPayload } from 'src/common/common.types';
 import { encryptPassword } from 'src/utils/helpers';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import {
   BadRequestException,
   ForbiddenException,
@@ -199,11 +199,45 @@ export class UserService {
       searchFields: ['id', 'name', 'username'],
       booleanFields: ['enabled'],
     });
+    const requestedColumns = new Set(
+      (query.columns ?? '')
+        .split(',')
+        .map((column) => column.trim())
+        .filter(Boolean),
+    );
+    const needsRoles = requestedColumns.has('roles');
+    const needsPerson = requestedColumns.has('person');
+    const ids = result.map((user) => user.id);
+    const rolesByUserId = new Map<string, Role[]>();
+    const personByUserId = new Map<string, Person>();
+
+    if (ids.length && needsRoles) {
+      const usersWithRoles = await this.repository.find({
+        where: { id: In(ids) },
+        relations: { roles: true },
+      });
+      usersWithRoles.forEach((user) =>
+        rolesByUserId.set(
+          user.id,
+          user.roles.filter((role) => role.enabled),
+        ),
+      );
+    }
+
+    if (ids.length && needsPerson) {
+      const people = await this.personRepository.find({ where: { user_id: In(ids) } });
+      people.forEach((person) => {
+        if (person.user_id) personByUserId.set(person.user_id, person);
+      });
+    }
 
     return {
-      result: result.map((r) => {
-        delete r.password;
-        return r;
+      result: result.map((user) => {
+        const listedUser = user as User & { person?: Person | null };
+        delete listedUser.password;
+        if (needsRoles) listedUser.roles = rolesByUserId.get(listedUser.id) ?? [];
+        if (needsPerson) listedUser.person = personByUserId.get(listedUser.id) ?? null;
+        return listedUser;
       }),
       total,
     };

@@ -4,6 +4,12 @@ import { CreateEditDialog } from '@components/common/forms/CreateEditDialog';
 import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import {
+  CRUD_AUDIT_COLUMN_IDS,
+  type CrudAuditColumnId,
+  getCrudAuditColumnDefinitions,
+} from '@components/common/modules/crudAuditColumns';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useModuleList } from '@components/common/modules/useModuleList';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -31,6 +37,10 @@ interface NewPeopleFormState {
   enabled: boolean;
 }
 
+type ServiceNewPeopleColumnId = 'id' | 'date' | 'service' | 'notes' | 'actions' | CrudAuditColumnId;
+const SERVICE_NEW_PEOPLE_COLUMN_IDS: ServiceNewPeopleColumnId[] = ['id', 'date', 'service', 'notes', 'actions'];
+const DEFAULT_SERVICE_NEW_PEOPLE_VISIBLE_COLUMNS: ServiceNewPeopleColumnId[] = ['date', 'service', 'notes', 'actions'];
+
 const createForm = (serviceId = ''): NewPeopleFormState => ({
   service_id: serviceId,
   date: DateTime.local().toISODate() ?? '',
@@ -48,10 +58,21 @@ const toForm = (group: ServiceNewPeople): NewPeopleFormState => ({
 const getPersonName = (person?: Person) => (person ? `${person.code} · ${person.first_name} ${person.last_name}` : '');
 
 const ServiceNewPeopleManagement = () => {
-  const { t } = useTranslation();
-  const { hasPermission } = useAuth();
+  const { i18n, t } = useTranslation();
+  const { auth, hasPermission } = useAuth();
   const { showNotification } = useNotificationContext();
   const list = useModuleList({ moduleKey: 'services-new-people-list', defaultSort: 'date', defaultDirection: 'DESC' });
+  const allColumnIds = useMemo<ServiceNewPeopleColumnId[]>(
+    () => [...SERVICE_NEW_PEOPLE_COLUMN_IDS, ...(auth?.fullAccess ? CRUD_AUDIT_COLUMN_IDS : [])],
+    [auth?.fullAccess],
+  );
+  const columnVisibility = useModuleColumnVisibility<ServiceNewPeopleColumnId>({
+    moduleKey: 'services-new-people-list',
+    allColumnIds,
+    defaultVisibleColumnIds: DEFAULT_SERVICE_NEW_PEOPLE_VISIBLE_COLUMNS,
+    fixedColumnIds: ['actions'],
+    defaultSearchColumnIds: ['date', 'notes'],
+  });
   const [tab, setTab] = useState<'today' | 'history'>('today');
   const [services, setServices] = useState<Service[]>([]);
   const [rows, setRows] = useState<ServiceNewPeople[]>([]);
@@ -89,6 +110,8 @@ const ServiceNewPeopleManagement = () => {
           size: list.pageSize,
           order: list.sort,
           direction: list.direction,
+          columns: columnVisibility.columnsQuery,
+          search_columns: columnVisibility.searchColumnsQuery,
           ...(list.debouncedSearch ? { search: list.debouncedSearch } : {}),
         },
       });
@@ -99,7 +122,16 @@ const ServiceNewPeopleManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [list.debouncedSearch, list.direction, list.page, list.pageSize, list.sort, t]);
+  }, [
+    columnVisibility.columnsQuery,
+    columnVisibility.searchColumnsQuery,
+    list.debouncedSearch,
+    list.direction,
+    list.page,
+    list.pageSize,
+    list.sort,
+    t,
+  ]);
 
   useEffect(() => {
     void loadServices();
@@ -186,16 +218,40 @@ const ServiceNewPeopleManagement = () => {
     return rows.filter(({ date }) => date === today);
   }, [rows, tab]);
 
-  const columns = useMemo<ModuleListColumn<ServiceNewPeople>[]>(
+  const auditColumnDefinitions = useMemo(
+    () =>
+      auth?.fullAccess
+        ? getCrudAuditColumnDefinitions<ServiceNewPeople>({
+            language: i18n.language,
+            t,
+          }).columns
+        : [],
+    [auth?.fullAccess, i18n.language, t],
+  );
+
+  const columnDefinitions = useMemo<
+    Array<
+      {
+        id: ServiceNewPeopleColumnId;
+        label: string;
+        sortKey?: string;
+      } & ModuleListColumn<ServiceNewPeople>
+    >
+  >(
     () => [
-      { id: 'date', render: (row) => row.date },
+      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row) => row.id },
+      { id: 'date', label: t('pages.services.newPeople.date'), sortKey: 'date', render: (row) => row.date },
       {
         id: 'service',
+        label: t('pages.services.newPeople.service'),
+        sortKey: 'service_id',
         render: (row) => services.find(({ id }) => id === row.service_id)?.name ?? row.service?.name ?? '-',
       },
-      { id: 'notes', render: (row) => row.notes || '-' },
+      { id: 'notes', label: t('pages.services.newPeople.notes'), render: (row) => row.notes || '-' },
+      ...auditColumnDefinitions,
       {
         id: 'actions',
+        label: t('pages.modules.common.actions'),
         align: 'right',
         render: (row) => (
           <ModuleRowActions
@@ -223,19 +279,37 @@ const ServiceNewPeopleManagement = () => {
         ),
       },
     ],
-    [canDelete, canUpdate, services, t],
+    [auditColumnDefinitions, canDelete, canUpdate, services, t],
+  );
+  const visibleColumnDefinitions = useMemo(
+    () =>
+      columnDefinitions.filter(
+        (column) => column.id === 'actions' || columnVisibility.visibleColumnIds.includes(column.id),
+      ),
+    [columnDefinitions, columnVisibility.visibleColumnIds],
+  );
+  const columns = useMemo<ModuleListColumn<ServiceNewPeople>[]>(
+    () =>
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        align: column.align,
+        minWidth: column.minWidth,
+        width: column.width,
+        render: column.render,
+      })),
+    [visibleColumnDefinitions],
   );
 
   const headerRows = useMemo<ModuleListHeaderCell[][]>(
     () => [
-      [
-        { id: 'date', label: t('pages.services.newPeople.date'), sortKey: 'date' },
-        { id: 'service', label: t('pages.services.newPeople.service'), sortKey: 'service_id' },
-        { id: 'notes', label: t('pages.services.newPeople.notes') },
-        { id: 'actions', label: t('pages.modules.common.actions'), align: 'right' },
-      ],
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        label: column.label,
+        sortKey: column.sortKey,
+        align: column.align,
+      })),
     ],
-    [t],
+    [visibleColumnDefinitions],
   );
 
   return (
@@ -277,6 +351,15 @@ const ServiceNewPeopleManagement = () => {
           onPageChange: list.handleChangePage,
           onPageSizeChange: list.handleChangeRowsPerPage,
           rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+          columnVisibility: {
+            label: t('pages.modules.common.columns'),
+            options: columnDefinitions
+              .filter((column) => column.id !== 'actions')
+              .map((column) => ({ id: column.id, label: column.label })),
+            visibleIds: columnVisibility.visibleColumnIds,
+            disabled: loading,
+            onChange: (value) => columnVisibility.setVisibleColumnIds(value as ServiceNewPeopleColumnId[]),
+          },
         }}
       />
 

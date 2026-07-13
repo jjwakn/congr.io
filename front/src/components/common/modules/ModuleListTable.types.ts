@@ -2,6 +2,20 @@ import type { SxProps, TableCellProps, Theme } from '@mui/material';
 import type { MouseEvent, ReactNode } from 'react';
 import type { ListDirection } from './useModuleList.types';
 
+export interface ModuleColumnVisibilityOption {
+  id: string;
+  label: ReactNode;
+  disabled?: boolean;
+}
+
+export interface ModuleColumnVisibilityProps {
+  label: string;
+  options: ModuleColumnVisibilityOption[];
+  visibleIds: string[];
+  disabled?: boolean;
+  onChange: (value: string[]) => void;
+}
+
 export interface ModuleListHeaderCell {
   id: string;
   label: ReactNode;
@@ -45,6 +59,7 @@ export interface ModuleListTableProps<RowType> {
   onPageChange: (value: number) => void;
   onPageSizeChange: (value: number) => void;
   rowsPerPageLabel: string;
+  columnVisibility?: ModuleColumnVisibilityProps;
   fixedStartColumnIds?: string[];
   fixedEndColumnIds?: string[];
 }

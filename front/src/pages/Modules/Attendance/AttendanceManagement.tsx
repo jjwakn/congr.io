@@ -1,7 +1,13 @@
 import { ConfirmDialog } from '@components/common/forms/ConfirmDialog';
-import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
+import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import {
+  CRUD_AUDIT_COLUMN_IDS,
+  type CrudAuditColumnId,
+  getCrudAuditColumnDefinitions,
+} from '@components/common/modules/crudAuditColumns';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useModuleList } from '@components/common/modules/useModuleList';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
@@ -42,6 +48,14 @@ import { EventParticipantsEditorDialog } from '../Events/EventParticipantsEditor
 import { PastEventPickerDialog } from '../Events/PastEventPickerDialog';
 
 const PAST_EVENTS_PAGE_SIZE = 50;
+type AttendanceHistoryColumnId = 'id' | 'type' | 'name' | 'start_datetime' | 'actions' | CrudAuditColumnId;
+const ATTENDANCE_HISTORY_COLUMN_IDS: AttendanceHistoryColumnId[] = ['id', 'type', 'name', 'start_datetime', 'actions'];
+const DEFAULT_ATTENDANCE_HISTORY_VISIBLE_COLUMNS: AttendanceHistoryColumnId[] = [
+  'type',
+  'name',
+  'start_datetime',
+  'actions',
+];
 
 const formatFieldValue = (value: JsonValue | undefined) => {
   if (Array.isArray(value)) return value.join(', ');
@@ -53,7 +67,7 @@ const getParticipantName = (participant: EventParticipant) =>
 
 export const AttendanceManagement = () => {
   const { i18n, t } = useTranslation();
-  const { hasPermission } = useAuth();
+  const { auth, hasPermission } = useAuth();
   const { showNotification } = useNotificationContext();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [historyRows, setHistoryRows] = useState<CalendarEvent[]>([]);
@@ -86,6 +100,17 @@ export const AttendanceManagement = () => {
     moduleKey: 'event-attendance-history',
     defaultSort: 'start_datetime',
     defaultDirection: 'DESC',
+  });
+  const historyColumnIds = useMemo<AttendanceHistoryColumnId[]>(
+    () => [...ATTENDANCE_HISTORY_COLUMN_IDS, ...(auth?.fullAccess ? CRUD_AUDIT_COLUMN_IDS : [])],
+    [auth?.fullAccess],
+  );
+  const historyColumnVisibility = useModuleColumnVisibility<AttendanceHistoryColumnId>({
+    moduleKey: 'event-attendance-history',
+    allColumnIds: historyColumnIds,
+    defaultVisibleColumnIds: DEFAULT_ATTENDANCE_HISTORY_VISIBLE_COLUMNS,
+    fixedColumnIds: ['actions'],
+    defaultSearchColumnIds: ['name'],
   });
   const loadParticipants = useCallback(async (id: string) => {
     if (!id) return;
@@ -140,6 +165,8 @@ export const AttendanceManagement = () => {
           size: historyList.pageSize,
           order: historyList.sort,
           direction: historyList.direction,
+          columns: historyColumnVisibility.columnsQuery,
+          search_columns: historyColumnVisibility.searchColumnsQuery,
           ...(historyList.debouncedSearch ? { search: historyList.debouncedSearch } : {}),
         },
       });
@@ -156,6 +183,8 @@ export const AttendanceManagement = () => {
     historyList.page,
     historyList.pageSize,
     historyList.sort,
+    historyColumnVisibility.columnsQuery,
+    historyColumnVisibility.searchColumnsQuery,
     showNotification,
     t,
   ]);
@@ -277,23 +306,54 @@ export const AttendanceManagement = () => {
     [eventId, loadParticipants, showNotification, t],
   );
 
-  const historyColumns = useMemo<ModuleListColumn<CalendarEvent>[]>(
+  const historyAuditColumnDefinitions = useMemo(
+    () =>
+      auth?.fullAccess
+        ? getCrudAuditColumnDefinitions<CalendarEvent>({
+            language: i18n.language,
+            t,
+          }).columns
+        : [],
+    [auth?.fullAccess, i18n.language, t],
+  );
+
+  const historyColumnDefinitions = useMemo<
+    Array<
+      {
+        id: AttendanceHistoryColumnId;
+        label: string;
+        sortKey?: string;
+      } & ModuleListColumn<CalendarEvent>
+    >
+  >(
     () => [
+      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (event) => event.id },
       {
         id: 'type',
+        label: t('pages.events.form.type'),
         width: 72,
         align: 'center',
         render: (event) => <MuiIcon name={event.type?.icon} sx={{ color: event.type?.color ?? 'primary.main' }} />,
       },
-      { id: 'name', minWidth: 220, render: (event) => event.name },
+      {
+        id: 'name',
+        label: t('pages.events.form.name'),
+        sortKey: 'name',
+        minWidth: 220,
+        render: (event) => event.name,
+      },
       {
         id: 'start_datetime',
+        label: t('pages.events.form.start'),
+        sortKey: 'start_datetime',
         minWidth: 190,
         render: (event) =>
           DateTime.fromISO(event.start_datetime).setLocale(i18n.language).toLocaleString(DateTime.DATETIME_MED),
       },
+      ...historyAuditColumnDefinitions,
       {
         id: 'actions',
+        label: t('pages.settings.congregation.actions'),
         minWidth: 120,
         align: 'right',
         render: (event) => (
@@ -329,7 +389,44 @@ export const AttendanceManagement = () => {
         ),
       },
     ],
-    [canDeleteAttendance, canUpdateAttendance, historyLoading, i18n.language, openEditor, t],
+    [
+      canDeleteAttendance,
+      canUpdateAttendance,
+      historyAuditColumnDefinitions,
+      historyLoading,
+      i18n.language,
+      openEditor,
+      t,
+    ],
+  );
+  const visibleHistoryColumnDefinitions = useMemo(
+    () =>
+      historyColumnDefinitions.filter(
+        (column) => column.id === 'actions' || historyColumnVisibility.visibleColumnIds.includes(column.id),
+      ),
+    [historyColumnDefinitions, historyColumnVisibility.visibleColumnIds],
+  );
+  const historyColumns = useMemo<ModuleListColumn<CalendarEvent>[]>(
+    () =>
+      visibleHistoryColumnDefinitions.map((column) => ({
+        id: column.id,
+        minWidth: column.minWidth,
+        width: column.width,
+        align: column.align,
+        render: column.render,
+      })),
+    [visibleHistoryColumnDefinitions],
+  );
+  const historyHeaderRows = useMemo<ModuleListHeaderCell[][]>(
+    () => [
+      visibleHistoryColumnDefinitions.map((column) => ({
+        id: column.id,
+        label: column.label,
+        sortKey: column.sortKey,
+        align: column.align,
+      })),
+    ],
+    [visibleHistoryColumnDefinitions],
   );
 
   return (
@@ -488,14 +585,7 @@ export const AttendanceManagement = () => {
               onChange: historyList.setSearch,
             }}
             table={{
-              headerRows: [
-                [
-                  { id: 'type', label: t('pages.events.form.type'), align: 'center' },
-                  { id: 'name', label: t('pages.events.form.name'), sortKey: 'name' },
-                  { id: 'start_datetime', label: t('pages.events.form.start'), sortKey: 'start_datetime' },
-                  { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
-                ],
-              ],
+              headerRows: historyHeaderRows,
               columns: historyColumns,
               rows: historyRows,
               getRowId: (row) => row.id,
@@ -511,6 +601,15 @@ export const AttendanceManagement = () => {
               onPageChange: historyList.handleChangePage,
               onPageSizeChange: historyList.handleChangeRowsPerPage,
               rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+              columnVisibility: {
+                label: t('pages.modules.common.columns'),
+                options: historyColumnDefinitions
+                  .filter((column) => column.id !== 'actions')
+                  .map((column) => ({ id: column.id, label: column.label })),
+                visibleIds: historyColumnVisibility.visibleColumnIds,
+                disabled: historyLoading,
+                onChange: (value) => historyColumnVisibility.setVisibleColumnIds(value as AttendanceHistoryColumnId[]),
+              },
             }}
           />
         ) : null}

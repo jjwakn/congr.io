@@ -33,6 +33,12 @@ export interface UsePersonFieldsListResult extends PersonFieldsListResponse {
   handleChangeRowsPerPage: (value: number) => void;
 }
 
+export interface UsePersonFieldsListProps {
+  enabled?: boolean;
+  columnsQuery?: string;
+  searchColumnsQuery?: string;
+}
+
 export interface PersonFieldFormDialogProps {
   open: boolean;
   mode: CreateEditDialogMode;

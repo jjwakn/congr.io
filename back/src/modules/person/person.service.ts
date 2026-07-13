@@ -12,6 +12,23 @@ import { Person } from './person.entity';
 import type { PersonActionProps, PersonCreateProps, PersonListProps, PersonUpdateProps } from './person.types';
 
 const PERSON_SEARCH_FIELDS = [
+  'id',
+  'code',
+  'first_name',
+  'middle_name',
+  'last_name',
+  'second_last_name',
+  'married_name',
+  'phone',
+  'birthdate',
+  'registered_age',
+  'email',
+] as const;
+
+type PersonSearchField = (typeof PERSON_SEARCH_FIELDS)[number];
+type SortDirection = 'ASC' | 'DESC';
+
+const DEFAULT_PERSON_SEARCH_FIELDS: PersonSearchField[] = [
   'code',
   'first_name',
   'middle_name',
@@ -19,12 +36,14 @@ const PERSON_SEARCH_FIELDS = [
   'second_last_name',
   'phone',
   'email',
-] as const;
-
-type PersonSearchField = (typeof PERSON_SEARCH_FIELDS)[number];
-type SortDirection = 'ASC' | 'DESC';
-
+];
+const PERSON_SEARCH_FIELD_SET = new Set<PersonSearchField>(PERSON_SEARCH_FIELDS);
 const escapeLikePattern = (value: string) => value.replace(/[\\%_]/g, '\\$&');
+const getRequestedSearchFields = (value?: string) =>
+  (value ?? '')
+    .split(',')
+    .map((column) => column.trim())
+    .filter((column): column is PersonSearchField => PERSON_SEARCH_FIELD_SET.has(column as PersonSearchField));
 
 @Injectable()
 export class PersonService {
@@ -83,11 +102,15 @@ export class PersonService {
     };
   }
 
-  private addSearchFilters(builder: SelectQueryBuilder<Person>, search?: string) {
+  private addSearchFilters(
+    builder: SelectQueryBuilder<Person>,
+    search?: string,
+    searchFields = DEFAULT_PERSON_SEARCH_FIELDS,
+  ) {
     const searchTerms = (search?.trim() ?? '').split(/\s+/).filter(Boolean);
     if (!searchTerms.length) return;
 
-    if (searchTerms.length > PERSON_SEARCH_FIELDS.length) {
+    if (searchTerms.length > searchFields.length) {
       builder.andWhere('FALSE');
       return;
     }
@@ -104,7 +127,7 @@ export class PersonService {
           const term = searchTerms[termIndex];
           const isLastTerm = termIndex === searchTerms.length - 1;
 
-          PERSON_SEARCH_FIELDS.forEach((field) => {
+          searchFields.forEach((field) => {
             if (usedFields.has(field)) return;
 
             const parameterName = `personSearch${combinationIndex}_${termIndex}`;
@@ -152,7 +175,10 @@ export class PersonService {
         .andWhere('"person"."deleted_at" IS NULL');
 
       if (query.enabled !== undefined) builder.andWhere('"person"."enabled" = :enabled', { enabled: query.enabled });
-      this.addSearchFilters(builder, query.search);
+      const searchFields = Array.from(
+        new Set([...DEFAULT_PERSON_SEARCH_FIELDS, ...getRequestedSearchFields(query.search_columns)]),
+      );
+      this.addSearchFilters(builder, query.search, searchFields);
       this.applyNaturalCodeOrder(builder, direction);
       if (paginate) builder.skip(pageSize * page).take(pageSize);
 
@@ -163,7 +189,7 @@ export class PersonService {
     return findWithFilters<Person, typeof query>({
       repository: this.repository,
       query,
-      searchFields: [...PERSON_SEARCH_FIELDS],
+      searchFields: [...DEFAULT_PERSON_SEARCH_FIELDS],
       booleanFields: ['enabled'],
       baseWhere: { congregation_id: congregation.id, deleted_at: IsNull() },
     });

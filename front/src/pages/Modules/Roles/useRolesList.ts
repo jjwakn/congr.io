@@ -7,7 +7,11 @@ import { useTranslation } from 'react-i18next';
 import type { Role } from '@/types/role.types';
 import type { RoleSort, RolesListResponse, UseRolesListProps, UseRolesListResult } from './roles.types';
 
-export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRolesListResult => {
+export const useRolesList = ({
+  enabled = true,
+  columnsQuery,
+  searchColumnsQuery,
+}: UseRolesListProps = {}): UseRolesListResult => {
   const { t } = useTranslation();
   const cached = getPreloadedResource<RolesListResponse>('roles');
   const [roles, setRoles] = useState<Role[]>(cached?.result ?? []);
@@ -53,6 +57,8 @@ export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRol
           size: pageSize,
           order: sort,
           direction,
+          ...(columnsQuery ? { columns: columnsQuery } : {}),
+          ...(searchColumnsQuery ? { search_columns: searchColumnsQuery } : {}),
           ...(normalizedSearch ? { search: normalizedSearch } : {}),
         },
       });
@@ -67,7 +73,7 @@ export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRol
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, direction, enabled, page, pageSize, sort, t]);
+  }, [columnsQuery, debouncedSearch, direction, enabled, page, pageSize, searchColumnsQuery, sort, t]);
 
   useEffect(() => {
     if (!enabled) {

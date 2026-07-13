@@ -1,7 +1,13 @@
 import { ConfirmDialog } from '@components/common/forms/ConfirmDialog';
-import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
+import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import {
+  CRUD_AUDIT_COLUMN_IDS,
+  type CrudAuditColumnId,
+  getCrudAuditColumnDefinitions,
+} from '@components/common/modules/crudAuditColumns';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
@@ -18,21 +24,63 @@ import type { PersonFieldFormValues } from './personFields.types';
 import { usePersonFieldsList } from './usePersonFieldsList';
 
 type PersonFieldRow = PersonField & { persistent?: boolean };
+type PersonFieldColumnId =
+  | 'id'
+  | 'label'
+  | 'type'
+  | 'options'
+  | 'conditions'
+  | 'required'
+  | 'allow_multiple'
+  | 'actions'
+  | CrudAuditColumnId;
 
 const VALUELESS_OPERATORS: FieldConditionOperator[] = ['is_empty', 'is_not_empty', 'is_true', 'is_false'];
+const PERSON_FIELD_COLUMN_IDS: PersonFieldColumnId[] = [
+  'id',
+  'label',
+  'type',
+  'options',
+  'conditions',
+  'required',
+  'allow_multiple',
+  'actions',
+];
+const DEFAULT_PERSON_FIELD_VISIBLE_COLUMNS: PersonFieldColumnId[] = [
+  'label',
+  'type',
+  'options',
+  'conditions',
+  'actions',
+];
 
 const formatConditionValue = (value: FieldCondition['value']) =>
   value === null || value === undefined || value === '' ? '' : String(value);
 
 export const PersonFieldsManagement = () => {
-  const { t } = useTranslation();
-  const { hasPermission } = useAuth();
+  const { i18n, t } = useTranslation();
+  const { auth, hasPermission } = useAuth();
   const { showNotification } = useNotificationContext();
   const canView = hasPermission('person_field', 'get');
   const canCreate = hasPermission('person_field', 'create');
   const canUpdate = hasPermission('person_field', 'update');
   const canDelete = hasPermission('person_field', 'delete');
-  const list = usePersonFieldsList(canView);
+  const allColumnIds = useMemo<PersonFieldColumnId[]>(
+    () => [...PERSON_FIELD_COLUMN_IDS, ...(auth?.fullAccess ? CRUD_AUDIT_COLUMN_IDS : [])],
+    [auth?.fullAccess],
+  );
+  const columnVisibility = useModuleColumnVisibility<PersonFieldColumnId>({
+    moduleKey: 'settings-person-fields-list',
+    allColumnIds,
+    defaultVisibleColumnIds: DEFAULT_PERSON_FIELD_VISIBLE_COLUMNS,
+    fixedColumnIds: ['actions'],
+    defaultSearchColumnIds: ['label'],
+  });
+  const list = usePersonFieldsList({
+    enabled: canView,
+    columnsQuery: columnVisibility.columnsQuery,
+    searchColumnsQuery: columnVisibility.searchColumnsQuery,
+  });
   const [formOpen, setFormOpen] = useState(false);
   const [selected, setSelected] = useState<PersonField | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PersonField | null>(null);
@@ -86,17 +134,50 @@ export const PersonFieldsManagement = () => {
     [t],
   );
 
-  const columns = useMemo<ModuleListColumn<PersonFieldRow>[]>(
+  const auditColumnDefinitions = useMemo(
+    () =>
+      auth?.fullAccess
+        ? getCrudAuditColumnDefinitions<PersonFieldRow>({
+            language: i18n.language,
+            t,
+          }).columns
+        : [],
+    [auth?.fullAccess, i18n.language, t],
+  );
+
+  const columnDefinitions = useMemo<
+    Array<
+      {
+        id: PersonFieldColumnId;
+        label: string;
+        sortKey?: string;
+      } & ModuleListColumn<PersonFieldRow>
+    >
+  >(
     () => [
-      { id: 'label', minWidth: 180, render: (row) => row.label },
-      { id: 'type', minWidth: 120, render: (row) => t(`pages.persons.fieldTypes.${row.type}`) },
+      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row) => row.id },
+      {
+        id: 'label',
+        label: t('pages.persons.fieldsCrud.label'),
+        sortKey: 'label',
+        minWidth: 180,
+        render: (row) => row.label,
+      },
+      {
+        id: 'type',
+        label: t('pages.persons.fieldsCrud.type'),
+        minWidth: 120,
+        render: (row) => t(`pages.persons.fieldTypes.${row.type}`),
+      },
       {
         id: 'options',
+        label: t('pages.persons.fieldsCrud.options'),
         minWidth: 180,
         render: (row) => (row.options?.length ? row.options.join(', ') : t('pages.modules.common.emptyValue')),
       },
       {
         id: 'conditions',
+        label: t('pages.persons.fieldsCrud.conditions'),
         minWidth: 260,
         render: (row) =>
           row.type === 'yes_no' && row.calculated_conditions?.length
@@ -114,7 +195,22 @@ export const PersonFieldsManagement = () => {
             : t('pages.modules.common.emptyValue'),
       },
       {
+        id: 'required',
+        label: t('pages.persons.fieldsCrud.required'),
+        minWidth: 120,
+        render: (row) => (row.required ? t('pages.modules.common.filterYes') : t('pages.modules.common.filterNo')),
+      },
+      {
+        id: 'allow_multiple',
+        label: t('pages.persons.fieldsCrud.allowMultiple'),
+        minWidth: 150,
+        render: (row) =>
+          row.allow_multiple ? t('pages.modules.common.filterYes') : t('pages.modules.common.filterNo'),
+      },
+      ...auditColumnDefinitions,
+      {
         id: 'actions',
+        label: t('pages.settings.congregation.actions'),
         width: 100,
         align: 'right',
         render: (row) => (
@@ -144,7 +240,36 @@ export const PersonFieldsManagement = () => {
         ),
       },
     ],
-    [canDelete, canUpdate, conditionFieldLabels, operatorLabels, t],
+    [auditColumnDefinitions, canDelete, canUpdate, conditionFieldLabels, operatorLabels, t],
+  );
+  const visibleColumnDefinitions = useMemo(
+    () =>
+      columnDefinitions.filter(
+        (column) => column.id === 'actions' || columnVisibility.visibleColumnIds.includes(column.id),
+      ),
+    [columnDefinitions, columnVisibility.visibleColumnIds],
+  );
+  const columns = useMemo<ModuleListColumn<PersonFieldRow>[]>(
+    () =>
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        width: column.width,
+        minWidth: column.minWidth,
+        align: column.align,
+        render: column.render,
+      })),
+    [visibleColumnDefinitions],
+  );
+  const headerRows = useMemo<ModuleListHeaderCell[][]>(
+    () => [
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        label: column.label,
+        sortKey: column.sortKey,
+        align: column.align,
+      })),
+    ],
+    [visibleColumnDefinitions],
   );
 
   const save = async (values: PersonFieldFormValues) => {
@@ -204,15 +329,7 @@ export const PersonFieldsManagement = () => {
         alerts={list.error ? <Alert severity="error">{list.error}</Alert> : undefined}
         search={{ label: t('pages.modules.common.search'), value: list.search, onChange: list.setSearch }}
         table={{
-          headerRows: [
-            [
-              { id: 'label', label: t('pages.persons.fieldsCrud.label'), sortKey: 'label' },
-              { id: 'type', label: t('pages.persons.fieldsCrud.type') },
-              { id: 'options', label: t('pages.persons.fieldsCrud.options') },
-              { id: 'conditions', label: t('pages.persons.fieldsCrud.conditions') },
-              { id: 'actions', label: t('pages.settings.congregation.actions'), align: 'right' },
-            ],
-          ],
+          headerRows,
           columns,
           rows,
           getRowId: (row) => row.id,
@@ -228,6 +345,15 @@ export const PersonFieldsManagement = () => {
           onPageChange: list.handleChangePage,
           onPageSizeChange: list.handleChangeRowsPerPage,
           rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+          columnVisibility: {
+            label: t('pages.modules.common.columns'),
+            options: columnDefinitions
+              .filter((column) => column.id !== 'actions')
+              .map((column) => ({ id: column.id, label: column.label })),
+            visibleIds: columnVisibility.visibleColumnIds,
+            disabled: list.loading,
+            onChange: (value) => columnVisibility.setVisibleColumnIds(value as PersonFieldColumnId[]),
+          },
           fixedEndColumnIds: ['actions'],
         }}
       />

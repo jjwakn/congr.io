@@ -12,6 +12,8 @@ export interface UsersListResponse {
 
 export interface UseUsersListProps {
   enabled?: boolean;
+  columnsQuery?: string;
+  searchColumnsQuery?: string;
 }
 
 export type UserSort = 'name' | 'username' | 'enabled';

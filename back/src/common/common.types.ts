@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { User } from 'src/modules/user/user.entity';
 import { Module } from 'src/utils/constants';
 import { FindOptionsWhere, ObjectLiteral, Repository } from 'typeorm';
@@ -126,6 +126,22 @@ export class ListParamsQuery {
   })
   @IsOptional()
   search: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'id,name,enabled',
+  })
+  @IsString()
+  @IsOptional()
+  columns: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'name,description',
+  })
+  @IsString()
+  @IsOptional()
+  search_columns: string;
 
   @Transform(({ value }: { value: string }) => value.toLowerCase() === 'true')
   @ApiProperty({

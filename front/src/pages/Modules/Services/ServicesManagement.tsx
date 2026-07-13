@@ -3,6 +3,12 @@ import { CreateEditDialog } from '@components/common/forms/CreateEditDialog';
 import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import {
+  CRUD_AUDIT_COLUMN_IDS,
+  type CrudAuditColumnId,
+  getCrudAuditColumnDefinitions,
+} from '@components/common/modules/crudAuditColumns';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useModuleList } from '@components/common/modules/useModuleList';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
@@ -18,6 +24,39 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotificationContext } from '@/hooks/useNotifications';
 import type { Service, ServiceAttendanceGroup, ServiceListResponse } from '@/types/service.types';
+
+type ServiceColumnId =
+  | 'id'
+  | 'name'
+  | 'location'
+  | 'day_of_week'
+  | 'start_time'
+  | 'end_time'
+  | 'description'
+  | 'enabled'
+  | 'actions'
+  | CrudAuditColumnId;
+
+const SERVICE_COLUMN_IDS: ServiceColumnId[] = [
+  'id',
+  'name',
+  'location',
+  'day_of_week',
+  'start_time',
+  'end_time',
+  'description',
+  'enabled',
+  'actions',
+];
+const DEFAULT_SERVICE_VISIBLE_COLUMNS: ServiceColumnId[] = [
+  'name',
+  'location',
+  'day_of_week',
+  'start_time',
+  'end_time',
+  'enabled',
+  'actions',
+];
 
 interface ServiceFormState {
   name: string;
@@ -64,11 +103,22 @@ const toForm = (service: Service, defaultGroups: ServiceAttendanceGroup[]): Serv
 });
 
 const ServicesManagement = () => {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { congregation } = useAppContext();
-  const { hasPermission } = useAuth();
+  const { auth, hasPermission } = useAuth();
   const { showNotification } = useNotificationContext();
   const list = useModuleList({ moduleKey: 'services-list', defaultSort: 'day_of_week' });
+  const allColumnIds = useMemo<ServiceColumnId[]>(
+    () => [...SERVICE_COLUMN_IDS, ...(auth?.fullAccess ? CRUD_AUDIT_COLUMN_IDS : [])],
+    [auth?.fullAccess],
+  );
+  const columnVisibility = useModuleColumnVisibility<ServiceColumnId>({
+    moduleKey: 'services-list',
+    allColumnIds,
+    defaultVisibleColumnIds: DEFAULT_SERVICE_VISIBLE_COLUMNS,
+    fixedColumnIds: ['actions'],
+    defaultSearchColumnIds: ['name', 'description'],
+  });
   const [rows, setRows] = useState<Service[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -109,6 +159,8 @@ const ServicesManagement = () => {
           size: list.pageSize,
           order: list.sort,
           direction: list.direction,
+          columns: columnVisibility.columnsQuery,
+          search_columns: columnVisibility.searchColumnsQuery,
           ...(list.debouncedSearch ? { search: list.debouncedSearch } : {}),
         },
       });
@@ -119,7 +171,16 @@ const ServicesManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [list.debouncedSearch, list.direction, list.page, list.pageSize, list.sort, t]);
+  }, [
+    columnVisibility.columnsQuery,
+    columnVisibility.searchColumnsQuery,
+    list.debouncedSearch,
+    list.direction,
+    list.page,
+    list.pageSize,
+    list.sort,
+    t,
+  ]);
 
   useEffect(() => {
     void load();
@@ -211,19 +272,63 @@ const ServicesManagement = () => {
     }
   };
 
-  const columns = useMemo<ModuleListColumn<Service>[]>(
+  const auditColumnDefinitions = useMemo(
+    () =>
+      auth?.fullAccess
+        ? getCrudAuditColumnDefinitions<Service>({
+            language: i18n.language,
+            t,
+          }).columns
+        : [],
+    [auth?.fullAccess, i18n.language, t],
+  );
+
+  const columnDefinitions = useMemo<
+    Array<
+      {
+        id: ServiceColumnId;
+        label: string;
+        sortKey?: string;
+      } & ModuleListColumn<Service>
+    >
+  >(
     () => [
-      { id: 'name', render: (row) => row.name },
+      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (row) => row.id },
+      { id: 'name', label: t('pages.services.fields.name'), sortKey: 'name', render: (row) => row.name },
       {
         id: 'location',
+        label: t('pages.services.fields.location'),
         render: (row) =>
           row.location?.name ?? congregation?.locations.find(({ id }) => id === row.location_id)?.name ?? '-',
       },
-      { id: 'day_of_week', render: (row) => t(`pages.services.days.${row.day_of_week}`) },
-      { id: 'start_time', render: (row) => row.start_time.slice(0, 5) },
-      { id: 'end_time', render: (row) => row.end_time.slice(0, 5) },
+      {
+        id: 'day_of_week',
+        label: t('pages.services.fields.dayOfWeek'),
+        sortKey: 'day_of_week',
+        render: (row) => t(`pages.services.days.${row.day_of_week}`),
+      },
+      {
+        id: 'start_time',
+        label: t('pages.services.fields.startTime'),
+        sortKey: 'start_time',
+        render: (row) => row.start_time.slice(0, 5),
+      },
+      {
+        id: 'end_time',
+        label: t('pages.services.fields.endTime'),
+        sortKey: 'end_time',
+        render: (row) => row.end_time.slice(0, 5),
+      },
+      {
+        id: 'description',
+        label: t('pages.services.fields.description'),
+        minWidth: 220,
+        render: (row) => row.description || t('pages.modules.common.emptyValue'),
+      },
       {
         id: 'enabled',
+        label: t('pages.services.fields.active'),
+        sortKey: 'enabled',
         align: 'center',
         render: (row) => (
           <Tooltip title={t('pages.services.fields.active')}>
@@ -239,8 +344,10 @@ const ServicesManagement = () => {
           </Tooltip>
         ),
       },
+      ...auditColumnDefinitions,
       {
         id: 'actions',
+        label: t('pages.modules.common.actions'),
         align: 'right',
         render: (row) => (
           <ModuleRowActions
@@ -273,22 +380,37 @@ const ServicesManagement = () => {
         ),
       },
     ],
-    [canDelete, canUpdate, congregation?.locations, loading, openEdit, t],
+    [auditColumnDefinitions, canDelete, canUpdate, congregation?.locations, loading, openEdit, t],
+  );
+  const visibleColumnDefinitions = useMemo(
+    () =>
+      columnDefinitions.filter(
+        (column) => column.id === 'actions' || columnVisibility.visibleColumnIds.includes(column.id),
+      ),
+    [columnDefinitions, columnVisibility.visibleColumnIds],
+  );
+  const columns = useMemo<ModuleListColumn<Service>[]>(
+    () =>
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        align: column.align,
+        minWidth: column.minWidth,
+        width: column.width,
+        render: column.render,
+      })),
+    [visibleColumnDefinitions],
   );
 
   const headerRows = useMemo<ModuleListHeaderCell[][]>(
     () => [
-      [
-        { id: 'name', label: t('pages.services.fields.name'), sortKey: 'name' },
-        { id: 'location', label: t('pages.services.fields.location') },
-        { id: 'day_of_week', label: t('pages.services.fields.dayOfWeek'), sortKey: 'day_of_week' },
-        { id: 'start_time', label: t('pages.services.fields.startTime'), sortKey: 'start_time' },
-        { id: 'end_time', label: t('pages.services.fields.endTime'), sortKey: 'end_time' },
-        { id: 'enabled', label: t('pages.services.fields.active'), align: 'center', sortKey: 'enabled' },
-        { id: 'actions', label: t('pages.modules.common.actions'), align: 'right' },
-      ],
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        label: column.label,
+        sortKey: column.sortKey,
+        align: column.align,
+      })),
     ],
-    [t],
+    [visibleColumnDefinitions],
   );
 
   const formValid = Boolean(form.name.trim() && form.location_id && form.start_time && form.end_time);
@@ -324,6 +446,15 @@ const ServicesManagement = () => {
           onPageChange: list.handleChangePage,
           onPageSizeChange: list.handleChangeRowsPerPage,
           rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+          columnVisibility: {
+            label: t('pages.modules.common.columns'),
+            options: columnDefinitions
+              .filter((column) => column.id !== 'actions')
+              .map((column) => ({ id: column.id, label: column.label })),
+            visibleIds: columnVisibility.visibleColumnIds,
+            disabled: loading,
+            onChange: (value) => columnVisibility.setVisibleColumnIds(value as ServiceColumnId[]),
+          },
         }}
       />
 

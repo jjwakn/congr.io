@@ -1,3 +1,4 @@
+import FilterAltRoundedIcon from '@mui/icons-material/FilterAltRounded';
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import {
   Box,
@@ -19,6 +20,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ModuleColumnVisibilityDialog } from './ModuleColumnVisibilityDialog';
 import type { ModuleListHeaderCell, ModuleListTableProps } from './ModuleListTable.types';
 
 const DEFAULT_FIXED_END_COLUMN_IDS = ['actions'];
@@ -114,14 +116,20 @@ export const ModuleListTable = <RowType,>({
   onPageChange,
   onPageSizeChange,
   rowsPerPageLabel,
+  columnVisibility,
   fixedStartColumnIds = [],
   fixedEndColumnIds = DEFAULT_FIXED_END_COLUMN_IDS,
 }: ModuleListTableProps<RowType>) => {
   const theme = useTheme();
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  const [columnVisibilityOpen, setColumnVisibilityOpen] = useState(false);
 
   const columnMap = useMemo(() => new Map(columns.map((column) => [column.id, column])), [columns]);
+  const rowsPerPageOptions = useMemo(
+    () => Array.from(new Set([10, 25, 50, 100, pageSize])).sort((left, right) => left - right),
+    [pageSize],
+  );
 
   const fixedStartIds = useMemo(() => {
     const fixedIds = new Set(fixedStartColumnIds);
@@ -380,23 +388,66 @@ export const ModuleListTable = <RowType,>({
         ) : null}
       </TableContainer>
 
-      <TablePagination
-        component="div"
-        count={total}
-        page={page}
-        onPageChange={(_event, nextPage) => onPageChange(nextPage)}
-        rowsPerPage={pageSize}
-        onRowsPerPageChange={(event) => onPageSizeChange(Number(event.target.value))}
-        labelRowsPerPage={rowsPerPageLabel}
-        rowsPerPageOptions={[10, 25, 50, 100]}
+      <Box
         sx={{
+          display: 'flex',
+          alignItems: 'center',
           flexShrink: 0,
           borderTop: 1,
           borderColor: 'divider',
           pointerEvents: loading ? 'none' : undefined,
           opacity: loading ? 0.55 : undefined,
         }}
-      />
+      >
+        <Box sx={{ flex: 1, minWidth: 0, pl: 1 }}>
+          {columnVisibility ? (
+            <Tooltip title={columnVisibility.label}>
+              <span>
+                <IconButton
+                  size="small"
+                  disabled={loading || columnVisibility.disabled}
+                  aria-label={columnVisibility.label}
+                  onClick={() => setColumnVisibilityOpen(true)}
+                >
+                  <FilterAltRoundedIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          ) : null}
+        </Box>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={(_event, nextPage) => onPageChange(nextPage)}
+          rowsPerPage={pageSize}
+          onRowsPerPageChange={(event) => onPageSizeChange(Number(event.target.value))}
+          labelRowsPerPage=""
+          rowsPerPageOptions={rowsPerPageOptions}
+          getItemAriaLabel={(type) => `${rowsPerPageLabel} ${type}`}
+          sx={{
+            borderTop: 0,
+            flexShrink: 0,
+            '& .MuiTablePagination-toolbar': {
+              pl: 0,
+            },
+          }}
+        />
+      </Box>
+
+      {columnVisibility && columnVisibilityOpen ? (
+        <ModuleColumnVisibilityDialog
+          open={columnVisibilityOpen}
+          title={columnVisibility.label}
+          options={columnVisibility.options}
+          visibleIds={columnVisibility.visibleIds}
+          onClose={() => setColumnVisibilityOpen(false)}
+          onSave={(value) => {
+            columnVisibility.onChange(value);
+            setColumnVisibilityOpen(false);
+          }}
+        />
+      ) : null}
     </Paper>
   );
 };

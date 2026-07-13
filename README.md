@@ -44,6 +44,35 @@ REPORTS? FOR THE DAY, week, location
 - events
 - attendance
 
+Se need to group the sidebar per category, i'll send you the categories, but take this into consideration
+
+- each category needs an icon
+- each category will be expandable so show its subitems
+- depending on the route that we are we will show the current item selected (coloring the icon) and the category expanded
+- each subitem needs to be aligned with the icon and text of the parent (so no paddin/margin on the expandable body), what will make it disting maybe another icon style (like outlined) and having a different backgorund color
+- when we have only one subitem on the category (like flows) or because of the current user permissions we can only see one of the items of the category we will show the subtiem as an item (without expandable), keeping the selected behavior and the category style
+- if the current logged user doesnt have access to any of the subitems of the categroy then we wont show the category at all
+- for the settings allowing the user to sort the items, the user will be able only to change the order of the categoreis (or items without a parent like flows) and internally the category items also
+- this is the list, sort it by default alfabetically depending on the language (unless the user changes its order for them), sort the events categories first and then every subitem on the category only in its category
+
+- Events
+  - Calendar
+  - Asistencia a Events
+  - eventos
+  - registro a eventos
+    Servicios
+  - asistencia a servicios
+  - servicios
+    personas
+  - personas nuevas
+  - personas
+  - seguimiento
+    flujos
+  - flujos
+    systema
+  - usuarios
+  - roles
+
 12. Flow Creation is still broken
 
 - use react flow

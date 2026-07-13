@@ -1,8 +1,14 @@
 import { ConfirmDialog } from '@components/common/forms/ConfirmDialog';
 import { CrudPermissionStatus } from '@components/common/modules/CrudPermissionStatus';
-import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
+import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import {
+  CRUD_AUDIT_COLUMN_IDS,
+  type CrudAuditColumnId,
+  getCrudAuditColumnDefinitions,
+} from '@components/common/modules/crudAuditColumns';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
@@ -22,6 +28,8 @@ import { RoleDetailsDialog } from './RoleDetailsDialog';
 import { RoleFormDialog } from './RoleFormDialog';
 import type { RoleDialogMode, RoleFormValues, RolePermissionColumn, RoleTableSchema } from './roles.types';
 import { useRolesList } from './useRolesList';
+
+type RoleColumnId = 'id' | 'name' | 'full-access' | 'actions' | RolePermissionColumn['id'] | CrudAuditColumnId;
 
 const getErrorMessage = (value: Error | null, fallback: string) =>
   value instanceof HttpRequestError || value instanceof Error ? value.message : fallback;
@@ -123,14 +131,54 @@ const createRoleTableSchema = (
 };
 
 export const RolesManagement = () => {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { showNotification } = useNotificationContext();
   const { congregation } = useAppContext();
-  const { hasPermission } = useAuth();
+  const { auth, hasPermission } = useAuth();
   const canView = hasPermission('role', 'get');
   const canCreate = hasPermission('role', 'create');
   const canUpdate = hasPermission('role', 'update');
   const canDelete = hasPermission('role', 'delete');
+
+  const [permissionSections, setPermissionSections] = useState<PermissionSection[]>([]);
+  const [permissionActions, setPermissionActions] = useState<PermissionAction[]>([]);
+  const [metadataLoading, setMetadataLoading] = useState(false);
+  const [metadataError, setMetadataError] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<RoleDialogMode>('create');
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [roleDetails, setRoleDetails] = useState<Role | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingRoleId, setLoadingRoleId] = useState<string | null>(null);
+  const [rolePendingDelete, setRolePendingDelete] = useState<Role | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const isPermissionMetadataReady = permissionSections.length > 0 && permissionActions.length > 0;
+  const tableSchema = useMemo(
+    () => createRoleTableSchema(permissionSections, permissionActions, t),
+    [permissionActions, permissionSections, t],
+  );
+  const roleColumnIds = useMemo<RoleColumnId[]>(
+    () => [
+      'id',
+      'name',
+      'full-access',
+      ...tableSchema.permissionColumns.map((column) => column.id),
+      ...(auth?.fullAccess ? CRUD_AUDIT_COLUMN_IDS : []),
+      'actions',
+    ],
+    [auth?.fullAccess, tableSchema.permissionColumns],
+  );
+  const defaultVisibleRoleColumns = useMemo<RoleColumnId[]>(
+    () => ['name', 'full-access', ...tableSchema.permissionColumns.map((column) => column.id), 'actions'],
+    [tableSchema.permissionColumns],
+  );
+  const columnVisibility = useModuleColumnVisibility<RoleColumnId>({
+    moduleKey: 'roles-list',
+    allColumnIds: roleColumnIds,
+    defaultVisibleColumnIds: defaultVisibleRoleColumns,
+    fixedColumnIds: ['actions'],
+    defaultSearchColumnIds: ['name'],
+  });
 
   const {
     roles,
@@ -147,21 +195,11 @@ export const RolesManagement = () => {
     handleSort,
     handleChangePage,
     handleChangeRowsPerPage,
-  } = useRolesList({ enabled: canView });
-
-  const [permissionSections, setPermissionSections] = useState<PermissionSection[]>([]);
-  const [permissionActions, setPermissionActions] = useState<PermissionAction[]>([]);
-  const [metadataLoading, setMetadataLoading] = useState(false);
-  const [metadataError, setMetadataError] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<RoleDialogMode>('create');
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [roleDetails, setRoleDetails] = useState<Role | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [loadingRoleId, setLoadingRoleId] = useState<string | null>(null);
-  const [rolePendingDelete, setRolePendingDelete] = useState<Role | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const isPermissionMetadataReady = permissionSections.length > 0 && permissionActions.length > 0;
+  } = useRolesList({
+    enabled: canView,
+    columnsQuery: columnVisibility.columnsQuery,
+    searchColumnsQuery: columnVisibility.searchColumnsQuery,
+  });
 
   const refreshMetadata = useCallback(async () => {
     if (!canView) {
@@ -336,27 +374,57 @@ export const RolesManagement = () => {
     }
   }, [refresh, rolePendingDelete, showNotification, t]);
 
-  const tableSchema = useMemo(
-    () => createRoleTableSchema(permissionSections, permissionActions, t),
-    [permissionActions, permissionSections, t],
+  const auditColumnDefinitions = useMemo(
+    () =>
+      auth?.fullAccess
+        ? getCrudAuditColumnDefinitions<Role>({
+            language: i18n.language,
+            t,
+          }).columns
+        : [],
+    [auth?.fullAccess, i18n.language, t],
   );
 
-  const columns = useMemo<ModuleListColumn<Role>[]>(
+  const columnDefinitions = useMemo<
+    Array<
+      {
+        id: RoleColumnId;
+        label: string;
+        sortKey?: string;
+      } & ModuleListColumn<Role>
+    >
+  >(
     () => [
+      { id: 'id', label: t('pages.modules.common.id'), minWidth: 260, render: (role) => role.id },
       {
         id: 'name',
+        label: t('pages.modules.roles.columns.role'),
+        sortKey: 'name',
         minWidth: 220,
         render: (role) => role.name,
       },
       {
         id: 'full-access',
+        label: t('pages.modules.roles.columns.fullAccess'),
         minWidth: 96,
         align: 'center',
         render: (role) => <CrudPermissionStatus enabled={Boolean(role.full_access)} />,
       },
       ...tableSchema.permissionColumns.map(
-        (column): ModuleListColumn<Role> => ({
+        (
+          column,
+        ): {
+          id: RoleColumnId;
+          label: string;
+          sortKey?: string;
+        } & ModuleListColumn<Role> => ({
           id: column.id,
+          label: `${t(`pages.modules.roles.permissions.sections.${column.sectionId}`, {
+            defaultValue: column.sectionId,
+          })} · ${t(`pages.modules.roles.columns.${column.action}`, {
+            defaultValue: column.action,
+          })}`,
+          sortKey: column.id,
           minWidth: 72,
           align: 'center',
           render: (role) => (
@@ -367,8 +435,10 @@ export const RolesManagement = () => {
           ),
         }),
       ),
+      ...auditColumnDefinitions,
       {
         id: 'actions',
+        label: t('pages.modules.roles.columns.actions'),
         minWidth: 148,
         align: 'right',
         render: (role) => (
@@ -414,6 +484,7 @@ export const RolesManagement = () => {
       },
     ],
     [
+      auditColumnDefinitions,
       canDelete,
       canUpdate,
       deleting,
@@ -425,6 +496,35 @@ export const RolesManagement = () => {
       tableSchema.permissionColumns,
       t,
     ],
+  );
+  const visibleColumnDefinitions = useMemo(
+    () =>
+      columnDefinitions.filter(
+        (column) => column.id === 'actions' || columnVisibility.visibleColumnIds.includes(column.id),
+      ),
+    [columnDefinitions, columnVisibility.visibleColumnIds],
+  );
+  const columns = useMemo<ModuleListColumn<Role>[]>(
+    () =>
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        minWidth: column.minWidth,
+        width: column.width,
+        align: column.align,
+        render: column.render,
+      })),
+    [visibleColumnDefinitions],
+  );
+  const headerRows = useMemo<ModuleListHeaderCell[][]>(
+    () => [
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        label: column.label,
+        sortKey: column.sortKey,
+        align: column.align,
+      })),
+    ],
+    [visibleColumnDefinitions],
   );
 
   if (!canView) {
@@ -465,7 +565,7 @@ export const RolesManagement = () => {
         },
       }}
       table={{
-        headerRows: tableSchema.headerRows,
+        headerRows,
         columns,
         rows: roles,
         getRowId: (role) => role.id,
@@ -481,6 +581,15 @@ export const RolesManagement = () => {
         onPageChange: handleChangePage,
         onPageSizeChange: handleChangeRowsPerPage,
         rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+        columnVisibility: {
+          label: t('pages.modules.common.columns'),
+          options: columnDefinitions
+            .filter((column) => column.id !== 'actions')
+            .map((column) => ({ id: column.id, label: column.label })),
+          visibleIds: columnVisibility.visibleColumnIds,
+          disabled: loading || metadataLoading,
+          onChange: (value) => columnVisibility.setVisibleColumnIds(value as RoleColumnId[]),
+        },
         fixedStartColumnIds: ['name'],
       }}
     >

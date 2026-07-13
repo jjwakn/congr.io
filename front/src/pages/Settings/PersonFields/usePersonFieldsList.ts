@@ -4,9 +4,17 @@ import { HttpRequestError, httpRequest } from '@utils/http';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PersonField } from '@/types/person.types';
-import type { PersonFieldsListResponse, UsePersonFieldsListResult } from './personFields.types';
+import type {
+  PersonFieldsListResponse,
+  UsePersonFieldsListProps,
+  UsePersonFieldsListResult,
+} from './personFields.types';
 
-export const usePersonFieldsList = (enabled = true): UsePersonFieldsListResult => {
+export const usePersonFieldsList = ({
+  enabled = true,
+  columnsQuery,
+  searchColumnsQuery,
+}: UsePersonFieldsListProps = {}): UsePersonFieldsListResult => {
   const { t } = useTranslation();
   const [result, setResult] = useState<PersonField[]>([]);
   const [total, setTotal] = useState(0);
@@ -32,6 +40,8 @@ export const usePersonFieldsList = (enabled = true): UsePersonFieldsListResult =
           size: list.pageSize,
           order: list.sort,
           direction: list.direction,
+          ...(columnsQuery ? { columns: columnsQuery } : {}),
+          ...(searchColumnsQuery ? { search_columns: searchColumnsQuery } : {}),
           ...(list.debouncedSearch ? { search: list.debouncedSearch } : {}),
         },
       });
@@ -46,7 +56,17 @@ export const usePersonFieldsList = (enabled = true): UsePersonFieldsListResult =
     } finally {
       setLoading(false);
     }
-  }, [enabled, list.debouncedSearch, list.direction, list.page, list.pageSize, list.sort, t]);
+  }, [
+    columnsQuery,
+    enabled,
+    list.debouncedSearch,
+    list.direction,
+    list.page,
+    list.pageSize,
+    list.sort,
+    searchColumnsQuery,
+    t,
+  ]);
 
   useEffect(() => {
     void refresh();
