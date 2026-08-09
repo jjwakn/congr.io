@@ -1,9 +1,10 @@
--- PostgreSQL seed for 100 random active roles, 100 random active users, and 1000 random active persons.
+-- PostgreSQL seed for 100 random active roles, 100 random active users, 1000 random active persons, and monthly events.
 -- Safe cleanup if you want to remove only this batch later:
 -- DELETE FROM "user_location" WHERE "user_id" IN (SELECT "id" FROM "user" WHERE "username" LIKE 'seed.user.%');
 -- DELETE FROM "user_congregation" WHERE "user_id" IN (SELECT "id" FROM "user" WHERE "username" LIKE 'seed.user.%');
 -- DELETE FROM "user_role" WHERE "user_id" IN (SELECT "id" FROM "user" WHERE "username" LIKE 'seed.user.%');
 -- DELETE FROM "user" WHERE "username" LIKE 'seed.user.%';
+-- DELETE FROM "event" WHERE "description" LIKE 'Seed event generated for %';
 -- DELETE FROM "person" WHERE "code" LIKE 'SD%';
 -- DELETE FROM "role" WHERE "name" LIKE 'Seed Role %';
 
@@ -464,5 +465,148 @@ JOIN seed_persons
   ON seed_persons.rn = seed_users.rn
 WHERE "person"."id" = seed_persons."id"
   AND seed_users.rn <= 75;
+
+WITH target_months AS (
+  SELECT generate_series(
+    date_trunc('year', current_date)::date,
+    (date_trunc('year', current_date)::date + interval '11 months')::date,
+    interval '1 month'
+  )::date AS month_start
+),
+month_sundays AS (
+  SELECT
+    target_months.month_start,
+    sunday_dates.sunday_date::date,
+    row_number() OVER (
+      PARTITION BY target_months.month_start
+      ORDER BY sunday_dates.sunday_date
+    ) AS sunday_position,
+    count(*) OVER (PARTITION BY target_months.month_start) AS sunday_count
+  FROM target_months
+  CROSS JOIN LATERAL generate_series(
+    target_months.month_start,
+    (target_months.month_start + interval '1 month' - interval '1 day')::date,
+    interval '1 day'
+  ) AS sunday_dates(sunday_date)
+  WHERE extract(dow FROM sunday_dates.sunday_date) = 0
+),
+active_event_types AS (
+  SELECT
+    event_type."id",
+    event_type."congregation_id",
+    event_type."name",
+    event_type."attendance_enabled",
+    event_type."default_public",
+    event_type."default_self_registration",
+    event_type."custom_fields",
+    event_type."save_attendance_date",
+    event_type."default_start_time",
+    event_type."default_duration_minutes",
+    event_type."attendance_date_person_field_id",
+    congregation."timezone"
+  FROM "event_type" AS event_type
+  INNER JOIN "congregation" AS congregation
+    ON congregation."id" = event_type."congregation_id"
+    AND congregation."deleted_at" IS NULL
+  WHERE event_type."enabled" = TRUE
+    AND event_type."deleted_at" IS NULL
+),
+monthly_event_types AS (
+  SELECT
+    target_months.month_start,
+    active_event_types.*,
+    row_number() OVER (
+      PARTITION BY target_months.month_start, active_event_types."congregation_id"
+      ORDER BY random(), active_event_types."name", active_event_types."id"
+    ) AS event_type_position
+  FROM target_months
+  CROSS JOIN active_event_types
+),
+scheduled_events AS (
+  SELECT
+    monthly_event_types.*,
+    month_sundays.sunday_date,
+    COALESCE(monthly_event_types."default_start_time", time '10:00') AS start_time,
+    GREATEST(COALESCE(monthly_event_types."default_duration_minutes", 60), 15) AS duration_minutes,
+    md5(
+      monthly_event_types."id"::text ||
+      monthly_event_types.month_start::text ||
+      random()::text ||
+      clock_timestamp()::text
+    ) AS public_uuid_seed
+  FROM monthly_event_types
+  INNER JOIN month_sundays
+    ON month_sundays.month_start = monthly_event_types.month_start
+    AND month_sundays.sunday_position = (
+      ((monthly_event_types.event_type_position - 1) % month_sundays.sunday_count) + 1
+    )
+)
+INSERT INTO "event" (
+  "congregation_id",
+  "name",
+  "description",
+  "start_datetime",
+  "end_datetime",
+  "event_type_id",
+  "all_day",
+  "is_public",
+  "public_id",
+  "attendance_enabled",
+  "self_registration_enabled",
+  "registration_locked",
+  "custom_fields",
+  "save_attendance_date",
+  "attendance_date_person_field_id",
+  "enabled"
+)
+SELECT
+  scheduled_events."congregation_id",
+  scheduled_events."name",
+  format(
+    'Seed event generated for %s on %s.',
+    scheduled_events."name",
+    to_char(scheduled_events.sunday_date, 'YYYY-MM-DD')
+  ),
+  ((scheduled_events.sunday_date + scheduled_events.start_time) AT TIME ZONE scheduled_events."timezone"),
+  (
+    (
+      scheduled_events.sunday_date +
+      scheduled_events.start_time +
+      (scheduled_events.duration_minutes::text || ' minutes')::interval
+    ) AT TIME ZONE scheduled_events."timezone"
+  ),
+  scheduled_events."id",
+  FALSE,
+  scheduled_events."default_public",
+  CASE
+    WHEN scheduled_events."default_public" THEN (
+      substr(scheduled_events.public_uuid_seed, 1, 8) || '-' ||
+      substr(scheduled_events.public_uuid_seed, 9, 4) || '-' ||
+      substr(scheduled_events.public_uuid_seed, 13, 4) || '-' ||
+      substr(scheduled_events.public_uuid_seed, 17, 4) || '-' ||
+      substr(scheduled_events.public_uuid_seed, 21, 12)
+    )::uuid
+    ELSE NULL
+  END,
+  scheduled_events."attendance_enabled",
+  scheduled_events."default_self_registration",
+  FALSE,
+  scheduled_events."custom_fields",
+  scheduled_events."save_attendance_date",
+  scheduled_events."attendance_date_person_field_id",
+  TRUE
+FROM scheduled_events
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM "event" AS existing_event
+  WHERE existing_event."event_type_id" = scheduled_events."id"
+    AND existing_event."deleted_at" IS NULL
+    AND date_trunc(
+      'month',
+      existing_event."start_datetime" AT TIME ZONE scheduled_events."timezone"
+    ) = scheduled_events.month_start::timestamp
+)
+ORDER BY scheduled_events.month_start, scheduled_events.sunday_date, scheduled_events."name"
+ON CONFLICT DO NOTHING;
 
 COMMIT;
