@@ -99,7 +99,7 @@ export class EventParticipantController {
 export class PublicEventRegistrationController {
   constructor(private service: EventParticipantService) {}
   @Post(':id') register(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body(new ValidationPipe({ transform: true, whitelist: true })) data: PublicRegistrationDto,
   ) {
     return this.service.publicRegister(id, data);

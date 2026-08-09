@@ -582,8 +582,8 @@ SELECT
     WHEN scheduled_events."default_public" THEN (
       substr(scheduled_events.public_uuid_seed, 1, 8) || '-' ||
       substr(scheduled_events.public_uuid_seed, 9, 4) || '-' ||
-      substr(scheduled_events.public_uuid_seed, 13, 4) || '-' ||
-      substr(scheduled_events.public_uuid_seed, 17, 4) || '-' ||
+      '4' || substr(scheduled_events.public_uuid_seed, 14, 3) || '-' ||
+      '8' || substr(scheduled_events.public_uuid_seed, 18, 3) || '-' ||
       substr(scheduled_events.public_uuid_seed, 21, 12)
     )::uuid
     ELSE NULL
@@ -608,5 +608,38 @@ WHERE NOT EXISTS (
 )
 ORDER BY scheduled_events.month_start, scheduled_events.sunday_date, scheduled_events."name"
 ON CONFLICT DO NOTHING;
+
+WITH public_seed_events_to_repair AS (
+  SELECT
+    "id",
+    md5(
+      "id"::text ||
+      COALESCE("public_id"::text, '') ||
+      random()::text ||
+      clock_timestamp()::text
+    ) AS public_uuid_seed
+  FROM "event"
+  WHERE "description" LIKE 'Seed event generated for %'
+    AND "is_public" = TRUE
+    AND "public_id" IS NOT NULL
+    AND "deleted_at" IS NULL
+    AND "public_id"::text !~* '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+),
+repaired_public_seed_events AS (
+  SELECT
+    "id",
+    (
+      substr(public_uuid_seed, 1, 8) || '-' ||
+      substr(public_uuid_seed, 9, 4) || '-' ||
+      '4' || substr(public_uuid_seed, 14, 3) || '-' ||
+      '8' || substr(public_uuid_seed, 18, 3) || '-' ||
+      substr(public_uuid_seed, 21, 12)
+    )::uuid AS public_id
+  FROM public_seed_events_to_repair
+)
+UPDATE "event"
+SET "public_id" = repaired_public_seed_events.public_id
+FROM repaired_public_seed_events
+WHERE "event"."id" = repaired_public_seed_events."id";
 
 COMMIT;

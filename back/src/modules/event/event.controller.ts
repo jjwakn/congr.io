@@ -128,7 +128,7 @@ export class PublicEventController {
   }
 
   @Get(':id')
-  get(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  get(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.service.getPublic(id);
   }
 }
