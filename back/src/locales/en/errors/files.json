@@ -2,5 +2,7 @@
   "imageRequired": "Select a valid browser-compatible image.",
   "notFound": "File not found.",
   "providerUploadUnavailable": "The selected file provider is not available for server uploads. Use a public image URL or configure local storage.",
-  "invalidLogoKind": "The congregation logo type is invalid."
+  "invalidLogoKind": "The congregation logo type is invalid.",
+  "tooLarge": "The image exceeds the 5 MB upload limit.",
+  "quotaExceeded": "The congregation file storage quota has been reached."
 }

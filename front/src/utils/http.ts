@@ -20,15 +20,6 @@ export class HttpRequestError<TPayload = JsonValue> extends Error {
   }
 }
 
-const getLegacyAuthToken = () => {
-  if (typeof window === 'undefined') return null;
-  try {
-    return localStorage.getItem('auth_token');
-  } catch {
-    return null;
-  }
-};
-
 const parseResponseBody = async (response: Response): Promise<JsonValue | null> => {
   if (response.status === 204) return null;
 
@@ -118,8 +109,6 @@ export const httpRequest = async <ResponseType>({
     'Accept-Language': i18n.language || 'en',
     ...headers,
   };
-  const legacyAuthToken = getLegacyAuthToken();
-  if (legacyAuthToken && !requestHeaders.Authorization) requestHeaders.Authorization = `Bearer ${legacyAuthToken}`;
   const congregationId = getSelectedCongregationId();
   if (congregationId && !requestHeaders['X-Congregation-Id']) requestHeaders['X-Congregation-Id'] = congregationId;
 

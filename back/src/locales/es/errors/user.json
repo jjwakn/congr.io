@@ -12,5 +12,10 @@
   "currentPasswordRequired": "La contraseña actual es requerida.",
   "passwordRequired": "La contraseña es requerida.",
   "passwordConfirmationRequired": "La confirmación de contraseña es requerida.",
-  "passwordConfirmationMismatch": "La confirmación de contraseña no coincide."
+  "passwordConfirmationMismatch": "La confirmación de contraseña no coincide.",
+  "passwordTooShort": "La contraseña debe contener al menos 12 caracteres.",
+  "passwordTooLong": "La contraseña no puede contener más de 72 caracteres.",
+  "outsideCongregation": "No puedes administrar un usuario fuera de tu congregación.",
+  "higherAuthority": "No puedes administrar un usuario con autoridad igual o superior.",
+  "invalidRelationship": "La relación seleccionada está fuera de tu alcance autorizado."
 }

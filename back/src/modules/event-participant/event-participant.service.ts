@@ -1,10 +1,19 @@
 import { I18nService } from 'nestjs-i18n';
 import { randomUUID } from 'node:crypto';
 import type { JsonObject, JsonValue } from 'src/common/common.types';
+import { MAX_PAGE_SIZE, MAX_PUBLIC_REGISTRATIONS_PER_EVENT } from 'src/config/security';
 import { getUserCongregationContext } from 'src/utils/congregation-context';
 import { Feature } from 'src/utils/constants';
-import { IsNull, Repository } from 'typeorm';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { assertJsonWithinLimits } from 'src/utils/json-limits';
+import { EntityManager, IsNull, Repository } from 'typeorm';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Congregation } from '../congregation/congregation.entity';
 import { Event } from '../event/event.entity';
@@ -16,6 +25,7 @@ import type {
   ParticipantCreateProps,
   ParticipantEventActionProps,
   ParticipantListProps,
+  PublicRegistrationContext,
   PublicRegistrationDto,
 } from './event-participant.types';
 
@@ -109,13 +119,11 @@ export class EventParticipantService {
     person,
     event,
     values,
-    updates,
     attended,
   }: {
     person: Person;
     event: Event;
     values: JsonObject;
-    updates?: JsonObject;
     attended: boolean;
   }) {
     const mapped = Object.fromEntries(
@@ -125,13 +133,111 @@ export class EventParticipantService {
         return personFieldId && fieldId && values[fieldId] !== undefined ? [[personFieldId, values[fieldId]]] : [];
       }),
     );
-    const personUpdates = { ...mapped, ...(updates ?? {}) };
+    const personUpdates = { ...mapped };
     if (attended && event.save_attendance_date && event.attendance_date_person_field_id)
       personUpdates[event.attendance_date_person_field_id] = event.start_datetime.toISOString();
     Object.entries(personUpdates).forEach(([key, value]) => {
       this.assignPersonValue(person, key, value);
     });
     if (Object.keys(personUpdates).length) await this.personRepository.save(person);
+  }
+
+  private validateFieldValues(event: Event, values: JsonObject, userFillableOnly = false): void {
+    assertJsonWithinLimits(values);
+    const fields = new Map((event.custom_fields ?? []).map((field) => [String(field.id), field]));
+    Object.entries(values).forEach(([fieldId, value]) => {
+      const field = fields.get(fieldId);
+      if (!field || (userFillableOnly && !field.user_fillable)) {
+        throw new BadRequestException(this.i18n.t('errors.eventParticipant.invalidRegistration'));
+      }
+      const valid =
+        value === null ||
+        (['text', 'paragraph', 'date'].includes(field.type) && typeof value === 'string') ||
+        (field.type === 'number' && typeof value === 'number' && Number.isFinite(value)) ||
+        (field.type === 'yes_no' && typeof value === 'boolean') ||
+        (field.type === 'options' &&
+          (field.allow_multiple
+            ? Array.isArray(value) &&
+              value.every((option) => typeof option === 'string' && field.options.includes(option))
+            : typeof value === 'string' && field.options.includes(value)));
+      if (!valid) throw new BadRequestException(this.i18n.t('errors.eventParticipant.invalidRegistration'));
+    });
+  }
+
+  private async savePublicRegistration({
+    event,
+    data,
+    values,
+    firstName,
+    lastName,
+  }: {
+    event: Event;
+    data: PublicRegistrationDto;
+    values: JsonObject;
+    firstName: string;
+    lastName: string;
+  }): Promise<EventParticipant> {
+    const persist = async (repository: Repository<EventParticipant>): Promise<EventParticipant> => {
+      const registrationCount = await repository.count({
+        where: { event_id: event.id, public_submission: true, deleted_at: IsNull() },
+      });
+      if (registrationCount >= MAX_PUBLIC_REGISTRATIONS_PER_EVENT) {
+        throw new HttpException(
+          this.i18n.t('errors.eventParticipant.registrationLimitReached'),
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+
+      const email = data.submitted_person.email?.trim().toLowerCase();
+      const phone = data.submitted_person.phone?.trim().toLowerCase();
+      if ((email || phone) && repository.createQueryBuilder) {
+        const duplicateBuilder = repository
+          .createQueryBuilder('participant')
+          .where('participant.event_id = :eventId', { eventId: event.id })
+          .andWhere('participant.public_submission = TRUE')
+          .andWhere('participant.deleted_at IS NULL');
+        const duplicateConditions: string[] = [];
+        const duplicateParameters: Record<string, string> = {};
+        if (email) {
+          duplicateConditions.push(
+            `LOWER(CAST("participant"."submitted_person" AS jsonb) ->> 'email') = :submittedEmail`,
+          );
+          duplicateParameters.submittedEmail = email;
+        }
+        if (phone) {
+          duplicateConditions.push(
+            `LOWER(CAST("participant"."submitted_person" AS jsonb) ->> 'phone') = :submittedPhone`,
+          );
+          duplicateParameters.submittedPhone = phone;
+        }
+        duplicateBuilder.andWhere(`(${duplicateConditions.join(' OR ')})`, duplicateParameters);
+        if (await duplicateBuilder.getExists()) {
+          throw new ConflictException(this.i18n.t('errors.eventParticipant.duplicateRegistration'));
+        }
+      }
+
+      return repository.save(
+        repository.create({
+          event_id: event.id,
+          event,
+          person_id: null,
+          attended: false,
+          public_submission: true,
+          public_submission_id: randomUUID(),
+          submitted_person: { ...data.submitted_person, first_name: firstName, last_name: lastName },
+          field_values: values,
+        }),
+      );
+    };
+
+    const manager = this.repository.manager as EntityManager | undefined;
+    if (!manager?.transaction) return persist(this.repository);
+    return manager.transaction(async (transactionManager) => {
+      await transactionManager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
+        `public-event-registration:${event.id}`,
+      ]);
+      return persist(transactionManager.getRepository(EventParticipant));
+    });
   }
   async list({ query, userId, congregationId }: ParticipantListProps) {
     const { congregation } = await this.getContext(userId, congregationId);
@@ -140,7 +246,7 @@ export class EventParticipantService {
     }
 
     await this.event(query.event_id, congregation.id);
-    const size = Number.isFinite(query.size) && query.size > 0 ? query.size : 50;
+    const size = Number.isFinite(query.size) && query.size > 0 ? Math.min(query.size, MAX_PAGE_SIZE) : 50;
     const page = Number.isFinite(query.page) && query.page >= 0 ? query.page : 0;
     const [result, total] = await this.repository.findAndCount({
       where: {
@@ -184,6 +290,10 @@ export class EventParticipantService {
   async create({ data, userId, congregationId }: ParticipantCreateProps) {
     const { user, congregation } = await this.getContext(userId, congregationId);
     const event = await this.event(data.event_id, congregation.id);
+    if ('person_updates' in data) {
+      throw new BadRequestException(this.i18n.t('errors.eventParticipant.personUpdatesNotAllowed'));
+    }
+    this.validateFieldValues(event, data.field_values ?? {});
     const person = data.person_id
       ? await this.personRepository.findOne({ where: { id: data.person_id, congregation_id: congregation.id } })
       : null;
@@ -217,7 +327,6 @@ export class EventParticipantService {
         person,
         event,
         values: existing.field_values,
-        updates: data.person_updates,
         attended: existing.attended,
       });
     return this.repository.save(existing);
@@ -284,9 +393,6 @@ export class EventParticipantService {
     const person = await this.personRepository.findOne({ where: { id: personId, congregation_id: congregation.id } });
     if (!item || item.event.congregation_id !== congregation.id || !person)
       throw new NotFoundException(this.i18n.t('errors.eventParticipant.notFound'));
-    Object.entries(item.submitted_person ?? {}).forEach(([key, value]) => {
-      if (value) this.assignPersonValue(person, key, value);
-    });
     await this.updatePersonFromEvent({ person, event: item.event, values: item.field_values, attended: item.attended });
     const existing = await this.repository.findOne({
       where: { event_id: item.event_id, person_id: person.id, deleted_at: IsNull() },
@@ -305,22 +411,30 @@ export class EventParticipantService {
     item.updated_by = user;
     return this.repository.save(item);
   }
-  async publicRegister(publicId: string, data: PublicRegistrationDto) {
+  async publicRegister(publicId: string, data: PublicRegistrationDto, _context: PublicRegistrationContext = {}) {
     const event = await this.eventRepository.findOne({
       where: {
         public_id: publicId,
         is_public: true,
         self_registration_enabled: true,
         registration_locked: false,
+        enabled: true,
         deleted_at: IsNull(),
       },
       relations: { congregation: true },
     });
-    if (!event || !event.congregation.features?.includes(Feature.PublicEvents))
+    if (
+      !event ||
+      !event.enabled ||
+      !event.congregation.enabled ||
+      !event.congregation.features?.includes(Feature.PublicEvents)
+    )
       throw new NotFoundException(this.i18n.t('errors.event.notFound'));
     const firstName = data.submitted_person.first_name;
     const lastName = data.submitted_person.last_name;
     const values = data.field_values ?? {};
+    this.validateFieldValues(event, values, true);
+    assertJsonWithinLimits({ ...data.submitted_person });
     const missingRequired = (event.custom_fields ?? []).some((field) =>
       Boolean(
         field.user_fillable &&
@@ -336,17 +450,12 @@ export class EventParticipantService {
       missingRequired
     )
       throw new BadRequestException(this.i18n.t('errors.eventParticipant.invalidRegistration'));
-    return this.repository.save(
-      this.repository.create({
-        event_id: event.id,
-        event,
-        person_id: null,
-        attended: false,
-        public_submission: true,
-        public_submission_id: randomUUID(),
-        submitted_person: { ...data.submitted_person, first_name: firstName.trim(), last_name: lastName.trim() },
-        field_values: values,
-      }),
-    );
+    return this.savePublicRegistration({
+      event,
+      data,
+      values,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+    });
   }
 }

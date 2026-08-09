@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsByteLength,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -9,8 +10,10 @@ import {
   IsString,
   MaxLength,
   Min,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from 'src/config/security';
 import { Feature } from 'src/utils/constants';
 import { ThemePaletteConfig } from '../configurations/configurations.types';
 import { Congregation } from '../congregation/congregation.entity';
@@ -31,7 +34,9 @@ export class SetupUserDto {
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(255)
+  @MinLength(MIN_PASSWORD_LENGTH)
+  @MaxLength(MAX_PASSWORD_LENGTH)
+  @IsByteLength(0, MAX_PASSWORD_LENGTH)
   password: string;
 
   @IsString()

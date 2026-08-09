@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 import type { RequestType } from 'src/common/common.types';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { PermissionDecorator, PermissionGuard } from 'src/modules/permission/permission.guard';
@@ -17,6 +18,8 @@ import {
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
+import { SecurityRateLimitService } from '../security/security-rate-limit.service';
+import { SecurityRateLimitScope } from '../security/security.types';
 import { EventParticipantService } from './event-participant.service';
 import {
   ParticipantDto,
@@ -33,32 +36,35 @@ export class EventParticipantController {
     return { userId: getRequestUserIdOrThrow(request), congregationId: getRequestCongregationId(request) };
   }
   @Get('attendance') @PermissionDecorator(Module.event_attendance, ModuleAction.get) attendanceList(
-    @Query(new ValidationPipe({ transform: true, whitelist: true })) query: ParticipantQuery,
+    @Query(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
+    query: ParticipantQuery,
     @Req() request: RequestType,
   ) {
     return this.service.list({ query, ...this.context(request) });
   }
   @Post('attendance') @PermissionDecorator(Module.event_attendance, ModuleAction.create) attendanceCreate(
-    @Body(new ValidationPipe({ transform: true, whitelist: true })) data: ParticipantDto,
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })) data: ParticipantDto,
     @Req() request: RequestType,
   ) {
     return this.service.create({ data: { ...data, attended: true }, ...this.context(request) });
   }
   @Get() @PermissionDecorator(Module.event_registration, ModuleAction.get) list(
-    @Query(new ValidationPipe({ transform: true, whitelist: true })) query: ParticipantQuery,
+    @Query(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
+    query: ParticipantQuery,
     @Req() request: RequestType,
   ) {
     return this.service.list({ query, ...this.context(request) });
   }
   @Post() @PermissionDecorator(Module.event_registration, ModuleAction.create) create(
-    @Body(new ValidationPipe({ transform: true, whitelist: true })) data: ParticipantDto,
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })) data: ParticipantDto,
     @Req() request: RequestType,
   ) {
     return this.service.create({ data, ...this.context(request) });
   }
   @Put(':id/match') @PermissionDecorator(Module.event_registration, ModuleAction.update) match(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-    @Body(new ValidationPipe({ transform: true, whitelist: true })) data: ParticipantMatchDto,
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
+    data: ParticipantMatchDto,
     @Req() request: RequestType,
   ) {
     return this.service.match({ id, personId: data.person_id, ...this.context(request) });
@@ -97,11 +103,18 @@ export class EventParticipantController {
 }
 @Controller('public/event-registration')
 export class PublicEventRegistrationController {
-  constructor(private service: EventParticipantService) {}
+  constructor(
+    private service: EventParticipantService,
+    private readonly rateLimiter?: SecurityRateLimitService,
+  ) {}
   @Post(':id') register(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body(new ValidationPipe({ transform: true, whitelist: true })) data: PublicRegistrationDto,
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
+    data: PublicRegistrationDto,
+    @Req() request: Request,
   ) {
-    return this.service.publicRegister(id, data);
+    this.rateLimiter?.assertAllowed(SecurityRateLimitScope.publicRegistrationIp, request.ip ?? 'unavailable');
+    this.rateLimiter?.assertAllowed(SecurityRateLimitScope.publicRegistrationEvent, id);
+    return this.service.publicRegister(id, data, { ip: request.ip });
   }
 }

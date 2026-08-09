@@ -3,7 +3,8 @@
   "error": {
     "notFound": "System is not setup. If you think this is an error please let us know",
     "featuresNotFound": "Fatal error, features not found",
-    "saveFailed": "Setup could not be completed"
+    "saveFailed": "Setup could not be completed",
+    "bootstrapSecretLength": "The bootstrap secret must contain at least 32 characters"
   },
   "log": {
     "featuresError": "Features load error",
@@ -29,6 +30,8 @@
     "user": "Main user",
     "userSubtitle": "The main user that will manage the system. We could add more or update it later",
     "fullAccessRoleName": "Role Name",
+    "bootstrapSecret": "Bootstrap secret",
+    "bootstrapSecretHelp": "Enter the bootstrap secret configured on the server.",
     "confirm": "Confirm",
     "confirmSubtitle": "Confirm your {{type}} setup"
   },

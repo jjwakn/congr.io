@@ -1,19 +1,55 @@
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { EntityActionProps, ListParamsQuery } from 'src/common/common.types';
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from './role.entity';
 
 export interface RoleCreateProps extends EntityActionProps {
-  data: Role;
+  data: RoleCreateDto;
 }
 
-export interface RoleUpdateProps extends RoleCreateProps {
+export interface RoleUpdateProps extends EntityActionProps {
   id: string;
+  data: RoleUpdateDto;
 }
 
 export interface RoleDeleteProps extends EntityActionProps {
   id: string;
+}
+
+export class RoleCreateDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  name: string;
+
+  @IsObject()
+  @IsOptional()
+  permissions?: Role['permissions'];
+
+  @IsBoolean()
+  @IsOptional()
+  full_access?: boolean;
+}
+
+export class RoleUpdateDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  @IsOptional()
+  name?: string;
+
+  @IsObject()
+  @IsOptional()
+  permissions?: Role['permissions'];
+
+  @IsBoolean()
+  @IsOptional()
+  full_access?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  enabled?: boolean;
 }
 
 enum Order {

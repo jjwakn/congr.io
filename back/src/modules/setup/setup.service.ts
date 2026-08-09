@@ -1,9 +1,17 @@
 import { I18nContext, I18nService } from 'nestjs-i18n';
+import { secretsMatch } from 'src/config/security';
 import { Feature } from 'src/utils/constants';
 import { isValidTimeZone, normalizeTimeZone } from 'src/utils/datetime';
 import { encryptPassword } from 'src/utils/helpers';
 import { DataSource, IsNull, Repository } from 'typeorm';
-import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  Optional,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Configuration } from '../configurations/configurations.entity';
 import { ConfigurationsService } from '../configurations/configurations.service';
@@ -15,6 +23,8 @@ import {
 import { Congregation } from '../congregation/congregation.entity';
 import { Location } from '../location/location.entity';
 import { Role } from '../role/role.entity';
+import { SecurityAuditService } from '../security/security-audit.service';
+import { SecurityAuditEvent } from '../security/security.types';
 import { User } from '../user/user.entity';
 import { IsSetupResponse, SetupCongregationData, SetupProps, SetupResponse } from './setup.types';
 
@@ -40,6 +50,9 @@ export class SetupService {
     private readonly configurationsService: ConfigurationsService,
 
     private readonly i18n: I18nService,
+
+    @Optional()
+    private readonly securityAudit?: SecurityAuditService,
   ) {}
 
   private translate(key: string, lang?: string): string {
@@ -101,7 +114,11 @@ export class SetupService {
     };
   }
 
-  async setup(data: SetupProps, lang?: string): Promise<SetupResponse> {
+  async setup(data: SetupProps, lang?: string, bootstrapSecret?: string): Promise<SetupResponse> {
+    if (!secretsMatch(bootstrapSecret, process.env.SETUP_BOOTSTRAP_SECRET?.trim() ?? '')) {
+      throw new UnauthorizedException(this.translate('errors.setup.invalidBootstrapSecret', lang));
+    }
+
     if (this.setupInProgress) throw new ConflictException(this.translate('errors.setup.alreadySetup', lang));
 
     this.setupInProgress = true;
@@ -144,6 +161,7 @@ export class SetupService {
       const encryptedPassword = await encryptPassword(user.password);
 
       return this.dataSource.transaction(async (manager) => {
+        await manager.query('SELECT pg_advisory_xact_lock($1)', [737_170_001]);
         const userRepository = manager.getRepository(User);
         const roleRepository = manager.getRepository(Role);
         const congregationRepository = manager.getRepository(Congregation);
@@ -151,15 +169,9 @@ export class SetupService {
         const locationRepository = manager.getRepository(Location);
 
         const [userCount, roleCount, congregationCount] = await Promise.all([
-          userRepository.count({
-            where: { deleted_at: IsNull(), deleted_by: IsNull() },
-          }),
-          roleRepository.count({
-            where: { deleted_at: IsNull(), deleted_by: IsNull() },
-          }),
-          congregationRepository.count({
-            where: { deleted_at: IsNull(), deleted_by: IsNull() },
-          }),
+          userRepository.count({ withDeleted: true }),
+          roleRepository.count({ withDeleted: true }),
+          congregationRepository.count({ withDeleted: true }),
         ]);
 
         if (userCount || roleCount || congregationCount)
@@ -234,6 +246,12 @@ export class SetupService {
           throw new InternalServerErrorException(
             this.translate('errors.setup.errorCreatingCongregationRepository', lang),
           );
+
+        this.securityAudit?.record(SecurityAuditEvent.setupCompleted, {
+          user_id: userCreated.id,
+          congregation_id: congregationWithRelations.id,
+          role_id: roleCreated.id,
+        });
 
         return {
           isSetup: true,

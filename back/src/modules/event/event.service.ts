@@ -1,9 +1,10 @@
 import { I18nService } from 'nestjs-i18n';
 import { randomUUID } from 'node:crypto';
 import { Direction } from 'src/common/common.types';
+import { MAX_PAGE_SIZE, MAX_SEARCH_LENGTH, MAX_SEARCH_TERMS } from 'src/config/security';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
 import { Brackets, In, IsNull, LessThan, MoreThan, Repository } from 'typeorm';
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getUserCongregationContext } from '../../utils/congregation-context';
 import { Feature } from '../../utils/constants';
@@ -14,6 +15,8 @@ import { EventType } from '../event-type/event-type.entity';
 import type { EventTypeCustomField } from '../event-type/event-type.types';
 import { FilesService } from '../files/files.service';
 import { PersonField } from '../person-field/person-field.entity';
+import { SecurityAuditService } from '../security/security-audit.service';
+import { SecurityAuditEvent } from '../security/security.types';
 import { User } from '../user/user.entity';
 import { Event } from './event.entity';
 import {
@@ -57,6 +60,9 @@ export class EventService {
     private readonly filesService: FilesService,
 
     private readonly i18n: I18nService,
+
+    @Optional()
+    private readonly securityAudit?: SecurityAuditService,
   ) {}
 
   private async getContext(userId: string, congregationId?: string) {
@@ -224,7 +230,8 @@ export class EventService {
   async list({ query, userId, congregationId, canViewAll = false }: EventListProps) {
     const { congregation } = await this.getContext(userId, congregationId);
 
-    const size = Number.isFinite(Number(query.size)) && Number(query.size) > 0 ? Number(query.size) : 50;
+    const requestedSize = Number(query.size);
+    const size = Number.isFinite(requestedSize) && requestedSize > 0 ? Math.min(requestedSize, MAX_PAGE_SIZE) : 50;
     const page = Number.isFinite(Number(query.page)) && Number(query.page) >= 0 ? Number(query.page) : 0;
     const direction = query.direction === Direction.ASC ? Direction.ASC : Direction.DESC;
     const orderMap: Record<string, string> = {
@@ -301,7 +308,14 @@ export class EventService {
     if (query.participant_filter === EventParticipantFilter.without_attendance)
       builder.andWhere(`NOT ${attendanceExists}`);
 
-    const searchTerms = (query.search?.trim() ?? '').split(/\s+/).filter(Boolean);
+    const normalizedSearch = query.search?.trim() ?? '';
+    if (normalizedSearch.length > MAX_SEARCH_LENGTH) {
+      throw new BadRequestException(this.i18n.t('errors.query.searchTooLong'));
+    }
+    const searchTerms = normalizedSearch.split(/\s+/).filter(Boolean);
+    if (searchTerms.length > MAX_SEARCH_TERMS) {
+      throw new BadRequestException(this.i18n.t('errors.query.tooManySearchTerms'));
+    }
     searchTerms.forEach((term, index) => {
       const parameterName = `eventSearch${index}`;
       builder.andWhere(
@@ -352,6 +366,9 @@ export class EventService {
       id: normalized.type_id,
       congregationId: congregation.id,
     });
+    if (normalized.image_file_id) {
+      await this.filesService.assertOwnedFile?.(normalized.image_file_id, userId, congregation.id);
+    }
     const created = this.repository.create({
       congregation_id: congregation.id,
       congregation,
@@ -374,7 +391,17 @@ export class EventService {
       created_by: user,
     });
     const resultId = (await this.repository.save(created)).id;
-    if (normalized.image_file_id) await this.filesService.setPublic(normalized.image_file_id, normalized.is_public);
+    if (normalized.image_file_id)
+      await this.filesService.setPublic(normalized.image_file_id, normalized.is_public, userId, congregation.id);
+    if (normalized.is_public) {
+      this.securityAudit?.record(SecurityAuditEvent.publicEventStateChanged, {
+        action: 'created',
+        actor_id: userId,
+        congregation_id: congregation.id,
+        event_id: resultId,
+        public: true,
+      });
+    }
     return this.get({ id: resultId, userId, congregationId, canViewAll: true });
   }
 
@@ -389,12 +416,16 @@ export class EventService {
     });
 
     if (!existing) throw new NotFoundException(this.i18n.t('errors.event.notFound'));
+    const previousImageFileId = existing.image_file_id;
 
     const normalized = this.normalizeEvent(data);
     const eventType = await this.resolveEventTypeOrThrow({
       id: normalized.type_id,
       congregationId: congregation.id,
     });
+    if (normalized.image_file_id) {
+      await this.filesService.assertOwnedFile?.(normalized.image_file_id, userId, congregation.id);
+    }
 
     const dateTimes = this.parseEventDateTimes({
       startDateTime: data.start_datetime,
@@ -422,7 +453,19 @@ export class EventService {
     existing.updated_by = user;
 
     await this.repository.save(existing);
-    if (normalized.image_file_id) await this.filesService.setPublic(normalized.image_file_id, normalized.is_public);
+    if (normalized.image_file_id)
+      await this.filesService.setPublic(normalized.image_file_id, normalized.is_public, userId, congregation.id);
+    if (previousImageFileId && previousImageFileId !== normalized.image_file_id) {
+      await this.filesService.releaseIfUnreferenced(previousImageFileId);
+    }
+    this.securityAudit?.record(SecurityAuditEvent.publicEventStateChanged, {
+      action: 'updated',
+      actor_id: userId,
+      congregation_id: congregation.id,
+      event_id: id,
+      public: normalized.is_public,
+      enabled: normalized.enabled,
+    });
     return this.get({ id, userId, congregationId, canViewAll: true });
   }
 
@@ -439,8 +482,17 @@ export class EventService {
     if (!existing) throw new NotFoundException(this.i18n.t('errors.event.notFound'));
 
     existing.deleted_by = user;
+    const imageFileId = existing.image_file_id;
     await this.repository.save(existing);
     await this.repository.softDelete(id);
+    if (imageFileId) await this.filesService.releaseIfUnreferenced(imageFileId);
+    this.securityAudit?.record(SecurityAuditEvent.publicEventStateChanged, {
+      action: 'deleted',
+      actor_id: userId,
+      congregation_id: congregation.id,
+      event_id: id,
+      public: false,
+    });
     return { deleted: true };
   }
 
@@ -458,7 +510,7 @@ export class EventService {
 
   async listPublic({ congregationId, query }: { congregationId: string; query: EventQuery }) {
     const congregation = await this.congregationRepository.findOne({
-      where: { id: congregationId, deleted_at: IsNull() },
+      where: { id: congregationId, enabled: true, deleted_at: IsNull(), deleted_by: IsNull() },
     });
     if (!congregation?.features?.includes(Feature.PublicEvents))
       throw new NotFoundException(this.i18n.t('errors.event.notFound'));
@@ -469,6 +521,7 @@ export class EventService {
       baseWhere: {
         congregation_id: congregationId,
         is_public: true,
+        enabled: true,
         deleted_at: IsNull(),
         ...(query.start ? { end_datetime: MoreThan(new Date(query.start)) } : {}),
         ...(query.end ? { start_datetime: LessThan(new Date(query.end)) } : {}),
@@ -482,10 +535,10 @@ export class EventService {
 
   async getPublic(publicId: string) {
     const result = await this.repository.findOne({
-      where: { public_id: publicId, is_public: true, deleted_at: IsNull() },
+      where: { public_id: publicId, is_public: true, enabled: true, deleted_at: IsNull(), deleted_by: IsNull() },
       relations: { type: true, congregation: true },
     });
-    if (!result || !result.congregation.features?.includes(Feature.PublicEvents))
+    if (!result || !result.congregation.enabled || !result.congregation.features?.includes(Feature.PublicEvents))
       throw new NotFoundException(this.i18n.t('errors.event.notFound'));
     return this.hydrateEvent(result, result.congregation_id);
   }

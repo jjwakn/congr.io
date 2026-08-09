@@ -16,7 +16,7 @@ const initialSetupData: SetupData = {
   },
   features: { features: [] },
   locations: { locations: [] },
-  admin: { username: '', password: '', name: '', roleName: '' },
+  admin: { username: '', password: '', name: '', roleName: '', bootstrapSecret: '' },
 };
 
 export const SetupProvider = ({ children }: { children: ReactNode }) => {

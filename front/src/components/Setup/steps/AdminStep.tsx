@@ -30,6 +30,7 @@ export const AdminStep = ({
           password: values.password,
           name: values.name.trim(),
           roleName: values.roleName.trim(),
+          bootstrapSecret: values.bootstrapSecret,
         },
       }));
       goNext();
@@ -91,6 +92,17 @@ export const AdminStep = ({
           })}
           error={!!form.formState.errors.roleName}
           helperText={form.formState.errors.roleName?.message}
+        />
+        <TextField
+          fullWidth
+          type="password"
+          label={t('setup.form.bootstrapSecret')}
+          {...form.register('bootstrapSecret', {
+            required: t('form.error.isRequired') as string,
+            minLength: { value: 32, message: t('setup.error.bootstrapSecretLength') },
+          })}
+          error={!!form.formState.errors.bootstrapSecret}
+          helperText={form.formState.errors.bootstrapSecret?.message ?? t('setup.form.bootstrapSecretHelp')}
         />
       </Box>
     </FormContainer>

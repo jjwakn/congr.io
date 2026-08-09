@@ -1,0 +1,5 @@
+{
+  "jsonTooDeep": "Los datos enviados contienen demasiados niveles anidados.",
+  "jsonTooLarge": "Los datos enviados son demasiado grandes.",
+  "tooManyJsonFields": "Los datos enviados contienen demasiados campos."
+}

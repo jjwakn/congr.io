@@ -2,5 +2,7 @@
   "imageRequired": "Selecciona una imagen válida compatible con el navegador.",
   "notFound": "No se encontró el archivo.",
   "providerUploadUnavailable": "El proveedor de archivos seleccionado no está disponible para cargas del servidor. Usa una URL pública o configura almacenamiento local.",
-  "invalidLogoKind": "El tipo de logo de la congregación no es válido."
+  "invalidLogoKind": "El tipo de logo de la congregación no es válido.",
+  "tooLarge": "La imagen supera el límite de carga de 5 MB.",
+  "quotaExceeded": "Se alcanzó la cuota de almacenamiento de archivos de la congregación."
 }

@@ -1,5 +1,6 @@
 {
   "alreadySetup": "System already setup",
+  "invalidBootstrapSecret": "The setup bootstrap credential is invalid.",
   "missing": "Missing in request:",
   "missingBody": "Missing in request: body",
   "missingUser": "Missing in request: user",

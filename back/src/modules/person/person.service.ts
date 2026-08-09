@@ -1,10 +1,11 @@
 import { DateTime } from 'luxon';
 import { I18nService } from 'nestjs-i18n';
 import { Direction } from 'src/common/common.types';
+import { MAX_PAGE_SIZE, MAX_SEARCH_LENGTH, MAX_SEARCH_TERMS } from 'src/config/security';
 import { getUserCongregationContext } from 'src/utils/congregation-context';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
 import { Brackets, DataSource, IsNull, Like, Repository, type SelectQueryBuilder } from 'typeorm';
-import { Injectable, NotAcceptableException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Congregation } from '../congregation/congregation.entity';
 import { User } from '../user/user.entity';
@@ -84,6 +85,17 @@ export class PersonService {
     };
   }
 
+  private async assertLinkedUserInCongregation(userId: string | null | undefined, congregationId: string) {
+    if (!userId) return;
+    const user = await this.userRepository.findOne({
+      where: { id: userId, enabled: true, deleted_at: IsNull(), deleted_by: IsNull() },
+      relations: { congregations: true },
+    });
+    if (!user?.congregations?.some(({ id }) => id === congregationId)) {
+      throw new NotAcceptableException(this.i18n.t('errors.user.invalidRelationship'));
+    }
+  }
+
   private normalize(data: PersonCreateProps['data'], defaultEnabled = true) {
     return {
       first_name: data.first_name.trim(),
@@ -107,52 +119,29 @@ export class PersonService {
     search?: string,
     searchFields = DEFAULT_PERSON_SEARCH_FIELDS,
   ) {
-    const searchTerms = (search?.trim() ?? '').split(/\s+/).filter(Boolean);
+    const normalizedSearch = search?.trim() ?? '';
+    if (normalizedSearch.length > MAX_SEARCH_LENGTH) {
+      throw new BadRequestException(this.i18n.t('errors.query.searchTooLong'));
+    }
+    const searchTerms = normalizedSearch.split(/\s+/).filter(Boolean);
     if (!searchTerms.length) return;
-
-    if (searchTerms.length > searchFields.length) {
-      builder.andWhere('FALSE');
-      return;
+    if (searchTerms.length > MAX_SEARCH_TERMS) {
+      throw new BadRequestException(this.i18n.t('errors.query.tooManySearchTerms'));
     }
 
-    let combinationIndex = 0;
-    builder.andWhere(
-      new Brackets((searchBuilder) => {
-        const appendCombinations = (
-          termIndex: number,
-          usedFields: Set<PersonSearchField>,
-          conditions: string[],
-          parameters: Record<string, string>,
-        ) => {
-          const term = searchTerms[termIndex];
-          const isLastTerm = termIndex === searchTerms.length - 1;
-
-          searchFields.forEach((field) => {
-            if (usedFields.has(field)) return;
-
-            const parameterName = `personSearch${combinationIndex}_${termIndex}`;
-            const nextConditions = [
-              ...conditions,
-              `LOWER(CAST("person"."${field}" AS text)) LIKE :${parameterName} ESCAPE '\\'`,
-            ];
-            const nextParameters = {
-              ...parameters,
-              [parameterName]: `%${escapeLikePattern(term.toLowerCase())}%`,
-            };
-
-            if (isLastTerm) {
-              combinationIndex += 1;
-              searchBuilder.orWhere(`(${nextConditions.join(' AND ')})`, nextParameters);
-              return;
-            }
-
-            appendCombinations(termIndex + 1, new Set([...usedFields, field]), nextConditions, nextParameters);
+    searchTerms.forEach((term, termIndex) => {
+      const parameterName = `personSearch${termIndex}`;
+      builder.andWhere(
+        new Brackets((searchBuilder) => {
+          searchFields.forEach((field, fieldIndex) => {
+            const predicate = `LOWER(CAST("person"."${field}" AS text)) LIKE :${parameterName} ESCAPE '\\'`;
+            if (fieldIndex === 0) searchBuilder.where(predicate);
+            else searchBuilder.orWhere(predicate);
           });
-        };
-
-        appendCombinations(0, new Set(), [], {});
-      }),
-    );
+        }),
+        { [parameterName]: `%${escapeLikePattern(term.toLowerCase())}%` },
+      );
+    });
   }
 
   private applyNaturalCodeOrder(builder: SelectQueryBuilder<Person>, direction: SortDirection) {
@@ -165,9 +154,11 @@ export class PersonService {
   async list({ query, userId, congregationId }: PersonListProps) {
     const { congregation } = await this.getContext(userId, congregationId);
     if (String(query.order) === 'code') {
-      const pageSize = Number(query.size);
-      const page = Number(query.page);
-      const paginate = Number.isFinite(pageSize) && pageSize > 0 && Number.isFinite(page) && page >= 0;
+      const requestedPageSize = Number(query.size);
+      const pageSize =
+        Number.isFinite(requestedPageSize) && requestedPageSize > 0 ? Math.min(requestedPageSize, MAX_PAGE_SIZE) : 50;
+      const requestedPage = Number(query.page);
+      const page = Number.isFinite(requestedPage) && requestedPage >= 0 ? requestedPage : 0;
       const direction: SortDirection = query.direction === Direction.DESC ? Direction.DESC : Direction.ASC;
       const builder = this.repository
         .createQueryBuilder('person')
@@ -180,7 +171,7 @@ export class PersonService {
       );
       this.addSearchFilters(builder, query.search, searchFields);
       this.applyNaturalCodeOrder(builder, direction);
-      if (paginate) builder.skip(pageSize * page).take(pageSize);
+      builder.skip(pageSize * page).take(pageSize);
 
       const [result, total] = await builder.getManyAndCount();
       return { result, total };
@@ -261,6 +252,7 @@ export class PersonService {
 
   async create({ data, userId, congregationId }: PersonCreateProps) {
     const { user, congregation } = await this.getContext(userId, congregationId);
+    await this.assertLinkedUserInCongregation(data.user_id, congregation.id);
     if (data.user_id && (await this.repository.findOne({ where: { user_id: data.user_id } })))
       throw new NotAcceptableException(this.i18n.t('errors.person.userInUse'));
     const code = await this.nextCode(congregation.id, data.last_name, data.second_last_name);
@@ -279,6 +271,7 @@ export class PersonService {
     const { user, congregation } = await this.getContext(userId, congregationId);
     const existing = await this.repository.findOne({ where: { id, congregation_id: congregation.id } });
     if (!existing) throw new NotFoundException(this.i18n.t('errors.person.notFound'));
+    await this.assertLinkedUserInCongregation(data.user_id, congregation.id);
     const linkedPerson = data.user_id ? await this.repository.findOne({ where: { user_id: data.user_id } }) : null;
     if (linkedPerson && linkedPerson.id !== existing.id)
       throw new NotAcceptableException(this.i18n.t('errors.person.userInUse'));

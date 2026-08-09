@@ -17,6 +17,7 @@ import { PersonFieldModule } from './modules/person-field/person-field.module';
 import { PersonModule } from './modules/person/person.module';
 import { ProcessModule } from './modules/process/process.module';
 import { RoleModule } from './modules/role/role.module';
+import { SecurityModule } from './modules/security/security.module';
 import { ServiceAttendanceModule } from './modules/service-attendance/service-attendance.module';
 import { ServiceNewPeopleModule } from './modules/service-new-people/service-new-people.module';
 import { ServiceModule } from './modules/service/service.module';
@@ -57,6 +58,7 @@ import { UserModule } from './modules/user/user.module';
         new HeaderResolver(['x-lang']),
       ],
     }),
+    SecurityModule,
     SetupModule,
     PermissionModule,
     FeatureModule,

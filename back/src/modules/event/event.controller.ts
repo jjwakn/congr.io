@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 import type { RequestType } from 'src/common/common.types';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { PermissionDecorator, PermissionGuard } from 'src/modules/permission/permission.guard';
@@ -18,6 +19,8 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
+import { SecurityRateLimitService } from '../security/security-rate-limit.service';
+import { SecurityRateLimitScope } from '../security/security.types';
 import { EventService } from './event.service';
 import { EventDto, EventQuery, EventRegistrationLockDto } from './event.types';
 
@@ -117,18 +120,24 @@ export class EventController {
 @ApiTags('public-events')
 @Controller('public/events')
 export class PublicEventController {
-  constructor(private readonly service: EventService) {}
+  constructor(
+    private readonly service: EventService,
+    private readonly rateLimiter?: SecurityRateLimitService,
+  ) {}
 
   @Get()
   list(
     @Query(new ValidationPipe({ transform: true, whitelist: true })) query: EventQuery,
     @Query('congregation_id', new ParseUUIDPipe({ version: '4' })) congregationId: string,
+    @Req() request: Request,
   ) {
+    this.rateLimiter?.assertAllowed(SecurityRateLimitScope.publicEventRead, request.ip ?? 'unavailable');
     return this.service.listPublic({ congregationId, query });
   }
 
   @Get(':id')
-  get(@Param('id', new ParseUUIDPipe()) id: string) {
+  get(@Param('id', new ParseUUIDPipe()) id: string, @Req() request: Request) {
+    this.rateLimiter?.assertAllowed(SecurityRateLimitScope.publicEventRead, request.ip ?? 'unavailable');
     return this.service.getPublic(id);
   }
 }

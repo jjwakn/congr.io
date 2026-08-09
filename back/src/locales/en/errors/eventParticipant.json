@@ -1,4 +1,7 @@
 {
   "notFound": "Event registration not found.",
-  "invalidRegistration": "Complete the required registration fields."
+  "invalidRegistration": "Complete the required registration fields.",
+  "personUpdatesNotAllowed": "Participant access cannot modify unrelated person fields.",
+  "registrationLimitReached": "This event cannot accept more public registrations.",
+  "duplicateRegistration": "A registration with this email or phone already exists for this event."
 }

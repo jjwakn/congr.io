@@ -13,8 +13,11 @@ export class User extends CommonEntity {
   username: string;
 
   @ApiPropertyI18n({ example: 'examples.user.password' })
-  @Column({ nullable: false, default: '' })
+  @Column({ nullable: false, default: '', select: false })
   password?: string;
+
+  @Column({ type: 'int', nullable: false, default: 0 })
+  session_version: number;
 
   @ApiPropertyI18n({ example: 'examples.user.name' })
   @Column({ nullable: false })

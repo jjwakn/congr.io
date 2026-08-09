@@ -1,0 +1,5 @@
+{
+  "searchTooLong": "El valor de busqueda es demasiado largo.",
+  "tooManySearchTerms": "La busqueda contiene demasiados terminos.",
+  "tooLong": "La consulta de la solicitud es demasiado larga."
+}

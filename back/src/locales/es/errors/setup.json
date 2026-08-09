@@ -1,5 +1,6 @@
 {
   "alreadySetup": "Sistema ya configurado",
+  "invalidBootstrapSecret": "La credencial de configuración inicial no es válida.",
   "missing": "No encontrado en request:",
   "missingBody": "No encontrado en request: body",
   "missingUser": "No encontrado en request: user",
