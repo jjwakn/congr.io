@@ -28,6 +28,11 @@ import type { FieldCondition } from '@/types/person.types';
 import type { EventCustomFieldsEditorProps } from './events.types';
 
 const TYPES: EventFieldType[] = ['text', 'paragraph', 'number', 'yes_no', 'options', 'date'];
+const FIELD_SWITCH_LABEL_SX = {
+  m: 0,
+  gap: 1.5,
+  alignSelf: 'flex-start',
+};
 
 const areOptionsEqual = (left: string[], right: string[]) =>
   left.length === right.length && left.every((value, index) => value === right[index]);
@@ -348,6 +353,7 @@ export const EventCustomFieldsEditor = ({
                   {field.type === 'options' ? (
                     <>
                       <FormControlLabel
+                        sx={FIELD_SWITCH_LABEL_SX}
                         control={
                           <Switch
                             checked={field.allow_multiple ?? false}
@@ -386,6 +392,7 @@ export const EventCustomFieldsEditor = ({
                   {personFieldOptions.length || canCreatePersonFields ? (
                     <>
                       <FormControlLabel
+                        sx={FIELD_SWITCH_LABEL_SX}
                         control={
                           <Switch
                             checked={Boolean(field.link_person_field)}
@@ -439,6 +446,7 @@ export const EventCustomFieldsEditor = ({
                   ) : null}
                   <Stack direction={{ xs: 'column', sm: 'row' }}>
                     <FormControlLabel
+                      sx={FIELD_SWITCH_LABEL_SX}
                       control={
                         <Switch
                           checked={field.required}
@@ -450,6 +458,7 @@ export const EventCustomFieldsEditor = ({
                     />
                     {selfRegistration ? (
                       <FormControlLabel
+                        sx={FIELD_SWITCH_LABEL_SX}
                         control={
                           <Switch
                             checked={field.user_fillable}
@@ -462,6 +471,7 @@ export const EventCustomFieldsEditor = ({
                     ) : null}
                     {canUpdateEventType && mode === 'event' ? (
                       <FormControlLabel
+                        sx={FIELD_SWITCH_LABEL_SX}
                         control={
                           <Switch checked={scope === 'type'} disabled={readOnly} onChange={() => move(scope, field)} />
                         }

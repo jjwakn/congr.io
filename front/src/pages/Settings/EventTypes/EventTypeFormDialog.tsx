@@ -197,7 +197,12 @@ export const EventTypeFormDialog = ({
             onChange={(event) => setDescription(event.target.value)}
           />
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-            <IconPicker label={t('pages.settings.eventTypes.fields.icon')} value={icon} onChange={setIcon} />
+            <IconPicker
+              label={t('pages.settings.eventTypes.fields.icon')}
+              value={icon}
+              iconColor={color}
+              onChange={setIcon}
+            />
             <TextField
               type="color"
               label={t('pages.settings.eventTypes.fields.color')}

@@ -3,15 +3,11 @@ import { DEFAULT_MUI_ICON, MUI_ICON_OPTIONS, MuiIcon } from '@utils/muiIcons';
 import { useEffect, useMemo, useState } from 'react';
 import type { IconPickerProps } from './IconPicker.types';
 
-export const IconPicker = ({ label, value, disabled = false, onChange }: IconPickerProps) => {
+export const IconPicker = ({ label, value, disabled = false, iconColor, onChange }: IconPickerProps) => {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const [search, setSearch] = useState(value || DEFAULT_MUI_ICON);
+  const [search, setSearch] = useState('');
   const supportedIcon = MUI_ICON_OPTIONS.includes(value ?? '');
   const selectedIcon = supportedIcon && value ? value : DEFAULT_MUI_ICON;
-
-  useEffect(() => {
-    setSearch(selectedIcon);
-  }, [selectedIcon]);
 
   useEffect(() => {
     if (value && !supportedIcon) onChange(DEFAULT_MUI_ICON);
@@ -19,19 +15,19 @@ export const IconPicker = ({ label, value, disabled = false, onChange }: IconPic
 
   const filteredIcons = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    if (!normalizedSearch || normalizedSearch === selectedIcon.toLowerCase()) return MUI_ICON_OPTIONS;
+    if (!normalizedSearch) return MUI_ICON_OPTIONS;
 
     const matches = MUI_ICON_OPTIONS.filter((name) => name.toLowerCase().includes(normalizedSearch));
     return matches.length ? matches : MUI_ICON_OPTIONS;
-  }, [search, selectedIcon]);
+  }, [search]);
   const close = () => {
     setAnchor(null);
-    setSearch(selectedIcon);
+    setSearch('');
   };
 
   const selectIcon = (iconName: string) => {
     onChange(iconName);
-    setSearch(iconName);
+    setSearch('');
     setAnchor(null);
   };
 
@@ -40,11 +36,11 @@ export const IconPicker = ({ label, value, disabled = false, onChange }: IconPic
       <TextField
         fullWidth
         label={label}
-        value={search}
+        value={anchor ? search : ''}
         disabled={disabled}
         onFocus={(event) => {
           setAnchor(event.currentTarget);
-          setSearch(selectedIcon);
+          setSearch('');
         }}
         onClick={(event) => setAnchor(event.currentTarget)}
         onChange={(event) => {
@@ -64,7 +60,7 @@ export const IconPicker = ({ label, value, disabled = false, onChange }: IconPic
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <MuiIcon name={selectedIcon} fontSize="small" />
+              <MuiIcon name={selectedIcon} fontSize="small" sx={{ color: iconColor ?? 'inherit' }} />
             </InputAdornment>
           ),
         }}
@@ -91,9 +87,9 @@ export const IconPicker = ({ label, value, disabled = false, onChange }: IconPic
               {filteredIcons.map((iconName) => (
                 <Tooltip key={iconName} title={iconName}>
                   <IconButton
-                    color={iconName === selectedIcon ? 'primary' : 'default'}
                     onClick={() => selectIcon(iconName)}
                     aria-label={iconName}
+                    sx={{ color: iconName === selectedIcon ? (iconColor ?? 'primary.main') : 'text.secondary' }}
                   >
                     <MuiIcon name={iconName} fontSize="small" />
                   </IconButton>
