@@ -791,10 +791,9 @@ export const RegistrationManagement = () => {
                     p: 2,
                     width: { xs: '100%', sm: 280 },
                     cursor: 'pointer',
-                    transition: (theme) => theme.transitions.create(['border-color', 'box-shadow']),
+                    transition: (theme) => theme.transitions.create(['border-color']),
                     '&:hover': {
                       borderColor: 'primary.main',
-                      boxShadow: 4,
                     },
                   }}
                 >

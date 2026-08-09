@@ -209,7 +209,7 @@ export const ModuleListTable = <RowType,>({
           left: fixedStartOffsets[columnId],
           zIndex: variant === 'header' ? 4 : 2,
           backgroundColor: theme.palette.background.paper,
-          boxShadow: columnId === lastFixedStartId ? `inset -1px 0 0 ${theme.palette.divider}` : undefined,
+          borderRight: columnId === lastFixedStartId ? `1px solid ${theme.palette.divider}` : undefined,
         };
       }
 
@@ -219,7 +219,7 @@ export const ModuleListTable = <RowType,>({
           right: fixedEndOffsets[columnId],
           zIndex: variant === 'header' ? 4 : 2,
           backgroundColor: theme.palette.background.paper,
-          boxShadow: columnId === firstFixedEndId ? `inset 1px 0 0 ${theme.palette.divider}` : undefined,
+          borderLeft: columnId === firstFixedEndId ? `1px solid ${theme.palette.divider}` : undefined,
         };
       }
 

@@ -237,7 +237,6 @@ export const FlowEditorDialog = ({ flow, submitting, onClose, onSubmit }: FlowEd
                       borderColor: 'divider',
                       borderRadius: 1,
                       bgcolor: 'background.paper',
-                      boxShadow: 2,
                     }}
                   >
                     <Button size="small" onClick={() => addFollowingStep()}>
