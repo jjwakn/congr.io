@@ -79,7 +79,7 @@ export const EventTypeFormDialog = ({
     setDescription(eventType?.description ?? '');
     setAttendanceEnabled(eventType?.attendance_enabled ?? false);
     setDefaultPublic(eventType?.default_public ?? false);
-    setDefaultSelfRegistration(eventType?.default_self_registration ?? false);
+    setDefaultSelfRegistration(eventType?.default_public ? (eventType?.default_self_registration ?? false) : false);
     setSaveAttendanceDate(eventType?.save_attendance_date ?? false);
     setAttendanceDateFieldId(eventType?.attendance_date_person_field_id ?? '');
     setDefaultStartTime(eventType?.default_start_time?.slice(0, 5) ?? '');
@@ -146,7 +146,7 @@ export const EventTypeFormDialog = ({
       description: description.trim(),
       attendance_enabled: attendanceEnabled,
       default_public: defaultPublic,
-      default_self_registration: defaultSelfRegistration,
+      default_self_registration: defaultPublic && defaultSelfRegistration,
       save_attendance_date: attendanceEnabled && saveAttendanceDate,
       attendance_date_person_field_id:
         attendanceEnabled && saveAttendanceDate && attendanceDateFieldId ? attendanceDateFieldId : undefined,
@@ -222,24 +222,34 @@ export const EventTypeFormDialog = ({
             )}
           />
           <FormControlLabel
-            control={<Switch checked={defaultPublic} onChange={(_event, checked) => setDefaultPublic(checked)} />}
+            control={
+              <Switch
+                checked={defaultPublic}
+                onChange={(_event, checked) => {
+                  setDefaultPublic(checked);
+                  if (!checked) setDefaultSelfRegistration(false);
+                }}
+              />
+            }
             label={switchLabel(
               'pages.settings.eventTypes.fields.defaultPublic',
               'pages.settings.eventTypes.help.public',
             )}
           />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={defaultSelfRegistration}
-                onChange={(_event, checked) => setDefaultSelfRegistration(checked)}
-              />
-            }
-            label={switchLabel(
-              'pages.settings.eventTypes.fields.defaultSelfRegistration',
-              'pages.settings.eventTypes.help.selfRegistration',
-            )}
-          />
+          {defaultPublic ? (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={defaultSelfRegistration}
+                  onChange={(_event, checked) => setDefaultSelfRegistration(checked)}
+                />
+              }
+              label={switchLabel(
+                'pages.settings.eventTypes.fields.defaultSelfRegistration',
+                'pages.settings.eventTypes.help.selfRegistration',
+              )}
+            />
+          ) : null}
           {attendanceEnabled ? (
             <>
               <FormControlLabel
@@ -340,7 +350,7 @@ export const EventTypeFormDialog = ({
             canUpdateEventType
             canCreatePersonFields={canCreatePersonFields}
             canUpdatePersonFields={canUpdatePersonFields}
-            selfRegistration={defaultSelfRegistration}
+            selfRegistration={defaultPublic && defaultSelfRegistration}
             personFields={personFields}
             onChange={({ typeFields }) => {
               setCustomFields(typeFields);

@@ -101,7 +101,9 @@ export const EventEditorDialog = ({
   const [isPublic, setIsPublic] = useState(event?.is_public ?? initialType?.default_public ?? false);
   const [attendance, setAttendance] = useState(event?.attendance_enabled ?? initialType?.attendance_enabled ?? false);
   const [selfRegistration, setSelfRegistration] = useState(
-    event?.self_registration_enabled ?? initialType?.default_self_registration ?? false,
+    event?.is_public || initialType?.default_public
+      ? (event?.self_registration_enabled ?? initialType?.default_self_registration ?? false)
+      : false,
   );
   const [eventFields, setEventFields] = useState(
     (event?.custom_fields ?? []).filter(({ id }) => !initialTypeFieldIds.has(id)),
@@ -160,7 +162,7 @@ export const EventEditorDialog = ({
     if (!event && !nameTouched) setName(type.name);
     setAttendance(type.attendance_enabled ?? false);
     setIsPublic(type.default_public ?? false);
-    setSelfRegistration(type.default_self_registration ?? false);
+    setSelfRegistration(type.default_public ? (type.default_self_registration ?? false) : false);
     setTypeFields(type.custom_fields ?? []);
     setSaveAttendanceDate(type.save_attendance_date ?? false);
     setAttendanceDateFieldId(type.attendance_date_person_field_id ?? '');
@@ -199,7 +201,7 @@ export const EventEditorDialog = ({
         all_day: allDay,
         is_public: isPublic,
         attendance_enabled: attendance,
-        self_registration_enabled: attendance && selfRegistration,
+        self_registration_enabled: isPublic && selfRegistration,
         custom_fields: [...typeFields, ...eventFields],
         event_fields: eventFields,
         ...(imageOptions.allow_public_url && imageUrl.trim() ? { image_url: imageUrl.trim() } : {}),
@@ -388,14 +390,18 @@ export const EventEditorDialog = ({
             ) : null}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
               <FormControlLabel
-                control={<Switch checked={isPublic} onChange={(_event, checked) => setIsPublic(checked)} />}
+                control={
+                  <Switch
+                    checked={isPublic}
+                    onChange={(_event, checked) => {
+                      setIsPublic(checked);
+                      if (!checked) setSelfRegistration(false);
+                    }}
+                  />
+                }
                 label={t('pages.events.form.public')}
               />
-              <FormControlLabel
-                control={<Switch checked={attendance} onChange={(_event, checked) => setAttendance(checked)} />}
-                label={t('pages.events.form.attendance')}
-              />
-              {attendance ? (
+              {isPublic ? (
                 <FormControlLabel
                   control={
                     <Switch checked={selfRegistration} onChange={(_event, checked) => setSelfRegistration(checked)} />
@@ -403,6 +409,10 @@ export const EventEditorDialog = ({
                   label={t('pages.events.form.selfRegistration')}
                 />
               ) : null}
+              <FormControlLabel
+                control={<Switch checked={attendance} onChange={(_event, checked) => setAttendance(checked)} />}
+                label={t('pages.events.form.attendance')}
+              />
             </Stack>
             {attendance ? (
               <>
@@ -428,18 +438,6 @@ export const EventEditorDialog = ({
                 ) : null}
               </>
             ) : null}
-            {isPublic && attendance && !selfRegistration ? (
-              <Alert
-                severity="warning"
-                action={
-                  <Button color="inherit" onClick={() => setSelfRegistration(true)}>
-                    {t('pages.events.form.allowRegistration')}
-                  </Button>
-                }
-              >
-                {t('pages.events.form.publicAttendanceNotice')}
-              </Alert>
-            ) : null}
           </Stack>
         ) : (
           <EventCustomFieldsEditor
@@ -448,7 +446,7 @@ export const EventEditorDialog = ({
             canUpdateEventType={false}
             canCreatePersonFields={canCreatePersonFields}
             canUpdatePersonFields={canUpdatePersonFields}
-            selfRegistration={selfRegistration}
+            selfRegistration={isPublic && selfRegistration}
             personFields={personFields}
             readOnlyTypeFields
             onChange={({ eventFields: nextEventFields }) => setEventFields(nextEventFields)}
@@ -459,11 +457,7 @@ export const EventEditorDialog = ({
         <Button onClick={onClose} disabled={submitting}>
           {t('form.field.cancel')}
         </Button>
-        <Button
-          variant="contained"
-          onClick={submit}
-          disabled={submitting || (isPublic && attendance && !selfRegistration)}
-        >
+        <Button variant="contained" onClick={submit} disabled={submitting}>
           {t('pages.events.form.save')}
         </Button>
       </DialogActions>

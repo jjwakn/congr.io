@@ -31,7 +31,7 @@ export const NavigationItems = ({ categories, settingsItem, selectedPath, onNavi
     () => categories.find((category) => category.items.some((item) => isSelectedPath(selectedPath, item.path)))?.id,
     [categories, selectedPath],
   );
-  const [expandedCategoryIds, setExpandedCategoryIds] = useState<string[]>([]);
+  const [categoryExpansionOverrides, setCategoryExpansionOverrides] = useState<Record<string, boolean>>({});
 
   const renderItem = (item: DashboardNavigationItem, nested = false, icon = item.icon) => {
     const selected = isSelectedPath(selectedPath, item.path);
@@ -54,7 +54,7 @@ export const NavigationItems = ({ categories, settingsItem, selectedPath, onNavi
       <List disablePadding sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
         {categories.map((category) => {
           const active = category.id === activeCategoryId;
-          const expanded = active || expandedCategoryIds.includes(category.id);
+          const expanded = categoryExpansionOverrides[category.id] ?? active;
 
           if (category.items.length === 1) return renderItem(category.items[0], false, category.icon);
 
@@ -63,11 +63,10 @@ export const NavigationItems = ({ categories, settingsItem, selectedPath, onNavi
               <ListItemButton
                 selected={active}
                 onClick={() =>
-                  setExpandedCategoryIds((current) =>
-                    current.includes(category.id)
-                      ? current.filter((id) => id !== category.id)
-                      : [...current, category.id],
-                  )
+                  setCategoryExpansionOverrides((current) => ({
+                    ...current,
+                    [category.id]: !expanded,
+                  }))
                 }
                 sx={itemButtonSx(active)}
               >

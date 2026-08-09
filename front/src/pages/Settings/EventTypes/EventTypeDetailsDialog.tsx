@@ -72,10 +72,12 @@ export const EventTypeDetailsDialog = ({
             <Switch checked={Boolean(eventType?.default_public)} disabled />
             <Typography>{t('pages.settings.eventTypes.fields.defaultPublic')}</Typography>
           </Stack>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Switch checked={Boolean(eventType?.default_self_registration)} disabled />
-            <Typography>{t('pages.settings.eventTypes.fields.defaultSelfRegistration')}</Typography>
-          </Stack>
+          {eventType?.default_public ? (
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Switch checked={Boolean(eventType?.default_self_registration)} disabled />
+              <Typography>{t('pages.settings.eventTypes.fields.defaultSelfRegistration')}</Typography>
+            </Stack>
+          ) : null}
         </Stack>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <TextField

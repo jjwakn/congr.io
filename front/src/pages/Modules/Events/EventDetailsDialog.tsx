@@ -135,10 +135,12 @@ export const EventDetailsDialog = ({
                 <Switch checked={Boolean(event?.attendance_enabled)} disabled />
                 <Typography>{t('pages.events.form.attendance')}</Typography>
               </Stack>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Switch checked={Boolean(event?.self_registration_enabled)} disabled />
-                <Typography>{t('pages.events.form.selfRegistration')}</Typography>
-              </Stack>
+              {event?.is_public ? (
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Switch checked={Boolean(event?.self_registration_enabled)} disabled />
+                  <Typography>{t('pages.events.form.selfRegistration')}</Typography>
+                </Stack>
+              ) : null}
             </Stack>
             <Stack direction="row" alignItems="center" spacing={1}>
               <Switch checked={Boolean(event?.save_attendance_date)} disabled />
@@ -150,7 +152,7 @@ export const EventDetailsDialog = ({
             eventFields={eventFields}
             typeFields={typeFields}
             canUpdateEventType={false}
-            selfRegistration={Boolean(event?.self_registration_enabled)}
+            selfRegistration={Boolean(event?.is_public && event.self_registration_enabled)}
             personFields={personFields}
             readOnly
             canAddFields={false}
