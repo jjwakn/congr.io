@@ -1,5 +1,7 @@
 {
   "notFound": "Rol no encontrado",
   "notFoundWithId": "Rol no encontrado. ID: {{id}}",
-  "cannotDeleteLastFullAccess": "No puedes eliminar el último rol con acceso total"
+  "cannotDeleteLastFullAccess": "No puedes eliminar el último rol con acceso total",
+  "higherAuthority": "No puedes administrar un rol con autoridad igual o superior.",
+  "invalidPermissions": "Los permisos del rol no son válidos."
 }

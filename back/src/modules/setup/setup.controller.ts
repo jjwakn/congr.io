@@ -1,8 +1,14 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
+import type { Request } from 'express';
 import { I18nLang, I18nService } from 'nestjs-i18n';
-import { BadRequestException, Body, Controller, Get, Post } from '@nestjs/common';
+import { secretsMatch } from 'src/config/security';
+import { BadRequestException, Body, Controller, Get, Headers, Optional, Post, Req } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { SecurityAuditService } from '../security/security-audit.service';
+import { SecurityRateLimitService } from '../security/security-rate-limit.service';
+import { SecurityAuditEvent, SecurityRateLimitScope } from '../security/security.types';
 import { SetupService } from './setup.service';
 import type { IsSetupResponse, SetupResponse } from './setup.types';
 import { SetupPayloadDto, SetupProps } from './setup.types';
@@ -13,6 +19,8 @@ export class SetupController {
   constructor(
     private readonly service: SetupService,
     private readonly i18n: I18nService,
+    private readonly rateLimiter?: SecurityRateLimitService,
+    @Optional() private readonly securityAudit?: SecurityAuditService,
   ) {}
 
   private translate(key: string, lang?: string): string {
@@ -47,8 +55,15 @@ export class SetupController {
   @Post()
   async setup(
     @Body() body: SetupProps & { payload?: string | SetupProps },
+    @Headers('x-bootstrap-secret') bootstrapSecret?: string,
     @I18nLang() lang?: string,
+    @Req() request?: Request,
   ): Promise<SetupResponse> {
+    this.rateLimiter?.assertAllowed(SecurityRateLimitScope.setup, request?.ip ?? 'unavailable');
+    if (!secretsMatch(bootstrapSecret, process.env.SETUP_BOOTSTRAP_SECRET?.trim() ?? '')) {
+      this.securityAudit?.record(SecurityAuditEvent.setupRejected, { reason: 'invalid_secret' });
+      throw new UnauthorizedException(this.translate('errors.setup.invalidBootstrapSecret', lang));
+    }
     const payload = this.parsePayload(body, lang);
 
     if (!payload?.congregation)
@@ -58,6 +73,7 @@ export class SetupController {
     const validationErrors = validateSync(parsedBody, {
       whitelist: true,
       forbidNonWhitelisted: true,
+      validationError: { target: false, value: false },
     });
 
     if (validationErrors.length)
@@ -66,6 +82,6 @@ export class SetupController {
         errors: validationErrors,
       });
 
-    return this.service.setup(parsedBody, lang);
+    return this.service.setup(parsedBody, lang, bootstrapSecret);
   }
 }

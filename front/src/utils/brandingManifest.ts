@@ -5,7 +5,7 @@ export type { BrandingManifest, LogoBackgroundMode } from './brandingManifest.ty
 const MANIFEST_PATH = '/manifest.webmanifest';
 let manifestRequest: Promise<BrandingManifest | null> | null = null;
 
-const isLogoBackgroundMode = (value: unknown): value is LogoBackgroundMode =>
+const isLogoBackgroundMode = (value?: string | null): value is LogoBackgroundMode =>
   value === 'transparent' || value === 'white' || value === 'black';
 
 const fetchBrandingManifest = async (): Promise<BrandingManifest | null> => {

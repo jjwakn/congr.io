@@ -2,7 +2,10 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 type SupportedLanguage = 'en' | 'es';
-type TranslationRecord = Record<string, unknown>;
+type TranslationValue = string | TranslationRecord;
+interface TranslationRecord {
+  [key: string]: TranslationValue;
+}
 type TranslationBundle = Record<string, TranslationRecord>;
 type TranslationLoader = () => Promise<{ default: TranslationBundle }>;
 

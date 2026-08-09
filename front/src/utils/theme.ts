@@ -65,6 +65,7 @@ const components: ThemeOptions['components'] = {
     },
   },
 };
+const noShadows = Array.from({ length: 25 }, () => 'none') as NonNullable<ThemeOptions['shadows']>;
 
 export const DEFAULT_THEME_PALETTE_CONFIG: ThemePaletteConfig = {
   light: {
@@ -81,7 +82,7 @@ export const DEFAULT_THEME_PALETTE_CONFIG: ThemePaletteConfig = {
   },
 };
 
-export const isHexColor = (value: unknown): value is string =>
+export const isHexColor = (value?: string | null): value is string =>
   typeof value === 'string' && HEX_COLOR_REGEX.test(value.trim());
 
 const normalizeModeConfig = (
@@ -129,6 +130,7 @@ export const getTheme = ({ mode, paletteConfig }: { mode: PaletteMode; paletteCo
         paper: modePalette.backgroundPaper,
       },
     },
+    shadows: noShadows,
     components,
   });
 };

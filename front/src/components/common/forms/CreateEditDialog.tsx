@@ -4,7 +4,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   type SxProps,
   type Theme,
   useMediaQuery,
@@ -12,6 +11,7 @@ import {
 } from '@mui/material';
 import { useMemo } from 'react';
 import { CreateEditDialogProps } from './CreateEditDialog.types';
+import { DialogTitleBar } from './DialogTitleBar';
 
 const DEFAULT_CONTENT_SX = {
   mt: 1,
@@ -40,6 +40,7 @@ export const CreateEditDialog = ({
   open,
   mode,
   submitting,
+  submitDisabled = false,
   onClose,
   onSubmit,
   onEnter,
@@ -47,6 +48,7 @@ export const CreateEditDialog = ({
   fullWidth = true,
   mobileFullScreen = true,
   contentSx,
+  extraActions,
   children,
   labels,
 }: CreateEditDialogProps) => {
@@ -71,17 +73,18 @@ export const CreateEditDialog = ({
       fullScreen={mobileFullScreen && isMobile}
       TransitionProps={onEnter ? { onEnter } : undefined}
     >
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitleBar title={title} closeDisabled={submitting} onClose={onClose} />
 
       <DialogContent>
         <Box sx={mergeSx(DEFAULT_CONTENT_SX, contentSx)}>{children}</Box>
       </DialogContent>
 
       <DialogActions>
+        {extraActions ? <Box sx={{ mr: 'auto', display: 'flex', gap: 1 }}>{extraActions}</Box> : null}
         <Button onClick={onClose} disabled={submitting}>
           {labels.cancel}
         </Button>
-        <Button onClick={onSubmit} variant="contained" disabled={submitting}>
+        <Button onClick={onSubmit} variant="contained" disabled={submitting || submitDisabled}>
           {submitLabel}
         </Button>
       </DialogActions>

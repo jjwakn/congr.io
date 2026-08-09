@@ -9,6 +9,7 @@ export enum ModuleAction {
   update = 'update',
   delete = 'delete',
   change_password = 'change_password',
+  lock = 'lock',
 }
 
 export enum Module {
@@ -19,6 +20,14 @@ export enum Module {
   process = 'process',
   event = 'event',
   event_type = 'event_type',
+  person = 'person',
+  person_field = 'person_field',
+  event_attendance = 'event_attendance',
+  event_registration = 'event_registration',
+  service = 'service',
+  service_new_people = 'service_new_people',
+  service_follow_up = 'service_follow_up',
+  service_attendance = 'service_attendance',
 }
 
 export enum Feature {
@@ -27,8 +36,13 @@ export enum Feature {
   Processes = 'processes',
   EventsCalendar = 'events_calendar',
   EventsAttendance = 'events_attendance',
+  PublicEvents = 'public_events',
   Ministries = 'ministries',
   MinistriesCalendar = 'ministries_calendar',
+  Services = 'services',
+  ServicesNewPeople = 'services_new_people',
+  ServicesFollowUp = 'services_follow_up',
+  ServicesAttendance = 'services_attendance',
 }
 //#endregion
 
@@ -55,6 +69,30 @@ export const permission: PermissionType = {
     permissions: CRUD,
   },
   event_type: {
+    permissions: CRUD,
+  },
+  person: {
+    permissions: CRUD,
+  },
+  person_field: {
+    permissions: CRUD,
+  },
+  event_attendance: {
+    permissions: CRUD,
+  },
+  event_registration: {
+    permissions: [...CRUD, ModuleAction.lock],
+  },
+  service: {
+    permissions: CRUD,
+  },
+  service_new_people: {
+    permissions: CRUD,
+  },
+  service_follow_up: {
+    permissions: CRUD,
+  },
+  service_attendance: {
     permissions: CRUD,
   },
 };
@@ -109,13 +147,33 @@ export const FeatureTree: FeatureTreeType = {
     prerequisites: [],
   },
   [Feature.EventsAttendance]: {
+    parent: Feature.EventsCalendar,
     prerequisites: [Feature.EventsCalendar, Feature.Members],
+  },
+  [Feature.PublicEvents]: {
+    parent: Feature.EventsCalendar,
+    prerequisites: [Feature.EventsCalendar],
   },
   [Feature.Ministries]: {
     prerequisites: [Feature.Users, Feature.Members],
   },
   [Feature.MinistriesCalendar]: {
     prerequisites: [Feature.Users, Feature.Members, Feature.Ministries],
+  },
+  [Feature.Services]: {
+    prerequisites: [],
+  },
+  [Feature.ServicesNewPeople]: {
+    parent: Feature.Services,
+    prerequisites: [Feature.Services, Feature.Members],
+  },
+  [Feature.ServicesFollowUp]: {
+    parent: Feature.Services,
+    prerequisites: [Feature.ServicesNewPeople, Feature.Processes],
+  },
+  [Feature.ServicesAttendance]: {
+    parent: Feature.Services,
+    prerequisites: [Feature.Services],
   },
 };
 //#endregion

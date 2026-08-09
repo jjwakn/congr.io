@@ -3,6 +3,10 @@ import { ModuleRowActionsProps } from './ModuleRowActions.types';
 
 const resolveBoolean = <RowType,>(value: boolean | ((row: RowType) => boolean) | undefined, row: RowType): boolean =>
   typeof value === 'function' ? value(row) : Boolean(value);
+const resolveText = <RowType,>(
+  value: string | ((row: RowType) => string) | undefined,
+  row: RowType,
+): string | undefined => (typeof value === 'function' ? value(row) : value);
 
 export const ModuleRowActions = <RowType,>({ row, actions, emptyLabel = '-' }: ModuleRowActionsProps<RowType>) => {
   const visibleActions = actions.filter((action) => !resolveBoolean(action.hidden, row));
@@ -13,7 +17,7 @@ export const ModuleRowActions = <RowType,>({ row, actions, emptyLabel = '-' }: M
         const Icon = action.icon;
 
         return (
-          <Tooltip key={action.id} title={action.label}>
+          <Tooltip key={action.id} title={resolveText(action.tooltip, row) ?? action.label}>
             <span>
               <IconButton
                 size="small"

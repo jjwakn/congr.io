@@ -38,8 +38,8 @@ export class CongregationController {
 
   @PermissionDecorator(Module.congregation, ModuleAction.create)
   @Get('creation-users')
-  creationUsers() {
-    return this.service.listCreationUsers();
+  creationUsers(@Req() request: RequestType) {
+    return this.service.listCreationUsers(getRequestUserIdOrThrow(request));
   }
 
   @PermissionDecorator(Module.congregation, ModuleAction.get)

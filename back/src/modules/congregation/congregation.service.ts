@@ -1,10 +1,17 @@
 import { I18nService } from 'nestjs-i18n';
 import { randomUUID } from 'node:crypto';
+import { hasSharedCongregation, userHasFullAccess } from 'src/utils/administration-policy';
 import { Feature, FeatureTree } from 'src/utils/constants';
 import { isValidTimeZone, normalizeTimeZone } from 'src/utils/datetime';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
 import { DataSource, EntityManager, In, IsNull, Repository } from 'typeorm';
-import { BadRequestException, Injectable, NotAcceptableException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotAcceptableException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
 import { Congregation } from './congregation.entity';
@@ -55,9 +62,8 @@ export class CongregationService {
 
   private async getUserWithCongregations(userId: string) {
     const user = await this.userRepository.findOne({
-      where: { id: userId },
-      withDeleted: true,
-      relations: { congregations: true },
+      where: { id: userId, enabled: true, deleted_at: IsNull(), deleted_by: IsNull() },
+      relations: { congregations: true, roles: true },
     });
     if (!user) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
     return user;
@@ -89,14 +95,16 @@ export class CongregationService {
     };
   }
 
-  async listCreationUsers() {
+  async listCreationUsers(userId: string) {
+    const actor = await this.getUserWithCongregations(userId);
     const users = await this.userRepository.find({
       where: { enabled: true, deleted_at: IsNull() },
-      relations: { roles: true },
+      relations: { congregations: true, roles: true },
       order: { name: 'ASC' },
     });
 
     const result = users
+      .filter((user) => userHasFullAccess(actor) || user.id === actor.id || hasSharedCongregation(actor, user))
       .map((user) => {
         delete user.password;
         return { ...user, roles: (user.roles ?? []).filter(({ enabled }) => enabled) };
@@ -149,7 +157,7 @@ export class CongregationService {
       const congregationRepository = manager.getRepository(Congregation);
       const users = await userRepository.find({
         where: { id: In(selectedUserIds), enabled: true, deleted_at: IsNull() },
-        relations: { congregations: true },
+        relations: { congregations: true, roles: true },
       });
 
       if (users.length !== selectedUserIds.length)
@@ -157,6 +165,12 @@ export class CongregationService {
 
       const createdBy = users.find(({ id }) => id === userId);
       if (!createdBy) throw new NotFoundException(this.i18n.t('errors.user.notFound'));
+      if (
+        !userHasFullAccess(createdBy) &&
+        users.some((user) => user.id !== createdBy.id && !hasSharedCongregation(createdBy, user))
+      ) {
+        throw new ForbiddenException(this.i18n.t('errors.user.invalidRelationship'));
+      }
 
       const created = congregationRepository.create({
         ...congregationData,
@@ -262,6 +276,11 @@ export class CongregationService {
       [congregationId],
     );
     const processIds = processRows.map(({ id }) => id);
+    const eventRows = await manager.query<Array<{ id: string }>>(
+      'SELECT "id" FROM "event" WHERE "congregation_id" = $1 AND "deleted_at" IS NULL',
+      [congregationId],
+    );
+    const eventIds = eventRows.map(({ id }) => id);
     const count = async (table: string, column: string, value: string) => {
       const rows = await manager.query<Array<{ count: number }>>(
         `SELECT COUNT(*)::int AS "count" FROM "${table}" WHERE "${column}" = $1 AND "deleted_at" IS NULL`,
@@ -269,18 +288,29 @@ export class CongregationService {
       );
       return Number(rows[0]?.count ?? 0);
     };
-    const [events, eventTypes, processSteps, configurations] = await Promise.all([
-      count('event', 'congregation_id', congregationId),
-      count('event_type', 'congregation_id', congregationId),
-      processIds.length
-        ? manager
-            .query<
-              Array<{ count: number }>
-            >('SELECT COUNT(*)::int AS "count" FROM "process_step" WHERE "process_id" = ANY($1::uuid[]) AND "deleted_at" IS NULL', [processIds])
-            .then((rows) => Number(rows[0]?.count ?? 0))
-        : Promise.resolve(0),
-      count('congregation_config', 'congregation_id', congregationId),
-    ]);
+    const [events, eventTypes, processSteps, configurations, persons, personFields, eventParticipants, files] =
+      await Promise.all([
+        count('event', 'congregation_id', congregationId),
+        count('event_type', 'congregation_id', congregationId),
+        processIds.length
+          ? manager
+              .query<
+                Array<{ count: number }>
+              >('SELECT COUNT(*)::int AS "count" FROM "process_step" WHERE "process_id" = ANY($1::uuid[]) AND "deleted_at" IS NULL', [processIds])
+              .then((rows) => Number(rows[0]?.count ?? 0))
+          : Promise.resolve(0),
+        count('congregation_config', 'congregation_id', congregationId),
+        count('person', 'congregation_id', congregationId),
+        count('person_field', 'congregation_id', congregationId),
+        eventIds.length
+          ? manager
+              .query<
+                Array<{ count: number }>
+              >('SELECT COUNT(*)::int AS "count" FROM "event_participant" WHERE "event_id" = ANY($1::uuid[]) AND "deleted_at" IS NULL', [eventIds])
+              .then((rows) => Number(rows[0]?.count ?? 0))
+          : Promise.resolve(0),
+        count('stored_file', 'congregation_id', congregationId),
+      ]);
 
     const exclusiveUserIds = userIds.filter((id) => (userCounts.get(id) ?? 0) <= 1);
     const sharedUserIds = userIds.filter((id) => (userCounts.get(id) ?? 0) > 1);
@@ -296,9 +326,13 @@ export class CongregationService {
       processes: processIds.length,
       processSteps,
       configurations,
+      persons,
+      personFields,
+      eventParticipants,
+      files,
     };
 
-    return { preview, exclusiveUserIds, exclusiveLocationIds, processIds };
+    return { preview, userIds, exclusiveUserIds, exclusiveLocationIds, processIds, eventIds };
   }
 
   async getDeletionPreview({ id, userId }: CongregationDeleteProps): Promise<CongregationDeletionPreview> {
@@ -310,7 +344,8 @@ export class CongregationService {
     await this.assertUserCongregation(userId, id);
     return this.dataSource.transaction(async (manager) => {
       const congregationRepository = manager.getRepository(Congregation);
-      const { preview, exclusiveUserIds, exclusiveLocationIds, processIds } = await this.getDeletionData(manager, id);
+      const { preview, userIds, exclusiveUserIds, exclusiveLocationIds, processIds, eventIds } =
+        await this.getDeletionData(manager, id);
       const softDeleteBy = async (table: string, column: string, value: string | string[]) => {
         const isList = Array.isArray(value);
         await manager.query(
@@ -319,6 +354,7 @@ export class CongregationService {
         );
       };
 
+      if (eventIds.length) await softDeleteBy('event_participant', 'event_id', eventIds);
       await softDeleteBy('event', 'congregation_id', id);
       await softDeleteBy('event_type', 'congregation_id', id);
 
@@ -327,7 +363,16 @@ export class CongregationService {
       }
       await softDeleteBy('process', 'congregation_id', id);
       await softDeleteBy('congregation_config', 'congregation_id', id);
+      await softDeleteBy('person', 'congregation_id', id);
+      await softDeleteBy('person_field', 'congregation_id', id);
+      await softDeleteBy('stored_file', 'congregation_id', id);
 
+      if (userIds.length) {
+        await manager.query(
+          'UPDATE "user" SET "session_version" = "session_version" + 1 WHERE "id" = ANY($1::uuid[])',
+          [userIds],
+        );
+      }
       await manager.query('DELETE FROM "user_congregation" WHERE "congregation_id" = $1', [id]);
       await manager.query('DELETE FROM "congregation_location" WHERE "congregation_id" = $1', [id]);
 

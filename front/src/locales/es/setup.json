@@ -3,7 +3,8 @@
   "error": {
     "notFound": "El sistema no esta configurado. Si crees que es un error puedes reportarlo",
     "featuresNotFound": "Error grave, características no encontradas",
-    "saveFailed": "No se pudo completar la configuración"
+    "saveFailed": "No se pudo completar la configuración",
+    "bootstrapSecretLength": "El secreto de inicio debe contener al menos 32 caracteres"
   },
   "log": {
     "featuresError": "Error al cargar características",
@@ -29,6 +30,8 @@
     "user": "Usuario principal",
     "userSubtitle": "El usuario principal que administrará el sistema. Podemos añadir más o editarlo luego",
     "fullAccessRoleName": "Nombre Rol",
+    "bootstrapSecret": "Secreto de inicio",
+    "bootstrapSecretHelp": "Ingresa el secreto de inicio configurado en el servidor.",
     "confirm": "Confirmar",
     "confirmSubtitle": "Confirma la configuración de tu {{type}}"
   },

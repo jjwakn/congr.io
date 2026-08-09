@@ -1,4 +1,4 @@
-export type PermissionAction = 'get' | 'create' | 'update' | 'delete' | 'change_password';
+export type PermissionAction = 'get' | 'create' | 'update' | 'delete' | 'change_password' | 'lock';
 
 export type PermissionMap = {
   [sectionId: string]: PermissionAction[];

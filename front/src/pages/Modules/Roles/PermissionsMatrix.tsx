@@ -1,6 +1,6 @@
 import {
-  Checkbox,
   Paper,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -45,7 +45,7 @@ export const PermissionsMatrix = ({ actions, disabled, value, sections, onToggle
                 return (
                   <TableCell key={`${section.id}-${action}`} align="center">
                     {isSupported ? (
-                      <Checkbox
+                      <Switch
                         size="small"
                         checked={isChecked}
                         disabled={disabled}

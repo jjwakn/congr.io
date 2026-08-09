@@ -4,4 +4,6 @@ node_modules
 .env
 back/dist
 front/dist
+storage
+back/storage
 .idea

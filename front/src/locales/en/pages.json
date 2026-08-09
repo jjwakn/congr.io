@@ -10,15 +10,43 @@
     "logout": "Logout",
     "settings": "Settings",
     "switchCongregation": "Switch congregation",
-    "congregationSwitchFailed": "Could not switch congregations."
+    "congregationSwitchFailed": "Could not switch congregations.",
+    "toggleFavorite": "Add or remove this section from quick access",
+    "categories": {
+      "events": "Events",
+      "services": "Services",
+      "people": "People",
+      "flows": "Flows",
+      "system": "System"
+    }
   },
   "modules": {
     "common": {
       "refresh": "Refresh",
       "search": "Search",
-      "rowsPerPage": "Rows per page",
+      "id": "ID",
+      "rowsPerPage": "Items per page",
       "view": "View",
-      "emptyValue": "Not provided"
+      "actions": "Actions",
+      "emptyValue": " - ",
+      "columns": "Columns",
+      "filter": "Filter",
+      "filterAll": "All",
+      "filterYes": "Yes",
+      "filterNo": "No",
+      "filterFrom": "From",
+      "filterTo": "To",
+      "clearFilter": "Clear filter",
+      "enableConfirm": "Enable this item?",
+      "disableConfirm": "Disable this item?",
+      "audit": {
+        "created_at": "Created at",
+        "updated_at": "Updated at",
+        "deleted_at": "Deleted at",
+        "created_by": "Created by",
+        "updated_by": "Updated by",
+        "deleted_by": "Deleted by"
+      }
     },
     "users": {
       "title": "Users",
@@ -32,12 +60,15 @@
         "save": "Save changes",
         "changeOwnPassword": "Change password",
         "setTemporaryPassword": "Set temporary password",
-        "savePassword": "Save password"
+        "savePassword": "Save password",
+        "linkPerson": "Link person"
       },
       "columns": {
         "name": "Name",
         "username": "Username",
         "enabled": "Enabled",
+        "person": "Person",
+        "roles": "Roles",
         "actions": "Actions"
       },
       "form": {
@@ -50,7 +81,8 @@
         "locationsHint": "Locations are limited to the selected congregation context.",
         "noRoles": "No roles available.",
         "noCongregations": "No congregations available.",
-        "noLocations": "No locations available."
+        "noLocations": "No locations available.",
+        "person": "Person"
       },
       "dialogs": {
         "createTitle": "Create user",
@@ -100,7 +132,8 @@
         "create": "Create",
         "update": "Update",
         "delete": "Delete",
-        "change_password": "Change password"
+        "change_password": "Change password",
+        "lock": "Lock"
       },
       "form": {
         "fullAccess": "Full access",
@@ -122,9 +155,14 @@
           "role": "Roles",
           "congregation": "Congregation",
           "configuration": "Settings",
-          "process": "Processes",
+          "process": "Flows",
           "event": "Events",
-          "event_type": "Event Types"
+          "event_type": "Event Types",
+          "event_field": "Event Fields",
+          "person": "Persons",
+          "person_field": "Person Fields",
+          "event_attendance": "Event Attendance",
+          "event_registration": "Event Registration"
         }
       },
       "success": {
@@ -148,7 +186,10 @@
     "tabs": {
       "congregations": "Congregation Settings",
       "ui": "UI",
-      "eventTypes": "Event Types"
+      "customFields": "Custom Fields",
+      "eventTypes": "Event Types",
+      "personFields": "Person Fields",
+      "deployment": "Deployment"
     },
     "congregation": {
       "title": "Congregation Settings",
@@ -194,7 +235,16 @@
       "paletteLoading": "Loading color palette...",
       "editTabs": {
         "info": "Info",
-        "palette": "Palette"
+        "palette": "Theme"
+      },
+      "maxFavorites": "Maximum quick access items",
+      "maxFavoritesHelp": "Choose how many section shortcuts users can keep in the header.",
+      "branding": {
+        "title": "Congregation branding",
+        "publicNotice": "Congregation logos are public so they can appear on public event pages.",
+        "small": "Upload small logo",
+        "big": "Upload large logo",
+        "uploading": "Uploading..."
       },
       "modules": {
         "title": "Available modules",
@@ -203,6 +253,7 @@
       },
       "delete": {
         "action": "Delete",
+        "lastCongregationTooltip": "The last congregation cannot be deleted.",
         "title": "Delete {{name}}",
         "dataLossWarning": "Deleting this congregation permanently removes its congregation-owned information. This action cannot be undone.",
         "previewDescription": "The following records will be deleted or detached:",
@@ -223,7 +274,11 @@
           "eventTypes": "{{count}} event types will be deleted",
           "processes": "{{count}} processes will be deleted",
           "processSteps": "{{count}} process steps will be deleted",
-          "configurations": "{{count}} configuration records will be deleted"
+          "configurations": "{{count}} configuration records will be deleted",
+          "persons": "{{count}} persons will be deleted",
+          "personFields": "{{count}} person fields will be deleted",
+          "eventParticipants": "{{count}} event registrations will be deleted",
+          "files": "{{count}} stored files will be deleted"
         }
       }
     },
@@ -240,6 +295,25 @@
       "english": "English",
       "spanish": "Spanish"
     },
+    "interface": {
+      "browser": "Browser",
+      "time24": "24 hours",
+      "time12": "AM/PM",
+      "paginationTitle": "Items per page",
+      "paginationDescription": "Set a default and optional section-specific page sizes for your account.",
+      "defaultPageSize": "Default",
+      "resetToDefault": "Reset to 50",
+      "section": "Section",
+      "itemsPerPage": "Items per page",
+      "sidebarTitle": "Sidebar order",
+      "sidebarDescription": "Reorder visible sections. Settings always remains at the bottom.",
+      "sortAlphabetically": "Sort alphabetically"
+    },
+    "deployment": {
+      "description": "Review deployment-time branding and file storage configuration.",
+      "branding": "Branding setup",
+      "files": "File storage setup"
+    },
     "lightMode": "Light Mode Palette",
     "darkMode": "Dark Mode Palette",
     "fields": {
@@ -251,7 +325,40 @@
     "actions": {
       "save": "Save",
       "reset": "Reset",
-      "discard": "Discard"
+      "discard": "Discard",
+      "preview": "Preview"
+    },
+    "palettePreview": {
+      "navbarTitle": "{{name}} · Preview",
+      "title": "{{mode}} preview",
+      "light": "Light theme",
+      "dark": "Dark theme",
+      "user": "Preview",
+      "navAction": "Members",
+      "nextEvent": "Next event",
+      "eventTime": "Sunday, 10:00",
+      "summary": "Activity",
+      "calendar": "Calendar",
+      "month": "March",
+      "days": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      },
+      "events": {
+        "service": "Service",
+        "group": "Group",
+        "outreach": "Outreach"
+      },
+      "chips": {
+        "today": "Today",
+        "registered": "Registered",
+        "pending": "Pending"
+      }
     },
     "frontendVersion": "Frontend version: {{version}}",
     "success": {
@@ -277,7 +384,25 @@
         "description": "Description",
         "enabled": "Enabled",
         "enabledHint": "Disabled event types cannot be selected for new events.",
+        "attendance": "Capture attendance",
+        "defaultPublic": "Public",
+        "defaultSelfRegistration": "Self-registration",
+        "defaultStartTime": "Default start time",
+        "defaultTime": "Default time",
+        "defaultDuration": "Default duration in minutes",
+        "icon": "Icon",
+        "color": "Calendar color",
+        "customFieldsHelp": "These fields are added when an event uses this event type.",
         "actions": "Actions"
+      },
+      "tabs": {
+        "info": "Info",
+        "customFields": "Custom fields"
+      },
+      "help": {
+        "attendance": "Enables attendance capture for events created with this type.",
+        "public": "Makes events public when this type is selected.",
+        "selfRegistration": "Allows people to register themselves when public registration is open."
       },
       "dialogs": {
         "createTitle": "Create event type",
@@ -297,6 +422,407 @@
         "saveFailed": "Could not save the event type.",
         "deleteFailed": "Could not delete the event type."
       }
+    }
+  },
+  "files": {
+    "title": "File storage",
+    "description": "Choose one storage provider with environment variables. Only status is shown here.",
+    "selected": "Selected provider",
+    "configured": "Configured correctly",
+    "notConfigured": "Configuration incomplete",
+    "adapterUnavailable": "This provider is documented for deployment planning, but its upload adapter is not enabled in this build.",
+    "missing": "Missing variables: {{variables}}",
+    "loadFailed": "Could not load file provider status.",
+    "accessDenied": "Full access is required to configure file storage.",
+    "providers": {
+      "local": {
+        "title": "Local storage",
+        "instructions": "Set FILE_STORAGE_PROVIDER=local and optionally FILE_STORAGE_PATH. Mount that path as a persistent Docker volume in production."
+      },
+      "url": {
+        "title": "Public URL",
+        "instructions": "Set FILE_STORAGE_PROVIDER=url and FILE_PUBLIC_BASE_URL when images are hosted externally."
+      },
+      "aws": {
+        "title": "Amazon S3",
+        "instructions": "Set the shared bucket, region, access key, and secret variables for an S3-compatible bucket."
+      },
+      "gcp": {
+        "title": "Google Cloud",
+        "instructions": "Set the shared bucket, project, and credentials variables for Cloud Storage."
+      },
+      "onedrive": {
+        "title": "OneDrive",
+        "instructions": "Set the drive folder, client, secret, and tenant variables for Microsoft Graph."
+      },
+      "google_drive": {
+        "title": "Google Drive",
+        "instructions": "Set the drive folder and credentials variables for Google Drive."
+      }
+    }
+  },
+  "publicEvents": {
+    "title": "Events",
+    "congregationRequired": "A congregation is required to list public events.",
+    "loadFailed": "Could not load public events.",
+    "registration": {
+      "title": "Register for this event",
+      "submit": "Register",
+      "success": "Your registration was received."
+    }
+  },
+  "events": {
+    "title": "Events",
+    "calendar": "Calendar",
+    "viewDay": "View day",
+    "today": "Today",
+    "filter": "Filter event types",
+    "previous": "Previous",
+    "next": "Next",
+    "selectDate": "Select date",
+    "refresh": "Refresh calendar",
+    "create": "Create event",
+    "loading": "Loading events...",
+    "empty": "No events found.",
+    "views": { "day": "Day", "week": "Week", "month": "Month" },
+    "actions": {
+      "viewDay": "View day",
+      "create": "Create event",
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "addToCalendar": "Add to calendar",
+      "share": "Copy link"
+    },
+    "form": {
+      "createTitle": "Create event",
+      "editTitle": "Edit event",
+      "name": "Event name",
+      "type": "Event type",
+      "newType": "Create event type",
+      "description": "Description",
+      "start": "Starts",
+      "end": "Ends",
+      "startDate": "Start date",
+      "startTime": "Start time",
+      "endDate": "End date",
+      "endTime": "End time",
+      "tabs": { "details": "Details", "fields": "Fields" },
+      "timezone": "Times use {{timezone}}",
+      "dropImage": "Drop an image here or select one",
+      "publicImageUrl": "Public image URL",
+      "allDay": "All day",
+      "public": "Public event",
+      "attendance": "Capture attendance",
+      "selfRegistration": "Allow self-registration",
+      "applyAttendanceToType": "Use this attendance setting for future events of this type",
+      "allowRegistration": "Allow self-registration",
+      "saveAttendanceDate": "Save the attendance date on the person",
+      "attendanceDateField": "Person date field",
+      "publicAttendanceNotice": "A public attendance event must allow self-registration or be changed before saving. Only fields marked for users are shown.",
+      "required": "Complete the required event fields.",
+      "invalidImage": "Select a browser-compatible image.",
+      "save": "Save event"
+    },
+    "fields": {
+      "typeTitle": "Person fields captured",
+      "eventTitle": "Additional person fields captured",
+      "capturedHelp": "These person fields are shown when a person registers or is added to this event.",
+      "label": "Field label",
+      "type": "Field type",
+      "options": "Options",
+      "required": "Required",
+      "userFillable": "Visible on self-registration",
+      "allEvents": "Use for every event of this type",
+      "personField": "Save value to person field",
+      "doNotSave": "Do not save to person",
+      "linkPersonField": "Link person field",
+      "linkPersonFieldHelp": "When enabled, this event field uses the selected person field type and options.",
+      "createPersonFieldFromThis": "Create person field from this field",
+      "reusableField": "Reusable event field",
+      "selectReusable": "Select a reusable field",
+      "add": "Add field",
+      "addNew": "Add new field",
+      "types": {
+        "text": "Text",
+        "paragraph": "Paragraph",
+        "number": "Number",
+        "yes_no": "Yes/No",
+        "options": "Options",
+        "date": "Date",
+        "switch": "Yes/No",
+        "single_option": "One option",
+        "multiple_options": "Multiple options"
+      }
+    },
+    "delete": { "title": "Delete event", "message": "Delete this event and its congregation-owned data?" },
+    "success": { "saved": "Event saved.", "deleted": "Event deleted.", "linkCopied": "Event link copied." },
+    "errors": {
+      "load": "Could not load events.",
+      "types": "Could not load event types.",
+      "save": "Could not save the event.",
+      "delete": "Could not delete the event."
+    }
+  },
+  "persons": {
+    "title": "Persons",
+    "fieldsTitle": "Custom person fields",
+    "create": "Create person",
+    "edit": "Edit",
+    "save": "Save person",
+    "loading": "Loading persons...",
+    "empty": "No persons found.",
+    "loadFailed": "Could not load persons.",
+    "saved": "Person saved.",
+    "createdWithCode": "Person created with code {{code}}.",
+    "deleteMessage": "Delete this item? Existing values are retained when deleting a custom field.",
+    "deleteFieldMessage": "Delete {{name}}? Existing values are retained.",
+    "tabs": {
+      "persons": "Persons",
+      "fields": "Custom fields",
+      "details": "Details",
+      "flows": "Flows",
+      "codes": "Code history"
+    },
+    "actions": { "linkUser": "Link system user" },
+    "code": {
+      "regenerate": "Generate a new code",
+      "pendingRegeneration": "A new code will be generated when saved",
+      "regenerateTitle": "Generate a new person code?",
+      "regenerateMessage": "The last name changed. Do you want to generate a new code and keep the old code in history?",
+      "regenerateConfirm": "Generate new code",
+      "keepCurrent": "Keep current code",
+      "createdTitle": "New person code"
+    },
+    "flowsEmpty": "No flows are available for this person.",
+    "fields": {
+      "code": "Code",
+      "firstName": "First name",
+      "middleName": "Middle name",
+      "lastName": "Last name",
+      "secondLastName": "Second last name",
+      "marriedName": "Married name",
+      "phone": "Phone",
+      "birthdate": "Birthdate",
+      "age": "Age",
+      "email": "Email",
+      "user": "System user",
+      "ageCalculated": "Age is calculated from the birthdate."
+    },
+    "fieldsCrud": {
+      "create": "Create custom field",
+      "edit": "Edit custom field",
+      "label": "Label",
+      "type": "Type",
+      "required": "Required",
+      "options": "Options",
+      "conditions": "Conditions",
+      "allowMultiple": "Allow multiple selection",
+      "addOption": "Add option",
+      "conditionField": "Field",
+      "conditionOperator": "Condition",
+      "conditionValue": "Value",
+      "addCondition": "Add condition",
+      "calculatedTooltip": "This value is conditionally calculated and cannot be edited manually.",
+      "operators": {
+        "notEmpty": "Is not empty",
+        "empty": "Is empty",
+        "equals": "Equals",
+        "notEquals": "Does not equal",
+        "contains": "Contains",
+        "startsWith": "Starts with",
+        "endsWith": "Ends with",
+        "greaterThan": "Greater than",
+        "greaterOrEqual": "Greater than or equal",
+        "lessThan": "Less than",
+        "lessOrEqual": "Less than or equal",
+        "isTrue": "Is true",
+        "isFalse": "Is false"
+      },
+      "created": "Custom field created.",
+      "saved": "Custom field saved.",
+      "deleted": "Custom field deleted.",
+      "loadFailed": "Could not load custom fields.",
+      "saveFailed": "Could not save the custom field."
+    },
+    "fieldTypes": {
+      "text": "Text",
+      "paragraph": "Paragraph",
+      "number": "Number",
+      "yes_no": "Yes/No",
+      "options": "Options",
+      "switch": "Yes/No",
+      "single_option": "One option",
+      "multiple_options": "Multiple options",
+      "date": "Date"
+    }
+  },
+  "attendance": {
+    "title": "Event Attendance",
+    "event": "Event",
+    "person": "Person",
+    "add": "Add attendee",
+    "addMissingEvent": "Add missing event",
+    "attended": "Attended",
+    "viewPeople": "View attendees",
+    "editPeople": "Edit attendees",
+    "pastEvent": "Past event",
+    "pastEventsEmpty": "No past events found.",
+    "selectPastEventTitle": "Select event for attendance",
+    "createPerson": "Create person",
+    "loading": "Loading attendance events...",
+    "empty": "No attendance events found.",
+    "peopleEmpty": "No attendees found.",
+    "noCurrentEvent": "No attendance event is active right now.",
+    "publicSubmission": "Public submission",
+    "error": "Could not update attendance.",
+    "deleted": "Attendance capture deleted.",
+    "deleteFailed": "Could not delete attendance capture.",
+    "deleteAction": "Clear attendance",
+    "deleteTitle": "Delete attendance capture",
+    "deleteMessage": "Remove the attendance marks for {{name}}? The event will stay available."
+  },
+  "registration": {
+    "title": "Event Registration",
+    "today": "Today",
+    "history": "History",
+    "register": "Register person",
+    "open": "Open registration",
+    "lock": "Lock registration",
+    "unlock": "Unlock registration",
+    "addMissingEvent": "Add missing event",
+    "viewPeople": "View registered people",
+    "editPeople": "Edit registered people",
+    "pastEvent": "Past event",
+    "pastEventsEmpty": "No past events found.",
+    "selectPastEventTitle": "Select event for registration",
+    "loading": "Loading registration events...",
+    "empty": "No registration events found.",
+    "peopleEmpty": "No registered people found.",
+    "loadFailed": "Could not load registration events.",
+    "favoriteType": "Quick access to the latest event of this type",
+    "favoriteTypeLabel": "{{type}} registration",
+    "noUpcoming": "No upcoming event exists for this event type.",
+    "createEvent": "Create event",
+    "people": "Registered people",
+    "possiblePerson": "Possible match: {{name}}",
+    "confirmMatch": "Confirm person match",
+    "createPerson": "Create a new person from this submission",
+    "deleted": "Registration capture deleted.",
+    "deleteFailed": "Could not delete registration capture.",
+    "deleteAction": "Clear registration",
+    "deleteTitle": "Delete registration capture",
+    "deleteMessage": "Remove all registered people for {{name}}? The event will stay available."
+  },
+  "services": {
+    "title": "Services",
+    "create": "Create service",
+    "edit": "Edit service",
+    "view": "View service",
+    "loading": "Loading services...",
+    "empty": "No services found.",
+    "saved": "Service saved.",
+    "deleted": "Service deleted.",
+    "loadFailed": "Could not load services.",
+    "saveFailed": "Could not save the service.",
+    "deleteTitle": "Delete service",
+    "deleteMessage": "Delete {{name}}?",
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "location": "Location",
+      "dayOfWeek": "Day of week",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "attendanceGroups": "Attendance groups",
+      "groupLabel": "Group name",
+      "groupColor": "Color",
+      "defaultAdults": "Adults",
+      "defaultKids": "Kids",
+      "addGroup": "Add group",
+      "active": "Active"
+    },
+    "days": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "newPeople": {
+      "title": "New People",
+      "today": "Today",
+      "history": "History",
+      "create": "Create group",
+      "edit": "Edit group",
+      "service": "Service",
+      "date": "Date",
+      "notes": "Notes",
+      "people": "People",
+      "addPerson": "Add person",
+      "loading": "Loading new people...",
+      "empty": "No new people groups found.",
+      "saved": "New people group saved.",
+      "deleted": "New people group deleted.",
+      "deleteTitle": "Delete new people group",
+      "deleteMessage": "Delete this new people group?",
+      "noCurrent": "No service is active or later today."
+    },
+    "followUp": {
+      "title": "Follow-up",
+      "firstVisit": "First visit",
+      "person": "Person",
+      "phone": "Phone",
+      "status": "Status",
+      "pending": "Pending",
+      "completed": "Completed",
+      "loading": "Loading follow-up...",
+      "empty": "No follow-up records found."
+    },
+    "attendance": {
+      "title": "Service Attendance",
+      "today": "Today",
+      "history": "History",
+      "service": "Service",
+      "date": "Date",
+      "count": "Count",
+      "loading": "Loading service attendance...",
+      "empty": "No service attendance records found.",
+      "noCurrent": "No service is active or later today.",
+      "saved": "Attendance updated.",
+      "error": "Could not update attendance."
+    }
+  },
+  "flows": {
+    "title": "Flows",
+    "create": "Create flow",
+    "edit": "Edit",
+    "description": "Description",
+    "steps": "Steps",
+    "loading": "Loading flows...",
+    "empty": "No flows found.",
+    "loadFailed": "Could not load flows.",
+    "saved": "Flow saved.",
+    "saveFailed": "Could not save the flow.",
+    "deleteTitle": "Delete flow",
+    "deleteMessage": "Delete this flow and disable its generated event types?",
+    "editor": {
+      "createTitle": "Create flow",
+      "editTitle": "Edit flow",
+      "unnamedStep": "Unnamed step",
+      "required": "Name the flow and every step.",
+      "addStep": "Add step",
+      "addFollowingStep": "Add following step",
+      "attachEventType": "Attach event type",
+      "generatedEventType": "Step event type",
+      "generatedEventTypeHelp": "Each active step has a generated event type with the same name.",
+      "stepEnabled": "Active step and event type",
+      "completePreviousSteps": "Mark previous steps as completed",
+      "stepName": "Step name",
+      "stepDescription": "Step description",
+      "deleteStep": "Delete step"
     }
   }
 }

@@ -1,0 +1,7 @@
+{
+  "notFound": "No se encontró el registro del evento.",
+  "invalidRegistration": "Completa los campos requeridos del registro.",
+  "personUpdatesNotAllowed": "El acceso de participantes no puede modificar campos no relacionados de la persona.",
+  "registrationLimitReached": "Este evento no puede aceptar más registros públicos.",
+  "duplicateRegistration": "Ya existe un registro con este correo o teléfono para este evento."
+}

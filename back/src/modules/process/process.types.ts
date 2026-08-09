@@ -41,6 +41,17 @@ export class ProcessStepDto {
   @IsOptional()
   id?: string;
 
+  @ApiProperty({ required: false, format: 'uuid' })
+  @IsUUID('4')
+  @IsOptional()
+  flow_key?: string;
+
+  @ApiProperty({ required: false, type: [String], format: 'uuid' })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  next_step_keys?: string[];
+
   @ApiProperty({ example: 1 })
   @Type(() => Number)
   @IsInt()
@@ -64,6 +75,12 @@ export class ProcessStepDto {
   @IsBoolean()
   @IsOptional()
   enabled?: boolean;
+
+  @ApiProperty({ required: false, example: false })
+  @Type(() => Boolean)
+  @IsBoolean()
+  @IsOptional()
+  complete_previous_steps?: boolean;
 }
 
 export class ProcessDto {

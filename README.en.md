@@ -18,6 +18,13 @@ Before starting, ensure you have the following ready:
 4. **Deploy the backend**
 5. **Set environment variables** in the frontend (`.env`)
 6. **Deploy the frontend**
+7. **Setup Data** (event types, roles, users)
+
+### File storage
+
+The backend uses local storage by default. Set `FILE_STORAGE_PROVIDER=local` and mount
+`FILE_STORAGE_PATH` as a persistent Docker volume. The `/files` route shows status and setup
+instructions for every available provider.
 
 ---
 

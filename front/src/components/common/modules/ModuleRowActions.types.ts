@@ -4,6 +4,7 @@ import type { ElementType, ReactNode } from 'react';
 export interface ModuleRowAction<RowType> {
   id: string;
   label: string;
+  tooltip?: string | ((row: RowType) => string);
   icon: ElementType<SvgIconProps>;
   onClick: (row: RowType) => void;
   disabled?: boolean | ((row: RowType) => boolean);

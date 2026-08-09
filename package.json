@@ -1,6 +1,6 @@
 {
   "name": "congr.io",
-  "version": "0.0.17",
+  "version": "0.0.27",
   "private": true,
   "license": "Apache-2.0",
   "workspaces": [

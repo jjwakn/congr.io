@@ -1,64 +1,109 @@
-import { CommonController } from 'src/common/common.controller';
 import type { RequestType } from 'src/common/common.types';
 import { PermissionDecorator, PermissionGuard } from 'src/modules/permission/permission.guard';
 import { Module, ModuleAction } from 'src/utils/constants';
 import { getRequestUserIdOrThrow } from 'src/utils/request';
-import { Body, Controller, Param, ParseUUIDPipe, Post, Put, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
-import { User } from './user.entity';
 import { UserService } from './user.service';
-import {
-  UserChangeOwnPasswordDto,
-  UserCompleteTemporaryPasswordDto,
-  UserGetByIdProps,
-  UserQuery,
-  UserSetTemporaryPasswordDto,
-  UserValidateProps,
-} from './user.types';
+import { UserCreateDto, UserPreferencesDto, UserQuery, UserSetTemporaryPasswordDto, UserUpdateDto } from './user.types';
 
 @ApiTags('user')
 @Controller('user')
-export class UserController extends CommonController<User, UserQuery, UserGetByIdProps> {
-  protected module = Module.user;
+export class UserController {
+  constructor(private readonly service: UserService) {}
 
-  constructor(protected readonly service: UserService) {
-    super();
-  }
-
-  @UseGuards(AuthGuard)
-  @Post('/validate')
-  @ApiBody({ type: UserValidateProps })
-  async validate(@Body() data: UserValidateProps) {
-    return this.service.validate(data);
-  }
-
-  @UseGuards(AuthGuard)
-  @Put('/me/password')
-  @ApiBody({ type: UserChangeOwnPasswordDto })
-  async changeOwnPassword(
-    @Body(new ValidationPipe({ transform: true, whitelist: true }))
-    data: UserChangeOwnPasswordDto,
+  @UseGuards(AuthGuard, PermissionGuard)
+  @PermissionDecorator(Module.user, ModuleAction.get)
+  @Get()
+  list(
+    @Query(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })) query: UserQuery,
     @Req() request: RequestType,
   ) {
-    return this.service.changeOwnPassword({
+    return this.service.list({
+      query,
+      userId: getRequestUserIdOrThrow(request),
+      congregationId: request.headers['x-congregation-id'],
+    });
+  }
+
+  @UseGuards(AuthGuard, PermissionGuard)
+  @PermissionDecorator(Module.user, ModuleAction.get)
+  @Get(':id')
+  get(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() request: RequestType) {
+    return this.service.get({
+      id,
+      userId: getRequestUserIdOrThrow(request),
+      congregationId: request.headers['x-congregation-id'],
+    });
+  }
+
+  @UseGuards(AuthGuard, PermissionGuard)
+  @PermissionDecorator(Module.user, ModuleAction.create)
+  @Post()
+  create(
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })) data: UserCreateDto,
+    @Req() request: RequestType,
+  ) {
+    return this.service.create({
       data,
       userId: getRequestUserIdOrThrow(request),
     });
   }
 
-  @UseGuards(AuthGuard)
-  @Put('/me/temporary-password')
-  @ApiBody({ type: UserCompleteTemporaryPasswordDto })
-  async completeTemporaryPassword(
-    @Body(new ValidationPipe({ transform: true, whitelist: true }))
-    data: UserCompleteTemporaryPasswordDto,
+  @UseGuards(AuthGuard, PermissionGuard)
+  @PermissionDecorator(Module.user, ModuleAction.update)
+  @Put(':id')
+  update(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })) data: UserUpdateDto,
     @Req() request: RequestType,
   ) {
-    return this.service.completeTemporaryPassword({
+    return this.service.update({
+      id,
       data,
       userId: getRequestUserIdOrThrow(request),
+      congregationId: request.headers['x-congregation-id'],
     });
+  }
+
+  @UseGuards(AuthGuard, PermissionGuard)
+  @PermissionDecorator(Module.user, ModuleAction.delete)
+  @Delete(':id')
+  remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() request: RequestType) {
+    return this.service.remove({
+      id,
+      userId: getRequestUserIdOrThrow(request),
+      congregationId: request.headers['x-congregation-id'],
+    });
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/me/preferences')
+  preferences(@Req() request: RequestType) {
+    return this.service.getPreferences(getRequestUserIdOrThrow(request));
+  }
+
+  @UseGuards(AuthGuard)
+  @Put('/me/preferences')
+  updatePreferences(
+    @Body(new ValidationPipe({ transform: true, whitelist: true })) data: UserPreferencesDto,
+    @Req() request: RequestType,
+  ) {
+    return this.service.updatePreferences({ data, userId: getRequestUserIdOrThrow(request) });
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
@@ -75,6 +120,7 @@ export class UserController extends CommonController<User, UserQuery, UserGetByI
       id,
       data,
       userId: getRequestUserIdOrThrow(request),
+      congregationId: request.headers['x-congregation-id'],
     });
   }
 }

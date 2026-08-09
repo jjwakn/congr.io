@@ -12,5 +12,10 @@
   "currentPasswordRequired": "Current password is required.",
   "passwordRequired": "Password is required.",
   "passwordConfirmationRequired": "Password confirmation is required.",
-  "passwordConfirmationMismatch": "The password confirmation does not match."
+  "passwordConfirmationMismatch": "The password confirmation does not match.",
+  "passwordTooShort": "The password must contain at least 12 characters.",
+  "passwordTooLong": "The password cannot contain more than 72 characters.",
+  "outsideCongregation": "You cannot manage a user outside your congregation.",
+  "higherAuthority": "You cannot manage a user with equal or higher authority.",
+  "invalidRelationship": "The selected relationship is outside your authorized scope."
 }

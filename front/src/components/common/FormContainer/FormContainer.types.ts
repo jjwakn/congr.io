@@ -3,7 +3,7 @@ import { FieldValues, UseFormReturn } from 'react-hook-form';
 
 export interface FormContainerProps<FormData extends FieldValues> {
   children: ReactNode;
-  form: UseFormReturn<FormData, unknown, FormData>;
+  form: UseFormReturn<FormData, object, FormData>;
   onSubmit: (data: FormData) => void;
   onCancel?: () => void;
   loading?: boolean;

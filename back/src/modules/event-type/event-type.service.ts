@@ -1,16 +1,21 @@
 import { I18nService } from 'nestjs-i18n';
+import { randomUUID } from 'node:crypto';
 import { cleanColumns, findWithFilters } from 'src/utils/query';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { Injectable, NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getUserCongregationContext } from '../../utils/congregation-context';
 import { Congregation } from '../congregation/congregation.entity';
 import { Event } from '../event/event.entity';
+import type { FieldCondition } from '../person-field/person-field.entity';
+import { PersonField } from '../person-field/person-field.entity';
 import { ProcessStep } from '../process/process-step.entity';
 import { User } from '../user/user.entity';
 import { EventType } from './event-type.entity';
 import {
   EventTypeCreateProps,
+  EventTypeCustomField,
+  EventTypeCustomFieldDto,
   EventTypeDeleteProps,
   EventTypeDto,
   EventTypeGetProps,
@@ -18,6 +23,22 @@ import {
   EventTypeQuery,
   EventTypeUpdateProps,
 } from './event-type.types';
+
+interface NormalizedEventType {
+  name: string;
+  description: string;
+  enabled: boolean;
+  attendance_enabled: boolean;
+  default_public: boolean;
+  default_self_registration: boolean;
+  save_attendance_date: boolean;
+  attendance_date_person_field_id: string | null;
+  custom_fields: EventTypeCustomField[];
+  color: string;
+  icon: string;
+  default_start_time: string | null;
+  default_duration_minutes: number | null;
+}
 
 @Injectable()
 export class EventTypeService {
@@ -33,6 +54,9 @@ export class EventTypeService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    @InjectRepository(PersonField)
+    private readonly personFieldRepository: Repository<PersonField>,
 
     @InjectRepository(Congregation)
     private readonly congregationRepository: Repository<Congregation>,
@@ -50,18 +74,119 @@ export class EventTypeService {
     });
   }
 
-  private normalizeEventType(data: EventTypeDto) {
+  private normalizeConditions(conditions: FieldCondition[] = []): FieldCondition[] {
+    return conditions.map((condition) => ({
+      field_id: condition.field_id,
+      operator: condition.operator,
+      value: condition.value ?? null,
+    }));
+  }
+
+  private normalizeOptions(options: string[] = []): string[] {
+    return options.map((value) => value.trim()).filter(Boolean);
+  }
+
+  private normalizeCustomField(field: EventTypeCustomFieldDto): EventTypeCustomField {
+    return {
+      id: field.id?.trim() || randomUUID(),
+      label: field.label.trim(),
+      type: field.type,
+      required: field.required ?? false,
+      user_fillable: field.user_fillable ?? false,
+      options: field.type === 'options' ? this.normalizeOptions(field.options) : [],
+      allow_multiple: field.type === 'options' ? (field.allow_multiple ?? false) : false,
+      link_person_field: field.link_person_field ?? Boolean(field.person_field_id),
+      person_field_id: field.person_field_id ?? null,
+      calculated_conditions: field.type === 'yes_no' ? this.normalizeConditions(field.calculated_conditions) : [],
+    };
+  }
+
+  private normalizeCustomFields(data: EventTypeDto): EventTypeCustomField[] {
+    const normalized = (data.custom_fields ?? []).map((field) => this.normalizeCustomField(field));
+    return Array.from(
+      normalized
+        .reduce(
+          (fieldsById, field) => fieldsById.set(field.person_field_id ?? field.id, field),
+          new Map<string, EventTypeCustomField>(),
+        )
+        .values(),
+    );
+  }
+
+  private normalizeEventType(data: EventTypeDto, defaultEnabled = true): NormalizedEventType {
     return {
       name: data.name.trim(),
       description: data.description?.trim() ?? '',
-      enabled: data.enabled ?? true,
+      enabled: defaultEnabled,
+      attendance_enabled: data.attendance_enabled ?? false,
+      default_public: data.default_public ?? false,
+      default_self_registration: data.default_self_registration ?? false,
+      save_attendance_date: data.save_attendance_date ?? false,
+      attendance_date_person_field_id: data.attendance_date_person_field_id ?? null,
+      custom_fields: this.normalizeCustomFields(data),
+      color: data.color ?? '#1976d2',
+      icon: data.icon?.trim() || 'Event',
+      default_start_time: data.default_start_time ?? null,
+      default_duration_minutes: data.default_duration_minutes ?? null,
+    };
+  }
+
+  private async hydrateLinkedFieldOptions({
+    customFields,
+    congregationId,
+  }: {
+    customFields: EventTypeCustomField[];
+    congregationId: string;
+  }): Promise<EventTypeCustomField[]> {
+    const personFieldIds = Array.from(
+      new Set(
+        customFields
+          .filter(
+            (field): field is EventTypeCustomField & { person_field_id: string } =>
+              field.link_person_field && field.type === 'options' && Boolean(field.person_field_id),
+          )
+          .map((field) => field.person_field_id),
+      ),
+    );
+
+    if (!personFieldIds.length) return customFields;
+
+    const personFields = await this.personFieldRepository.find({
+      where: {
+        id: In(personFieldIds),
+        congregation_id: congregationId,
+        type: 'options',
+        deleted_at: IsNull(),
+      },
+    });
+    const personFieldById = new Map(personFields.map((personField) => [personField.id, personField]));
+
+    return customFields.map((field) => {
+      const personField = field.person_field_id ? personFieldById.get(field.person_field_id) : undefined;
+      if (!personField) return field;
+
+      return {
+        ...field,
+        options: personField.options,
+        allow_multiple: personField.allow_multiple,
+      };
+    });
+  }
+
+  private async hydrateEventType(eventType: EventType, congregationId: string): Promise<EventType> {
+    return {
+      ...eventType,
+      custom_fields: await this.hydrateLinkedFieldOptions({
+        customFields: eventType.custom_fields ?? [],
+        congregationId,
+      }),
     };
   }
 
   async list({ query, userId, congregationId }: EventTypeListProps) {
     const { congregation } = await this.getContext(userId, congregationId);
 
-    return findWithFilters<EventType, EventTypeQuery>({
+    const { result, total } = await findWithFilters<EventType, EventTypeQuery>({
       repository: this.repository,
       query,
       searchFields: ['id', 'name', 'description'],
@@ -72,6 +197,11 @@ export class EventTypeService {
         deleted_by: IsNull(),
       },
     });
+
+    return {
+      result: await Promise.all(result.map((eventType) => this.hydrateEventType(eventType, congregation.id))),
+      total,
+    };
   }
 
   async get({ id, userId, congregationId }: EventTypeGetProps) {
@@ -93,7 +223,7 @@ export class EventTypeService {
 
     if (!result) throw new NotFoundException(this.i18n.t('errors.eventType.notFound'));
 
-    return cleanColumns<EventType>(result);
+    return this.hydrateEventType(cleanColumns<EventType>(result), congregation.id);
   }
 
   async create({ data, userId, congregationId }: EventTypeCreateProps) {
@@ -126,10 +256,20 @@ export class EventTypeService {
 
     if (!existing) throw new NotFoundException(this.i18n.t('errors.eventType.notFound'));
 
-    const normalized = this.normalizeEventType(data);
+    const normalized = this.normalizeEventType(data, existing.enabled);
     existing.name = normalized.name;
     existing.description = normalized.description;
     existing.enabled = normalized.enabled;
+    existing.attendance_enabled = normalized.attendance_enabled;
+    existing.default_public = normalized.default_public;
+    existing.default_self_registration = normalized.default_self_registration;
+    existing.save_attendance_date = normalized.save_attendance_date;
+    existing.attendance_date_person_field_id = normalized.attendance_date_person_field_id;
+    existing.custom_fields = normalized.custom_fields;
+    existing.color = normalized.color;
+    existing.icon = normalized.icon;
+    existing.default_start_time = normalized.default_start_time;
+    existing.default_duration_minutes = normalized.default_duration_minutes;
     existing.updated_by = user;
     await this.repository.save(existing);
 

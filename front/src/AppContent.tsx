@@ -13,7 +13,7 @@ const Dashboard = lazy(() => import('@pages/Dashboard'));
 const Login = lazy(() => import('@pages/Login'));
 const Setup = lazy(() => import('@pages/Setup'));
 
-const getErrorMessage = (value: unknown, fallback: string) =>
+const getErrorMessage = (value: Error | null, fallback: string) =>
   value instanceof HttpRequestError || value instanceof Error ? value.message : fallback;
 
 const AppContent = () => {
@@ -37,9 +37,12 @@ const AppContent = () => {
           severity: 'success',
         });
       } catch (value) {
-        showNotification(getErrorMessage(value, t('pages.modules.users.error.changePasswordFailed')), {
-          severity: 'error',
-        });
+        showNotification(
+          getErrorMessage(value instanceof Error ? value : null, t('pages.modules.users.error.changePasswordFailed')),
+          {
+            severity: 'error',
+          },
+        );
       } finally {
         setPasswordSubmitting(false);
       }

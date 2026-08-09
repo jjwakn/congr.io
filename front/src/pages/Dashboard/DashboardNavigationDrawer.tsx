@@ -7,9 +7,11 @@ import { NavigationItems } from './NavigationItems';
 const DRAWER_WIDTH = 260;
 
 export const DashboardNavigationDrawer = ({
-  items,
+  categories,
+  settingsItem,
   selectedPath,
   congregationName,
+  logoSrc,
   homeLabel,
   open,
   onNavigate,
@@ -45,6 +47,7 @@ export const DashboardNavigationDrawer = ({
               bgcolor: 'background.paper',
             },
       }}
+      PaperProps={{ sx: { display: 'flex', flexDirection: 'column' } }}
     >
       {!isMobile ? (
         <>
@@ -66,7 +69,7 @@ export const DashboardNavigationDrawer = ({
               aria-label={homeLabel}
               sx={{ p: 0 }}
             >
-              <LogoSmall alt={congregationName} size={28} />
+              <LogoSmall alt={congregationName} size={28} src={logoSrc} />
             </IconButton>
             <Typography
               variant="subtitle1"
@@ -85,7 +88,8 @@ export const DashboardNavigationDrawer = ({
       ) : null}
 
       <NavigationItems
-        items={items}
+        categories={categories}
+        settingsItem={settingsItem}
         selectedPath={selectedPath}
         onNavigate={(path) => {
           onNavigate(path);

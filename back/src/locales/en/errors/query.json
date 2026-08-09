@@ -1,0 +1,5 @@
+{
+  "searchTooLong": "The search value is too long.",
+  "tooManySearchTerms": "The search contains too many terms.",
+  "tooLong": "The request query is too long."
+}

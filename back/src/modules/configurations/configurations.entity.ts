@@ -2,6 +2,7 @@ import { CommonEntity } from 'src/common/common.entity';
 import { Column, Entity, JoinColumn, ManyToOne, Unique } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Congregation } from '../congregation/congregation.entity';
+import type { ThemePaletteConfig } from './configurations.types';
 
 @Entity('congregation_config')
 @Unique('UQ_congregation_config_key', ['congregation_id', 'config_key'])
@@ -35,5 +36,5 @@ export class Configuration extends CommonEntity {
     },
   })
   @Column({ type: 'json', nullable: false, default: {} })
-  config_value: Record<string, unknown>;
+  config_value: ThemePaletteConfig;
 }

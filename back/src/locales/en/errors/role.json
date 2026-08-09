@@ -1,5 +1,7 @@
 {
   "notFound": "Role not found",
   "notFoundWithId": "Role not found. ID: {{id}}",
-  "cannotDeleteLastFullAccess": "You cannot delete the last full access role"
+  "cannotDeleteLastFullAccess": "You cannot delete the last full access role",
+  "higherAuthority": "You cannot manage a role with equal or higher authority.",
+  "invalidPermissions": "The role permissions are invalid."
 }

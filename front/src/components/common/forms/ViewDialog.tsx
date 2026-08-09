@@ -1,4 +1,5 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, useMediaQuery, useTheme } from '@mui/material';
+import { DialogTitleBar } from './DialogTitleBar';
 import { ViewDialogProps } from './ViewDialog.types';
 
 export const ViewDialog = ({
@@ -16,21 +17,7 @@ export const ViewDialog = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth={maxWidth} fullWidth fullScreen={mobileFullScreen && isMobile}>
-      <DialogTitle
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 2,
-          pr: titleAction ? 1 : undefined,
-        }}
-      >
-        <Box component="span" sx={{ minWidth: 0 }}>
-          {title}
-        </Box>
-
-        {titleAction ? <Box sx={{ display: 'inline-flex', flexShrink: 0 }}>{titleAction}</Box> : null}
-      </DialogTitle>
+      <DialogTitleBar title={title} action={titleAction} onClose={onClose} />
 
       <DialogContent>{children}</DialogContent>
 

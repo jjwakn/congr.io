@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 import type { RequestType } from 'src/common/common.types';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { PermissionDecorator, PermissionGuard } from 'src/modules/permission/permission.guard';
@@ -18,16 +19,20 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
+import { SecurityRateLimitService } from '../security/security-rate-limit.service';
+import { SecurityRateLimitScope } from '../security/security.types';
 import { EventService } from './event.service';
-import { EventDto, EventQuery } from './event.types';
+import { EventDto, EventQuery, EventRegistrationLockDto } from './event.types';
+
+const can = (request: RequestType, section: Module, action: ModuleAction) =>
+  Boolean(request.user?.auth.fullAccess || request.user?.auth.permissions[section]?.includes(action));
 
 @ApiTags('event')
 @Controller('event')
-@UseGuards(AuthGuard, PermissionGuard)
+@UseGuards(AuthGuard)
 export class EventController {
   constructor(private readonly service: EventService) {}
 
-  @PermissionDecorator(Module.event, ModuleAction.get)
   @Get()
   async list(
     @Query(new ValidationPipe({ transform: true, whitelist: true }))
@@ -38,20 +43,22 @@ export class EventController {
       query,
       userId: getRequestUserIdOrThrow(request),
       congregationId: getRequestCongregationId(request),
+      canViewAll: can(request, Module.event, ModuleAction.get),
     });
   }
 
-  @PermissionDecorator(Module.event, ModuleAction.get)
   @Get(':id')
   async get(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() request: RequestType) {
     return this.service.get({
       id,
       userId: getRequestUserIdOrThrow(request),
       congregationId: getRequestCongregationId(request),
+      canViewAll: can(request, Module.event, ModuleAction.get),
     });
   }
 
   @PermissionDecorator(Module.event, ModuleAction.create)
+  @UseGuards(PermissionGuard)
   @Post()
   @ApiBody({ type: EventDto })
   async create(
@@ -66,6 +73,7 @@ export class EventController {
   }
 
   @PermissionDecorator(Module.event, ModuleAction.update)
+  @UseGuards(PermissionGuard)
   @Put(':id')
   @ApiBody({ type: EventDto })
   async update(
@@ -81,7 +89,24 @@ export class EventController {
     });
   }
 
+  @PermissionDecorator(Module.event_registration, ModuleAction.lock)
+  @UseGuards(PermissionGuard)
+  @Put(':id/registration-lock')
+  setRegistrationLock(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body(new ValidationPipe({ transform: true, whitelist: true })) data: EventRegistrationLockDto,
+    @Req() request: RequestType,
+  ) {
+    return this.service.setRegistrationLock({
+      id,
+      locked: data.locked,
+      userId: getRequestUserIdOrThrow(request),
+      congregationId: getRequestCongregationId(request),
+    });
+  }
+
   @PermissionDecorator(Module.event, ModuleAction.delete)
+  @UseGuards(PermissionGuard)
   @Delete(':id')
   async remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() request: RequestType) {
     return this.service.remove({
@@ -89,5 +114,30 @@ export class EventController {
       userId: getRequestUserIdOrThrow(request),
       congregationId: getRequestCongregationId(request),
     });
+  }
+}
+
+@ApiTags('public-events')
+@Controller('public/events')
+export class PublicEventController {
+  constructor(
+    private readonly service: EventService,
+    private readonly rateLimiter?: SecurityRateLimitService,
+  ) {}
+
+  @Get()
+  list(
+    @Query(new ValidationPipe({ transform: true, whitelist: true })) query: EventQuery,
+    @Query('congregation_id', new ParseUUIDPipe({ version: '4' })) congregationId: string,
+    @Req() request: Request,
+  ) {
+    this.rateLimiter?.assertAllowed(SecurityRateLimitScope.publicEventRead, request.ip ?? 'unavailable');
+    return this.service.listPublic({ congregationId, query });
+  }
+
+  @Get(':id')
+  get(@Param('id', new ParseUUIDPipe()) id: string, @Req() request: Request) {
+    this.rateLimiter?.assertAllowed(SecurityRateLimitScope.publicEventRead, request.ip ?? 'unavailable');
+    return this.service.getPublic(id);
   }
 }

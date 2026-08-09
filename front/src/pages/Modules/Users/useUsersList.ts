@@ -1,15 +1,21 @@
 import { useModuleList } from '@components/common/modules/useModuleList';
 import { UsersService } from '@services/users';
 import { HttpRequestError, httpRequest } from '@utils/http';
+import { getPreloadedResource } from '@utils/preload';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { User } from '@/types/user.types';
 import type { UseUsersListProps, UseUsersListResult, UserSort, UsersListResponse } from './users.types';
 
-export const useUsersList = ({ enabled = true }: UseUsersListProps = {}): UseUsersListResult => {
+export const useUsersList = ({
+  enabled = true,
+  columnsQuery,
+  searchColumnsQuery,
+}: UseUsersListProps = {}): UseUsersListResult => {
   const { t } = useTranslation();
-  const [users, setUsers] = useState<User[]>([]);
-  const [total, setTotal] = useState(0);
+  const cached = getPreloadedResource<UsersListResponse>('users');
+  const [users, setUsers] = useState<User[]>(cached?.result ?? []);
+  const [total, setTotal] = useState(cached?.total ?? 0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -19,6 +25,7 @@ export const useUsersList = ({ enabled = true }: UseUsersListProps = {}): UseUse
     page,
     pageSize,
     search,
+    debouncedSearch,
     setSearch,
     setPage,
     handleSort,
@@ -42,7 +49,7 @@ export const useUsersList = ({ enabled = true }: UseUsersListProps = {}): UseUse
     setError('');
 
     try {
-      const normalizedSearch = search.trim();
+      const normalizedSearch = debouncedSearch.trim();
       const response = await httpRequest<UsersListResponse>({
         service: UsersService.list,
         data: {
@@ -50,6 +57,8 @@ export const useUsersList = ({ enabled = true }: UseUsersListProps = {}): UseUse
           size: pageSize,
           order: sort,
           direction,
+          ...(columnsQuery ? { columns: columnsQuery } : {}),
+          ...(searchColumnsQuery ? { search_columns: searchColumnsQuery } : {}),
           ...(normalizedSearch ? { search: normalizedSearch } : {}),
         },
       });
@@ -65,7 +74,7 @@ export const useUsersList = ({ enabled = true }: UseUsersListProps = {}): UseUse
     } finally {
       setLoading(false);
     }
-  }, [direction, enabled, page, pageSize, search, sort, t]);
+  }, [columnsQuery, debouncedSearch, direction, enabled, page, pageSize, searchColumnsQuery, sort, t]);
 
   useEffect(() => {
     if (!enabled) {

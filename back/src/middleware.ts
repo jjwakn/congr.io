@@ -7,7 +7,7 @@ export class AppLoggerMiddleware implements NestMiddleware {
 
   use(request: Request, response: Response, next: NextFunction): void {
     const { ip, method, baseUrl } = request;
-    const userAgent = request.get('user-agent') || '';
+    const userAgent = (request.get('user-agent') || '').replace(/[\r\n]/g, ' ').slice(0, 256);
 
     this.logger.log(`${method} ${baseUrl} - ${userAgent} ${ip}`);
 

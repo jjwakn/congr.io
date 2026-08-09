@@ -1,6 +1,7 @@
 {
   "error": {
-    "isRequired": "is required"
+    "isRequired": "is required",
+    "invalidDate": "Enter a valid date."
   },
   "field": {
     "name": "Name",
@@ -17,11 +18,17 @@
     "next": "Next",
     "cancel": "Cancel",
     "close": "Close",
+    "save": "Save",
     "back": "Back",
+    "discard": "Discard",
+    "hour": "Hour",
+    "minute": "Minute",
     "selectAll": "Select All",
     "add": "Add"
   },
   "common": {
+    "yes": "Yes",
+    "no": "No",
     "replace": "Replace",
     "delete": "Delete",
     "moveUp": "Move up",

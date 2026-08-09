@@ -26,6 +26,10 @@ These rules apply to all agent chats in this repository.
 
 ## Frontend Structure
 
+- Use switches for every binary selection. Do not introduce checkbox controls.
+- Gate every section, route, settings tab, permission row, and related action behind its
+  congregation feature before rendering it.
+
 - Keep TypeScript `type`/`interface` declarations in dedicated `*.types.ts` files.
 - Keep only shared domain-level types in `front/src/types`.
 - Move feature-specific/component-specific types to `*.types.ts` files colocated with the feature/component.
@@ -34,6 +38,8 @@ These rules apply to all agent chats in this repository.
 - Prefer arrow functions for consistency.
 - Prefer path aliases for project imports (for example `@components/*`, `@utils/*`, `@constants/*`).
 - Avoid deep relative imports when an alias is available.
+- Do not use hover styles that move or offset the hovered element. Hover feedback may change
+  color, shadow, border, or background, but it must not translate or shift layout.
 
 ### New Frontend CRUD Models
 
@@ -57,6 +63,11 @@ These rules apply to all agent chats in this repository.
 - Add a `front/src/services/<models>.ts` service file for the model API instead of hardcoding URLs in components.
 - Reuse shared components when behavior matches an existing module. Add model-specific components only for model-specific form fields or display behavior.
 - Keep list screens consistent with Roles CRUD: permission-gate access, use shared row actions, support refresh/search/sort/pagination, and use confirmation dialogs for deletes.
+- Every visible data column must be sortable. Sort controls must visually distinguish inactive, ascending, and descending states.
+- List search must include all default visible data columns except actions and enabled/active columns. Multi-word search terms are AND conditions across distinct searchable fields.
+- Active/enabled state belongs in the list, not in create/edit forms. Show an active column before actions and confirm enable/disable changes from that column.
+- Boolean columns need an All/Yes/No filter. Numeric columns need condition filters such as greater than, less than, and between.
+- Persisted-model lists must support per-user visible column preferences. Custom fields may be optional columns, but default search fields must remain stable even when hidden.
 - Add all user-facing text to both English and Spanish locale JSON files before using it in code.
 - When adding seed scripts for a model, include related join-table inserts when the model depends on existing roles, congregations, locations, or other relations.
 

@@ -8,4 +8,7 @@ export interface DashboardContentRoutesProps {
   loadingLabel: string;
   moduleNotFoundLabel: string;
   settingsPath: string;
+  favorites: string[];
+  favoriteLabel: string;
+  onToggleFavorite: (moduleId: string) => void;
 }

@@ -6,6 +6,7 @@ export interface LogoProps {
   size?: number;
   containerSx?: SxProps<Theme>;
   imageSx?: SxProps<Theme>;
+  src?: string;
 }
 
 export interface LogoFrameProps {

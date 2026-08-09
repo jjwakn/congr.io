@@ -1,0 +1,5 @@
+{
+  "jsonTooDeep": "The submitted data contains too many nested levels.",
+  "jsonTooLarge": "The submitted data is too large.",
+  "tooManyJsonFields": "The submitted data contains too many fields."
+}

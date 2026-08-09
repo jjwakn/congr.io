@@ -7,6 +7,8 @@ export const UsersService: ModuleType = {
   update: { url: 'user/{id}', method: 'PUT' },
   changeOwnPassword: { url: 'user/me/password', method: 'PUT' },
   completeTemporaryPassword: { url: 'user/me/temporary-password', method: 'PUT' },
+  preferences: { url: 'user/me/preferences', method: 'GET' },
+  updatePreferences: { url: 'user/me/preferences', method: 'PUT' },
   setTemporaryPassword: { url: 'user/{id}/temporary-password', method: 'PUT' },
   remove: { url: 'user/{id}', method: 'DELETE' },
 };

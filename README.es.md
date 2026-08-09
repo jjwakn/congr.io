@@ -18,6 +18,13 @@ Antes de comenzar, asegúrate de contar con lo siguiente:
 4. **Desplegar el backend**
 5. **Definir variables de entorno** en el frontend (`.env`)
 6. **Desplegar el frontend**
+7. **Configurar los datos iniciales** (tipos de evento, roles y usuarios)
+
+### Almacenamiento de archivos
+
+El backend usa almacenamiento local de forma predeterminada. Configura
+`FILE_STORAGE_PROVIDER=local` y monta `FILE_STORAGE_PATH` como volumen persistente en Docker.
+La ruta `/files` muestra el estado y las instrucciones de todos los proveedores disponibles.
 
 ---
 

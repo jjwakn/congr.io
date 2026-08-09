@@ -15,6 +15,7 @@ export interface CreateEditDialogProps {
   open: boolean;
   mode: CreateEditDialogMode;
   submitting: boolean;
+  submitDisabled?: boolean;
   onClose: () => void;
   onSubmit: () => void;
   onEnter?: () => void;
@@ -22,6 +23,7 @@ export interface CreateEditDialogProps {
   fullWidth?: boolean;
   mobileFullScreen?: boolean;
   contentSx?: SxProps<Theme>;
+  extraActions?: ReactNode;
   children?: ReactNode;
   labels: CreateEditDialogLabels;
 }

@@ -1,0 +1,4 @@
+{
+  "notFound": "Person field not found.",
+  "inUse": "This field contains person data. Clear its values before deleting it."
+}

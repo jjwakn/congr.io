@@ -9,15 +9,18 @@ import { DashboardHeaderProps } from './DashboardHeader.types';
 export const DashboardHeader = ({
   congregationName,
   congregationId,
+  logoSrc,
   congregations,
   username,
   homeLabel,
   logoutLabel,
   switchCongregationLabel,
+  favoriteItems,
   onLogout,
   onMenuClick,
   onLogoClick,
   onCongregationChange,
+  onFavoriteNavigate,
 }: DashboardHeaderProps) => {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const canSwitchCongregation = congregations.length > 1;
@@ -37,6 +40,7 @@ export const DashboardHeader = ({
         <IconButton color="inherit" size="small" onClick={onLogoClick} aria-label={homeLabel} sx={{ mr: 0.25 }}>
           <LogoSmall
             alt={congregationName || 'Congr.io'}
+            src={logoSrc}
             size={22}
             containerSx={{
               mr: 0,
@@ -67,6 +71,23 @@ export const DashboardHeader = ({
                 <ArrowDropDownRoundedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+          ) : null}
+
+          {favoriteItems.length ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, ml: 0.75, overflowX: 'auto' }}>
+              {favoriteItems.map((item) => (
+                <Tooltip key={item.id} title={item.label}>
+                  <IconButton
+                    color="inherit"
+                    size="small"
+                    onClick={() => onFavoriteNavigate(item.path)}
+                    aria-label={item.label}
+                  >
+                    {item.icon}
+                  </IconButton>
+                </Tooltip>
+              ))}
+            </Box>
           ) : null}
         </Box>
 

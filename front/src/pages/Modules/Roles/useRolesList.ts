@@ -1,15 +1,21 @@
 import { useModuleList } from '@components/common/modules/useModuleList';
 import { RolesService } from '@services/roles';
 import { HttpRequestError, httpRequest } from '@utils/http';
+import { getPreloadedResource } from '@utils/preload';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Role } from '@/types/role.types';
 import type { RoleSort, RolesListResponse, UseRolesListProps, UseRolesListResult } from './roles.types';
 
-export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRolesListResult => {
+export const useRolesList = ({
+  enabled = true,
+  columnsQuery,
+  searchColumnsQuery,
+}: UseRolesListProps = {}): UseRolesListResult => {
   const { t } = useTranslation();
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [total, setTotal] = useState(0);
+  const cached = getPreloadedResource<RolesListResponse>('roles');
+  const [roles, setRoles] = useState<Role[]>(cached?.result ?? []);
+  const [total, setTotal] = useState(cached?.total ?? 0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -19,6 +25,7 @@ export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRol
     page,
     pageSize,
     search,
+    debouncedSearch,
     setSearch,
     setPage,
     handleSort,
@@ -42,7 +49,7 @@ export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRol
     setError('');
 
     try {
-      const normalizedSearch = search.trim();
+      const normalizedSearch = debouncedSearch.trim();
       const response = await httpRequest<RolesListResponse>({
         service: RolesService.list,
         data: {
@@ -50,6 +57,8 @@ export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRol
           size: pageSize,
           order: sort,
           direction,
+          ...(columnsQuery ? { columns: columnsQuery } : {}),
+          ...(searchColumnsQuery ? { search_columns: searchColumnsQuery } : {}),
           ...(normalizedSearch ? { search: normalizedSearch } : {}),
         },
       });
@@ -64,7 +73,7 @@ export const useRolesList = ({ enabled = true }: UseRolesListProps = {}): UseRol
     } finally {
       setLoading(false);
     }
-  }, [direction, enabled, page, pageSize, search, sort, t]);
+  }, [columnsQuery, debouncedSearch, direction, enabled, page, pageSize, searchColumnsQuery, sort, t]);
 
   useEffect(() => {
     if (!enabled) {

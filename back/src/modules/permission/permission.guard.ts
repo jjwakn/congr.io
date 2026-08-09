@@ -1,7 +1,6 @@
 import { I18nService } from 'nestjs-i18n';
 import { RequestType } from 'src/common/common.types';
 import { Module, ModuleAction } from 'src/utils/constants';
-import { decodeToken } from 'src/utils/helpers';
 import { CanActivate, ExecutionContext, Injectable, SetMetadata, UnauthorizedException } from '@nestjs/common';
 import { PATH_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
@@ -44,29 +43,22 @@ export class PermissionGuard implements CanActivate {
   }
 
   canActivate(context: ExecutionContext): boolean {
-    try {
-      const permissionMetadata = this.reflector.get<PermissionMetadata>('permission', context.getHandler());
-      const action = permissionMetadata?.action;
-      const section = permissionMetadata ? this.resolvePermissionSection(permissionMetadata.section, context) : null;
+    const permissionMetadata = this.reflector.get<PermissionMetadata>('permission', context.getHandler());
+    const action = permissionMetadata?.action;
+    const section = permissionMetadata ? this.resolvePermissionSection(permissionMetadata.section, context) : null;
 
-      if (!section || !action) throw new UnauthorizedException(this.i18n.t('errors.permission.undefinedPermission'));
+    if (!section || !action) throw new UnauthorizedException(this.i18n.t('errors.permission.undefinedPermission'));
 
-      const request: RequestType = context.switchToHttp().getRequest();
-      const token = request.headers.authorization;
+    const request: RequestType = context.switchToHttp().getRequest();
+    const auth = request.user?.auth;
 
-      const auth = request.user?.auth ?? (token ? decodeToken(token).auth : undefined);
+    if (!auth) throw new UnauthorizedException(this.i18n.t('errors.auth.notIncluded'));
 
-      if (!auth) throw new UnauthorizedException(this.i18n.t('errors.auth.notIncluded'));
+    const { fullAccess, permissions } = auth;
 
-      const { fullAccess, permissions } = auth;
+    const canDoIt = fullAccess || permissions[section]?.includes(action);
 
-      const canDoIt = fullAccess || permissions[section]?.includes(action);
-
-      return !!canDoIt;
-    } catch (err) {
-      console.error(this.i18n.t('errors.auth.decodingError'), err);
-      throw new UnauthorizedException(this.i18n.t('errors.auth.decodingError'));
-    }
+    return Boolean(canDoIt);
   }
 }
 

@@ -66,6 +66,7 @@ const Setup = () => {
       const rawResult = await httpRequest<SetupSubmitResponse>({
         service: SetupService.setup,
         data: payload,
+        headers: { 'X-Bootstrap-Secret': data.admin.bootstrapSecret },
       });
 
       if (

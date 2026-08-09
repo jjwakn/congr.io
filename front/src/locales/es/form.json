@@ -1,6 +1,7 @@
 {
   "error": {
-    "isRequired": "es requerido"
+    "isRequired": "es requerido",
+    "invalidDate": "Ingresa una fecha válida."
   },
   "field": {
     "name": "Nombre",
@@ -17,11 +18,17 @@
     "next": "Siguiente",
     "cancel": "Cancelar",
     "close": "Cerrar",
+    "save": "Guardar",
     "back": "Regresar",
+    "discard": "Descartar",
+    "hour": "Hora",
+    "minute": "Minuto",
     "selectAll": "Seleccionar Todos",
     "add": "Añadir"
   },
   "common": {
+    "yes": "Sí",
+    "no": "No",
     "replace": "Reemplazar",
     "delete": "Eliminar",
     "moveUp": "Mover arriba",

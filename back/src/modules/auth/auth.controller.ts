@@ -1,34 +1,37 @@
 import type { Request, Response } from 'express';
 import { I18nContext } from 'nestjs-i18n';
-import { Body, Controller, Get, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
+import { AUTH_COOKIE_NAME, getAuthCookieOptions } from './auth-cookie';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { LoginProps } from './auth.types';
-
-const AUTH_COOKIE_NAME = 'auth_token';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly service: AuthService) {}
 
-  private getCookieOptions() {
-    const isProd = process.env.NODE_ENV === 'production';
-    return {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? 'none' : 'lax',
-      path: '/',
-    } as const;
-  }
-
   @Post('login')
   @ApiBody({ type: LoginProps })
-  async login(@Body() data: LoginProps, @Res({ passthrough: true }) res: Response) {
-    const result = await this.service.login(data);
+  async login(
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })) data: LoginProps,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.service.login({ ...data, ip: req.ip });
 
-    res.cookie(AUTH_COOKIE_NAME, result.token, this.getCookieOptions());
+    res.cookie(AUTH_COOKIE_NAME, result.token, getAuthCookieOptions());
 
     return {
       user: result.user,
@@ -53,9 +56,11 @@ export class AuthController {
     return this.service.getCurrentSession(userId);
   }
 
+  @UseGuards(AuthGuard)
   @Post('logout')
-  logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie(AUTH_COOKIE_NAME, this.getCookieOptions());
+  async logout(@Req() req: Request & { user?: { userId?: string } }, @Res({ passthrough: true }) res: Response) {
+    if (req.user?.userId) await this.service.revokeSessions(req.user.userId);
+    res.clearCookie(AUTH_COOKIE_NAME, getAuthCookieOptions());
     return { loggedOut: true };
   }
 }

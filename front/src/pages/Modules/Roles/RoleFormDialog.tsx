@@ -9,8 +9,9 @@ import { RoleFormDialogProps } from './roles.types';
 const REQUIRED_PERMISSION_ACTIONS: Partial<Record<PermissionAction, PermissionAction[]>> = {
   create: ['get'],
   update: ['get'],
-  delete: ['update', 'get', 'create'],
+  delete: ['update', 'get'],
   change_password: ['get'],
+  lock: ['get'],
 };
 
 const getRequiredActions = (action: PermissionAction, supportedActions: PermissionAction[]) => {
@@ -46,14 +47,27 @@ const normalizeSectionActions = (actions: PermissionAction[], supportedActions: 
   return supportedActions.filter((action) => normalizedActions.has(action));
 };
 
-const normalizePermissions = (permissions: PermissionMap, sections: RoleFormDialogProps['sections']): PermissionMap =>
-  sections.reduce<PermissionMap>((normalizedPermissions, section) => {
+const normalizePermissions = (permissions: PermissionMap, sections: RoleFormDialogProps['sections']): PermissionMap => {
+  const normalized = sections.reduce<PermissionMap>((normalizedPermissions, section) => {
     const normalizedActions = normalizeSectionActions(permissions[section.id] ?? [], section.permissions);
 
     if (normalizedActions.length) normalizedPermissions[section.id] = normalizedActions;
 
     return normalizedPermissions;
   }, {});
+  const needsEventAndPerson = Boolean(normalized.event_attendance?.length || normalized.event_registration?.length);
+  if (needsEventAndPerson) {
+    normalized.event = normalizeSectionActions(
+      [...(normalized.event ?? []), 'get'],
+      sections.find(({ id }) => id === 'event')?.permissions ?? [],
+    );
+    normalized.person = normalizeSectionActions(
+      [...(normalized.person ?? []), 'get'],
+      sections.find(({ id }) => id === 'person')?.permissions ?? [],
+    );
+  }
+  return normalized;
+};
 
 const togglePermission = (
   permissions: PermissionMap,
@@ -184,7 +198,18 @@ export const RoleFormDialog = ({
           const section = sections.find(({ id }) => id === sectionId);
           if (!section) return;
 
-          setPermissions((current) => togglePermission(current, sectionId, action, section.permissions));
+          setPermissions((current) => {
+            const next = togglePermission(current, sectionId, action, section.permissions);
+            if (
+              (sectionId === 'event' || sectionId === 'person') &&
+              action === 'get' &&
+              !next[sectionId]?.includes('get')
+            ) {
+              delete next.event_attendance;
+              delete next.event_registration;
+            }
+            return normalizePermissions(next, sections);
+          });
         }}
       />
     </CreateEditDialog>

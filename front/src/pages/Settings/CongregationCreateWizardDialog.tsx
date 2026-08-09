@@ -8,7 +8,6 @@ import {
   Autocomplete,
   Box,
   Button,
-  Checkbox,
   Chip,
   Dialog,
   DialogActions,
@@ -25,6 +24,7 @@ import {
   Step,
   StepLabel,
   Stepper,
+  Switch,
   TextField,
   Tooltip,
   Typography,
@@ -397,7 +397,7 @@ export const CongregationCreateWizardDialog = ({
                     setSelectedUserIds(allSelected ? [currentUserId] : selectableIds);
                   }}
                 >
-                  <Checkbox
+                  <Switch
                     edge="start"
                     checked={users.length > 0 && users.every(({ id }) => selectedUserIds.includes(id))}
                     tabIndex={-1}
@@ -421,7 +421,7 @@ export const CongregationCreateWizardDialog = ({
                         );
                       }}
                     >
-                      <Checkbox edge="start" checked={selected} disabled={isCurrent} tabIndex={-1} disableRipple />
+                      <Switch edge="start" checked={selected} disabled={isCurrent} tabIndex={-1} disableRipple />
                       <ListItemText primary={user.name} secondary={user.username} sx={{ minWidth: 140 }} />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, flexWrap: 'wrap' }}>
                         {roles.length ? (

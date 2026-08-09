@@ -1,16 +1,22 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Congregation } from '../congregation/congregation.entity';
+import { EventParticipant } from '../event-participant/event-participant.entity';
 import { EventType } from '../event-type/event-type.entity';
+import { FilesModule } from '../files/files.module';
+import { PersonField } from '../person-field/person-field.entity';
 import { User } from '../user/user.entity';
-import { EventController } from './event.controller';
+import { EventController, PublicEventController } from './event.controller';
 import { Event } from './event.entity';
 import { EventService } from './event.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Event, EventType, User, Congregation])],
+  imports: [
+    TypeOrmModule.forFeature([Event, EventType, EventParticipant, User, Congregation, PersonField]),
+    FilesModule,
+  ],
   providers: [EventService],
-  controllers: [EventController],
+  controllers: [EventController, PublicEventController],
   exports: [EventService, TypeOrmModule],
 })
 export class EventModule {}

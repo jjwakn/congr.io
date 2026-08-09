@@ -10,15 +10,43 @@
     "logout": "Cerrar sesión",
     "settings": "Preferencias",
     "switchCongregation": "Cambiar congregación",
-    "congregationSwitchFailed": "No se pudo cambiar de congregación."
+    "congregationSwitchFailed": "No se pudo cambiar de congregación.",
+    "toggleFavorite": "Añadir o quitar esta sección del acceso rápido",
+    "categories": {
+      "events": "Eventos",
+      "services": "Servicios",
+      "people": "Personas",
+      "flows": "Flujos",
+      "system": "Sistema"
+    }
   },
   "modules": {
     "common": {
       "refresh": "Actualizar",
       "search": "Buscar",
-      "rowsPerPage": "Filas por página",
+      "id": "ID",
+      "rowsPerPage": "Elementos por página",
       "view": "Ver",
-      "emptyValue": "Sin especificar"
+      "actions": "Acciones",
+      "emptyValue": " - ",
+      "columns": "Columnas",
+      "filter": "Filtrar",
+      "filterAll": "Todos",
+      "filterYes": "Sí",
+      "filterNo": "No",
+      "filterFrom": "Desde",
+      "filterTo": "Hasta",
+      "clearFilter": "Limpiar filtro",
+      "enableConfirm": "¿Activar este elemento?",
+      "disableConfirm": "¿Desactivar este elemento?",
+      "audit": {
+        "created_at": "Creado",
+        "updated_at": "Actualizado",
+        "deleted_at": "Eliminado",
+        "created_by": "Creado por",
+        "updated_by": "Actualizado por",
+        "deleted_by": "Eliminado por"
+      }
     },
     "users": {
       "title": "Usuarios",
@@ -32,12 +60,15 @@
         "save": "Guardar cambios",
         "changeOwnPassword": "Cambiar contraseña",
         "setTemporaryPassword": "Asignar contraseña temporal",
-        "savePassword": "Guardar contraseña"
+        "savePassword": "Guardar contraseña",
+        "linkPerson": "Vincular persona"
       },
       "columns": {
         "name": "Nombre",
         "username": "Usuario",
         "enabled": "Activo",
+        "person": "Persona",
+        "roles": "Roles",
         "actions": "Acciones"
       },
       "form": {
@@ -50,7 +81,8 @@
         "locationsHint": "Las ubicaciones están limitadas al contexto de la congregación seleccionada.",
         "noRoles": "No hay roles disponibles.",
         "noCongregations": "No hay congregaciones disponibles.",
-        "noLocations": "No hay ubicaciones disponibles."
+        "noLocations": "No hay ubicaciones disponibles.",
+        "person": "Persona"
       },
       "dialogs": {
         "createTitle": "Crear usuario",
@@ -100,7 +132,8 @@
         "create": "Crear",
         "update": "Actualizar",
         "delete": "Eliminar",
-        "change_password": "Cambiar contraseña"
+        "change_password": "Cambiar contraseña",
+        "lock": "Bloquear"
       },
       "form": {
         "fullAccess": "Acceso total",
@@ -122,9 +155,14 @@
           "role": "Roles",
           "congregation": "Congregación",
           "configuration": "Preferencias",
-          "process": "Procesos",
+          "process": "Flujos",
           "event": "Eventos",
-          "event_type": "Tipos de evento"
+          "event_type": "Tipos de evento",
+          "event_field": "Campos de evento",
+          "person": "Personas",
+          "person_field": "Campos de personas",
+          "event_attendance": "Asistencia a eventos",
+          "event_registration": "Registro a eventos"
         }
       },
       "success": {
@@ -148,7 +186,10 @@
     "tabs": {
       "congregations": "Preferencias de congregación",
       "ui": "Interfaz",
-      "eventTypes": "Tipos de evento"
+      "customFields": "Campos personalizados",
+      "eventTypes": "Tipos de evento",
+      "personFields": "Campos de personas",
+      "deployment": "Despliegue"
     },
     "congregation": {
       "title": "Preferencias de congregación",
@@ -194,7 +235,16 @@
       "paletteLoading": "Cargando paleta de colores...",
       "editTabs": {
         "info": "Información",
-        "palette": "Paleta"
+        "palette": "Tema"
+      },
+      "maxFavorites": "Máximo de accesos rápidos",
+      "maxFavoritesHelp": "Elige cuántos accesos a secciones puede mantener cada usuario en el encabezado.",
+      "branding": {
+        "title": "Marca de la congregación",
+        "publicNotice": "Los logos de la congregación son públicos para mostrarlos en páginas públicas de eventos.",
+        "small": "Subir logo pequeño",
+        "big": "Subir logo grande",
+        "uploading": "Subiendo..."
       },
       "modules": {
         "title": "Módulos disponibles",
@@ -203,6 +253,7 @@
       },
       "delete": {
         "action": "Eliminar",
+        "lastCongregationTooltip": "No se puede eliminar la última congregación.",
         "title": "Eliminar {{name}}",
         "dataLossWarning": "Eliminar esta congregación borrará permanentemente la información que le pertenece. Esta acción no se puede deshacer.",
         "previewDescription": "Los siguientes registros serán eliminados o desvinculados:",
@@ -223,7 +274,11 @@
           "eventTypes": "{{count}} tipos de evento serán eliminados",
           "processes": "{{count}} procesos serán eliminados",
           "processSteps": "{{count}} pasos de proceso serán eliminados",
-          "configurations": "{{count}} registros de configuración serán eliminados"
+          "configurations": "{{count}} registros de configuración serán eliminados",
+          "persons": "{{count}} personas serán eliminadas",
+          "personFields": "{{count}} campos de personas serán eliminados",
+          "eventParticipants": "{{count}} registros de eventos serán eliminados",
+          "files": "{{count}} archivos almacenados serán eliminados"
         }
       }
     },
@@ -240,6 +295,25 @@
       "english": "Inglés",
       "spanish": "Español"
     },
+    "interface": {
+      "browser": "Navegador",
+      "time24": "24 horas",
+      "time12": "AM/PM",
+      "paginationTitle": "Elementos por página",
+      "paginationDescription": "Configura un valor predeterminado y valores opcionales por sección para tu cuenta.",
+      "defaultPageSize": "Todos",
+      "resetToDefault": "Restablecer a 50",
+      "section": "Sección",
+      "itemsPerPage": "Elementos por página",
+      "sidebarTitle": "Orden de la barra lateral",
+      "sidebarDescription": "Reordena las secciones visibles. Preferencias siempre permanece al final.",
+      "sortAlphabetically": "Ordenar alfabéticamente"
+    },
+    "deployment": {
+      "description": "Revisa la configuración de marca y almacenamiento de archivos del despliegue.",
+      "branding": "Configuración de marca",
+      "files": "Configuración de archivos"
+    },
     "lightMode": "Paleta Modo Claro",
     "darkMode": "Paleta Modo Oscuro",
     "fields": {
@@ -251,7 +325,40 @@
     "actions": {
       "save": "Guardar",
       "reset": "Restablecer",
-      "discard": "Descartar"
+      "discard": "Descartar",
+      "preview": "Vista previa"
+    },
+    "palettePreview": {
+      "navbarTitle": "{{name}} · Vista previa",
+      "title": "Vista previa de {{mode}}",
+      "light": "tema claro",
+      "dark": "tema oscuro",
+      "user": "Vista previa",
+      "navAction": "Miembros",
+      "nextEvent": "Próximo evento",
+      "eventTime": "Domingo, 10:00",
+      "summary": "Actividad",
+      "calendar": "Calendario",
+      "month": "Marzo",
+      "days": {
+        "sun": "Dom",
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mié",
+        "thu": "Jue",
+        "fri": "Vie",
+        "sat": "Sáb"
+      },
+      "events": {
+        "service": "Servicio",
+        "group": "Grupo",
+        "outreach": "Alcance"
+      },
+      "chips": {
+        "today": "Hoy",
+        "registered": "Registrados",
+        "pending": "Pendientes"
+      }
     },
     "frontendVersion": "Versión del frontend: {{version}}",
     "success": {
@@ -277,7 +384,25 @@
         "description": "Descripción",
         "enabled": "Activo",
         "enabledHint": "Los tipos de evento desactivados no pueden seleccionarse para eventos nuevos.",
+        "attendance": "Capturar asistencia",
+        "defaultPublic": "Público",
+        "defaultSelfRegistration": "Autorregistro",
+        "defaultStartTime": "Hora de inicio predeterminada",
+        "defaultTime": "Hora predeterminada",
+        "defaultDuration": "Duración predeterminada en minutos",
+        "icon": "Icono",
+        "color": "Color del calendario",
+        "customFieldsHelp": "Estos campos se agregan cuando un evento usa este tipo de evento.",
         "actions": "Acciones"
+      },
+      "tabs": {
+        "info": "Información",
+        "customFields": "Campos personalizados"
+      },
+      "help": {
+        "attendance": "Habilita la captura de asistencia para eventos creados con este tipo.",
+        "public": "Hace públicos los eventos cuando se selecciona este tipo.",
+        "selfRegistration": "Permite que las personas se registren cuando el registro público está abierto."
       },
       "dialogs": {
         "createTitle": "Crear tipo de evento",
@@ -297,6 +422,411 @@
         "saveFailed": "No se pudo guardar el tipo de evento.",
         "deleteFailed": "No se pudo eliminar el tipo de evento."
       }
+    }
+  },
+  "files": {
+    "title": "Almacenamiento de archivos",
+    "description": "Elige un proveedor mediante variables de entorno. Aquí solo se muestra su estado.",
+    "selected": "Proveedor seleccionado",
+    "configured": "Configurado correctamente",
+    "notConfigured": "Configuración incompleta",
+    "adapterUnavailable": "Este proveedor se documenta para planificar el despliegue, pero su adaptador de carga no está habilitado en esta versión.",
+    "missing": "Variables faltantes: {{variables}}",
+    "loadFailed": "No se pudo cargar el estado del proveedor.",
+    "accessDenied": "Se requiere acceso total para configurar el almacenamiento de archivos.",
+    "providers": {
+      "local": {
+        "title": "Almacenamiento local",
+        "instructions": "Usa FILE_STORAGE_PROVIDER=local y opcionalmente FILE_STORAGE_PATH. Monta esa ruta como volumen persistente de Docker en producción."
+      },
+      "url": {
+        "title": "URL pública",
+        "instructions": "Usa FILE_STORAGE_PROVIDER=url y FILE_PUBLIC_BASE_URL cuando las imágenes estén alojadas externamente."
+      },
+      "aws": {
+        "title": "Amazon S3",
+        "instructions": "Configura las variables compartidas de bucket, región, llave y secreto para un bucket compatible con S3."
+      },
+      "gcp": {
+        "title": "Google Cloud",
+        "instructions": "Configura las variables compartidas de bucket, proyecto y credenciales para Cloud Storage."
+      },
+      "onedrive": {
+        "title": "OneDrive",
+        "instructions": "Configura las variables de carpeta, cliente, secreto y tenant para Microsoft Graph."
+      },
+      "google_drive": {
+        "title": "Google Drive",
+        "instructions": "Configura las variables de carpeta y credenciales para Google Drive."
+      }
+    }
+  },
+  "publicEvents": {
+    "title": "Eventos",
+    "congregationRequired": "Se requiere una congregación para listar eventos públicos.",
+    "loadFailed": "No se pudieron cargar los eventos públicos.",
+    "registration": {
+      "title": "Regístrate a este evento",
+      "submit": "Registrarme",
+      "success": "Recibimos tu registro."
+    }
+  },
+  "events": {
+    "title": "Eventos",
+    "calendar": "Calendario",
+    "viewDay": "Ver día",
+    "today": "Hoy",
+    "filter": "Filtrar tipos de evento",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "selectDate": "Seleccionar fecha",
+    "refresh": "Actualizar calendario",
+    "create": "Crear evento",
+    "loading": "Cargando eventos...",
+    "empty": "No se encontraron eventos.",
+    "views": { "day": "Día", "week": "Semana", "month": "Mes" },
+    "actions": {
+      "viewDay": "Ver día",
+      "create": "Crear evento",
+      "view": "Ver",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "addToCalendar": "Añadir al calendario",
+      "share": "Copiar enlace"
+    },
+    "form": {
+      "createTitle": "Crear evento",
+      "editTitle": "Editar evento",
+      "name": "Nombre del evento",
+      "type": "Tipo de evento",
+      "newType": "Crear tipo de evento",
+      "description": "Descripción",
+      "start": "Inicia",
+      "end": "Finaliza",
+      "startDate": "Fecha de inicio",
+      "startTime": "Hora de inicio",
+      "endDate": "Fecha de finalización",
+      "endTime": "Hora de finalización",
+      "tabs": { "details": "Detalles", "fields": "Campos" },
+      "timezone": "Las horas usan {{timezone}}",
+      "dropImage": "Arrastra una imagen aquí o selecciónala",
+      "publicImageUrl": "URL pública de imagen",
+      "allDay": "Todo el día",
+      "public": "Evento público",
+      "attendance": "Capturar asistencia",
+      "selfRegistration": "Permitir autorregistro",
+      "applyAttendanceToType": "Usar esta configuración de asistencia en futuros eventos de este tipo",
+      "allowRegistration": "Permitir autorregistro",
+      "saveAttendanceDate": "Guardar la fecha de asistencia en la persona",
+      "attendanceDateField": "Campo de fecha de la persona",
+      "publicAttendanceNotice": "Un evento público con asistencia debe permitir autorregistro o modificarse antes de guardar. Solo se muestran los campos marcados para usuarios.",
+      "required": "Completa los campos requeridos del evento.",
+      "invalidImage": "Selecciona una imagen compatible con el navegador.",
+      "save": "Guardar evento"
+    },
+    "fields": {
+      "typeTitle": "Campos de persona capturados",
+      "eventTitle": "Campos adicionales de persona capturados",
+      "capturedHelp": "Estos campos de persona se muestran cuando una persona se registra o se añade a este evento.",
+      "label": "Etiqueta",
+      "type": "Tipo de campo",
+      "options": "Opciones",
+      "required": "Requerido",
+      "userFillable": "Visible en autorregistro",
+      "allEvents": "Usar en todos los eventos de este tipo",
+      "personField": "Guardar valor en campo de persona",
+      "doNotSave": "No guardar en persona",
+      "linkPersonField": "Vincular campo de persona",
+      "linkPersonFieldHelp": "Cuando está activo, este campo de evento usa el tipo y opciones del campo de persona seleccionado.",
+      "createPersonFieldFromThis": "Crear campo de persona desde este campo",
+      "reusableField": "Campo de evento reutilizable",
+      "selectReusable": "Seleccionar campo reutilizable",
+      "add": "Añadir campo",
+      "addNew": "Añadir campo nuevo",
+      "types": {
+        "text": "Texto",
+        "paragraph": "Párrafo",
+        "number": "Número",
+        "yes_no": "Sí/No",
+        "options": "Opciones",
+        "date": "Fecha",
+        "switch": "Sí/No",
+        "single_option": "Una opción",
+        "multiple_options": "Varias opciones"
+      }
+    },
+    "delete": { "title": "Eliminar evento", "message": "¿Eliminar este evento y sus datos de la congregación?" },
+    "success": {
+      "saved": "Evento guardado.",
+      "deleted": "Evento eliminado.",
+      "linkCopied": "Enlace del evento copiado."
+    },
+    "errors": {
+      "load": "No se pudieron cargar los eventos.",
+      "types": "No se pudieron cargar los tipos de evento.",
+      "save": "No se pudo guardar el evento.",
+      "delete": "No se pudo eliminar el evento."
+    }
+  },
+  "persons": {
+    "title": "Personas",
+    "fieldsTitle": "Campos personalizados de personas",
+    "create": "Crear persona",
+    "edit": "Editar",
+    "save": "Guardar persona",
+    "loading": "Cargando personas...",
+    "empty": "No se encontraron personas.",
+    "loadFailed": "No se pudieron cargar las personas.",
+    "saved": "Persona guardada.",
+    "createdWithCode": "Persona creada con el código {{code}}.",
+    "deleteMessage": "¿Eliminar este elemento? Los valores existentes se conservan al eliminar un campo personalizado.",
+    "deleteFieldMessage": "¿Eliminar {{name}}? Los valores existentes se conservarán.",
+    "tabs": {
+      "persons": "Personas",
+      "fields": "Campos personalizados",
+      "details": "Detalles",
+      "flows": "Flujos",
+      "codes": "Historial de códigos"
+    },
+    "actions": { "linkUser": "Vincular usuario del sistema" },
+    "code": {
+      "regenerate": "Generar un nuevo código",
+      "pendingRegeneration": "Se generará un nuevo código al guardar",
+      "regenerateTitle": "¿Generar un nuevo código de persona?",
+      "regenerateMessage": "El apellido cambió. ¿Deseas generar un nuevo código y conservar el anterior en el historial?",
+      "regenerateConfirm": "Generar nuevo código",
+      "keepCurrent": "Conservar código actual",
+      "createdTitle": "Nuevo código de persona"
+    },
+    "flowsEmpty": "No hay flujos disponibles para esta persona.",
+    "fields": {
+      "code": "Código",
+      "firstName": "Primer nombre",
+      "middleName": "Segundo nombre",
+      "lastName": "Apellido",
+      "secondLastName": "Segundo apellido",
+      "marriedName": "Apellido de casada",
+      "phone": "Teléfono",
+      "birthdate": "Fecha de nacimiento",
+      "age": "Edad",
+      "email": "Correo",
+      "user": "Usuario del sistema",
+      "ageCalculated": "La edad se calcula con la fecha de nacimiento."
+    },
+    "fieldsCrud": {
+      "create": "Crear campo personalizado",
+      "edit": "Editar campo personalizado",
+      "label": "Etiqueta",
+      "type": "Tipo",
+      "required": "Requerido",
+      "options": "Opciones",
+      "conditions": "Condiciones",
+      "allowMultiple": "Permitir seleccionar múltiples",
+      "addOption": "Añadir opción",
+      "conditionField": "Campo",
+      "conditionOperator": "Condición",
+      "conditionValue": "Valor",
+      "addCondition": "Añadir condición",
+      "calculatedTooltip": "Este valor se calcula por condiciones y no puede editarse manualmente.",
+      "operators": {
+        "notEmpty": "No está vacío",
+        "empty": "Está vacío",
+        "equals": "Es igual a",
+        "notEquals": "No es igual a",
+        "contains": "Contiene",
+        "startsWith": "Empieza con",
+        "endsWith": "Termina con",
+        "greaterThan": "Mayor que",
+        "greaterOrEqual": "Mayor o igual que",
+        "lessThan": "Menor que",
+        "lessOrEqual": "Menor o igual que",
+        "isTrue": "Es verdadero",
+        "isFalse": "Es falso"
+      },
+      "created": "Campo personalizado creado.",
+      "saved": "Campo personalizado guardado.",
+      "deleted": "Campo personalizado eliminado.",
+      "loadFailed": "No se pudieron cargar los campos personalizados.",
+      "saveFailed": "No se pudo guardar el campo personalizado."
+    },
+    "fieldTypes": {
+      "text": "Texto",
+      "paragraph": "Párrafo",
+      "number": "Número",
+      "yes_no": "Sí/No",
+      "options": "Opciones",
+      "switch": "Sí/No",
+      "single_option": "Una opción",
+      "multiple_options": "Varias opciones",
+      "date": "Fecha"
+    }
+  },
+  "attendance": {
+    "title": "Asistencia a eventos",
+    "event": "Evento",
+    "person": "Persona",
+    "add": "Añadir asistente",
+    "addMissingEvent": "Añadir evento faltante",
+    "attended": "Asistió",
+    "viewPeople": "Ver asistentes",
+    "editPeople": "Editar asistentes",
+    "pastEvent": "Evento pasado",
+    "pastEventsEmpty": "No se encontraron eventos pasados.",
+    "selectPastEventTitle": "Seleccionar evento para asistencia",
+    "createPerson": "Crear persona",
+    "loading": "Cargando eventos de asistencia...",
+    "empty": "No se encontraron eventos de asistencia.",
+    "peopleEmpty": "No se encontraron asistentes.",
+    "noCurrentEvent": "No hay un evento de asistencia activo ahora.",
+    "publicSubmission": "Registro público",
+    "error": "No se pudo actualizar la asistencia.",
+    "deleted": "Captura de asistencia eliminada.",
+    "deleteFailed": "No se pudo eliminar la captura de asistencia.",
+    "deleteAction": "Limpiar asistencia",
+    "deleteTitle": "Eliminar captura de asistencia",
+    "deleteMessage": "¿Quitar las marcas de asistencia de {{name}}? El evento seguirá disponible."
+  },
+  "registration": {
+    "title": "Registro a eventos",
+    "today": "Hoy",
+    "history": "Historial",
+    "register": "Registrar persona",
+    "open": "Abrir registro",
+    "lock": "Bloquear registro",
+    "unlock": "Desbloquear registro",
+    "addMissingEvent": "Añadir evento faltante",
+    "viewPeople": "Ver personas registradas",
+    "editPeople": "Editar personas registradas",
+    "pastEvent": "Evento pasado",
+    "pastEventsEmpty": "No se encontraron eventos pasados.",
+    "selectPastEventTitle": "Seleccionar evento para registro",
+    "loading": "Cargando eventos de registro...",
+    "empty": "No se encontraron eventos de registro.",
+    "peopleEmpty": "No se encontraron personas registradas.",
+    "loadFailed": "No se pudieron cargar los eventos de registro.",
+    "favoriteType": "Acceso rápido al evento más reciente de este tipo",
+    "favoriteTypeLabel": "Registro de {{type}}",
+    "noUpcoming": "No existe un próximo evento para este tipo.",
+    "createEvent": "Crear evento",
+    "people": "Personas registradas",
+    "possiblePerson": "Posible coincidencia: {{name}}",
+    "confirmMatch": "Confirmar coincidencia",
+    "createPerson": "Crear una persona desde este registro",
+    "deleted": "Captura de registro eliminada.",
+    "deleteFailed": "No se pudo eliminar la captura de registro.",
+    "deleteAction": "Limpiar registro",
+    "deleteTitle": "Eliminar captura de registro",
+    "deleteMessage": "¿Quitar todas las personas registradas de {{name}}? El evento seguirá disponible."
+  },
+  "services": {
+    "title": "Servicios",
+    "create": "Crear servicio",
+    "edit": "Editar servicio",
+    "view": "Ver servicio",
+    "loading": "Cargando servicios...",
+    "empty": "No se encontraron servicios.",
+    "saved": "Servicio guardado.",
+    "deleted": "Servicio eliminado.",
+    "loadFailed": "No se pudieron cargar los servicios.",
+    "saveFailed": "No se pudo guardar el servicio.",
+    "deleteTitle": "Eliminar servicio",
+    "deleteMessage": "¿Eliminar {{name}}?",
+    "fields": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "location": "Ubicación",
+      "dayOfWeek": "Día de la semana",
+      "startTime": "Hora de inicio",
+      "endTime": "Hora de finalización",
+      "attendanceGroups": "Grupos de asistencia",
+      "groupLabel": "Nombre del grupo",
+      "groupColor": "Color",
+      "defaultAdults": "Adultos",
+      "defaultKids": "Niños",
+      "addGroup": "Añadir grupo",
+      "active": "Activo"
+    },
+    "days": {
+      "0": "Domingo",
+      "1": "Lunes",
+      "2": "Martes",
+      "3": "Miércoles",
+      "4": "Jueves",
+      "5": "Viernes",
+      "6": "Sábado"
+    },
+    "newPeople": {
+      "title": "Personas nuevas",
+      "today": "Hoy",
+      "history": "Historial",
+      "create": "Crear grupo",
+      "edit": "Editar grupo",
+      "service": "Servicio",
+      "date": "Fecha",
+      "notes": "Notas",
+      "people": "Personas",
+      "addPerson": "Añadir persona",
+      "loading": "Cargando personas nuevas...",
+      "empty": "No se encontraron grupos de personas nuevas.",
+      "saved": "Grupo de personas nuevas guardado.",
+      "deleted": "Grupo de personas nuevas eliminado.",
+      "deleteTitle": "Eliminar grupo de personas nuevas",
+      "deleteMessage": "¿Eliminar este grupo de personas nuevas?",
+      "noCurrent": "No hay un servicio activo o posterior hoy."
+    },
+    "followUp": {
+      "title": "Seguimiento",
+      "firstVisit": "Primera visita",
+      "person": "Persona",
+      "phone": "Teléfono",
+      "status": "Estado",
+      "pending": "Pendiente",
+      "completed": "Completado",
+      "loading": "Cargando seguimiento...",
+      "empty": "No se encontraron registros de seguimiento."
+    },
+    "attendance": {
+      "title": "Asistencia de servicios",
+      "today": "Hoy",
+      "history": "Historial",
+      "service": "Servicio",
+      "date": "Fecha",
+      "count": "Conteo",
+      "loading": "Cargando asistencia de servicios...",
+      "empty": "No se encontraron registros de asistencia de servicios.",
+      "noCurrent": "No hay un servicio activo o posterior hoy.",
+      "saved": "Asistencia actualizada.",
+      "error": "No se pudo actualizar la asistencia."
+    }
+  },
+  "flows": {
+    "title": "Flujos",
+    "create": "Crear flujo",
+    "edit": "Editar",
+    "description": "Descripción",
+    "steps": "Pasos",
+    "loading": "Cargando flujos...",
+    "empty": "No se encontraron flujos.",
+    "loadFailed": "No se pudieron cargar los flujos.",
+    "saved": "Flujo guardado.",
+    "saveFailed": "No se pudo guardar el flujo.",
+    "deleteTitle": "Eliminar flujo",
+    "deleteMessage": "¿Eliminar este flujo y desactivar sus tipos de evento generados?",
+    "editor": {
+      "createTitle": "Crear flujo",
+      "editTitle": "Editar flujo",
+      "unnamedStep": "Paso sin nombre",
+      "required": "Asigna nombre al flujo y a cada paso.",
+      "addStep": "Añadir paso",
+      "addFollowingStep": "Añadir paso siguiente",
+      "attachEventType": "Vincular tipo de evento",
+      "generatedEventType": "Tipo de evento del paso",
+      "generatedEventTypeHelp": "Cada paso activo tiene un tipo de evento generado con el mismo nombre.",
+      "stepEnabled": "Paso y tipo de evento activos",
+      "completePreviousSteps": "Marcar pasos anteriores como completados",
+      "stepName": "Nombre del paso",
+      "stepDescription": "Descripción del paso",
+      "deleteStep": "Eliminar paso"
     }
   }
 }

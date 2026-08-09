@@ -8,13 +8,23 @@ export interface SettingsPageProps {
   showHeader?: boolean;
 }
 
-export type SettingsTabId = 'congregations' | 'ui' | 'eventTypes';
+export interface SettingsNavigationState {
+  settingsTab?: SettingsTabId;
+  customFieldsTab?: CustomFieldsSettingsSubTabId;
+  createEventType?: boolean;
+}
+
+export type SettingsTabId = 'congregations' | 'ui' | 'customFields' | 'deployment';
+export type CustomFieldsSettingsSubTabId = 'eventTypes' | 'personFields';
 
 export interface CongregationSettingsDraft {
   name: string;
   type: string;
   timezone: string;
   features?: string[];
+  max_favorites?: number;
+  logo_small_file_id?: string | null;
+  logo_big_file_id?: string | null;
 }
 
 export interface CongregationCreationLocation {
@@ -57,6 +67,19 @@ export interface CongregationEditValues {
   palette: ThemePaletteConfig;
 }
 
+export interface CongregationLogoUpload {
+  id: string;
+  url: string;
+}
+
+export interface CongregationBrandingEditorProps {
+  congregationId: string;
+  smallLogoId?: string | null;
+  bigLogoId?: string | null;
+  disabled?: boolean;
+  onChange: (value: { smallLogoId?: string | null; bigLogoId?: string | null }) => void;
+}
+
 export interface CongregationModulesSelectorProps {
   features: Feature[];
   selected: string[];
@@ -75,6 +98,10 @@ export interface CongregationDeletionPreview {
   processes: number;
   processSteps: number;
   configurations: number;
+  persons: number;
+  personFields: number;
+  eventParticipants: number;
+  files: number;
 }
 
 export interface CongregationDeleteDialogProps {

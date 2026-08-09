@@ -13,6 +13,7 @@ export interface UseModuleListState {
   page: number;
   pageSize: number;
   search: string;
+  debouncedSearch: string;
   setSearch: (value: string) => void;
   setPage: (value: number) => void;
   handleSort: (value: string) => void;

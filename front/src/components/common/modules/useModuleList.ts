@@ -1,3 +1,4 @@
+import { useAuth } from '@hooks/useAuth';
 import { useEffect, useState } from 'react';
 import {
   ListDirection,
@@ -10,7 +11,7 @@ import {
 const LIST_SORTING_STORAGE_VERSION = 1;
 const LIST_SORTING_STORAGE_KEY = `congrio:modules:list-sorting:v${LIST_SORTING_STORAGE_VERSION}`;
 
-const isDirection = (value: unknown): value is ListDirection => value === 'ASC' || value === 'DESC';
+const isDirection = (value?: string): value is ListDirection => value === 'ASC' || value === 'DESC';
 
 const readSortingStorage = (): ListSortingStorage => {
   if (typeof window === 'undefined') return {};
@@ -19,7 +20,7 @@ const readSortingStorage = (): ListSortingStorage => {
     const raw = window.localStorage.getItem(LIST_SORTING_STORAGE_KEY);
     if (!raw) return {};
 
-    const parsed = JSON.parse(raw) as unknown;
+    const parsed = JSON.parse(raw) as Partial<ListSortingStorage> | null;
     if (!parsed || typeof parsed !== 'object') return {};
     return parsed as ListSortingStorage;
   } catch {
@@ -68,6 +69,9 @@ export const useModuleList = ({
   defaultDirection = 'ASC',
   defaultPageSize = 50,
 }: UseModuleListProps): UseModuleListState => {
+  const { user } = useAuth();
+  const preferredPageSize =
+    user?.preferences?.page_sizes?.[moduleKey] ?? user?.preferences?.page_sizes?.default ?? defaultPageSize;
   const [direction, setDirection] = useState<ListDirection>(
     () =>
       getInitialSortingState({
@@ -85,8 +89,9 @@ export const useModuleList = ({
       }).sort,
   );
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(defaultPageSize);
+  const [pageSize, setPageSize] = useState(preferredPageSize);
   const [search, setSearchValue] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   useEffect(() => {
     if (!moduleKey) return;
@@ -101,12 +106,21 @@ export const useModuleList = ({
     });
   }, [direction, moduleKey, sort]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 600);
+
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
   return {
     direction,
     sort,
     page,
     pageSize,
     search,
+    debouncedSearch,
     setSearch: (value) => {
       setPage(0);
       setSearchValue(value);

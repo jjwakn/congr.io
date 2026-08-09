@@ -17,7 +17,7 @@ interface LuxonModule {
   };
 }
 
-const { DateTime, IANAZone } = Luxon as unknown as LuxonModule;
+const { DateTime, IANAZone } = Luxon as LuxonModule;
 
 export const DEFAULT_CONGREGATION_TIMEZONE = 'UTC';
 

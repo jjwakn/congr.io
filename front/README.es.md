@@ -29,3 +29,8 @@ Antes de ejecutar el flujo de configuración, abre la ruta de branding y sigue l
 1. Ve a `/branding`
 2. Genera y descarga el paquete de branding
 3. Copia los archivos generados en `front/public/` como indica esa página
+
+## Estado del almacenamiento de archivos
+
+Los usuarios con acceso total pueden abrir `/archivos` desde Preferencias > Despliegue para
+revisar el proveedor seleccionado, las variables faltantes y sus instrucciones de configuración.

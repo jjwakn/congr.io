@@ -7,6 +7,9 @@ const BRANDING_SEGMENT: LocalizedValue = {
   es: 'marca',
 };
 
+const FILES_SEGMENT: LocalizedValue = { en: 'files', es: 'archivos' };
+const PUBLIC_EVENTS_SEGMENT = 'e';
+
 const MODULES_SEGMENT: LocalizedValue = {
   en: 'modules',
   es: 'modulos',
@@ -24,16 +27,25 @@ const MODULE_SLUGS: Record<string, LocalizedValue> = {
   users: { en: 'users', es: 'usuarios' },
   members: { en: 'members', es: 'miembros' },
   processes: { en: 'processes', es: 'procesos' },
-  events_calendar: { en: 'events-calendar', es: 'eventos' },
+  events: { en: 'events', es: 'eventos' },
+  events_calendar: { en: 'events-calendar', es: 'calendario-eventos' },
   events_attendance: {
     en: 'events-attendance',
     es: 'asistencia-eventos',
+  },
+  event_registration: {
+    en: 'event-registration',
+    es: 'registro-eventos',
   },
   ministries: { en: 'ministries', es: 'ministerios' },
   ministries_calendar: {
     en: 'ministries-calendar',
     es: 'calendario-ministerios',
   },
+  services: { en: 'services', es: 'servicios' },
+  services_new_people: { en: 'new-people', es: 'personas-nuevas' },
+  services_follow_up: { en: 'follow-up', es: 'seguimiento' },
+  services_attendance: { en: 'service-attendance', es: 'asistencia-servicios' },
 };
 
 const normalizeLanguage = (language?: string): AppLanguage => (language?.toLowerCase().startsWith('es') ? 'es' : 'en');
@@ -88,6 +100,20 @@ export const isBrandingPath = (pathname: string): boolean => {
   return segments.length === 1 && matchesLocalizedSegment(segments[0], BRANDING_SEGMENT);
 };
 
+export const getFilesPath = (language?: string) => `/${FILES_SEGMENT[normalizeLanguage(language)]}`;
+export const isFilesPath = (pathname: string) => {
+  const segments = splitPath(pathname);
+  return segments.length === 1 && matchesLocalizedSegment(segments[0], FILES_SEGMENT);
+};
+export const isPublicEventsPath = (pathname: string) => {
+  const segments = splitPath(pathname);
+  return segments[0] === PUBLIC_EVENTS_SEGMENT;
+};
+export const getPublicEventsPath = (_language?: string, publicId?: string) => {
+  const base = `/${PUBLIC_EVENTS_SEGMENT}`;
+  return publicId ? `${base}/${publicId}` : base;
+};
+
 export const getModulePrefix = (language?: string): string => {
   const lang = normalizeLanguage(language);
   return `/${MODULES_SEGMENT[lang]}`;
@@ -122,7 +148,7 @@ export const getModuleIdFromPath = (pathname: string): string | null => {
     return segments[1] ? getModuleIdFromSlug(segments[1]) : null;
   }
 
-  if (segments.length === 1 && !matchesLocalizedSegment(segments[0], BRANDING_SEGMENT)) {
+  if (!matchesLocalizedSegment(segments[0], BRANDING_SEGMENT)) {
     return getModuleIdFromSlug(segments[0]);
   }
 
@@ -131,10 +157,18 @@ export const getModuleIdFromPath = (pathname: string): string | null => {
 
 export const getLocalizedPathname = (pathname: string, language?: string): string => {
   if (isBrandingPath(pathname)) return getBrandingPath(language);
+  if (isFilesPath(pathname)) return getFilesPath(language);
+  if (isPublicEventsPath(pathname)) {
+    const [, publicId] = splitPath(pathname);
+    return getPublicEventsPath(language, publicId);
+  }
   if (isSettingsPath(pathname)) return getSettingsPath(language);
 
   const moduleId = getModuleIdFromPath(pathname);
-  if (moduleId) return getModulePath(moduleId, language);
+  if (moduleId) {
+    const segments = splitPath(pathname);
+    return [getModulePath(moduleId, language), ...segments.slice(1)].join('/');
+  }
 
   return pathname;
 };

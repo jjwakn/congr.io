@@ -1,4 +1,5 @@
-import { Box, IconButton, TextField, Typography } from '@mui/material';
+import PreviewRoundedIcon from '@mui/icons-material/PreviewRounded';
+import { Box, Button, IconButton, Stack, TextField, Typography } from '@mui/material';
 import { isHexColor } from '@utils/theme';
 import { useRef } from 'react';
 import { ThemePaletteModeConfig } from '@/types/theme.types';
@@ -7,10 +8,13 @@ import { PaletteModeEditorProps } from './PaletteModeEditor.types';
 export const PaletteModeEditor = ({
   title,
   disabled = false,
+  previewDisabled = false,
+  previewLabel,
   values,
   errors,
   labels,
   onChange,
+  onPreview,
 }: PaletteModeEditorProps) => {
   const colorInputsRef = useRef<Partial<Record<keyof ThemePaletteModeConfig, HTMLInputElement | null>>>({});
 
@@ -106,15 +110,29 @@ export const PaletteModeEditor = ({
         gap: 2,
       }}
     >
-      <Typography
-        variant="subtitle1"
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1}
         sx={{
           gridColumn: '1 / -1',
-          fontWeight: 600,
+          alignItems: { xs: 'stretch', sm: 'center' },
+          justifyContent: 'space-between',
         }}
       >
-        {title}
-      </Typography>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          {title}
+        </Typography>
+        {onPreview && previewLabel ? (
+          <Button
+            startIcon={<PreviewRoundedIcon />}
+            disabled={disabled || previewDisabled}
+            onClick={onPreview}
+            variant="outlined"
+          >
+            {previewLabel}
+          </Button>
+        ) : null}
+      </Stack>
       {renderColorField('primary', labels.primary, values.primary)}
       {renderColorField('secondary', labels.secondary, values.secondary)}
       {renderColorField('backgroundDefault', labels.backgroundDefault, values.backgroundDefault)}

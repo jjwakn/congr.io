@@ -2,9 +2,15 @@ import { PasswordChangeDialog } from '@components/auth/PasswordChangeDialog';
 import type { PasswordChangeValues } from '@components/auth/PasswordChangeDialog.types';
 import { ConfirmDialog } from '@components/common/forms/ConfirmDialog';
 import { CrudPermissionStatus } from '@components/common/modules/CrudPermissionStatus';
-import type { ModuleListColumn } from '@components/common/modules/ModuleListTable.types';
+import type { ModuleListColumn, ModuleListHeaderCell } from '@components/common/modules/ModuleListTable.types';
 import { ModuleRowActions } from '@components/common/modules/ModuleRowActions';
 import { ModuleSection } from '@components/common/modules/ModuleSection';
+import {
+  CRUD_AUDIT_COLUMN_IDS,
+  type CrudAuditColumnId,
+  getCrudAuditColumnDefinitions,
+} from '@components/common/modules/crudAuditColumns';
+import { useModuleColumnVisibility } from '@components/common/modules/useModuleColumnVisibility';
 import { useAppContext } from '@hooks/useAppContext';
 import { useAuth } from '@hooks/useAuth';
 import { useNotificationContext } from '@hooks/useNotifications';
@@ -26,7 +32,12 @@ import { UserFormDialog } from './UserFormDialog';
 import { useUsersList } from './useUsersList';
 import type { UserDialogMode, UserFormValues, UserMetadata } from './users.types';
 
-const getErrorMessage = (value: unknown, fallback: string) =>
+type UserColumnId = 'id' | 'name' | 'username' | 'enabled' | 'person' | 'roles' | 'actions' | CrudAuditColumnId;
+
+const USER_COLUMN_IDS: UserColumnId[] = ['id', 'name', 'username', 'enabled', 'person', 'roles', 'actions'];
+const DEFAULT_USER_VISIBLE_COLUMNS: UserColumnId[] = ['name', 'username', 'enabled', 'actions'];
+
+const getErrorMessage = (value: Error | null, fallback: string) =>
   value instanceof HttpRequestError || value instanceof Error ? value.message : fallback;
 
 const mergeById = <Entity extends { id: string }>(primary: Entity[], secondary: Entity[] = []) => {
@@ -39,15 +50,26 @@ const mergeById = <Entity extends { id: string }>(primary: Entity[], secondary: 
 };
 
 export const UsersManagement = () => {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { showNotification } = useNotificationContext();
   const { congregation } = useAppContext();
-  const { user: authUser, hasPermission, refreshSession } = useAuth();
+  const { auth, user: authUser, hasPermission, refreshSession } = useAuth();
   const canView = hasPermission('user', 'get');
   const canCreate = hasPermission('user', 'create');
   const canUpdate = hasPermission('user', 'update');
   const canDelete = hasPermission('user', 'delete');
   const canChangePassword = hasPermission('user', 'change_password');
+  const allColumnIds = useMemo<UserColumnId[]>(
+    () => [...USER_COLUMN_IDS, ...(auth?.fullAccess ? CRUD_AUDIT_COLUMN_IDS : [])],
+    [auth?.fullAccess],
+  );
+  const columnVisibility = useModuleColumnVisibility<UserColumnId>({
+    moduleKey: 'users-list',
+    allColumnIds,
+    defaultVisibleColumnIds: DEFAULT_USER_VISIBLE_COLUMNS,
+    fixedColumnIds: ['actions'],
+    defaultSearchColumnIds: ['name', 'username'],
+  });
 
   const {
     users,
@@ -64,7 +86,11 @@ export const UsersManagement = () => {
     handleSort,
     handleChangePage,
     handleChangeRowsPerPage,
-  } = useUsersList({ enabled: canView });
+  } = useUsersList({
+    enabled: canView,
+    columnsQuery: columnVisibility.columnsQuery,
+    searchColumnsQuery: columnVisibility.searchColumnsQuery,
+  });
 
   const [roles, setRoles] = useState<Role[]>([]);
   const [metadataLoading, setMetadataLoading] = useState(false);
@@ -82,6 +108,16 @@ export const UsersManagement = () => {
 
   const congregationOptions = useMemo<Congregation[]>(() => (congregation ? [congregation] : []), [congregation]);
   const locationOptions = useMemo<Location[]>(() => congregation?.locations ?? [], [congregation?.locations]);
+  const auditColumnDefinitions = useMemo(
+    () =>
+      auth?.fullAccess
+        ? getCrudAuditColumnDefinitions<User>({
+            language: i18n.language,
+            t,
+          }).columns
+        : [],
+    [auth?.fullAccess, i18n.language, t],
+  );
 
   const metadata = useMemo<UserMetadata>(
     () => ({
@@ -131,7 +167,9 @@ export const UsersManagement = () => {
 
       setRoles(response.result ?? []);
     } catch (value) {
-      setMetadataError(getErrorMessage(value, t('pages.modules.users.error.rolesLoadFailed')));
+      setMetadataError(
+        getErrorMessage(value instanceof Error ? value : null, t('pages.modules.users.error.rolesLoadFailed')),
+      );
     } finally {
       setMetadataLoading(false);
     }
@@ -175,7 +213,7 @@ export const UsersManagement = () => {
           data: { id: userId },
         });
       } catch (value) {
-        showNotification(getErrorMessage(value, fallback), {
+        showNotification(getErrorMessage(value instanceof Error ? value : null, fallback), {
           severity: 'error',
         });
         return null;
@@ -254,9 +292,12 @@ export const UsersManagement = () => {
         setSelectedUser(null);
         await refresh();
       } catch (value) {
-        showNotification(getErrorMessage(value, t('pages.modules.users.error.saveFailed')), {
-          severity: 'error',
-        });
+        showNotification(
+          getErrorMessage(value instanceof Error ? value : null, t('pages.modules.users.error.saveFailed')),
+          {
+            severity: 'error',
+          },
+        );
       } finally {
         setSubmitting(false);
       }
@@ -304,9 +345,12 @@ export const UsersManagement = () => {
         if (isOwnPassword) await refreshSession();
         await refresh();
       } catch (value) {
-        showNotification(getErrorMessage(value, t('pages.modules.users.error.changePasswordFailed')), {
-          severity: 'error',
-        });
+        showNotification(
+          getErrorMessage(value instanceof Error ? value : null, t('pages.modules.users.error.changePasswordFailed')),
+          {
+            severity: 'error',
+          },
+        );
       } finally {
         setPasswordSubmitting(false);
       }
@@ -333,34 +377,76 @@ export const UsersManagement = () => {
       setUserPendingDelete(null);
       await refresh();
     } catch (value) {
-      showNotification(getErrorMessage(value, t('pages.modules.users.error.deleteFailed')), {
-        severity: 'error',
-      });
+      showNotification(
+        getErrorMessage(value instanceof Error ? value : null, t('pages.modules.users.error.deleteFailed')),
+        {
+          severity: 'error',
+        },
+      );
     } finally {
       setDeleting(false);
     }
   }, [refresh, showNotification, t, userPendingDelete]);
 
-  const columns = useMemo<ModuleListColumn<User>[]>(
+  const columnDefinitions = useMemo<
+    Array<
+      {
+        id: UserColumnId;
+        label: string;
+        sortKey?: string;
+      } & ModuleListColumn<User>
+    >
+  >(
     () => [
       {
+        id: 'id',
+        label: t('pages.modules.common.id'),
+        sortKey: 'id',
+        minWidth: 260,
+        render: (user) => user.id,
+      },
+      {
         id: 'name',
+        label: t('pages.modules.users.columns.name'),
+        sortKey: 'name',
         minWidth: 220,
         render: (user) => user.name,
       },
       {
         id: 'username',
+        label: t('pages.modules.users.columns.username'),
+        sortKey: 'username',
         minWidth: 180,
         render: (user) => user.username,
       },
       {
         id: 'enabled',
+        label: t('pages.modules.users.columns.enabled'),
+        sortKey: 'enabled',
         minWidth: 96,
         align: 'center',
         render: (user) => <CrudPermissionStatus enabled={Boolean(user.enabled)} />,
       },
       {
+        id: 'person',
+        label: t('pages.modules.users.columns.person'),
+        minWidth: 220,
+        render: (user) =>
+          user.person
+            ? `${user.person.code} · ${user.person.first_name} ${user.person.last_name}`
+            : t('pages.modules.common.emptyValue'),
+      },
+      {
+        id: 'roles',
+        label: t('pages.modules.users.columns.roles'),
+        minWidth: 220,
+        render: (user) =>
+          user.roles?.length ? user.roles.map((role) => role.name).join(', ') : t('pages.modules.common.emptyValue'),
+      },
+      ...auditColumnDefinitions,
+      {
         id: 'actions',
+        label: t('pages.modules.users.columns.actions'),
         minWidth: 188,
         align: 'right',
         render: (user) => (
@@ -421,6 +507,7 @@ export const UsersManagement = () => {
       },
     ],
     [
+      auditColumnDefinitions,
       canChangePassword,
       canDelete,
       canUpdate,
@@ -434,6 +521,35 @@ export const UsersManagement = () => {
       submitting,
       t,
     ],
+  );
+  const visibleColumnDefinitions = useMemo(
+    () =>
+      columnDefinitions.filter(
+        (column) => column.id === 'actions' || columnVisibility.visibleColumnIds.includes(column.id),
+      ),
+    [columnDefinitions, columnVisibility.visibleColumnIds],
+  );
+  const columns = useMemo<ModuleListColumn<User>[]>(
+    () =>
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        minWidth: column.minWidth,
+        width: column.width,
+        align: column.align,
+        render: column.render,
+      })),
+    [visibleColumnDefinitions],
+  );
+  const headerRows = useMemo<ModuleListHeaderCell[][]>(
+    () => [
+      visibleColumnDefinitions.map((column) => ({
+        id: column.id,
+        label: column.label,
+        sortKey: column.sortKey,
+        align: column.align,
+      })),
+    ],
+    [visibleColumnDefinitions],
   );
 
   if (!canView) {
@@ -474,31 +590,7 @@ export const UsersManagement = () => {
         },
       }}
       table={{
-        headerRows: [
-          [
-            {
-              id: 'name',
-              label: t('pages.modules.users.columns.name'),
-              sortKey: 'name',
-            },
-            {
-              id: 'username',
-              label: t('pages.modules.users.columns.username'),
-              sortKey: 'username',
-            },
-            {
-              id: 'enabled',
-              label: t('pages.modules.users.columns.enabled'),
-              align: 'center',
-              sortKey: 'enabled',
-            },
-            {
-              id: 'actions',
-              label: t('pages.modules.users.columns.actions'),
-              align: 'right',
-            },
-          ],
-        ],
+        headerRows,
         columns,
         rows: users,
         getRowId: (user) => user.id,
@@ -514,6 +606,16 @@ export const UsersManagement = () => {
         onPageChange: handleChangePage,
         onPageSizeChange: handleChangeRowsPerPage,
         rowsPerPageLabel: t('pages.modules.common.rowsPerPage'),
+        columnVisibility: {
+          label: t('pages.modules.common.columns'),
+          options: columnDefinitions
+            .filter((column) => column.id !== 'actions')
+            .map((column) => ({ id: column.id, label: column.label })),
+          visibleIds: columnVisibility.visibleColumnIds,
+          defaultVisibleIds: columnVisibility.defaultVisibleColumnIds,
+          disabled: loading || metadataLoading,
+          onChange: (value) => columnVisibility.setVisibleColumnIds(value as UserColumnId[]),
+        },
         fixedStartColumnIds: ['name'],
       }}
     >

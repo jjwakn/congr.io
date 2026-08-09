@@ -1,9 +1,11 @@
-import type { DashboardNavigationItem } from '@utils/dashboard';
+import type { DashboardNavigationCategory, DashboardNavigationItem } from '@utils/dashboard';
 
 export interface DashboardNavigationDrawerProps {
-  items: DashboardNavigationItem[];
+  categories: DashboardNavigationCategory[];
+  settingsItem: DashboardNavigationItem;
   selectedPath: string;
   congregationName: string;
+  logoSrc?: string;
   homeLabel: string;
   open: boolean;
   onNavigate: (path: string) => void;
@@ -12,7 +14,8 @@ export interface DashboardNavigationDrawerProps {
 }
 
 export interface NavigationItemsProps {
-  items: DashboardNavigationItem[];
+  categories: DashboardNavigationCategory[];
+  settingsItem: DashboardNavigationItem;
   selectedPath: string;
   onNavigate: (path: string) => void;
 }

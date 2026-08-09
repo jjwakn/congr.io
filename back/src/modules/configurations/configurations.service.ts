@@ -53,14 +53,14 @@ export class ConfigurationsService {
       const defaultConfig = this.repository.create({
         congregation_id: congregationId,
         config_key: THEME_PALETTE_CONFIG_KEY,
-        config_value: DEFAULT_THEME_PALETTE_CONFIG as unknown as Record<string, unknown>,
+        config_value: DEFAULT_THEME_PALETTE_CONFIG,
       });
 
       await this.repository
         .createQueryBuilder()
         .insert()
         .into(Configuration)
-        .values(defaultConfig as unknown as Record<string, unknown>)
+        .values(defaultConfig)
         .orIgnore()
         .execute();
 
@@ -71,10 +71,10 @@ export class ConfigurationsService {
         },
       });
 
-      return (insertedOrExisting?.config_value as unknown as ThemePaletteConfig) ?? DEFAULT_THEME_PALETTE_CONFIG;
+      return insertedOrExisting?.config_value ?? DEFAULT_THEME_PALETTE_CONFIG;
     }
 
-    return (config.config_value as unknown as ThemePaletteConfig) ?? DEFAULT_THEME_PALETTE_CONFIG;
+    return config.config_value ?? DEFAULT_THEME_PALETTE_CONFIG;
   }
 
   async upsertThemePaletteConfig({
@@ -97,7 +97,7 @@ export class ConfigurationsService {
     });
 
     if (existing) {
-      existing.config_value = themePalette as unknown as Record<string, unknown>;
+      existing.config_value = themePalette;
       existing.updated_by = user;
       await this.repository.save(existing);
       return themePalette;
@@ -107,7 +107,7 @@ export class ConfigurationsService {
       congregation_id: congregation.id,
       congregation,
       config_key: THEME_PALETTE_CONFIG_KEY,
-      config_value: themePalette as unknown as Record<string, unknown>,
+      config_value: themePalette,
       created_by: user,
     });
 

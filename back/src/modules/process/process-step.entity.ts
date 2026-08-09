@@ -27,6 +27,17 @@ export class ProcessStep extends CommonEntity {
   @Column({ type: 'text', nullable: false, default: '' })
   description: string;
 
+  @ApiProperty({ example: 'e61de631-93f8-46f4-a737-31b8ac6e4f51' })
+  @Column({ type: 'uuid', nullable: true })
+  flow_key?: string | null;
+
+  @ApiProperty({ type: [String] })
+  @Column('simple-json', { nullable: false, default: [] })
+  next_step_keys: string[];
+
+  @Column({ nullable: false, default: false })
+  complete_previous_steps: boolean;
+
   @OneToOne(() => EventType, (eventType) => eventType.process_step)
   event_type?: EventType | null;
 }

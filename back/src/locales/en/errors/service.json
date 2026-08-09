@@ -1,0 +1,6 @@
+{
+  "notFound": "Service not found.",
+  "locationNotFound": "Location not found for the selected congregation.",
+  "invalidTimeRange": "The service end time must be after the start time.",
+  "attendanceGroupRequired": "At least one attendance group is required."
+}

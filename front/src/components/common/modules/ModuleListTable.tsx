@@ -1,6 +1,9 @@
+import FilterAltRoundedIcon from '@mui/icons-material/FilterAltRounded';
+import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import {
   Box,
   CircularProgress,
+  IconButton,
   Paper,
   type SxProps,
   Table,
@@ -12,10 +15,12 @@ import {
   TableRow,
   TableSortLabel,
   type Theme,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ModuleColumnVisibilityDialog } from './ModuleColumnVisibilityDialog';
 import type { ModuleListHeaderCell, ModuleListTableProps } from './ModuleListTable.types';
 
 const DEFAULT_FIXED_END_COLUMN_IDS = ['actions'];
@@ -88,7 +93,11 @@ const getSortLabelSx = (align?: ModuleListHeaderCell['align']): SxProps<Theme> =
           margin: 0,
         },
       }
-    : {};
+    : {
+        '& .MuiTableSortLabel-icon': {
+          marginLeft: 0.75,
+        },
+      };
 
 export const ModuleListTable = <RowType,>({
   headerRows,
@@ -107,14 +116,20 @@ export const ModuleListTable = <RowType,>({
   onPageChange,
   onPageSizeChange,
   rowsPerPageLabel,
+  columnVisibility,
   fixedStartColumnIds = [],
   fixedEndColumnIds = DEFAULT_FIXED_END_COLUMN_IDS,
 }: ModuleListTableProps<RowType>) => {
   const theme = useTheme();
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  const [columnVisibilityOpen, setColumnVisibilityOpen] = useState(false);
 
   const columnMap = useMemo(() => new Map(columns.map((column) => [column.id, column])), [columns]);
+  const rowsPerPageOptions = useMemo(
+    () => Array.from(new Set([10, 25, 50, 100, pageSize])).sort((left, right) => left - right),
+    [pageSize],
+  );
 
   const fixedStartIds = useMemo(() => {
     const fixedIds = new Set(fixedStartColumnIds);
@@ -194,7 +209,7 @@ export const ModuleListTable = <RowType,>({
           left: fixedStartOffsets[columnId],
           zIndex: variant === 'header' ? 4 : 2,
           backgroundColor: theme.palette.background.paper,
-          boxShadow: columnId === lastFixedStartId ? `inset -1px 0 0 ${theme.palette.divider}` : undefined,
+          borderRight: columnId === lastFixedStartId ? `1px solid ${theme.palette.divider}` : undefined,
         };
       }
 
@@ -204,7 +219,7 @@ export const ModuleListTable = <RowType,>({
           right: fixedEndOffsets[columnId],
           zIndex: variant === 'header' ? 4 : 2,
           backgroundColor: theme.palette.background.paper,
-          boxShadow: columnId === firstFixedEndId ? `inset 1px 0 0 ${theme.palette.divider}` : undefined,
+          borderLeft: columnId === firstFixedEndId ? `1px solid ${theme.palette.divider}` : undefined,
         };
       }
 
@@ -234,10 +249,10 @@ export const ModuleListTable = <RowType,>({
   );
 
   return (
-    <Paper variant="outlined">
-      <TableContainer ref={tableContainerRef}>
+    <Paper variant="outlined" sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+      <TableContainer ref={tableContainerRef} sx={{ flex: 1, minHeight: 0, overflow: 'auto', position: 'relative' }}>
         <Table size="small">
-          <TableHead>
+          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5, bgcolor: 'background.paper' }}>
             {headerRows.map((headerRow, rowIndex) => (
               <TableRow key={`header-row-${rowIndex}`}>
                 {headerRow.map((cell) => (
@@ -256,20 +271,46 @@ export const ModuleListTable = <RowType,>({
                       cell.sx,
                     )}
                   >
-                    {cell.sortKey ? (
-                      <TableSortLabel
-                        active={sort === cell.sortKey}
-                        direction={
-                          sort === cell.sortKey ? (direction.toLowerCase() === 'desc' ? 'desc' : 'asc') : 'asc'
-                        }
-                        sx={getSortLabelSx(cell.align)}
-                        onClick={() => onSort(cell.sortKey as string)}
-                      >
-                        {cell.label}
-                      </TableSortLabel>
-                    ) : (
-                      cell.label
-                    )}
+                    <Box
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        width: cell.align === 'center' ? '100%' : undefined,
+                        justifyContent: cell.align === 'center' ? 'center' : undefined,
+                      }}
+                    >
+                      {cell.sortKey ? (
+                        <TableSortLabel
+                          active={sort === cell.sortKey}
+                          disabled={loading}
+                          direction={
+                            sort === cell.sortKey ? (direction.toLowerCase() === 'desc' ? 'desc' : 'asc') : 'asc'
+                          }
+                          sx={getSortLabelSx(cell.align)}
+                          onClick={() => onSort(cell.sortKey as string)}
+                        >
+                          {cell.label}
+                        </TableSortLabel>
+                      ) : (
+                        cell.label
+                      )}
+                      {cell.filter ? (
+                        <Tooltip title={cell.filter.label}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              color={cell.filter.active ? 'primary' : 'default'}
+                              disabled={loading || cell.filter.disabled}
+                              onClick={cell.filter.onClick}
+                              aria-label={cell.filter.label}
+                            >
+                              <FilterListRoundedIcon fontSize="inherit" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : null}
+                    </Box>
                   </TableCell>
                 ))}
               </TableRow>
@@ -277,7 +318,7 @@ export const ModuleListTable = <RowType,>({
           </TableHead>
 
           <TableBody>
-            {loading ? (
+            {loading && !rows.length ? (
               <TableRow>
                 <TableCell colSpan={columns.length} align="center">
                   <Box
@@ -324,18 +365,90 @@ export const ModuleListTable = <RowType,>({
             )}
           </TableBody>
         </Table>
+        {loading && rows.length ? (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 42,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 6,
+              bgcolor: (theme) => theme.palette.action.disabledBackground,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={20} />
+              <Typography variant="body2">{loadingLabel}</Typography>
+            </Box>
+          </Box>
+        ) : null}
       </TableContainer>
 
-      <TablePagination
-        component="div"
-        count={total}
-        page={page}
-        onPageChange={(_event, nextPage) => onPageChange(nextPage)}
-        rowsPerPage={pageSize}
-        onRowsPerPageChange={(event) => onPageSizeChange(Number(event.target.value))}
-        labelRowsPerPage={rowsPerPageLabel}
-        rowsPerPageOptions={[10, 25, 50, 100]}
-      />
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          flexShrink: 0,
+          borderTop: 1,
+          borderColor: 'divider',
+          pointerEvents: loading ? 'none' : undefined,
+          opacity: loading ? 0.55 : undefined,
+        }}
+      >
+        <Box sx={{ flex: 1, minWidth: 0, pl: 1 }}>
+          {columnVisibility ? (
+            <Tooltip title={columnVisibility.label}>
+              <span>
+                <IconButton
+                  size="small"
+                  disabled={loading || columnVisibility.disabled}
+                  aria-label={columnVisibility.label}
+                  onClick={() => setColumnVisibilityOpen(true)}
+                >
+                  <FilterAltRoundedIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          ) : null}
+        </Box>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={(_event, nextPage) => onPageChange(nextPage)}
+          rowsPerPage={pageSize}
+          onRowsPerPageChange={(event) => onPageSizeChange(Number(event.target.value))}
+          labelRowsPerPage=""
+          rowsPerPageOptions={rowsPerPageOptions}
+          getItemAriaLabel={(type) => `${rowsPerPageLabel} ${type}`}
+          sx={{
+            borderTop: 0,
+            flexShrink: 0,
+            '& .MuiTablePagination-toolbar': {
+              pl: 0,
+            },
+          }}
+        />
+      </Box>
+
+      {columnVisibility && columnVisibilityOpen ? (
+        <ModuleColumnVisibilityDialog
+          open={columnVisibilityOpen}
+          title={columnVisibility.label}
+          options={columnVisibility.options}
+          visibleIds={columnVisibility.visibleIds}
+          defaultVisibleIds={columnVisibility.defaultVisibleIds}
+          onClose={() => setColumnVisibilityOpen(false)}
+          onSave={(value) => {
+            columnVisibility.onChange(value);
+            setColumnVisibilityOpen(false);
+          }}
+        />
+      ) : null}
     </Paper>
   );
 };

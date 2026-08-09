@@ -1,7 +1,15 @@
 import { FormContainer } from '@components/common/FormContainer';
 import { useSetup } from '@hooks/useSetup';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Checkbox, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Switch, Typography } from '@mui/material';
+import {
+  PARTIAL_FEATURE_SWITCH_SX,
+  getFeatureChildren,
+  getRootFeatures,
+  isFeaturePartiallySelected,
+  normalizeSelectedFeatures,
+  toggleFeatureSelection,
+} from '@utils/features';
 import { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +40,7 @@ export const FeaturesStep = ({
     control: form.control,
     name: 'features',
   });
+  const normalizedSelectedFeatures = normalizeSelectedFeatures(features, selectedFeatures ?? []);
 
   const { setValue } = form;
 
@@ -63,7 +72,7 @@ export const FeaturesStep = ({
   );
 
   const handleSelectAll = useCallback(() => {
-    const allSelected = selectedFeatures.length === features.length;
+    const allSelected = normalizedSelectedFeatures.length === features.length;
     if (allSelected)
       setValue(
         'features',
@@ -74,7 +83,64 @@ export const FeaturesStep = ({
         'features',
         features.map((f) => f.id),
       );
-  }, [features, selectedFeatures.length, setValue]);
+  }, [features, normalizedSelectedFeatures.length, setValue]);
+
+  const renderFeature = (feature: (typeof features)[number], depth = 0) => {
+    const checked = normalizedSelectedFeatures.includes(feature.id);
+    const partial = isFeaturePartiallySelected(features, normalizedSelectedFeatures, feature.id);
+    const children = getFeatureChildren(features, feature.id);
+
+    return (
+      <Box key={feature.id} sx={{ ml: depth ? 4 : 0 }}>
+        <Controller
+          name="features"
+          control={form.control}
+          render={({ field }) => (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'flex-start',
+                alignItems: 'flex-start',
+              }}
+            >
+              <Switch
+                checked={checked}
+                onChange={(e) =>
+                  field.onChange(
+                    toggleFeatureSelection({
+                      features,
+                      selected: normalizedSelectedFeatures,
+                      featureId: feature.id,
+                      checked: e.target.checked,
+                    }),
+                  )
+                }
+                disabled={feature.required}
+                sx={{ mt: '2px', ...(partial ? PARTIAL_FEATURE_SWITCH_SX : {}) }}
+              />
+
+              <Accordion expanded={expanded === feature.id} onChange={handleChange(feature.id)}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography component="span">{feature.title}</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography
+                    sx={{
+                      whiteSpace: 'pre-line',
+                    }}
+                  >
+                    {feature.description.replace('{type}', setupData.congregation.type)}
+                  </Typography>
+                </AccordionDetails>
+              </Accordion>
+            </Box>
+          )}
+        />
+        {children.map((child) => renderFeature(child, depth + 1))}
+      </Box>
+    );
+  };
 
   return (
     <FormContainer<SetupData['features']>
@@ -110,74 +176,12 @@ export const FeaturesStep = ({
           }}
           onClick={handleSelectAll}
         >
-          <Checkbox checked={selectedFeatures.length === features.length} />
+          <Switch checked={normalizedSelectedFeatures.length === features.length} />
 
           <Typography fontWeight="bold">{t('form.field.selectAll')}</Typography>
         </Box>
 
-        {features.map((f) => (
-          <Box key={f.id}>
-            <Controller
-              name="features"
-              control={form.control}
-              render={({ field }) => {
-                const selected = new Set(field.value ?? []);
-                const checked = selected.has(f.id);
-
-                return (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      justifyContent: 'flex-start',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Checkbox
-                      checked={checked}
-                      onChange={(e) => {
-                        const next = new Set(field.value ?? []);
-                        if (e.target.checked) {
-                          next.add(f.id);
-
-                          if (f.prerequisites?.length)
-                            f.prerequisites.forEach((p) => {
-                              if (!next.has(p)) next.add(p);
-                            });
-                        } else {
-                          next.delete(f.id);
-                          const prerequisiteOf = features.filter((feature) => feature.prerequisites?.includes(f.id));
-                          prerequisiteOf.forEach((feature) => {
-                            if (next.has(feature.id)) next.delete(feature.id);
-                          });
-                        }
-
-                        field.onChange(Array.from(next));
-                      }}
-                      disabled={f.required}
-                      sx={{ mt: '2px' }}
-                    />
-
-                    <Accordion expanded={expanded === f.id} onChange={handleChange(f.id)}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography component="span">{f.title}</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography
-                          sx={{
-                            whiteSpace: 'pre-line',
-                          }}
-                        >
-                          {f.description.replace('{type}', setupData.congregation.type)}
-                        </Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                  </Box>
-                );
-              }}
-            />
-          </Box>
-        ))}
+        {getRootFeatures(features).map((feature) => renderFeature(feature))}
       </Box>
     </FormContainer>
   );

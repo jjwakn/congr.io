@@ -1,7 +1,7 @@
 import { I18nService } from 'nestjs-i18n';
 import { Congregation } from 'src/modules/congregation/congregation.entity';
 import { User } from 'src/modules/user/user.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 
 export const getUserCongregationContext = async ({
@@ -21,8 +21,7 @@ export const getUserCongregationContext = async ({
   congregation: Congregation;
 }> => {
   const user = await userRepository.findOne({
-    where: { id: userId },
-    withDeleted: true,
+    where: { id: userId, enabled: true, deleted_at: IsNull(), deleted_by: IsNull() },
     relations: {
       congregations: true,
     },
@@ -35,8 +34,7 @@ export const getUserCongregationContext = async ({
   if (!resolvedCongregationId || !hasCongregation) throw new NotFoundException(i18n.t('errors.congregation.notFound'));
 
   const congregation = await congregationRepository.findOne({
-    where: { id: resolvedCongregationId },
-    withDeleted: true,
+    where: { id: resolvedCongregationId, enabled: true, deleted_at: IsNull(), deleted_by: IsNull() },
   });
 
   if (!congregation) throw new NotFoundException(i18n.t('errors.congregation.notFound'));

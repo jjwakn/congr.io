@@ -1,4 +1,4 @@
 {
-  "title": "Processes",
-  "description": "Each process can define its own ordered steps, and every step automatically becomes an event type."
+  "title": "Flows",
+  "description": "Build branching journeys from event-type steps and track each person's progress."
 }
